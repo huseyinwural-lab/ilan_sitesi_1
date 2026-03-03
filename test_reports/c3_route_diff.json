@@ -1,0 +1,11 @@
+{
+  "task": "C3-03 Route Diff",
+  "before_method_path_count": 53,
+  "after_method_path_count": 53,
+  "openapi_finance_method_path_count": 53,
+  "missing_after": [],
+  "extra_after": [],
+  "duplicate_route_count": 0,
+  "duplicate_routes": [],
+  "contract_preserved": true
+}

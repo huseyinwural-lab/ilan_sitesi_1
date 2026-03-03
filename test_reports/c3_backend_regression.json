@@ -1,0 +1,89 @@
+{
+  "task": "C3 Finance Routes Backend Regression",
+  "test_date": "2026-03-03T11:35:00Z",
+  "test_file": "/app/backend/tests/test_c3_finance_routes.py",
+  "total_tests": 32,
+  "passed": 32,
+  "failed": 0,
+  "skipped": 0,
+  "success_rate": "100%",
+  "test_classes": {
+    "TestC303DuplicateRouteVerification": {
+      "tests": 3,
+      "passed": 3,
+      "description": "Duplicate route=0 verification and OpenAPI contract"
+    },
+    "TestC304StripeWebhookAcceptance": {
+      "tests": 6,
+      "passed": 6,
+      "description": "Stripe webhook acceptance tests"
+    },
+    "TestC305FinanceStateMachine": {
+      "tests": 8,
+      "passed": 8,
+      "description": "Invoice and subscription state machine tests"
+    },
+    "TestC306AdminAccountSmoke": {
+      "tests": 10,
+      "passed": 10,
+      "description": "Admin and account finance smoke tests"
+    },
+    "TestLedgerDebitCreditBalance": {
+      "tests": 1,
+      "passed": 1,
+      "description": "Ledger debit==credit verification"
+    },
+    "TestFinanceAdminExportScope": {
+      "tests": 4,
+      "passed": 4,
+      "description": "Admin export scope tests"
+    }
+  },
+  "routes_verified": {
+    "admin_finance": [
+      "GET /api/admin/finance/overview",
+      "GET /api/admin/finance/ledger",
+      "GET /api/admin/finance/subscriptions",
+      "GET /api/admin/finance/products",
+      "GET /api/admin/finance/product-prices",
+      "GET /api/admin/finance/tax-profiles",
+      "GET /api/admin/finance/revenue",
+      "GET /api/admin/finance/export"
+    ],
+    "admin_invoices": [
+      "GET /api/admin/invoices",
+      "GET /api/admin/invoices/{invoice_id}",
+      "POST /api/admin/invoices/{invoice_id}/generate-pdf",
+      "GET /api/admin/invoices/{invoice_id}/download-pdf",
+      "GET /api/admin/invoices/export/csv"
+    ],
+    "admin_payments": [
+      "GET /api/admin/payments",
+      "GET /api/admin/payments/runtime-health",
+      "GET /api/admin/payments/export/csv"
+    ],
+    "admin_ledger": [
+      "GET /api/admin/ledger/export/csv"
+    ],
+    "account_endpoints": [
+      "GET /api/account/invoices",
+      "GET /api/account/subscription",
+      "GET /api/account/subscription/plans",
+      "POST /api/account/subscription/cancel",
+      "POST /api/account/subscription/reactivate"
+    ],
+    "dealer_endpoints": [
+      "GET /api/dealer/invoices"
+    ],
+    "payments_public": [
+      "GET /api/payments/runtime-config"
+    ],
+    "webhook_endpoints": [
+      "POST /api/webhook/stripe",
+      "POST /api/payments/stripe/webhook",
+      "POST /api/admin/webhooks/events/{event_id}/replay"
+    ]
+  },
+  "duplicate_routes_found": 0,
+  "ledger_balance_verified": true
+}

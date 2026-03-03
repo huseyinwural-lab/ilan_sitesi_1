@@ -1,0 +1,79 @@
+{
+  "task": "C3-06 Finance Frontend Smoke Tests",
+  "test_date": "2026-03-03T11:35:00Z",
+  "admin_panel_tests": {
+    "login": "PASS",
+    "finance_overview": {
+      "url": "/admin/finance-overview",
+      "status": "PASS",
+      "elements_verified": [
+        "Revenue: 166,65 EUR",
+        "MRR: 10,00 EUR",
+        "Failed Payment Rate: 0.00%",
+        "Refund Rate: 0.00%",
+        "Active Subscriptions: 1",
+        "Export Payments button",
+        "Export Invoices button",
+        "Export Ledger button"
+      ]
+    },
+    "ledger": {
+      "url": "/admin/ledger",
+      "status": "PASS",
+      "elements_verified": [
+        "Ledger Entries title",
+        "Double-entry bookkeeping visible",
+        "CASH debit 88,88 EUR",
+        "REVENUE credit 88,88 EUR",
+        "Invoice reference links"
+      ]
+    },
+    "subscriptions": {
+      "url": "/admin/subscriptions",
+      "status": "PASS",
+      "elements_verified": [
+        "Subscriptions title",
+        "dealer@platform.com entry",
+        "DryRun Plan",
+        "active status badge",
+        "period_end date",
+        "provider_subscription_id"
+      ]
+    }
+  },
+  "account_portal_tests": {
+    "login": "PASS",
+    "invoices": {
+      "url": "/account/invoices",
+      "status": "PASS",
+      "elements_verified": [
+        "Faturalarım (My Invoices) title",
+        "Invoice list with 18 records",
+        "Status badges (issued)",
+        "Amount in EUR",
+        "PDF download button",
+        "Detail button"
+      ]
+    },
+    "subscription": {
+      "url": "/account/subscription",
+      "status": "PASS",
+      "elements_verified": [
+        "Aboneliğim (My Subscription) title",
+        "No active subscription message"
+      ]
+    }
+  },
+  "console_errors": {
+    "admin_panel": 6,
+    "account_portal": 2,
+    "severity": "LOW",
+    "type": "React hydration warnings (non-blocking)"
+  },
+  "design_notes": {
+    "admin_finance_overview": "Clean dashboard with filters, export buttons, and metrics cards",
+    "admin_ledger": "Table view with proper columns (group, account, debit, credit, reference, created)",
+    "admin_subscriptions": "Table view with user, plan, status, period_end, actions",
+    "account_invoices": "Table view with invoice_no, status, amount, date, PDF, actions"
+  }
+}

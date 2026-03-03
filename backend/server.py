@@ -210,6 +210,12 @@ from app.routers.system import ops_routes as system_ops_routes
 from app.routers.system import sitemap_routes as system_sitemap_routes
 from app.routers.category import routes as category_routes
 from app.routers.content import routes as content_routes
+from app.routers.finance import admin_finance_routes
+from app.routers.finance import invoice_routes as finance_invoice_routes
+from app.routers.finance import ledger_routes as finance_ledger_routes
+from app.routers.finance import payments_routes as finance_payments_routes
+from app.routers.finance import subscription_routes as finance_subscription_routes
+from app.routers.finance import webhook_routes as finance_webhook_routes
 
 
 from fastapi import UploadFile, File, BackgroundTasks, Form
@@ -39643,11 +39649,34 @@ async def get_info_page(slug: str, session: AsyncSession = Depends(get_sql_sessi
     }
 
 # --- Router binding + RBAC allowlist (must be after all route definitions) ---
+c3_finance_webhook_routes = finance_webhook_routes.delegate_routes(api_router)
+c3_finance_payments_routes = finance_payments_routes.delegate_routes(api_router)
+c3_finance_invoice_routes = finance_invoice_routes.delegate_routes(api_router)
+c3_finance_subscription_routes = finance_subscription_routes.delegate_routes(api_router)
+c3_finance_ledger_routes = finance_ledger_routes.delegate_routes(api_router)
+c3_finance_admin_routes = admin_finance_routes.delegate_routes(api_router)
+
 c2_category_routes = category_routes.delegate_routes(api_router)
 c2_content_routes = content_routes.delegate_routes(api_router)
 
+app.include_router(finance_webhook_routes.router)
+app.include_router(finance_payments_routes.router)
+app.include_router(finance_invoice_routes.router)
+app.include_router(finance_subscription_routes.router)
+app.include_router(finance_ledger_routes.router)
+app.include_router(admin_finance_routes.router)
+
 app.include_router(category_routes.router)
 app.include_router(content_routes.router)
+
+app.state.c3_router_migration = {
+    "webhook_routes": c3_finance_webhook_routes,
+    "payments_routes": c3_finance_payments_routes,
+    "invoice_routes": c3_finance_invoice_routes,
+    "subscription_routes": c3_finance_subscription_routes,
+    "ledger_routes": c3_finance_ledger_routes,
+    "admin_finance_routes": c3_finance_admin_routes,
+}
 
 app.state.c2_router_migration = {
     "category_routes": c2_category_routes,
@@ -39656,6 +39685,39 @@ app.state.c2_router_migration = {
 
 app.include_router(ui_designer_router)
 app.include_router(api_router)
+
+_c3_finance_prefixes = (
+    "/api/payments",
+    "/api/webhook/stripe",
+    "/api/webhooks/stripe",
+    "/api/admin/finance",
+    "/api/admin/invoices",
+    "/api/admin/subscriptions",
+    "/api/admin/ledger",
+    "/api/admin/payments",
+    "/api/account/invoices",
+    "/api/account/subscription",
+    "/api/account/payments",
+    "/api/dealer/invoices",
+    "/api/dealer/payments",
+)
+_c3_route_counter: Dict[str, int] = defaultdict(int)
+for _route in app.routes:
+    if not isinstance(_route, APIRoute):
+        continue
+    if not _route.path.startswith(_c3_finance_prefixes):
+        continue
+    for _method in (_route.methods or set()):
+        if _method in {"GET", "POST", "PUT", "PATCH", "DELETE"}:
+            _c3_route_counter[f"{_method} {_route.path}"] += 1
+
+_c3_finance_duplicates = sorted([key for key, count in _c3_route_counter.items() if count > 1])
+app.state.c3_finance_route_duplicates = _c3_finance_duplicates
+if _c3_finance_duplicates:
+    logging.getLogger("router_guard").warning(
+        "c3_finance_route_collision",
+        extra={"duplicates": _c3_finance_duplicates},
+    )
 
 RBAC_ALLOWLIST, RBAC_MISSING_POLICIES = _build_rbac_allowlist(app)
 app.state.rbac_allowlist = RBAC_ALLOWLIST

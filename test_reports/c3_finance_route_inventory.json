@@ -1,0 +1,1676 @@
+{
+  "task": "C3-01 Finance Route Inventory",
+  "source_file": "/app/backend/server.py",
+  "scope_lock": "finance domain routes only; behavioral change yok",
+  "prefix_scope": {
+    "required": [
+      "/api/payments/*",
+      "/api/webhooks/stripe",
+      "/api/admin/finance/*",
+      "/api/admin/invoices/*",
+      "/api/admin/subscriptions/*",
+      "/api/admin/ledger/*",
+      "user/account finance endpoints"
+    ],
+    "detected_missing": [
+      "/api/webhooks/stripe",
+      "/api/admin/subscriptions/*"
+    ],
+    "detected_equivalent": [
+      "/api/webhook/stripe"
+    ]
+  },
+  "inventory": [
+    {
+      "method": "GET",
+      "path": "/api/account/invoices",
+      "handler": "account_list_invoices",
+      "module_target": "invoice_routes",
+      "auth_guards": [
+        "require_portal_scope(\"account\""
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "require_portal_scope(\"account\"",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400
+        ],
+        "sample_payload_keys": [
+          "items"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/account/invoices/{invoice_id}",
+      "handler": "account_invoice_detail",
+      "module_target": "invoice_routes",
+      "auth_guards": [
+        "require_portal_scope(\"account\""
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "require_portal_scope(\"account\"",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          403,
+          404
+        ],
+        "sample_payload_keys": [
+          "invoice",
+          "payments"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/account/invoices/{invoice_id}/download-pdf",
+      "handler": "account_invoice_download_pdf",
+      "module_target": "invoice_routes",
+      "auth_guards": [
+        "require_portal_scope(\"account\""
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "require_portal_scope(\"account\"",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          403,
+          404
+        ],
+        "sample_payload_keys": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/account/payments",
+      "handler": "account_payment_history",
+      "module_target": "admin_finance_routes",
+      "auth_guards": [
+        "require_portal_scope(\"account\""
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "require_portal_scope(\"account\"",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400
+        ],
+        "sample_payload_keys": [
+          "items"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/account/subscription",
+      "handler": "account_subscription_status",
+      "module_target": "subscription_routes",
+      "auth_guards": [
+        "require_portal_scope(\"account\""
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "require_portal_scope(\"account\"",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400
+        ],
+        "sample_payload_keys": [
+          "has_subscription",
+          "status",
+          "plan",
+          "current_period_end",
+          "cancel_at_period_end"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/account/subscription/cancel",
+      "handler": "account_subscription_cancel_at_period_end",
+      "module_target": "subscription_routes",
+      "auth_guards": [
+        "require_portal_scope(\"account\""
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "require_portal_scope(\"account\"",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          404
+        ],
+        "sample_payload_keys": [
+          "ok",
+          "status",
+          "cancel_at_period_end"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/account/subscription/plan-change-preview",
+      "handler": "account_subscription_plan_change_preview",
+      "module_target": "subscription_routes",
+      "auth_guards": [
+        "require_portal_scope(\"account\""
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "require_portal_scope(\"account\"",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          404
+        ],
+        "sample_payload_keys": [
+          "current_plan",
+          "id",
+          "name",
+          "price_amount",
+          "currency_code"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/account/subscription/plans",
+      "handler": "account_subscription_plans",
+      "module_target": "subscription_routes",
+      "auth_guards": [
+        "require_portal_scope(\"account\""
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "require_portal_scope(\"account\"",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [],
+        "sample_payload_keys": [
+          "items",
+          "id",
+          "name",
+          "price_amount",
+          "currency_code",
+          "listing_quota",
+          "showcase_quota"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/account/subscription/reactivate",
+      "handler": "account_subscription_reactivate",
+      "module_target": "subscription_routes",
+      "auth_guards": [
+        "require_portal_scope(\"account\""
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "require_portal_scope(\"account\"",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          404
+        ],
+        "sample_payload_keys": [
+          "ok",
+          "status",
+          "cancel_at_period_end"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/export",
+      "handler": "admin_finance_export",
+      "module_target": "admin_finance_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"country_admin\"]"
+      ],
+      "permission_flag_checks": [
+        {
+          "domain": "finance",
+          "action": "export"
+        }
+      ],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"country_admin\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400
+        ],
+        "sample_payload_keys": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/ledger",
+      "handler": "admin_finance_ledger_list",
+      "module_target": "ledger_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\", \"country_admin\", \"admin\"]"
+      ],
+      "permission_flag_checks": [
+        {
+          "domain": "finance",
+          "action": "view"
+        }
+      ],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\", \"country_admin\", \"admin\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [],
+        "sample_payload_keys": [
+          "items"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/finance/ledger/{entry_id}/reverse",
+      "handler": "admin_finance_reverse_ledger_entry",
+      "module_target": "ledger_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          404
+        ],
+        "sample_payload_keys": [
+          "ok",
+          "reversal_id"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/overview",
+      "handler": "admin_finance_overview",
+      "module_target": "admin_finance_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\", \"country_admin\", \"admin\"]"
+      ],
+      "permission_flag_checks": [
+        {
+          "domain": "finance",
+          "action": "view"
+        }
+      ],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\", \"country_admin\", \"admin\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400
+        ],
+        "sample_payload_keys": [
+          "range",
+          "start_date",
+          "end_date"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/product-prices",
+      "handler": "admin_finance_product_prices",
+      "module_target": "admin_finance_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [],
+        "sample_payload_keys": [
+          "items",
+          "id",
+          "product_id",
+          "currency",
+          "amount_minor",
+          "amount_display",
+          "country_code",
+          "active_from",
+          "active_to",
+          "active_flag"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/products",
+      "handler": "admin_finance_products",
+      "module_target": "admin_finance_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [],
+        "sample_payload_keys": [
+          "items",
+          "id",
+          "code",
+          "name",
+          "description",
+          "active_flag"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/finance/products",
+      "handler": "admin_finance_create_product",
+      "module_target": "admin_finance_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [],
+        "sample_payload_keys": [
+          "id"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/finance/products/{product_id}/prices",
+      "handler": "admin_finance_create_product_price",
+      "module_target": "admin_finance_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          404
+        ],
+        "sample_payload_keys": [
+          "id"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/revenue",
+      "handler": "admin_revenue",
+      "module_target": "admin_finance_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400
+        ],
+        "sample_payload_keys": [
+          "country_code",
+          "start_date",
+          "end_date",
+          "total_gross",
+          "totals_by_currency"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/subscriptions",
+      "handler": "admin_finance_subscriptions",
+      "module_target": "subscription_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\", \"country_admin\", \"admin\"]"
+      ],
+      "permission_flag_checks": [
+        {
+          "domain": "finance",
+          "action": "view"
+        }
+      ],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\", \"country_admin\", \"admin\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400
+        ],
+        "sample_payload_keys": [
+          "items",
+          "pagination",
+          "total",
+          "skip",
+          "limit"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/subscriptions/{subscription_id}",
+      "handler": "admin_finance_subscription_detail",
+      "module_target": "subscription_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\", \"country_admin\", \"admin\"]"
+      ],
+      "permission_flag_checks": [
+        {
+          "domain": "finance",
+          "action": "view"
+        }
+      ],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\", \"country_admin\", \"admin\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          404
+        ],
+        "sample_payload_keys": [
+          "subscription",
+          "id",
+          "status",
+          "provider",
+          "provider_subscription_id",
+          "provider_customer_id",
+          "current_period_start",
+          "current_period_end",
+          "canceled_at",
+          "meta_json"
+        ]
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/finance/subscriptions/{subscription_id}/status",
+      "handler": "admin_finance_update_subscription_status",
+      "module_target": "subscription_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          404
+        ],
+        "sample_payload_keys": [
+          "ok",
+          "id",
+          "status"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/tax-profiles",
+      "handler": "admin_finance_tax_profiles",
+      "module_target": "admin_finance_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [],
+        "sample_payload_keys": [
+          "items",
+          "id",
+          "code",
+          "country_code",
+          "tax_name",
+          "tax_rate_bps",
+          "active_flag",
+          "rounding_mode"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/finance/tax-profiles",
+      "handler": "admin_finance_create_tax_profile",
+      "module_target": "admin_finance_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400
+        ],
+        "sample_payload_keys": [
+          "id"
+        ]
+      }
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/finance/tax-profiles/{profile_id}",
+      "handler": "admin_finance_update_tax_profile",
+      "module_target": "admin_finance_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          404
+        ],
+        "sample_payload_keys": [
+          "ok"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/trace/{invoice_id}",
+      "handler": "admin_finance_trace",
+      "module_target": "admin_finance_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\", \"country_admin\", \"admin\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\", \"country_admin\", \"admin\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          403,
+          404
+        ],
+        "sample_payload_keys": [
+          "invoice",
+          "payments",
+          "ledger_entries"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/invoices",
+      "handler": "admin_list_invoices",
+      "module_target": "invoice_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\", \"country_admin\", \"admin\"]"
+      ],
+      "permission_flag_checks": [
+        {
+          "domain": "finance",
+          "action": "view"
+        }
+      ],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\", \"country_admin\", \"admin\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400
+        ],
+        "sample_payload_keys": [
+          "items",
+          "pagination",
+          "total",
+          "skip",
+          "limit"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/invoices",
+      "handler": "admin_create_invoice",
+      "module_target": "invoice_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          404
+        ],
+        "sample_payload_keys": [
+          "invoice"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/invoices/export/csv",
+      "handler": "admin_export_invoices_csv",
+      "module_target": "invoice_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"country_admin\"]"
+      ],
+      "permission_flag_checks": [
+        {
+          "domain": "finance",
+          "action": "export"
+        }
+      ],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"country_admin\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [],
+        "sample_payload_keys": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/invoices/{invoice_id}",
+      "handler": "admin_invoice_detail",
+      "module_target": "invoice_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\", \"country_admin\", \"admin\"]"
+      ],
+      "permission_flag_checks": [
+        {
+          "domain": "finance",
+          "action": "view"
+        }
+      ],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\", \"country_admin\", \"admin\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          403,
+          404
+        ],
+        "sample_payload_keys": [
+          "invoice",
+          "dealer",
+          "id",
+          "email"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/invoices/{invoice_id}/cancel",
+      "handler": "admin_invoice_cancel",
+      "module_target": "invoice_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          404
+        ],
+        "sample_payload_keys": [
+          "invoice"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/invoices/{invoice_id}/download-pdf",
+      "handler": "admin_invoice_download_pdf",
+      "module_target": "invoice_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"country_admin\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"country_admin\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          403,
+          404
+        ],
+        "sample_payload_keys": []
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/invoices/{invoice_id}/generate-pdf",
+      "handler": "admin_invoice_generate_pdf",
+      "module_target": "invoice_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          404
+        ],
+        "sample_payload_keys": [
+          "status",
+          "pdf_url",
+          "pdf_generated_at"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/invoices/{invoice_id}/mark-paid",
+      "handler": "admin_invoice_mark_paid",
+      "module_target": "invoice_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          404
+        ],
+        "sample_payload_keys": [
+          "invoice"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/invoices/{invoice_id}/refund",
+      "handler": "admin_invoice_refund",
+      "module_target": "invoice_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          404
+        ],
+        "sample_payload_keys": [
+          "invoice"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/invoices/{invoice_id}/regenerate-pdf",
+      "handler": "admin_invoice_regenerate_pdf",
+      "module_target": "invoice_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          404
+        ],
+        "sample_payload_keys": [
+          "status",
+          "pdf_url",
+          "pdf_generated_at",
+          "version"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ledger/export/csv",
+      "handler": "admin_export_ledger_csv",
+      "module_target": "ledger_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"country_admin\"]"
+      ],
+      "permission_flag_checks": [
+        {
+          "domain": "finance",
+          "action": "export"
+        }
+      ],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"country_admin\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [],
+        "sample_payload_keys": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/payments",
+      "handler": "admin_list_payments",
+      "module_target": "payments_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\", \"country_admin\", \"admin\"]"
+      ],
+      "permission_flag_checks": [
+        {
+          "domain": "finance",
+          "action": "view"
+        }
+      ],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\", \"country_admin\", \"admin\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [],
+        "sample_payload_keys": [
+          "items",
+          "pagination",
+          "total",
+          "skip",
+          "limit"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/payments/export/csv",
+      "handler": "admin_export_payments_csv",
+      "module_target": "payments_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"country_admin\"]"
+      ],
+      "permission_flag_checks": [
+        {
+          "domain": "finance",
+          "action": "export"
+        }
+      ],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"country_admin\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [],
+        "sample_payload_keys": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/payments/runtime-health",
+      "handler": "get_admin_payments_runtime_health",
+      "module_target": "payments_routes",
+      "auth_guards": [
+        "check_permissions(list(ADMIN_ROLE_OPTIONS"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions(list(ADMIN_ROLE_OPTIONS"
+        ],
+        "db_session": false,
+        "stripe_client": false,
+        "settings_runtime": true
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [],
+        "sample_payload_keys": [
+          "stripe_api_version"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/webhooks/events/{event_id}/replay",
+      "handler": "admin_replay_webhook_event",
+      "module_target": "webhook_routes",
+      "auth_guards": [
+        "check_permissions([\"super_admin\", \"finance\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"super_admin\", \"finance\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          404
+        ],
+        "sample_payload_keys": [
+          "status"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/dealer/invoices",
+      "handler": "dealer_list_invoices",
+      "module_target": "invoice_routes",
+      "auth_guards": [
+        "check_permissions([\"dealer\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"dealer\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400
+        ],
+        "sample_payload_keys": [
+          "items"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/dealer/invoices/{invoice_id}",
+      "handler": "dealer_invoice_detail",
+      "module_target": "invoice_routes",
+      "auth_guards": [
+        "check_permissions([\"dealer\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"dealer\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          403,
+          404
+        ],
+        "sample_payload_keys": [
+          "invoice",
+          "payments"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/dealer/invoices/{invoice_id}/download-pdf",
+      "handler": "dealer_invoice_download_pdf",
+      "module_target": "invoice_routes",
+      "auth_guards": [
+        "check_permissions([\"dealer\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"dealer\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          403,
+          404
+        ],
+        "sample_payload_keys": []
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/dealer/payments",
+      "handler": "dealer_payment_history",
+      "module_target": "admin_finance_routes",
+      "auth_guards": [
+        "check_permissions([\"dealer\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"dealer\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400
+        ],
+        "sample_payload_keys": [
+          "items"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/payments/checkout/status/{session_id}",
+      "handler": "get_checkout_status",
+      "module_target": "payments_routes",
+      "auth_guards": [
+        "check_permissions([\"dealer\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"dealer\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": true,
+        "settings_runtime": true
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          403,
+          404,
+          503
+        ],
+        "sample_payload_keys": [
+          "session_id",
+          "status",
+          "payment_status"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/payments/create-checkout-session",
+      "handler": "create_checkout_session",
+      "module_target": "payments_routes",
+      "auth_guards": [
+        "check_permissions([\"dealer\"]"
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "check_permissions([\"dealer\"]",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": true,
+        "settings_runtime": true
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          403,
+          404,
+          503
+        ],
+        "sample_payload_keys": [
+          "checkout_url",
+          "session_id",
+          "idempotency_reused"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/payments/create-intent",
+      "handler": "create_listing_payment_intent",
+      "module_target": "payments_routes",
+      "auth_guards": [
+        "require_portal_scope(\"account\""
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "require_portal_scope(\"account\"",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": true,
+        "settings_runtime": true
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          401,
+          404
+        ],
+        "sample_payload_keys": [
+          "payment_id",
+          "payment_intent_id",
+          "client_secret",
+          "status",
+          "amount",
+          "currency",
+          "publishable_key",
+          "idempotency_reused"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/payments/runtime-config",
+      "handler": "get_payments_runtime_config",
+      "module_target": "payments_routes",
+      "auth_guards": [],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [],
+        "db_session": false,
+        "stripe_client": false,
+        "settings_runtime": true
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [],
+        "sample_payload_keys": [
+          "payments_enabled",
+          "status",
+          "disabled_reason",
+          "publishable_key"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/payments/stripe/webhook",
+      "handler": "stripe_payment_intent_webhook",
+      "module_target": "webhook_routes",
+      "auth_guards": [],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "RateLimiter(limit=120, window_seconds=60, scope=\"stripe_webhook\"",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": true,
+        "settings_runtime": true
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          503
+        ],
+        "sample_payload_keys": [
+          "status",
+          "processed"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/payments/webhook",
+      "handler": "stripe_payment_intent_webhook",
+      "module_target": "webhook_routes",
+      "auth_guards": [],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "RateLimiter(limit=120, window_seconds=60, scope=\"stripe_webhook\"",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": true,
+        "settings_runtime": true
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          503
+        ],
+        "sample_payload_keys": [
+          "status",
+          "processed"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/payments/{payment_id}/reconcile",
+      "handler": "reconcile_listing_payment",
+      "module_target": "payments_routes",
+      "auth_guards": [
+        "require_portal_scope(\"account\""
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "require_portal_scope(\"account\"",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": true,
+        "settings_runtime": true
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          401,
+          404
+        ],
+        "sample_payload_keys": [
+          "status",
+          "payment_id",
+          "payment_intent_id",
+          "payment_status",
+          "listing_status"
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/payments/{payment_id}/status",
+      "handler": "get_listing_payment_status",
+      "module_target": "payments_routes",
+      "auth_guards": [
+        "require_portal_scope(\"account\""
+      ],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "require_portal_scope(\"account\"",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": false,
+        "settings_runtime": false
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          401,
+          404
+        ],
+        "sample_payload_keys": [
+          "payment_id",
+          "payment_intent_id",
+          "payment_status",
+          "listing_id",
+          "listing_status",
+          "amount",
+          "currency",
+          "updated_at"
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/api/webhook/stripe",
+      "handler": "stripe_webhook",
+      "module_target": "webhook_routes",
+      "auth_guards": [],
+      "permission_flag_checks": [],
+      "dependencies": {
+        "depends": [
+          "RateLimiter(limit=120, window_seconds=60, scope=\"stripe_webhook\"",
+          "get_sql_session"
+        ],
+        "db_session": true,
+        "stripe_client": true,
+        "settings_runtime": true
+      },
+      "response": {
+        "success_code": 200,
+        "observed_error_codes": [
+          400,
+          503
+        ],
+        "sample_payload_keys": [
+          "status"
+        ]
+      }
+    }
+  ],
+  "summary": {
+    "total_routes": 53,
+    "by_module_target": {
+      "invoice_routes": 16,
+      "admin_finance_routes": 13,
+      "subscription_routes": 8,
+      "ledger_routes": 3,
+      "payments_routes": 9,
+      "webhook_routes": 4
+    }
+  }
+}
