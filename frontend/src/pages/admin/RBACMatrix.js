@@ -1,61 +1,103 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
+import { AdminEmptyState, AdminErrorState, AdminLoadingState } from '@/components/admin/standard/AdminStateBlocks';
+import { AdminStatusBadge } from '@/components/admin/standard/AdminStatusBadge';
 
 const PERMISSIONS = [
-  "Dashboard",
-  "Yönetim",
-  "Üyeler",
-  "İlan & Moderasyon",
-  "Katalog & İçerik",
-  "Araç Verisi",
-  "Finans",
-  "Sistem",
-  "Audit Log",
-  "Dealer Portal",
-  "Consumer Portal",
+  'Dashboard',
+  'Yönetim',
+  'Üyeler',
+  'İlan & Moderasyon',
+  'Katalog & İçerik',
+  'Araç Verisi',
+  'Finans',
+  'Sistem',
+  'Audit Log',
+  'Dealer Portal',
+  'Consumer Portal',
 ];
 
 const ROLE_MATRIX = {
   SUPER_ADMIN: [
-    "Dashboard",
-    "Yönetim",
-    "Üyeler",
-    "İlan & Moderasyon",
-    "Katalog & İçerik",
-    "Araç Verisi",
-    "Finans",
-    "Sistem",
-    "Audit Log",
+    'Dashboard',
+    'Yönetim',
+    'Üyeler',
+    'İlan & Moderasyon',
+    'Katalog & İçerik',
+    'Araç Verisi',
+    'Finans',
+    'Sistem',
+    'Audit Log',
   ],
   ADMIN: [
-    "Dashboard",
-    "Üyeler",
-    "İlan & Moderasyon",
-    "Katalog & İçerik",
-    "Araç Verisi",
-    "Sistem",
+    'Dashboard',
+    'Üyeler',
+    'İlan & Moderasyon',
+    'Katalog & İçerik',
+    'Araç Verisi',
+    'Sistem',
   ],
-  MODERATOR: ["İlan & Moderasyon", "Katalog & İçerik"],
-  SUPPORT: ["Üyeler"],
-  FINANCE: ["Dashboard", "Finans"],
-  AUDIT_VIEWER: ["Audit Log"],
-  DEALER_ADMIN: ["Dealer Portal"],
-  DEALER_USER: ["Dealer Portal"],
-  CONSUMER: ["Consumer Portal"],
+  MODERATOR: ['İlan & Moderasyon', 'Katalog & İçerik'],
+  SUPPORT: ['Üyeler'],
+  FINANCE: ['Dashboard', 'Finans'],
+  AUDIT_VIEWER: ['Audit Log'],
+  DEALER_ADMIN: ['Dealer Portal'],
+  DEALER_USER: ['Dealer Portal'],
+  CONSUMER: ['Consumer Portal'],
 };
 
 const ROLE_LABELS = {
-  SUPER_ADMIN: "SUPER_ADMIN (super_admin)",
-  ADMIN: "ADMIN (country_admin)",
-  MODERATOR: "MODERATOR (moderator)",
-  SUPPORT: "SUPPORT (support)",
-  FINANCE: "FINANCE (legacy: finance)",
-  AUDIT_VIEWER: "AUDIT_VIEWER (legacy: ROLE_AUDIT_VIEWER/audit_viewer)",
-  DEALER_ADMIN: "DEALER_ADMIN (dealer)",
-  DEALER_USER: "DEALER_USER (dealer)",
-  CONSUMER: "CONSUMER (individual)",
+  SUPER_ADMIN: 'SUPER_ADMIN (super_admin)',
+  ADMIN: 'ADMIN (country_admin)',
+  MODERATOR: 'MODERATOR (moderator)',
+  SUPPORT: 'SUPPORT (support)',
+  FINANCE: 'FINANCE (legacy: finance)',
+  AUDIT_VIEWER: 'AUDIT_VIEWER (legacy: ROLE_AUDIT_VIEWER/audit_viewer)',
+  DEALER_ADMIN: 'DEALER_ADMIN (dealer)',
+  DEALER_USER: 'DEALER_USER (dealer)',
+  CONSUMER: 'CONSUMER (individual)',
 };
 
+const API = process.env.REACT_APP_BACKEND_URL;
+
 export default function RBACMatrix() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [snapshotCount, setSnapshotCount] = useState(0);
+
+  const authHeader = useMemo(
+    () => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` }),
+    [],
+  );
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const response = await axios.get(`${API}/api/admin/permissions/snapshot`, { headers: authHeader });
+        if (!mounted) return;
+        setSnapshotCount(Number(response.data?.count || 0));
+      } catch (err) {
+        if (!mounted) return;
+        const status = err?.response?.status;
+        if (status === 403) {
+          setError('Bu ekran yalnızca super_admin rolüne açıktır.');
+        } else {
+          setError('Permission snapshot verisi alınamadı.');
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [authHeader]);
+
   return (
     <div className="space-y-6" data-testid="rbac-matrix-page">
       <div
@@ -64,6 +106,25 @@ export default function RBACMatrix() {
       >
         Read-only v1: RBAC matrisi değiştirilemez. Değişiklik talepleri audit workflow ile ilerler.
       </div>
+
+      <div className="rounded-lg border bg-white p-4" data-testid="rbac-matrix-snapshot-card">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="text-sm font-semibold" data-testid="rbac-matrix-snapshot-title">Permission Snapshot</div>
+          <AdminStatusBadge
+            label={`Satır: ${snapshotCount}`}
+            variant="info"
+            testId="rbac-matrix-snapshot-count-badge"
+          />
+        </div>
+        <div className="mt-2" data-testid="rbac-matrix-snapshot-state">
+          {loading ? <AdminLoadingState message="Permission snapshot yükleniyor..." testId="rbac-matrix-loading" /> : null}
+          {!loading && error ? <AdminErrorState message={error} testId="rbac-matrix-error" /> : null}
+          {!loading && !error && snapshotCount === 0 ? (
+            <AdminEmptyState message="Snapshot satırı bulunamadı." testId="rbac-matrix-empty" />
+          ) : null}
+        </div>
+      </div>
+
       <div className="rounded-lg border bg-white shadow-sm">
         <div className="border-b px-6 py-4">
           <h1 className="text-xl font-semibold text-gray-900" data-testid="rbac-matrix-title">
@@ -90,10 +151,10 @@ export default function RBACMatrix() {
                   {PERMISSIONS.map((perm) => (
                     <td key={perm} className="px-4 py-4 text-center">
                       <span
-                        className={ROLE_MATRIX[roleKey].includes(perm) ? "text-emerald-600" : "text-gray-300"}
+                        className={ROLE_MATRIX[roleKey].includes(perm) ? 'text-emerald-600' : 'text-gray-300'}
                         data-testid={`rbac-cell-${roleKey.toLowerCase()}-${perm.replace(/\s+/g, '-').toLowerCase()}`}
                       >
-                        {ROLE_MATRIX[roleKey].includes(perm) ? "✓" : "—"}
+                        {ROLE_MATRIX[roleKey].includes(perm) ? '✓' : '—'}
                       </span>
                     </td>
                   ))}

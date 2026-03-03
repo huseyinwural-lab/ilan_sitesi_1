@@ -1,0 +1,54 @@
+{
+  "task": "P1-Next-02 Admin UI Standardizasyonu Smoke",
+  "base_url": "https://monolith-modular-5.preview.emergentagent.com",
+  "backend_enforcement": [
+    {
+      "name": "super_admin_permissions_snapshot",
+      "path": "/api/admin/permissions/snapshot",
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true
+    },
+    {
+      "name": "user_permissions_snapshot_forbidden",
+      "path": "/api/admin/permissions/snapshot",
+      "status": 403,
+      "expected": [
+        403
+      ],
+      "ok": true
+    },
+    {
+      "name": "dealer_permissions_snapshot_forbidden",
+      "path": "/api/admin/permissions/snapshot",
+      "status": 403,
+      "expected": [
+        403
+      ],
+      "ok": true
+    },
+    {
+      "name": "super_admin_audit_stats",
+      "path": "/api/admin/audit/dashboard/stats",
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true
+    },
+    {
+      "name": "user_audit_stats_forbidden",
+      "path": "/api/admin/audit/dashboard/stats",
+      "status": 403,
+      "expected": [
+        403
+      ],
+      "ok": true
+    }
+  ],
+  "all_backend_checks_pass": true,
+  "frontend_smoke": {},
+  "overall_pass": false
+}

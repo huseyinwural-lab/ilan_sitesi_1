@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { AdminEmptyState, AdminErrorState, AdminLoadingState } from '@/components/admin/standard/AdminStateBlocks';
+import { AdminStatusBadge } from '@/components/admin/standard/AdminStatusBadge';
+import { AdminMoneyText } from '@/components/admin/standard/AdminMoneyText';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -67,6 +70,16 @@ export default function AdminAuditDashboard() {
 
   const stats24h = stats?.windows?.['24h'] || {};
   const stats7d = stats?.windows?.['7d'] || {};
+  const risk24hMinor = Number(stats24h.financial_risk_minor ?? (stats24h.denied_403_events || 0) * 100);
+  const risk7dMinor = Number(stats7d.financial_risk_minor ?? (stats7d.denied_403_events || 0) * 100);
+
+  const resolveSeverityVariant = (value) => {
+    const key = String(value || '').toLowerCase();
+    if (['critical', 'high', 'danger'].includes(key)) return 'danger';
+    if (['warning', 'warn', 'medium'].includes(key)) return 'warning';
+    if (['info', 'low'].includes(key)) return 'info';
+    return 'neutral';
+  };
 
   return (
     <div className="space-y-6" data-testid="admin-audit-dashboard-page">
@@ -105,6 +118,9 @@ export default function AdminAuditDashboard() {
             <div data-testid="admin-audit-stats-24h-403">403: {stats24h.denied_403_events || 0}</div>
             <div data-testid="admin-audit-stats-24h-publish-fail">Publish fail: {stats24h.publish_failure_events || 0}</div>
             <div data-testid="admin-audit-stats-24h-export">Export attempt: {stats24h.export_attempt_events || 0}</div>
+            <div className="col-span-2" data-testid="admin-audit-stats-24h-risk">
+              Tahmini risk: <AdminMoneyText amountMinor={risk24hMinor} testId="admin-audit-stats-24h-risk-money" />
+            </div>
           </div>
         </div>
 
@@ -116,6 +132,9 @@ export default function AdminAuditDashboard() {
             <div data-testid="admin-audit-stats-7d-403">403: {stats7d.denied_403_events || 0}</div>
             <div data-testid="admin-audit-stats-7d-publish-fail">Publish fail: {stats7d.publish_failure_events || 0}</div>
             <div data-testid="admin-audit-stats-7d-export">Export attempt: {stats7d.export_attempt_events || 0}</div>
+            <div className="col-span-2" data-testid="admin-audit-stats-7d-risk">
+              Tahmini risk: <AdminMoneyText amountMinor={risk7dMinor} testId="admin-audit-stats-7d-risk-money" />
+            </div>
           </div>
         </div>
       </div>
@@ -123,12 +142,21 @@ export default function AdminAuditDashboard() {
       <div className="rounded-md border p-4" data-testid="admin-audit-anomalies-card">
         <div className="text-sm font-semibold" data-testid="admin-audit-anomalies-title">Anomalies</div>
         {anomalies.length === 0 ? (
-          <div className="mt-2 text-sm text-muted-foreground" data-testid="admin-audit-anomalies-empty">Anomali yok.</div>
+          <div className="mt-2" data-testid="admin-audit-anomalies-empty-wrap">
+            <AdminEmptyState message="Anomali yok." testId="admin-audit-anomalies-empty" />
+          </div>
         ) : (
           <div className="mt-3 space-y-2" data-testid="admin-audit-anomalies-list">
             {anomalies.map((item) => (
               <div key={item.type} className="rounded-md border p-3 text-sm" data-testid={`admin-audit-anomaly-${item.type}`}>
-                <div className="font-medium">{item.type}</div>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="font-medium" data-testid={`admin-audit-anomaly-title-${item.type}`}>{item.type}</div>
+                  <AdminStatusBadge
+                    label={String(item.severity || 'info')}
+                    variant={resolveSeverityVariant(item.severity)}
+                    testId={`admin-audit-anomaly-severity-${item.type}`}
+                  />
+                </div>
                 <div className="text-muted-foreground">{item.description}</div>
                 <div className="text-xs text-muted-foreground">count: {item.count} / threshold: {item.threshold}</div>
               </div>
@@ -167,12 +195,12 @@ export default function AdminAuditDashboard() {
           </div>
         </div>
 
-        {loading ? <div className="text-sm text-muted-foreground" data-testid="admin-audit-events-loading">Yükleniyor...</div> : null}
-        {error ? <div className="text-sm text-rose-600" data-testid="admin-audit-events-error">{error}</div> : null}
+        {loading ? <AdminLoadingState message="Audit kayıtları yükleniyor..." testId="admin-audit-events-loading" /> : null}
+        {error ? <AdminErrorState message={error} testId="admin-audit-events-error" /> : null}
 
         {!loading && !error ? (
           events.length === 0 ? (
-            <div className="text-sm text-muted-foreground" data-testid="admin-audit-events-empty">Kayıt yok.</div>
+            <AdminEmptyState message="Kayıt yok." testId="admin-audit-events-empty" />
           ) : (
             <div className="overflow-auto" data-testid="admin-audit-events-table-wrap">
               <table className="w-full text-sm" data-testid="admin-audit-events-table">
@@ -192,7 +220,13 @@ export default function AdminAuditDashboard() {
                       <td className="py-2 pr-2" data-testid={`admin-audit-event-action-${evt.id}`}>{evt.action}</td>
                       <td className="py-2 pr-2" data-testid={`admin-audit-event-resource-${evt.id}`}>{evt.resource_type}</td>
                       <td className="py-2 pr-2" data-testid={`admin-audit-event-actor-${evt.id}`}>{evt.actor_email_masked || '-'}</td>
-                      <td className="py-2 pr-2" data-testid={`admin-audit-event-severity-${evt.id}`}>{evt.severity}</td>
+                      <td className="py-2 pr-2" data-testid={`admin-audit-event-severity-${evt.id}`}>
+                        <AdminStatusBadge
+                          label={String(evt.severity || 'info')}
+                          variant={resolveSeverityVariant(evt.severity)}
+                          testId={`admin-audit-event-severity-badge-${evt.id}`}
+                        />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
