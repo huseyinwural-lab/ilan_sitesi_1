@@ -388,7 +388,14 @@
       }
     ]
   },
-  "ui_validation": {},
+  "ui_validation": {
+    "user_flows_pass": true,
+    "dealer_flows_pass": true,
+    "negative_rbac_pass": true,
+    "console_error_count": 0,
+    "console_warning_count": 4,
+    "notes": "auto_frontend_testing_agent doğrulaması: user/dealer akışları ve admin bloklama PASS."
+  },
   "auth": {
     "admin": 200,
     "user": 200,

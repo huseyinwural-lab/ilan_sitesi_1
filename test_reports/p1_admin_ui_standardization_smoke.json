@@ -49,6 +49,13 @@
     }
   ],
   "all_backend_checks_pass": true,
-  "frontend_smoke": {},
-  "overall_pass": false
+  "frontend_smoke": {
+    "super_admin_audit_access": true,
+    "super_admin_permissions_access": true,
+    "non_super_admin_blocking": true,
+    "console_error_count": 0,
+    "console_warning_count": 7,
+    "notes": "auto_frontend_testing_agent doğruladı: user->/account, dealer->/dealer/overview redirect; audit + rbac-matrix super_admin için erişilebilir."
+  },
+  "overall_pass": true
 }
