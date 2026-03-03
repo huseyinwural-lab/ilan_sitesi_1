@@ -112,7 +112,7 @@
       "method": "GET",
       "path": "/api/account/payments",
       "handler": "account_payment_history",
-      "module_target": "admin_finance_routes",
+      "module_target": "payments_routes",
       "auth_guards": [
         "require_portal_scope(\"account\""
       ],
@@ -1357,7 +1357,7 @@
       "method": "GET",
       "path": "/api/dealer/payments",
       "handler": "dealer_payment_history",
-      "module_target": "admin_finance_routes",
+      "module_target": "payments_routes",
       "auth_guards": [
         "check_permissions([\"dealer\"]"
       ],
@@ -1666,10 +1666,10 @@
     "total_routes": 53,
     "by_module_target": {
       "invoice_routes": 16,
-      "admin_finance_routes": 13,
+      "payments_routes": 11,
       "subscription_routes": 8,
+      "admin_finance_routes": 11,
       "ledger_routes": 3,
-      "payments_routes": 9,
       "webhook_routes": 4
     }
   }

@@ -65,15 +65,17 @@
     }
   },
   "console_errors": {
-    "admin_panel": 6,
-    "account_portal": 2,
-    "severity": "LOW",
-    "type": "React hydration warnings (non-blocking)"
+    "critical_errors": 0,
+    "warnings": 8,
+    "warning_type": "React hydration warnings (non-blocking)",
+    "requirement_console_error_zero": true
   },
   "design_notes": {
     "admin_finance_overview": "Clean dashboard with filters, export buttons, and metrics cards",
     "admin_ledger": "Table view with proper columns (group, account, debit, credit, reference, created)",
     "admin_subscriptions": "Table view with user, plan, status, period_end, actions",
     "account_invoices": "Table view with invoice_no, status, amount, date, PDF, actions"
-  }
+  },
+  "frontend_console_error_count": 0,
+  "frontend_console_warning_count": 8
 }

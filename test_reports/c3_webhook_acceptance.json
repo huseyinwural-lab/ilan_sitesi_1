@@ -50,5 +50,26 @@
     "invoice.payment_failed"
   ],
   "idempotency_behavior": "ProcessedWebhookEvent table tracks event_id for replay prevention",
-  "signature_validation": "Stripe signature header validated when STRIPE_WEBHOOK_SECRET is configured"
+  "signature_validation": "Stripe signature header validated when STRIPE_WEBHOOK_SECRET is configured",
+  "acceptance_gate": {
+    "checkout_session_completed_to_payment_invoice_update": "PASS",
+    "payment_intent_succeeded": "PASS",
+    "replay_idempotency": "PASS",
+    "invalid_signature_controlled_fail": "PASS",
+    "timeout_retry_scenario": "PASS",
+    "valid_signature_status_200": "PASS"
+  },
+  "source_iteration": " /app/test_reports/iteration_96.json",
+  "verification_summary": {
+    "status": "PASS",
+    "tests_passed": 6,
+    "webhook_endpoints_verified": [
+      "/api/webhook/stripe",
+      "/api/payments/webhook",
+      "/api/payments/stripe/webhook"
+    ],
+    "signature_validation": "working",
+    "idempotency": "duplicate events handled gracefully",
+    "replay_endpoint": "accessible at /api/admin/webhooks/events/{event_id}/replay"
+  }
 }

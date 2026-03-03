@@ -711,3 +711,33 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Sonraki Öncelik (P1)
 - C-3: Finance route modüler taşıma (yüksek risk) + ödeme uçtan uca regresyonu.
 - Permission-flag değişikliklerinden sonra User/Dealer akış doğrulaması.
+## 2026-03-03 (C-3 — Finance Route Modüler Taşıma)
+- Kapsam kilidi uygulandı: yalnızca finance domain route delegasyonu yapıldı, iş mantığı/kontrat değişmedi (behavioral change yok).
+- Yeni paket eklendi: `backend/app/routers/finance/`
+  - `payments_routes.py`
+  - `webhook_routes.py`
+  - `invoice_routes.py`
+  - `subscription_routes.py`
+  - `ledger_routes.py`
+  - `admin_finance_routes.py`
+  - `common.py`
+- `server.py` C-3 delegasyon adımı aktif:
+  - `finance_webhook_routes.delegate_routes(api_router)`
+  - `finance_payments_routes.delegate_routes(api_router)`
+  - `finance_invoice_routes.delegate_routes(api_router)`
+  - `finance_subscription_routes.delegate_routes(api_router)`
+  - `finance_ledger_routes.delegate_routes(api_router)`
+  - `admin_finance_routes.delegate_routes(api_router)`
+- App state kanıtı: `app.state.c3_router_migration` set edildi; startup duplicate kontrolü eklendi (`app.state.c3_finance_route_duplicates`).
+
+### C-3 Kapanış Kanıtları
+- C3-01 Envanter: `/app/test_reports/c3_finance_route_inventory.json`
+- C3-03 Route diff: `/app/test_reports/c3_route_diff.json` (before=53, after=53, duplicate=0)
+- C3-04 Webhook acceptance: `/app/test_reports/c3_webhook_acceptance.json`
+- C3-05 Backend regression: `/app/test_reports/c3_backend_regression.json`
+- C3-06 Admin+Account smoke: `/app/test_reports/c3_finance_smoke.json`
+- Testing Agent: `/app/test_reports/iteration_96.json` (PASS)
+
+### Sonraki Öncelik (P1)
+- Permission-flag değişikliklerinden sonra User/Dealer akış validasyonu.
+- Admin panel UI standardizasyonu (Audit/Permissions).
