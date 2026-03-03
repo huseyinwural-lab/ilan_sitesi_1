@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePermissionFlags } from '../../hooks/usePermissionFlags';
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -71,7 +72,12 @@ export default function AdminPlans() {
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
-  const canEditFinance = ['super_admin', 'finance'].includes(user?.role);
+  const { can: canPermission } = usePermissionFlags(urlCountry || user?.country_code || '');
+  const canEditFinance = canPermission(
+    'finance',
+    'edit',
+    ['super_admin', 'finance'].includes(user?.role),
+  );
 
   const authHeader = useMemo(() => {
     const token = localStorage.getItem('access_token');

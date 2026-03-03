@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import { FinanceStatusBadge } from '../../components/finance/FinanceStatusBadge';
 import { formatMoneyMinor, resolveLocaleByCountry } from '../../utils/financeFormat';
+import { usePermissionFlags } from '../../hooks/usePermissionFlags';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -125,8 +126,17 @@ export default function AdminInvoicesPage() {
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
   }), []);
   const locale = resolveLocaleByCountry(urlCountry || user?.country_code || 'TR');
-  const canExportFinance = ['super_admin', 'country_admin'].includes(user?.role);
-  const canEditFinance = ['super_admin', 'finance'].includes(user?.role);
+  const { can: canPermission } = usePermissionFlags(urlCountry || user?.country_code || '');
+  const canExportFinance = canPermission(
+    'finance',
+    'export',
+    ['super_admin', 'country_admin'].includes(user?.role),
+  );
+  const canEditFinance = canPermission(
+    'finance',
+    'edit',
+    ['super_admin', 'finance'].includes(user?.role),
+  );
 
   const toTestId = (value) => String(value || 'all')
     .toLowerCase()

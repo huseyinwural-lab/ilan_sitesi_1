@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-03T08:04:30.529108+00:00",
+  "generated_at": "2026-03-03T09:20:21.553848+00:00",
   "rbac_allowlist": {
     "GET /api/admin/ui/permissions": [
       "super_admin",
@@ -114,30 +114,30 @@
     "GET /api/admin/system/health-summary": [
       "moderator",
       "masterdata_manager",
-      "super_admin",
-      "campaigns_admin",
       "ads_manager",
-      "pricing_manager",
-      "country_admin",
-      "ROLE_AUDIT_VIEWER",
       "support",
-      "campaigns_supervisor",
+      "campaigns_admin",
+      "pricing_manager",
       "admin",
-      "finance"
+      "ROLE_AUDIT_VIEWER",
+      "super_admin",
+      "finance",
+      "country_admin",
+      "campaigns_supervisor"
     ],
     "GET /api/admin/system/health-detail": [
       "moderator",
       "masterdata_manager",
-      "super_admin",
-      "campaigns_admin",
       "ads_manager",
-      "pricing_manager",
-      "country_admin",
-      "ROLE_AUDIT_VIEWER",
       "support",
-      "campaigns_supervisor",
+      "campaigns_admin",
+      "pricing_manager",
       "admin",
-      "finance"
+      "ROLE_AUDIT_VIEWER",
+      "super_admin",
+      "finance",
+      "country_admin",
+      "campaigns_supervisor"
     ],
     "GET /api/admin/users": [
       "super_admin"
@@ -289,6 +289,30 @@
       "country_admin",
       "moderator"
     ],
+    "GET /api/admin/audit/dashboard/schema": [
+      "super_admin"
+    ],
+    "GET /api/admin/audit/dashboard/events": [
+      "super_admin"
+    ],
+    "GET /api/admin/audit/dashboard/stats": [
+      "super_admin"
+    ],
+    "GET /api/admin/audit/dashboard/anomalies": [
+      "super_admin"
+    ],
+    "GET /api/admin/permissions/me": [
+      "super_admin",
+      "country_admin",
+      "admin",
+      "finance"
+    ],
+    "GET /api/admin/permissions/snapshot": [
+      "super_admin"
+    ],
+    "POST /api/admin/permissions/migrate-from-roles": [
+      "super_admin"
+    ],
     "GET /api/admin/audit-logs": [
       "super_admin",
       "finance",
@@ -321,44 +345,44 @@
       "audit_viewer"
     ],
     "GET /api/admin/moderation/queue": [
-      "moderator",
       "country_admin",
-      "super_admin"
+      "super_admin",
+      "moderator"
     ],
     "GET /api/admin/moderation/queue/count": [
-      "moderator",
       "country_admin",
-      "super_admin"
+      "super_admin",
+      "moderator"
     ],
     "GET /api/admin/moderation/listings/{listing_id}": [
-      "moderator",
       "country_admin",
-      "super_admin"
+      "super_admin",
+      "moderator"
     ],
     "POST /api/admin/listings/{listing_id}/approve": [
-      "moderator",
       "country_admin",
-      "super_admin"
+      "super_admin",
+      "moderator"
     ],
     "POST /api/admin/listings/{listing_id}/reject": [
-      "moderator",
       "country_admin",
-      "super_admin"
+      "super_admin",
+      "moderator"
     ],
     "POST /api/admin/listings/{listing_id}/needs_revision": [
-      "moderator",
       "country_admin",
-      "super_admin"
+      "super_admin",
+      "moderator"
     ],
     "POST /api/admin/moderation/bulk-approve": [
-      "moderator",
       "country_admin",
-      "super_admin"
+      "super_admin",
+      "moderator"
     ],
     "POST /api/admin/moderation/bulk-reject": [
-      "moderator",
       "country_admin",
-      "super_admin"
+      "super_admin",
+      "moderator"
     ],
     "GET /api/admin/listings": [
       "super_admin",
@@ -486,16 +510,16 @@
     "GET /api/admin/payments/runtime-health": [
       "moderator",
       "masterdata_manager",
-      "super_admin",
-      "campaigns_admin",
       "ads_manager",
-      "pricing_manager",
-      "country_admin",
-      "ROLE_AUDIT_VIEWER",
       "support",
-      "campaigns_supervisor",
+      "campaigns_admin",
+      "pricing_manager",
       "admin",
-      "finance"
+      "ROLE_AUDIT_VIEWER",
+      "super_admin",
+      "finance",
+      "country_admin",
+      "campaigns_supervisor"
     ],
     "POST /api/admin/webhooks/events/{event_id}/replay": [
       "super_admin",
@@ -990,16 +1014,16 @@
     "GET /api/admin/session/health": [
       "moderator",
       "masterdata_manager",
-      "super_admin",
-      "campaigns_admin",
       "ads_manager",
-      "pricing_manager",
-      "country_admin",
-      "ROLE_AUDIT_VIEWER",
       "support",
-      "campaigns_supervisor",
+      "campaigns_admin",
+      "pricing_manager",
       "admin",
-      "finance"
+      "ROLE_AUDIT_VIEWER",
+      "super_admin",
+      "finance",
+      "country_admin",
+      "campaigns_supervisor"
     ],
     "POST /api/admin/vehicle-master-import/jobs/api": [
       "super_admin",
@@ -1268,9 +1292,7 @@
       "public"
     ]
   },
-  "rbac_missing_policies": [
-    "/api/demo/synthetic-unprotected-route"
-  ],
+  "rbac_missing_policies": [],
   "route_inventory": [
     {
       "path": "/api/account/invoices",
@@ -1484,6 +1506,30 @@
     },
     {
       "path": "/api/admin/audit-logs/{log_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/audit/dashboard/anomalies",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/audit/dashboard/events",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/audit/dashboard/schema",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/audit/dashboard/stats",
       "methods": [
         "GET"
       ]
@@ -2276,6 +2322,24 @@
     },
     {
       "path": "/api/admin/payments/runtime-health",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/permissions/me",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/permissions/migrate-from-roles",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/permissions/snapshot",
       "methods": [
         "GET"
       ]
@@ -4103,5 +4167,5 @@
       "methods": []
     }
   ],
-  "demo_mode": true
+  "demo_mode": false
 }

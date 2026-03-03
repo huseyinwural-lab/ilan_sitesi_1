@@ -1,0 +1,24 @@
+{
+  "generated_at": "2026-03-03T09:19:55.585453+00:00",
+  "permission_flags_enabled": false,
+  "migrated_rows_processed": 40,
+  "before_count": 40,
+  "after_count": 40,
+  "roles_in_scope": [
+    "super_admin",
+    "country_admin",
+    "admin",
+    "finance"
+  ],
+  "domains": [
+    "finance",
+    "content"
+  ],
+  "actions": [
+    "view",
+    "edit",
+    "publish",
+    "export",
+    "delete"
+  ]
+}

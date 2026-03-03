@@ -58,6 +58,7 @@ from app.models.advertisement import Advertisement
 from app.models.doping_request import DopingRequest
 from app.models.footer_layout import FooterLayout
 from app.models.info_page import InfoPage
+from app.models.user_permission import UserPermission
 from app.models.pricing_campaign import PricingCampaign
 from app.models.pricing_campaign_item import PricingCampaignItem
 from app.models.pricing_tier_rule import PricingTierRule

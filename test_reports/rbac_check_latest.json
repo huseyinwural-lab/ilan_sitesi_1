@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-03T08:01:41.249697+00:00",
+  "generated_at": "2026-03-03T09:20:21.556810+00:00",
   "mode": "check",
   "status": "PASS",
   "alarm_triggered": false,
@@ -8,7 +8,7 @@
   "pytest": {
     "passed": true,
     "returncode": 0,
-    "command": "/root/.venv/bin/python -m pytest /app/backend/tests/test_p1_01_rbac_matrix.py -q --maxfail=1 --junitxml=/app/test_reports/pytest/rbac_suite_results.xml",
+    "command": "/root/.venv/bin/python -m pytest /app/backend/tests/test_p1_01_rbac_matrix.py /app/backend/tests/test_p1_1_permission_flags.py -q --maxfail=1 --junitxml=/app/test_reports/pytest/rbac_suite_results.xml",
     "junit_xml": "/app/test_reports/pytest/rbac_suite_results.xml"
   },
   "artifacts": {
@@ -17,7 +17,7 @@
     "nightly_report": "/app/test_reports/rbac_check_latest.json"
   },
   "rbac_summary": {
-    "allowlist_route_count": 283,
+    "allowlist_route_count": 290,
     "missing_policy_route_count": 0,
     "added_missing_routes": []
   },

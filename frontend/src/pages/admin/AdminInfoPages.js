@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
+import { usePermissionFlags } from '../../hooks/usePermissionFlags';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -16,6 +18,7 @@ const emptyForm = {
 };
 
 export default function AdminInfoPages() {
+  const { user } = useAuth();
   const [pages, setPages] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
@@ -24,6 +27,17 @@ export default function AdminInfoPages() {
   const [error, setError] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewPage, setPreviewPage] = useState(null);
+  const { can: canPermission } = usePermissionFlags(user?.country_code || '');
+  const canEditContent = canPermission(
+    'content',
+    'edit',
+    ['super_admin', 'country_admin'].includes(user?.role),
+  );
+  const canPublishContent = canPermission(
+    'content',
+    'publish',
+    ['super_admin', 'country_admin'].includes(user?.role),
+  );
 
   const authHeader = { Authorization: `Bearer ${localStorage.getItem('access_token')}` };
 
@@ -37,6 +51,7 @@ export default function AdminInfoPages() {
   }, []);
 
   const openCreate = () => {
+    if (!canEditContent) return;
     setForm(emptyForm);
     setEditingId(null);
     setStatus('');
@@ -45,6 +60,7 @@ export default function AdminInfoPages() {
   };
 
   const openEdit = async (id) => {
+    if (!canEditContent) return;
     try {
       const res = await axios.get(`${API}/admin/info-pages/${id}`, { headers: authHeader });
       setForm({
@@ -67,6 +83,14 @@ export default function AdminInfoPages() {
   };
 
   const handleSave = async () => {
+    if (!canEditContent) {
+      setError('Bu işlem için edit yetkiniz yok.');
+      return;
+    }
+    if (form.is_published && !canPublishContent) {
+      setError('Bu işlem için publish yetkiniz yok.');
+      return;
+    }
     setStatus('');
     setError('');
     try {
@@ -102,14 +126,16 @@ export default function AdminInfoPages() {
             Bilgi sayfalarını oluşturun, taslakta tutun veya yayınlayın.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm"
-          data-testid="admin-info-pages-create"
-        >
-          Yeni Sayfa
-        </button>
+        {canEditContent ? (
+          <button
+            type="button"
+            onClick={openCreate}
+            className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm"
+            data-testid="admin-info-pages-create"
+          >
+            Yeni Sayfa
+          </button>
+        ) : null}
       </div>
 
       {error && (
@@ -148,14 +174,16 @@ export default function AdminInfoPages() {
                   </td>
                   <td className="py-3 pr-3" data-testid={`admin-info-pages-updated-${page.id}`}>{page.updated_at || '-'}</td>
                   <td className="py-3 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      className="text-xs underline"
-                      onClick={() => openEdit(page.id)}
-                      data-testid={`admin-info-pages-edit-${page.id}`}
-                    >
-                      Düzenle
-                    </button>
+                    {canEditContent ? (
+                      <button
+                        type="button"
+                        className="text-xs underline"
+                        onClick={() => openEdit(page.id)}
+                        data-testid={`admin-info-pages-edit-${page.id}`}
+                      >
+                        Düzenle
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="text-xs underline"
@@ -290,14 +318,16 @@ export default function AdminInfoPages() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={handleSave}
-                className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm"
-                data-testid="admin-info-pages-save"
-              >
-                Kaydet
-              </button>
+              {canEditContent ? (
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm"
+                  data-testid="admin-info-pages-save"
+                >
+                  Kaydet
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={() => setShowModal(false)}

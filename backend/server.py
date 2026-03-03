@@ -144,6 +144,7 @@ from app.models.site_theme_config import SiteThemeConfig
 from app.models.site_showcase_layout import SiteShowcaseLayout
 from app.models.listing_design_config import ListingDesignConfig
 from app.models.info_page import InfoPage
+from app.models.user_permission import UserPermission
 from app.models.pricing_campaign import PricingCampaign
 from app.models.pricing_campaign_item import PricingCampaignItem
 from app.models.pricing_tier_rule import PricingTierRule
@@ -2592,6 +2593,99 @@ async def _ensure_invoices_db_ready(session: AsyncSession) -> None:
         raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Invoices database not reachable"))
 
 
+async def _ensure_permissions_db_ready(session: AsyncSession) -> None:
+    if not RAW_DATABASE_URL:
+        raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Permissions database not ready"))
+    try:
+        await session.execute(select(1))
+    except Exception:
+        raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Permissions database not reachable"))
+
+
+def _fallback_permission_allowed(role: Optional[str], domain: str, action: str) -> bool:
+    role_value = (role or "").strip()
+    if role_value == "super_admin":
+        return True
+    domain_rules = PERMISSION_FALLBACK_MATRIX.get(domain, {})
+    return role_value in domain_rules.get(action, [])
+
+
+def _normalize_country_scope_codes(scope: Any) -> List[str]:
+    if scope is None:
+        return []
+    if isinstance(scope, str):
+        return [scope.strip().upper()] if scope.strip() else []
+    if isinstance(scope, (list, tuple, set)):
+        normalized = []
+        for item in scope:
+            value = str(item).strip().upper()
+            if value:
+                normalized.append(value)
+        return normalized
+    return []
+
+
+async def _permission_allowed(
+    *,
+    session: AsyncSession,
+    current_user: Dict[str, Any],
+    domain: str,
+    action: str,
+    country_code: Optional[str] = None,
+) -> bool:
+    role = current_user.get("role")
+    if role == "super_admin":
+        return True
+
+    if not PERMISSION_FLAGS_ENABLED:
+        return _fallback_permission_allowed(role, domain, action)
+
+    user_id = current_user.get("id")
+    if not user_id:
+        return _fallback_permission_allowed(role, domain, action)
+
+    permission_row = (
+        await session.execute(
+            select(UserPermission).where(
+                UserPermission.user_id == user_id,
+                UserPermission.domain == domain,
+                UserPermission.action == action,
+                UserPermission.allowed.is_(True),
+            )
+        )
+    ).scalar_one_or_none()
+
+    if permission_row:
+        scope_codes = _normalize_country_scope_codes(permission_row.country_scope)
+        if not scope_codes or "*" in scope_codes:
+            return True
+        if country_code and country_code.upper() in scope_codes:
+            return True
+        return False
+
+    return _fallback_permission_allowed(role, domain, action)
+
+
+async def _enforce_permission(
+    *,
+    session: AsyncSession,
+    current_user: Dict[str, Any],
+    domain: str,
+    action: str,
+    country_code: Optional[str] = None,
+) -> None:
+    allowed = await _permission_allowed(
+        session=session,
+        current_user=current_user,
+        domain=domain,
+        action=action,
+        country_code=country_code,
+    )
+    if allowed:
+        return
+    raise HTTPException(status_code=403, detail="Forbidden")
+
+
 async def _get_db_status(session: AsyncSession) -> tuple[bool, str, str]:
     if not RAW_DATABASE_URL:
         return False, "db_config_missing", "config_missing"
@@ -3950,6 +4044,29 @@ VEHICLE_TYPE_SET = {"car", "suv", "offroad", "pickup", "truck", "bus"}
 APP_ENV = (os.environ.get("APP_ENV") or "dev").lower()
 AUTH_PROVIDER = "sql"
 APPLICATIONS_PROVIDER = "sql"
+PERMISSION_FLAGS_ENABLED = (os.environ.get("PERMISSION_FLAGS_ENABLED") or "false").lower() in {"1", "true", "yes"}
+
+PERMISSION_DOMAIN_ACTIONS: Dict[str, List[str]] = {
+    "finance": ["view", "edit", "publish", "export", "delete"],
+    "content": ["view", "edit", "publish", "export", "delete"],
+}
+
+PERMISSION_FALLBACK_MATRIX: Dict[str, Dict[str, List[str]]] = {
+    "finance": {
+        "view": ["super_admin", "country_admin", "admin", "finance"],
+        "edit": ["super_admin", "finance"],
+        "publish": ["super_admin"],
+        "export": ["super_admin", "country_admin"],
+        "delete": ["super_admin"],
+    },
+    "content": {
+        "view": ["super_admin", "country_admin"],
+        "edit": ["super_admin", "country_admin"],
+        "publish": ["super_admin", "country_admin"],
+        "export": ["super_admin", "country_admin"],
+        "delete": ["super_admin"],
+    },
+}
 
 RAW_DATABASE_URL = os.environ.get("DATABASE_URL")
 TOKEN_VERSION = os.environ.get("TOKEN_VERSION", "v2")
@@ -11948,6 +12065,184 @@ async def admin_audit_dashboard_anomalies(
     }
 
 
+def _permission_defaults_for_role(role: str) -> Dict[str, Dict[str, bool]]:
+    defaults = {
+        "finance": {"view": False, "edit": False, "publish": False, "export": False, "delete": False},
+        "content": {"view": False, "edit": False, "publish": False, "export": False, "delete": False},
+    }
+    role_value = (role or "").strip()
+
+    if role_value == "super_admin":
+        for domain in defaults:
+            for action in defaults[domain]:
+                defaults[domain][action] = True
+        return defaults
+
+    if role_value == "country_admin":
+        defaults["finance"]["view"] = True
+        defaults["finance"]["export"] = True
+        defaults["content"]["view"] = True
+        defaults["content"]["edit"] = True
+        defaults["content"]["publish"] = True
+        defaults["content"]["export"] = True
+        return defaults
+
+    if role_value in {"admin", "finance"}:
+        defaults["finance"]["view"] = True
+        if role_value == "finance":
+            defaults["finance"]["edit"] = True
+        return defaults
+
+    return defaults
+
+
+def _permission_scope_for_user(user: SqlUser) -> List[str]:
+    if user.role == "super_admin":
+        return ["*"]
+    if user.role == "country_admin":
+        scope = _normalize_country_scope_codes(user.country_scope)
+        if scope:
+            return scope
+        if user.country_code:
+            return [str(user.country_code).upper()]
+        return []
+    return ["*"]
+
+
+@api_router.get("/admin/permissions/me")
+async def admin_permissions_me(
+    country: Optional[str] = None,
+    session: AsyncSession = Depends(get_sql_session),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "admin", "finance"])),
+):
+    await _ensure_permissions_db_ready(session)
+    country_code = country.strip().upper() if country else None
+    domains_payload: Dict[str, Dict[str, bool]] = {}
+    for domain, actions in PERMISSION_DOMAIN_ACTIONS.items():
+        domains_payload[domain] = {}
+        for action in actions:
+            domains_payload[domain][action] = await _permission_allowed(
+                session=session,
+                current_user=current_user,
+                domain=domain,
+                action=action,
+                country_code=country_code,
+            )
+
+    return {
+        "permission_flags_enabled": PERMISSION_FLAGS_ENABLED,
+        "country": country_code,
+        "domains": domains_payload,
+    }
+
+
+@api_router.get("/admin/permissions/snapshot")
+async def admin_permissions_snapshot(
+    session: AsyncSession = Depends(get_sql_session),
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    await _ensure_permissions_db_ready(session)
+    rows = (await session.execute(select(UserPermission))).scalars().all()
+    payload = [
+        {
+            "user_id": str(row.user_id),
+            "domain": row.domain,
+            "action": row.action,
+            "country_scope": row.country_scope or [],
+            "allowed": bool(row.allowed),
+            "source_role": row.source_role,
+            "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+        }
+        for row in rows
+    ]
+    return {
+        "permission_flags_enabled": PERMISSION_FLAGS_ENABLED,
+        "count": len(payload),
+        "items": payload,
+    }
+
+
+@api_router.post("/admin/permissions/migrate-from-roles")
+async def admin_permissions_migrate_from_roles(
+    session: AsyncSession = Depends(get_sql_session),
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    await _ensure_permissions_db_ready(session)
+
+    before_count = (
+        await session.execute(select(func.count()).select_from(UserPermission))
+    ).scalar_one()
+
+    users = (
+        await session.execute(
+            select(SqlUser).where(SqlUser.role.in_(["super_admin", "country_admin", "admin", "finance"]))
+        )
+    ).scalars().all()
+
+    migrated_rows = 0
+    for user in users:
+        permission_defaults = _permission_defaults_for_role(user.role or "")
+        scope = _permission_scope_for_user(user)
+
+        for domain, action_map in permission_defaults.items():
+            for action, allowed in action_map.items():
+                existing = (
+                    await session.execute(
+                        select(UserPermission).where(
+                            UserPermission.user_id == user.id,
+                            UserPermission.domain == domain,
+                            UserPermission.action == action,
+                        )
+                    )
+                ).scalar_one_or_none()
+
+                if existing:
+                    existing.allowed = bool(allowed)
+                    existing.country_scope = scope
+                    existing.source_role = user.role
+                    existing.updated_at = datetime.now(timezone.utc)
+                else:
+                    session.add(
+                        UserPermission(
+                            user_id=user.id,
+                            domain=domain,
+                            action=action,
+                            allowed=bool(allowed),
+                            country_scope=scope,
+                            source_role=user.role,
+                            created_by=current_user.get("email"),
+                        )
+                    )
+                migrated_rows += 1
+
+    await session.commit()
+
+    after_count = (
+        await session.execute(select(func.count()).select_from(UserPermission))
+    ).scalar_one()
+
+    report = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "permission_flags_enabled": PERMISSION_FLAGS_ENABLED,
+        "migrated_rows_processed": migrated_rows,
+        "before_count": int(before_count or 0),
+        "after_count": int(after_count or 0),
+        "roles_in_scope": ["super_admin", "country_admin", "admin", "finance"],
+        "domains": ["finance", "content"],
+        "actions": ["view", "edit", "publish", "export", "delete"],
+    }
+
+    report_path = Path("/app/test_reports/permission_flag_diff.json")
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    return {
+        "status": "ok",
+        "report_path": str(report_path),
+        "report": report,
+    }
+
+
 @api_router.get("/admin/audit-logs")
 async def admin_list_audit_logs(
     request: Request,
@@ -16664,6 +16959,13 @@ async def admin_list_invoices(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_invoices_db_ready(session)
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="view",
+        country_code=country,
+    )
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
 
     conditions = []
@@ -16754,6 +17056,12 @@ async def admin_invoice_detail(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_invoices_db_ready(session)
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="view",
+    )
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
 
     try:
@@ -22276,6 +22584,12 @@ async def admin_list_payments(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_invoices_db_ready(session)
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="view",
+    )
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
 
     conditions = []
@@ -22382,6 +22696,12 @@ async def admin_export_payments_csv(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_invoices_db_ready(session)
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="export",
+    )
     _enforce_export_rate_limit(request, current_user.get("id"))
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
 
@@ -22484,6 +22804,12 @@ async def admin_export_invoices_csv(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="export",
+    )
     _enforce_export_rate_limit(request, current_user.get("id"))
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     conditions: List[Any] = []
@@ -22561,6 +22887,12 @@ async def admin_export_ledger_csv(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="export",
+    )
     _enforce_export_rate_limit(request, current_user.get("id"))
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     query = select(LedgerEntry)
@@ -22627,6 +22959,13 @@ async def admin_finance_export(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="export",
+        country_code=country,
+    )
     _enforce_export_rate_limit(request, current_user.get("id"))
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     export_type = (type or "").strip().lower()
@@ -22768,6 +23107,13 @@ async def admin_finance_overview(
     current_user=Depends(check_permissions(["super_admin", "finance", "country_admin", "admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="view",
+        country_code=country,
+    )
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     start_dt = _parse_iso_datetime(start_date, "start_date") if start_date else datetime.now(timezone.utc) - timedelta(days=30)
     end_dt = _parse_iso_datetime(end_date, "end_date") if end_date else datetime.now(timezone.utc)
@@ -22859,6 +23205,12 @@ async def admin_finance_subscriptions(
     current_user=Depends(check_permissions(["super_admin", "finance", "country_admin", "admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="view",
+    )
     await resolve_admin_country_context(request, current_user=current_user, session=session)
     limit = min(100, max(1, int(limit)))
     skip = max(0, int(skip))
@@ -22911,6 +23263,12 @@ async def admin_finance_subscription_detail(
     current_user=Depends(check_permissions(["super_admin", "finance", "country_admin", "admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="view",
+    )
     await resolve_admin_country_context(request, current_user=current_user, session=session)
     try:
         subscription_uuid = uuid.UUID(subscription_id)
@@ -23000,6 +23358,12 @@ async def admin_finance_ledger_list(
     current_user=Depends(check_permissions(["super_admin", "finance", "country_admin", "admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="view",
+    )
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     query = select(LedgerEntry)
     if reference_type:
@@ -23385,6 +23749,13 @@ async def admin_list_tax_rates(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="view",
+        country_code=country,
+    )
 
     query = select(VatRate)
     if country:
@@ -23419,6 +23790,13 @@ async def admin_create_tax_rate(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="edit",
+        country_code=payload.country_code,
+    )
 
     country_code = payload.country_code.upper()
     _assert_country_scope(country_code, current_user)
@@ -23470,6 +23848,12 @@ async def admin_update_tax_rate(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="edit",
+    )
 
     try:
         tax_uuid = uuid.UUID(tax_id)
@@ -23522,6 +23906,12 @@ async def admin_delete_tax_rate(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="delete",
+    )
 
     try:
         tax_uuid = uuid.UUID(tax_id)
@@ -23561,6 +23951,13 @@ async def admin_list_plans(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_plans_db_ready(session)
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="view",
+        country_code=country_code,
+    )
 
     query = select(Plan)
 
@@ -23619,6 +24016,12 @@ async def admin_get_plan(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_plans_db_ready(session)
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="view",
+    )
     plan = await session.get(Plan, plan_id)
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
@@ -23635,6 +24038,13 @@ async def admin_create_plan(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_plans_db_ready(session)
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="edit",
+        country_code=payload.country_code,
+    )
 
     name = payload.name.strip()
     if not name:
@@ -23712,6 +24122,13 @@ async def admin_update_plan(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_plans_db_ready(session)
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="edit",
+        country_code=payload.country_code,
+    )
 
     plan = await session.get(Plan, plan_id)
     if not plan:
@@ -23818,6 +24235,12 @@ async def admin_toggle_plan_active(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_plans_db_ready(session)
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="edit",
+    )
 
     plan = await session.get(Plan, plan_id)
     if not plan:
@@ -23840,6 +24263,12 @@ async def admin_archive_plan(
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_plans_db_ready(session)
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="finance",
+        action="delete",
+    )
 
     plan = await session.get(Plan, plan_id)
     if not plan:
@@ -38908,6 +39337,12 @@ async def list_info_pages(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="content",
+        action="view",
+    )
     result = await session.execute(select(InfoPage).order_by(desc(InfoPage.updated_at)))
     items = []
     for page in result.scalars().all():
@@ -38931,6 +39366,12 @@ async def get_info_page_admin(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="content",
+        action="view",
+    )
     try:
         page_uuid = uuid.UUID(page_id)
     except ValueError as exc:
@@ -38960,6 +39401,19 @@ async def create_info_page(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="content",
+        action="edit",
+    )
+    if payload.is_published:
+        await _enforce_permission(
+            session=session,
+            current_user=current_user,
+            domain="content",
+            action="publish",
+        )
     slug_value = payload.slug.strip().lower()
     if not slug_value:
         raise HTTPException(status_code=400, detail="Slug is required")
@@ -38990,6 +39444,19 @@ async def update_info_page(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    await _enforce_permission(
+        session=session,
+        current_user=current_user,
+        domain="content",
+        action="edit",
+    )
+    if payload.is_published is True:
+        await _enforce_permission(
+            session=session,
+            current_user=current_user,
+            domain="content",
+            action="publish",
+        )
     try:
         page_uuid = uuid.UUID(page_id)
     except ValueError as exc:

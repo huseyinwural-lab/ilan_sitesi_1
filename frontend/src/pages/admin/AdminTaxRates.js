@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
+import { usePermissionFlags } from '../../hooks/usePermissionFlags';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -22,7 +23,12 @@ export default function AdminTaxRatesPage() {
     active_flag: true,
   });
   const [error, setError] = useState(null);
-  const canEditFinance = ['super_admin', 'finance'].includes(user?.role);
+  const { can: canPermission } = usePermissionFlags(urlCountry || user?.country_code || '');
+  const canEditFinance = canPermission(
+    'finance',
+    'edit',
+    ['super_admin', 'finance'].includes(user?.role),
+  );
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,

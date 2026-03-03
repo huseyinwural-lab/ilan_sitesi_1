@@ -12,7 +12,10 @@ ROOT = Path(__file__).resolve().parents[1]
 BACKEND_DIR = ROOT / "backend"
 REPORTS_DIR = ROOT / "test_reports"
 PYTEST_DIR = REPORTS_DIR / "pytest"
-RBAC_TEST_FILE = BACKEND_DIR / "tests" / "test_p1_01_rbac_matrix.py"
+RBAC_TEST_FILES = [
+    BACKEND_DIR / "tests" / "test_p1_01_rbac_matrix.py",
+    BACKEND_DIR / "tests" / "test_p1_1_permission_flags.py",
+]
 POLICY_DIFF_FILE = REPORTS_DIR / "rbac_policy_diff.json"
 
 
@@ -31,7 +34,7 @@ def run_pytest() -> dict[str, Any]:
         sys.executable,
         "-m",
         "pytest",
-        str(RBAC_TEST_FILE),
+        *[str(path) for path in RBAC_TEST_FILES],
         "-q",
         "--maxfail=1",
         f"--junitxml={junit_file}",

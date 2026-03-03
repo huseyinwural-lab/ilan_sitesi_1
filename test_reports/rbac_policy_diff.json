@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-03T08:04:30.531829+00:00",
+  "generated_at": "2026-03-03T09:20:21.556589+00:00",
   "baseline_created": true,
   "added_allowlist_routes": [
     "DELETE /api/admin/ads/campaigns/{campaign_id}/ads/{ad_id}",
@@ -29,6 +29,10 @@
     "GET /api/admin/audit-logs/export",
     "GET /api/admin/audit-logs/resources",
     "GET /api/admin/audit-logs/{log_id}",
+    "GET /api/admin/audit/dashboard/anomalies",
+    "GET /api/admin/audit/dashboard/events",
+    "GET /api/admin/audit/dashboard/schema",
+    "GET /api/admin/audit/dashboard/stats",
     "GET /api/admin/campaigns",
     "GET /api/admin/campaigns/{campaign_id}",
     "GET /api/admin/categories",
@@ -95,6 +99,8 @@
     "GET /api/admin/payments",
     "GET /api/admin/payments/export/csv",
     "GET /api/admin/payments/runtime-health",
+    "GET /api/admin/permissions/me",
+    "GET /api/admin/permissions/snapshot",
     "GET /api/admin/plans",
     "GET /api/admin/plans/{plan_id}",
     "GET /api/admin/pricing/campaign",
@@ -225,6 +231,7 @@
     "POST /api/admin/moderation/bulk-approve",
     "POST /api/admin/moderation/bulk-reject",
     "POST /api/admin/ops/alert-delivery/rerun-simulation",
+    "POST /api/admin/permissions/migrate-from-roles",
     "POST /api/admin/plans",
     "POST /api/admin/plans/{plan_id}/archive",
     "POST /api/admin/plans/{plan_id}/toggle-active",
@@ -288,8 +295,6 @@
   ],
   "removed_allowlist_routes": [],
   "changed_roles": [],
-  "added_missing_routes": [
-    "/api/demo/synthetic-unprotected-route"
-  ],
+  "added_missing_routes": [],
   "removed_missing_routes": []
 }
