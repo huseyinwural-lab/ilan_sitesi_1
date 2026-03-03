@@ -837,3 +837,8 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Sonraki Önerilen Adımlar
 - Nightly raporlarını dashboardlaştırmak (trend/p95/gate history) ve fail reason clustering.
 - Dealer listing state-machine için submit->moderation->publish adımlarını tek akış olarak ayrı smoke setine almak.
+
+## 2026-03-03 (UI İyileştirme — Kurumsal Portal Header Hizalama)
+- Kurumsal portal header, bireysel header ile aynı admin tasarım kaynağından beslenecek şekilde güncellendi (`useUIHeaderConfig segment='individual'`).
+- Dealer header row1 sağ aksiyonlarında hizalama iyileştirildi: sağ blok `justify-end + nowrap + overflow-x-auto` ile alta düşme sorunu giderildi.
+- Smoke + frontend test doğrulaması PASS (dealer overview/listings/settings sayfalarında tutarlı görünüm, console error=0).
