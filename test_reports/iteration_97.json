@@ -1,0 +1,92 @@
+{
+  "summary": "P1-Next-01 Permission-Flag sonrası User/Dealer akış validasyonu complete. All 23 backend tests passed (100%). Frontend UI tests verify user/dealer portal access and negative authorization (admin pages blocked). Console errors: 4 React hydration warnings (non-blocking).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Various pages",
+        "issues": ["4 React hydration warnings - non-blocking cosmetic issues with tr/span/option/select elements"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p1_next_01_user_dealer_permission.py",
+    "/app/test_reports/pytest/p1_next_01_results.xml",
+    "/app/test_reports/p1_user_dealer_permission_validation.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_p1_next_01_user_dealer_permission.py"
+  ],
+  "success_rate": {
+    "backend": "100% (23/23 tests passed)",
+    "frontend": "100% (All user/dealer/admin portal access tests passed)"
+  },
+  "test_credentials": {
+    "super_admin": "admin@platform.com / Admin123!",
+    "user": "user@platform.com / User123!",
+    "dealer": "dealer@platform.com / Dealer123!"
+  },
+  "seed_data_creation": "Used existing seed data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P1-Next-01 complete. User positive flows (account invoices, payments, subscription cancel/reactivate) all pass. Dealer positive flows (profile access, store invoices, listing create/preview/submit/publish) all pass. Negative authorization tests (user->admin 403, dealer->admin 403) all pass. Permission flag shadow diff shows diff_count=0 (no divergence between flag ON and role-fallback). Console errors are React hydration warnings only (non-blocking).",
+  "p1_next_01_validation": {
+    "user_positive_flows": {
+      "account_invoices_list": "PASS (200)",
+      "account_invoice_pdf_download": "PASS (200/404 expected)",
+      "account_payments_list": "PASS (200)",
+      "account_subscription_get": "PASS (200)",
+      "account_subscription_cancel": "PASS (200/400 expected)",
+      "account_subscription_reactivate": "PASS (200/400 expected)"
+    },
+    "dealer_positive_flows": {
+      "dealer_profile_access": "PASS (200, role=dealer, portal_scope=dealer)",
+      "dealer_store_invoices": "PASS (200)",
+      "dealer_listing_create": "PASS (200/201)",
+      "dealer_listing_flow": "PASS (create->patch->preview->submit->request_publish)"
+    },
+    "negative_authorization": {
+      "user_to_admin_finance_overview": "PASS (403)",
+      "user_to_admin_finance_export": "PASS (403)",
+      "user_to_admin_payments": "PASS (403)",
+      "dealer_to_admin_finance_export": "PASS (403)",
+      "dealer_to_admin_publish": "PASS (403/404)",
+      "dealer_to_admin_subscriptions": "PASS (403)"
+    },
+    "permission_flag_shadow_diff": {
+      "diff_count": 0,
+      "status": "PASS - no divergence between flag ON and role-fallback"
+    },
+    "admin_positive_flows": {
+      "admin_finance_overview": "PASS (200)",
+      "admin_invoices_list": "PASS (200)",
+      "admin_payments_list": "PASS (200)",
+      "admin_subscriptions_list": "PASS (200)",
+      "admin_ledger": "PASS (200)"
+    }
+  },
+  "frontend_ui_tests": {
+    "homepage_load": "PASS",
+    "user_login_redirect": "PASS - redirected to account area",
+    "user_invoices_page": "PASS",
+    "user_subscription_page": "PASS",
+    "user_blocked_from_admin": "PASS - redirected away from /admin/finance-overview",
+    "dealer_portal_access": "PASS",
+    "dealer_blocked_from_admin": "PASS - redirected away from /admin/finance-overview",
+    "admin_login_works": "PASS"
+  },
+  "console_errors": {
+    "count": 4,
+    "type": "React hydration warnings",
+    "severity": "Non-blocking, cosmetic",
+    "target_zero": true,
+    "notes": "Hydration warnings for tr/span/tbody/option/select elements"
+  }
+}
