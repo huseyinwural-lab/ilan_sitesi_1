@@ -1022,3 +1022,43 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - Testing agent PASS: `/app/test_reports/iteration_105.json` (backend/frontend 100%).
 - `auto_frontend_testing_agent` PASS (regresyon temiz).
 - `deep_testing_backend_v2` PASS (FAZ 2 backend regresyon temiz).
+
+## 2026-03-03 (Fork Güncellemesi — FAZ 3 + Dinamik Header + i18n)
+
+### Tamamlananlar
+- **P0 Dinamik Header Yönetimi**
+  - Admin > Site Design > Header ekranı, **Guest/Auth/Corporate** sekmeleriyle güncellendi.
+  - Her mod için logo yükleme + link ekle/sil/sırala + stil (`text|solid`) + `open_in_new_tab` desteği eklendi.
+  - Yetki kararı uygulandı: **yalnızca `super_admin`**.
+  - API’ler:
+    - `GET /api/admin/site/header`
+    - `PUT /api/admin/site/header`
+    - `POST /api/admin/site/header/logo?mode=guest|auth|corporate`
+    - `GET /api/site/header?mode=guest|auth|corporate`
+
+- **P0 Header render entegrasyonu**
+  - Public `SiteHeader` artık mode bazlı (`guest/auth`) backend config’ini render ediyor.
+  - `DealerLayoutV2` corporate mode’dan gelen dinamik linkleri satır-1’de gösteriyor.
+
+- **P0 FAZ 3: academy mock kaldırma**
+  - `GET /api/dealer/dashboard/navigation-summary` içinde `academy.modules` artık `[]`.
+  - `academy.data_source` artık `feature_flag_disabled|feature_flag_enabled`.
+  - Seed’e `academy.enabled=false` eklendi.
+
+- **P0 i18n (TR/DE/FR, react-i18next)**
+  - `react-i18next` + `i18next` kuruldu.
+  - `LanguageContext` react-i18next ile initialize edilecek şekilde güncellendi.
+  - Header ve admin header yönetimi metinleri çeviri key’lerine bağlandı.
+
+### Test & Doğrulama
+- Smoke UI: `https://header-config-1.preview.emergentagent.com` yükleniyor.
+- Self-test (curl): header yönetim endpointleri + mode endpointleri + FAZ3 academy response doğrulandı.
+- **Testing agent PASS:** `/app/test_reports/iteration_106.json`
+  - Backend 14/14 PASS
+  - Frontend PASS
+  - Açık issue: yok
+
+### Backlog / Sonraki Adımlar
+- **P1:** Kurumsal dashboard’daki kullanıcı işaretli gereksiz menü kolonu için son sadeleştirme turu (hedef ekran teyidi ile).
+- **P1:** Uygulama genelindeki kalan hardcoded metinlerin kademeli olarak i18n key’lerine taşınması.
+- **P2:** Hızlı menü ayarlarını localStorage’dan kullanıcı-bazlı sunucu senkronuna taşıma.
