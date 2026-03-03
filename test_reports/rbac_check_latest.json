@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-03-03T08:01:41.249697+00:00",
+  "mode": "check",
+  "status": "PASS",
+  "alarm_triggered": false,
+  "demo_mode": false,
+  "fail_reasons": [],
+  "pytest": {
+    "passed": true,
+    "returncode": 0,
+    "command": "/root/.venv/bin/python -m pytest /app/backend/tests/test_p1_01_rbac_matrix.py -q --maxfail=1 --junitxml=/app/test_reports/pytest/rbac_suite_results.xml",
+    "junit_xml": "/app/test_reports/pytest/rbac_suite_results.xml"
+  },
+  "artifacts": {
+    "policy_snapshot": "/app/test_reports/rbac_policy_snapshot_20260303.json",
+    "policy_diff": "/app/test_reports/rbac_policy_diff.json",
+    "nightly_report": "/app/test_reports/rbac_check_latest.json"
+  },
+  "rbac_summary": {
+    "allowlist_route_count": 283,
+    "missing_policy_route_count": 0,
+    "added_missing_routes": []
+  },
+  "ci_gate": {
+    "merge_blocked": false,
+    "policy_diff_gate_active": true,
+    "nightly_gate_active": false
+  }
+}

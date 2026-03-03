@@ -1,0 +1,4107 @@
+{
+  "generated_at": "2026-03-03T08:04:30.529108+00:00",
+  "rbac_allowlist": {
+    "GET /api/admin/ui/permissions": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/ui/configs/{config_type}": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/ui/configs/{config_type}": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/ui/configs/{config_type}/diff": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/ui/configs/{config_type}/conflict-sync": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/ui/configs/{config_type}/publish-audits": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/ui/configs/{config_type}/ops-thresholds": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/ui/configs/{config_type}/ops-alerts/secret-presence": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/ui/configs/{config_type}/ops-alerts/secret-checklist": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/ui/configs/{config_type}/ops-alerts/html-report": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/ops/alert-delivery-metrics": [
+      "super_admin",
+      "country_admin",
+      "ops"
+    ],
+    "POST /api/admin/ops/alert-delivery/rerun-simulation": [
+      "super_admin",
+      "country_admin",
+      "ops"
+    ],
+    "POST /api/admin/ui/configs/{config_type}/ops-alerts/simulate": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/ui/configs/{config_type}/ops-alerts/delivery-audit": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/ui/configs/{config_type}/publish": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/ui/configs/{config_type}/rollback": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/ui/configs/header/logo": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/ui/logo-assets/cleanup": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/ui/logo-assets/health": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/ui/themes": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/ui/themes": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/ui/themes/{theme_id}": [
+      "super_admin",
+      "country_admin"
+    ],
+    "PATCH /api/admin/ui/themes/{theme_id}": [
+      "super_admin",
+      "country_admin"
+    ],
+    "DELETE /api/admin/ui/themes/{theme_id}": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/ui/theme-assignments": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/ui/theme-assignments": [
+      "super_admin",
+      "country_admin"
+    ],
+    "DELETE /api/admin/ui/theme-assignments/{assignment_id}": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/system/health-summary": [
+      "moderator",
+      "masterdata_manager",
+      "super_admin",
+      "campaigns_admin",
+      "ads_manager",
+      "pricing_manager",
+      "country_admin",
+      "ROLE_AUDIT_VIEWER",
+      "support",
+      "campaigns_supervisor",
+      "admin",
+      "finance"
+    ],
+    "GET /api/admin/system/health-detail": [
+      "moderator",
+      "masterdata_manager",
+      "super_admin",
+      "campaigns_admin",
+      "ads_manager",
+      "pricing_manager",
+      "country_admin",
+      "ROLE_AUDIT_VIEWER",
+      "support",
+      "campaigns_supervisor",
+      "admin",
+      "finance"
+    ],
+    "GET /api/admin/users": [
+      "super_admin"
+    ],
+    "POST /api/admin/users": [
+      "super_admin"
+    ],
+    "PATCH /api/admin/users/{user_id}": [
+      "super_admin"
+    ],
+    "POST /api/admin/users/bulk-deactivate": [
+      "super_admin"
+    ],
+    "POST /api/admin/users/{user_id}/suspend": [
+      "super_admin",
+      "moderator"
+    ],
+    "POST /api/admin/users/{user_id}/activate": [
+      "super_admin",
+      "moderator"
+    ],
+    "PATCH /api/admin/users/{user_id}/risk-level": [
+      "super_admin",
+      "moderator"
+    ],
+    "DELETE /api/admin/users/{user_id}": [
+      "super_admin"
+    ],
+    "GET /api/admin/users/{user_id}/detail": [
+      "super_admin",
+      "country_admin",
+      "support"
+    ],
+    "GET /api/admin/applications/assignees": [
+      "super_admin",
+      "country_admin",
+      "support",
+      "moderator"
+    ],
+    "PATCH /api/admin/applications/{application_id}/status": [
+      "super_admin",
+      "country_admin",
+      "support",
+      "moderator"
+    ],
+    "POST /api/admin/campaigns": [
+      "super_admin",
+      "country_admin",
+      "campaigns_admin"
+    ],
+    "GET /api/admin/campaigns": [
+      "super_admin",
+      "country_admin",
+      "campaigns_admin",
+      "campaigns_supervisor"
+    ],
+    "GET /api/admin/campaigns/{campaign_id}": [
+      "super_admin",
+      "country_admin",
+      "campaigns_admin",
+      "campaigns_supervisor"
+    ],
+    "PUT /api/admin/campaigns/{campaign_id}": [
+      "super_admin",
+      "country_admin",
+      "campaigns_admin"
+    ],
+    "DELETE /api/admin/campaigns/{campaign_id}": [
+      "super_admin",
+      "country_admin",
+      "campaigns_supervisor"
+    ],
+    "POST /api/admin/campaigns/{campaign_id}/activate": [
+      "super_admin",
+      "country_admin",
+      "campaigns_supervisor"
+    ],
+    "POST /api/admin/campaigns/{campaign_id}/pause": [
+      "super_admin",
+      "country_admin",
+      "campaigns_supervisor"
+    ],
+    "POST /api/admin/campaigns/{campaign_id}/archive": [
+      "super_admin",
+      "country_admin",
+      "campaigns_supervisor"
+    ],
+    "GET /api/admin/individual-users": [
+      "super_admin",
+      "country_admin",
+      "support",
+      "moderator"
+    ],
+    "GET /api/admin/individual-users/export/csv": [
+      "super_admin",
+      "marketing"
+    ],
+    "POST /api/admin/analytics/events": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/dealers": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/dealers/{dealer_id}": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/dealers/{dealer_id}/audit-logs": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/dealers/{dealer_id}/status": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/dealer-applications": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/individual-applications": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/dealer-applications/{app_id}/reject": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/dealer-applications/{app_id}/approve": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/individual-applications/{app_id}/approve": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/individual-applications/{app_id}/reject": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/audit-logs": [
+      "super_admin",
+      "finance",
+      "ROLE_AUDIT_VIEWER",
+      "audit_viewer"
+    ],
+    "GET /api/admin/audit-logs/event-types": [
+      "super_admin",
+      "ROLE_AUDIT_VIEWER",
+      "audit_viewer"
+    ],
+    "GET /api/admin/audit-logs/actions": [
+      "super_admin",
+      "ROLE_AUDIT_VIEWER",
+      "audit_viewer"
+    ],
+    "GET /api/admin/audit-logs/resources": [
+      "super_admin",
+      "ROLE_AUDIT_VIEWER",
+      "audit_viewer"
+    ],
+    "GET /api/admin/audit-logs/{log_id}": [
+      "super_admin",
+      "ROLE_AUDIT_VIEWER",
+      "audit_viewer"
+    ],
+    "GET /api/admin/audit-logs/export": [
+      "super_admin",
+      "ROLE_AUDIT_VIEWER",
+      "audit_viewer"
+    ],
+    "GET /api/admin/moderation/queue": [
+      "moderator",
+      "country_admin",
+      "super_admin"
+    ],
+    "GET /api/admin/moderation/queue/count": [
+      "moderator",
+      "country_admin",
+      "super_admin"
+    ],
+    "GET /api/admin/moderation/listings/{listing_id}": [
+      "moderator",
+      "country_admin",
+      "super_admin"
+    ],
+    "POST /api/admin/listings/{listing_id}/approve": [
+      "moderator",
+      "country_admin",
+      "super_admin"
+    ],
+    "POST /api/admin/listings/{listing_id}/reject": [
+      "moderator",
+      "country_admin",
+      "super_admin"
+    ],
+    "POST /api/admin/listings/{listing_id}/needs_revision": [
+      "moderator",
+      "country_admin",
+      "super_admin"
+    ],
+    "POST /api/admin/moderation/bulk-approve": [
+      "moderator",
+      "country_admin",
+      "super_admin"
+    ],
+    "POST /api/admin/moderation/bulk-reject": [
+      "moderator",
+      "country_admin",
+      "super_admin"
+    ],
+    "GET /api/admin/listings": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/listings/{listing_id}/soft-delete": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/listings/{listing_id}/force-unpublish": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/listings/{listing_id}/doping": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/reports": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/reports/messages": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/reports/messages/{report_id}/status": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/reports/{report_id}": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/reports/{report_id}/status": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/invoices": [
+      "super_admin",
+      "finance"
+    ],
+    "GET /api/admin/invoices": [
+      "super_admin",
+      "finance",
+      "country_admin",
+      "admin"
+    ],
+    "GET /api/admin/invoices/{invoice_id}": [
+      "super_admin",
+      "finance",
+      "country_admin",
+      "admin"
+    ],
+    "POST /api/admin/invoices/{invoice_id}/generate-pdf": [
+      "super_admin"
+    ],
+    "POST /api/admin/invoices/{invoice_id}/regenerate-pdf": [
+      "super_admin"
+    ],
+    "GET /api/admin/invoices/{invoice_id}/download-pdf": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/invoices/{invoice_id}/mark-paid": [
+      "super_admin",
+      "finance"
+    ],
+    "POST /api/admin/invoices/{invoice_id}/cancel": [
+      "super_admin",
+      "finance"
+    ],
+    "POST /api/admin/invoices/{invoice_id}/refund": [
+      "super_admin",
+      "finance"
+    ],
+    "GET /api/admin/dealer-portal/config": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/dealer-portal/config/preview": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/dealer-portal/config/draft/save": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/dealer-portal/config/draft/publish": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/dealer-portal/config/revisions": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/dealer-portal/config/rollback": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/dealer-portal/nav/reorder": [
+      "super_admin",
+      "country_admin"
+    ],
+    "PATCH /api/admin/dealer-portal/nav/{item_id}": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/dealer-portal/modules/reorder": [
+      "super_admin",
+      "country_admin"
+    ],
+    "PATCH /api/admin/dealer-portal/modules/{module_id}": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/payments/runtime-health": [
+      "moderator",
+      "masterdata_manager",
+      "super_admin",
+      "campaigns_admin",
+      "ads_manager",
+      "pricing_manager",
+      "country_admin",
+      "ROLE_AUDIT_VIEWER",
+      "support",
+      "campaigns_supervisor",
+      "admin",
+      "finance"
+    ],
+    "POST /api/admin/webhooks/events/{event_id}/replay": [
+      "super_admin",
+      "finance"
+    ],
+    "GET /api/admin/payments": [
+      "super_admin",
+      "finance",
+      "country_admin",
+      "admin"
+    ],
+    "GET /api/admin/payments/export/csv": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/invoices/export/csv": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/ledger/export/csv": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/finance/export": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/finance/overview": [
+      "super_admin",
+      "finance",
+      "country_admin",
+      "admin"
+    ],
+    "GET /api/admin/finance/subscriptions": [
+      "super_admin",
+      "finance",
+      "country_admin",
+      "admin"
+    ],
+    "GET /api/admin/finance/subscriptions/{subscription_id}": [
+      "super_admin",
+      "finance",
+      "country_admin",
+      "admin"
+    ],
+    "PATCH /api/admin/finance/subscriptions/{subscription_id}/status": [
+      "super_admin",
+      "finance"
+    ],
+    "GET /api/admin/finance/ledger": [
+      "super_admin",
+      "finance",
+      "country_admin",
+      "admin"
+    ],
+    "POST /api/admin/finance/ledger/{entry_id}/reverse": [
+      "super_admin"
+    ],
+    "GET /api/admin/finance/tax-profiles": [
+      "super_admin",
+      "finance"
+    ],
+    "POST /api/admin/finance/tax-profiles": [
+      "super_admin",
+      "finance"
+    ],
+    "PATCH /api/admin/finance/tax-profiles/{profile_id}": [
+      "super_admin",
+      "finance"
+    ],
+    "GET /api/admin/finance/products": [
+      "super_admin",
+      "finance"
+    ],
+    "POST /api/admin/finance/products": [
+      "super_admin",
+      "finance"
+    ],
+    "GET /api/admin/finance/product-prices": [
+      "super_admin",
+      "finance"
+    ],
+    "POST /api/admin/finance/products/{product_id}/prices": [
+      "super_admin",
+      "finance"
+    ],
+    "GET /api/admin/finance/trace/{invoice_id}": [
+      "super_admin",
+      "finance",
+      "country_admin",
+      "admin"
+    ],
+    "GET /api/admin/finance/revenue": [
+      "super_admin",
+      "finance"
+    ],
+    "GET /api/admin/tax-rates": [
+      "super_admin",
+      "finance",
+      "country_admin",
+      "admin"
+    ],
+    "POST /api/admin/tax-rates": [
+      "super_admin",
+      "finance"
+    ],
+    "PATCH /api/admin/tax-rates/{tax_id}": [
+      "super_admin",
+      "finance"
+    ],
+    "DELETE /api/admin/tax-rates/{tax_id}": [
+      "super_admin",
+      "finance"
+    ],
+    "GET /api/admin/plans": [
+      "super_admin",
+      "finance",
+      "country_admin",
+      "admin"
+    ],
+    "GET /api/admin/plans/{plan_id}": [
+      "super_admin",
+      "finance",
+      "country_admin",
+      "admin"
+    ],
+    "POST /api/admin/plans": [
+      "super_admin",
+      "finance"
+    ],
+    "PUT /api/admin/plans/{plan_id}": [
+      "super_admin",
+      "finance"
+    ],
+    "POST /api/admin/plans/{plan_id}/toggle-active": [
+      "super_admin",
+      "finance"
+    ],
+    "POST /api/admin/plans/{plan_id}/archive": [
+      "super_admin",
+      "finance"
+    ],
+    "POST /api/admin/dealers/{dealer_id}/plan": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/countries": [
+      "super_admin",
+      "country_admin",
+      "support"
+    ],
+    "GET /api/admin/countries/{code}": [
+      "super_admin",
+      "country_admin",
+      "support"
+    ],
+    "POST /api/admin/countries": [
+      "super_admin"
+    ],
+    "PATCH /api/admin/countries/{code}": [
+      "super_admin"
+    ],
+    "DELETE /api/admin/countries/{code}": [
+      "super_admin"
+    ],
+    "GET /api/admin/system-settings/meilisearch": [
+      "super_admin"
+    ],
+    "GET /api/admin/system-settings/meilisearch/history": [
+      "super_admin"
+    ],
+    "POST /api/admin/system-settings/meilisearch": [
+      "super_admin"
+    ],
+    "POST /api/admin/system-settings/meilisearch/{config_id}/test": [
+      "super_admin"
+    ],
+    "POST /api/admin/system-settings/meilisearch/{config_id}/activate": [
+      "super_admin"
+    ],
+    "POST /api/admin/system-settings/meilisearch/{config_id}/revoke": [
+      "super_admin"
+    ],
+    "GET /api/admin/search/meili/health": [
+      "super_admin"
+    ],
+    "GET /api/admin/search/meili/contract": [
+      "super_admin"
+    ],
+    "GET /api/admin/search/meili/stage-smoke": [
+      "super_admin"
+    ],
+    "GET /api/admin/search/meili/sync-jobs": [
+      "super_admin"
+    ],
+    "POST /api/admin/search/meili/sync-jobs/process": [
+      "super_admin"
+    ],
+    "POST /api/admin/search/meili/sync-jobs/retry-dead-letter": [
+      "super_admin"
+    ],
+    "POST /api/admin/search/meili/reindex": [
+      "super_admin"
+    ],
+    "GET /api/admin/system-settings": [
+      "super_admin",
+      "country_admin",
+      "support"
+    ],
+    "GET /api/admin/system-settings/cloudflare": [
+      "super_admin"
+    ],
+    "GET /api/admin/system-settings/google-maps": [
+      "super_admin"
+    ],
+    "POST /api/admin/system-settings/google-maps": [
+      "super_admin"
+    ],
+    "GET /api/admin/system-settings/listing-create": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/system-settings/listing-create": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/system-settings/cloudflare": [
+      "super_admin"
+    ],
+    "POST /api/admin/system-settings/cloudflare/canary": [
+      "super_admin"
+    ],
+    "POST /api/admin/system-settings": [
+      "super_admin"
+    ],
+    "PATCH /api/admin/system-settings/{setting_id}": [
+      "super_admin"
+    ],
+    "GET /api/admin/media/watermark/settings": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "PATCH /api/admin/media/watermark/settings": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/media/watermark/preview": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/media/pipeline/performance": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/categories": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/categories/seed/real-estate-standard": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/listings/batch-publish/run": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/listings/batch-publish/stats": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/categories/vehicle-segment/link-status": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/categories/order-index/preview": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/categories/bulk-actions": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/categories/bulk-actions/jobs/{job_id}": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/categories/import-export/export/json": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/categories/import-export/export/csv": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/categories/import-export/export/xlsx": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/categories/import-export/sample/csv": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/categories/import-export/sample/xlsx": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/categories/image-upload": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/categories": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "PATCH /api/admin/categories/{category_id}": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/categories/{category_id}/versions": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/categories/{category_id}/versions/{version_id}": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/categories/{category_id}/export/pdf": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/categories/{category_id}/export/csv": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "DELETE /api/admin/categories/{category_id}": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/categories/import-export/import/dry-run": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/categories/import-export/import/dry-run/pdf": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/categories/import-export/import/commit": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/menu-items": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/menu-items": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "PATCH /api/admin/menu-items/{menu_id}": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "DELETE /api/admin/menu-items/{menu_id}": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/attributes": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/attributes": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "PATCH /api/admin/attributes/{attribute_id}": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "DELETE /api/admin/attributes/{attribute_id}": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/vehicle-makes": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/vehicle-makes": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "PATCH /api/admin/vehicle-makes/{make_id}": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "DELETE /api/admin/vehicle-makes/{make_id}": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/vehicle-makes/bulk-delete": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/vehicle-models": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/vehicle-models": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "PATCH /api/admin/vehicle-models/{model_id}": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "DELETE /api/admin/vehicle-models/{model_id}": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/vehicle-models/bulk-delete": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/vehicle-import/dry-run": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/vehicle-import/apply": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/dashboard/summary": [
+      "super_admin",
+      "country_admin",
+      "support",
+      "finance"
+    ],
+    "GET /api/admin/dashboard/export/pdf": [
+      "super_admin"
+    ],
+    "GET /api/admin/dashboard/country-compare": [
+      "super_admin",
+      "country_admin",
+      "support",
+      "finance"
+    ],
+    "GET /api/admin/dashboard/country-compare/export/csv": [
+      "super_admin",
+      "country_admin",
+      "support",
+      "finance"
+    ],
+    "GET /api/admin/session/health": [
+      "moderator",
+      "masterdata_manager",
+      "super_admin",
+      "campaigns_admin",
+      "ads_manager",
+      "pricing_manager",
+      "country_admin",
+      "ROLE_AUDIT_VIEWER",
+      "support",
+      "campaigns_supervisor",
+      "admin",
+      "finance"
+    ],
+    "POST /api/admin/vehicle-master-import/jobs/api": [
+      "super_admin",
+      "masterdata_manager"
+    ],
+    "POST /api/admin/vehicle-master-import/jobs/upload": [
+      "super_admin",
+      "masterdata_manager"
+    ],
+    "GET /api/admin/vehicle-master-import/jobs": [
+      "super_admin",
+      "masterdata_manager"
+    ],
+    "GET /api/admin/vehicle-master-import/jobs/{job_id}": [
+      "super_admin",
+      "masterdata_manager"
+    ],
+    "GET /api/v1/admin/vehicle-master/status": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/v1/admin/vehicle-master/validate": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/v1/admin/vehicle-master/activate": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/v1/admin/vehicle-master/rollback": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/site/header": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/site/header/logo": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/ads": [
+      "super_admin",
+      "ads_manager"
+    ],
+    "POST /api/admin/ads": [
+      "super_admin",
+      "ads_manager"
+    ],
+    "PATCH /api/admin/ads/{ad_id}": [
+      "super_admin",
+      "ads_manager"
+    ],
+    "DELETE /api/admin/ads/{ad_id}": [
+      "super_admin",
+      "ads_manager"
+    ],
+    "POST /api/admin/ads/{ad_id}/upload": [
+      "super_admin",
+      "ads_manager"
+    ],
+    "GET /api/admin/ads/analytics": [
+      "super_admin",
+      "ads_manager"
+    ],
+    "GET /api/admin/ads/campaigns": [
+      "super_admin",
+      "ads_manager"
+    ],
+    "POST /api/admin/ads/campaigns": [
+      "super_admin",
+      "ads_manager"
+    ],
+    "GET /api/admin/ads/campaigns/{campaign_id}": [
+      "super_admin",
+      "ads_manager"
+    ],
+    "PATCH /api/admin/ads/campaigns/{campaign_id}": [
+      "super_admin",
+      "ads_manager"
+    ],
+    "POST /api/admin/ads/campaigns/{campaign_id}/ads/{ad_id}": [
+      "super_admin",
+      "ads_manager"
+    ],
+    "DELETE /api/admin/ads/campaigns/{campaign_id}/ads/{ad_id}": [
+      "super_admin",
+      "ads_manager"
+    ],
+    "GET /api/admin/pricing/campaign-items": [
+      "super_admin",
+      "pricing_manager"
+    ],
+    "POST /api/admin/pricing/campaign-items": [
+      "super_admin",
+      "pricing_manager"
+    ],
+    "PUT /api/admin/pricing/campaign-items/{item_id}": [
+      "super_admin",
+      "pricing_manager"
+    ],
+    "PATCH /api/admin/pricing/campaign-items/{item_id}/status": [
+      "super_admin",
+      "pricing_manager"
+    ],
+    "DELETE /api/admin/pricing/campaign-items/{item_id}": [
+      "super_admin",
+      "pricing_manager"
+    ],
+    "GET /api/admin/pricing/tiers": [
+      "super_admin",
+      "pricing_manager"
+    ],
+    "PUT /api/admin/pricing/tiers": [
+      "super_admin",
+      "pricing_manager"
+    ],
+    "GET /api/admin/pricing/packages": [
+      "super_admin",
+      "pricing_manager"
+    ],
+    "PUT /api/admin/pricing/packages": [
+      "super_admin",
+      "pricing_manager"
+    ],
+    "GET /api/admin/pricing/campaign": [
+      "super_admin",
+      "pricing_manager"
+    ],
+    "PUT /api/admin/pricing/campaign": [
+      "super_admin",
+      "pricing_manager"
+    ],
+    "GET /api/admin/doping/requests": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/doping/requests/{request_id}/approve": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/doping/requests/{request_id}/mark-paid": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "POST /api/admin/doping/requests/{request_id}/publish": [
+      "super_admin",
+      "country_admin",
+      "moderator"
+    ],
+    "GET /api/admin/site/theme": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/site/theme/configs": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/site/theme/config/{theme_id}": [
+      "super_admin",
+      "country_admin"
+    ],
+    "PUT /api/admin/site/theme/config": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/site/theme/config/{theme_id}/publish": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/site/home-category-layout": [
+      "super_admin",
+      "country_admin"
+    ],
+    "PUT /api/admin/site/home-category-layout": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/site/listing-design": [
+      "super_admin",
+      "country_admin"
+    ],
+    "PUT /api/admin/site/listing-design": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/site/listing-design/publish": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/site/listing-design/rollback": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/site/showcase-layout": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/site/showcase-layout/configs": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/site/showcase-layout/config/{layout_id}": [
+      "super_admin",
+      "country_admin"
+    ],
+    "PUT /api/admin/site/showcase-layout/config": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/site/showcase-layout/config/{layout_id}/publish": [
+      "super_admin",
+      "country_admin"
+    ],
+    "DELETE /api/admin/site/showcase-layout/config/{layout_id}": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/footer/layout": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/footer/layouts": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/footer/layout/{layout_id}": [
+      "super_admin",
+      "country_admin"
+    ],
+    "PUT /api/admin/footer/layout": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/footer/layout/publish": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/footer/layout/{layout_id}/publish": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/info-pages": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/info-pages/{page_id}": [
+      "super_admin",
+      "country_admin"
+    ],
+    "POST /api/admin/info-pages": [
+      "super_admin",
+      "country_admin"
+    ],
+    "PATCH /api/admin/info-pages/{page_id}": [
+      "super_admin",
+      "country_admin"
+    ],
+    "GET /api/admin/invite/preview": [
+      "public"
+    ],
+    "POST /api/admin/invite/accept": [
+      "public"
+    ]
+  },
+  "rbac_missing_policies": [
+    "/api/demo/synthetic-unprotected-route"
+  ],
+  "route_inventory": [
+    {
+      "path": "/api/account/invoices",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/account/invoices/{invoice_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/account/invoices/{invoice_id}/download-pdf",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/account/payments",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/account/recent-category",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/account/recent-category",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/account/subscription",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/account/subscription/cancel",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/account/subscription/plan-change-preview",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/account/subscription/plans",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/account/subscription/reactivate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/ads",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ads",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/ads/analytics",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ads/campaigns",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ads/campaigns",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/ads/campaigns/{campaign_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ads/campaigns/{campaign_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/ads/campaigns/{campaign_id}/ads/{ad_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/ads/campaigns/{campaign_id}/ads/{ad_id}",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/ads/{ad_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/ads/{ad_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/ads/{ad_id}/upload",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/analytics/events",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/applications/assignees",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/applications/{application_id}/status",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/attributes",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/attributes",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/attributes/{attribute_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/attributes/{attribute_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/audit-logs",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/audit-logs/actions",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/audit-logs/event-types",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/audit-logs/export",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/audit-logs/resources",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/audit-logs/{log_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/campaigns",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/campaigns",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/campaigns/{campaign_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/campaigns/{campaign_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/campaigns/{campaign_id}",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/admin/campaigns/{campaign_id}/activate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/campaigns/{campaign_id}/archive",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/campaigns/{campaign_id}/pause",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/categories",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/bulk-actions",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/bulk-actions/jobs/{job_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/image-upload",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/import-export/export/csv",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/import-export/export/json",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/import-export/export/xlsx",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/import-export/import/commit",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/import-export/import/dry-run",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/import-export/import/dry-run/pdf",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/import-export/sample/csv",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/import-export/sample/xlsx",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/order-index/preview",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/seed/real-estate-standard",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/vehicle-segment/link-status",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/{category_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/{category_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/{category_id}/export/csv",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/{category_id}/export/pdf",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/{category_id}/versions",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/{category_id}/versions/{version_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/countries",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/countries",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/countries/{code}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/countries/{code}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/countries/{code}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/dashboard/country-compare",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/dashboard/country-compare/export/csv",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/dashboard/export/pdf",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/dashboard/summary",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/dealer-applications",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/dealer-applications/{app_id}/approve",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/dealer-applications/{app_id}/reject",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/dealer-portal/config",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/dealer-portal/config/draft/publish",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/dealer-portal/config/draft/save",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/dealer-portal/config/preview",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/dealer-portal/config/revisions",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/dealer-portal/config/rollback",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/dealer-portal/modules/reorder",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/dealer-portal/modules/{module_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/dealer-portal/nav/reorder",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/dealer-portal/nav/{item_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/dealers",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/dealers/{dealer_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/dealers/{dealer_id}/audit-logs",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/dealers/{dealer_id}/plan",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/dealers/{dealer_id}/status",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/doping/requests",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/doping/requests/{request_id}/approve",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/doping/requests/{request_id}/mark-paid",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/doping/requests/{request_id}/publish",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/finance/export",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/finance/ledger",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/finance/ledger/{entry_id}/reverse",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/finance/overview",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/finance/product-prices",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/finance/products",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/finance/products",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/finance/products/{product_id}/prices",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/finance/revenue",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/finance/subscriptions",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/finance/subscriptions/{subscription_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/finance/subscriptions/{subscription_id}/status",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/finance/tax-profiles",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/finance/tax-profiles",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/finance/tax-profiles/{profile_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/finance/trace/{invoice_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/footer/layout",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/footer/layout",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/admin/footer/layout/publish",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/footer/layout/{layout_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/footer/layout/{layout_id}/publish",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/footer/layouts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/individual-applications",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/individual-applications/{app_id}/approve",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/individual-applications/{app_id}/reject",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/individual-users",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/individual-users/export/csv",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/info-pages",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/info-pages",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/info-pages/{page_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/info-pages/{page_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/invite/accept",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/invite/preview",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/invoices",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/invoices",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/invoices/export/csv",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/invoices/{invoice_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/invoices/{invoice_id}/cancel",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/invoices/{invoice_id}/download-pdf",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/invoices/{invoice_id}/generate-pdf",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/invoices/{invoice_id}/mark-paid",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/invoices/{invoice_id}/refund",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/invoices/{invoice_id}/regenerate-pdf",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/ledger/export/csv",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/listings",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/listings/batch-publish/run",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/listings/batch-publish/stats",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/listings/{listing_id}/approve",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/listings/{listing_id}/doping",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/listings/{listing_id}/force-unpublish",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/listings/{listing_id}/needs_revision",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/listings/{listing_id}/reject",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/listings/{listing_id}/soft-delete",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/media/pipeline/performance",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/media/watermark/preview",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/media/watermark/settings",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/media/watermark/settings",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/menu-items",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/menu-items",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/menu-items/{menu_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/menu-items/{menu_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/moderation/bulk-approve",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/moderation/bulk-reject",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/moderation/listings/{listing_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/moderation/queue",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/moderation/queue/count",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ops/alert-delivery-metrics",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ops/alert-delivery/rerun-simulation",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/payments",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/payments/export/csv",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/payments/runtime-health",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/plans",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/plans",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/plans/{plan_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/plans/{plan_id}",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/admin/plans/{plan_id}/archive",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/plans/{plan_id}/toggle-active",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/pricing/campaign",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/pricing/campaign",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/admin/pricing/campaign-items",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/pricing/campaign-items",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/pricing/campaign-items/{item_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/pricing/campaign-items/{item_id}",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/admin/pricing/campaign-items/{item_id}/status",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/pricing/packages",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/pricing/packages",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/admin/pricing/tiers",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/pricing/tiers",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/admin/reports",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/reports/messages",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/reports/messages/{report_id}/status",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/reports/{report_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/reports/{report_id}/status",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/search/meili/contract",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/search/meili/health",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/search/meili/reindex",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/search/meili/stage-smoke",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/search/meili/sync-jobs",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/search/meili/sync-jobs/process",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/search/meili/sync-jobs/retry-dead-letter",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/session/health",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/header",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/header/logo",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/site/home-category-layout",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/home-category-layout",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/admin/site/listing-design",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/listing-design",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/admin/site/listing-design/publish",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/site/listing-design/rollback",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/site/showcase-layout",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/showcase-layout/config",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/admin/site/showcase-layout/config/{layout_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/site/showcase-layout/config/{layout_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/showcase-layout/config/{layout_id}/publish",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/site/showcase-layout/configs",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/theme",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/theme/config",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/admin/site/theme/config/{theme_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/theme/config/{theme_id}/publish",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/site/theme/configs",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/system-settings",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/system-settings",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/system-settings/cloudflare",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/system-settings/cloudflare",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/system-settings/cloudflare/canary",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/system-settings/google-maps",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/system-settings/google-maps",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/system-settings/listing-create",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/system-settings/listing-create",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/system-settings/meilisearch",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/system-settings/meilisearch",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/system-settings/meilisearch/history",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/system-settings/meilisearch/{config_id}/activate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/system-settings/meilisearch/{config_id}/revoke",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/system-settings/meilisearch/{config_id}/test",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/system-settings/{setting_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/system/health-detail",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/system/health-summary",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/tax-rates",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/tax-rates",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/tax-rates/{tax_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/tax-rates/{tax_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/configs/header/logo",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/configs/{config_type}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/configs/{config_type}",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/configs/{config_type}/conflict-sync",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/configs/{config_type}/diff",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/configs/{config_type}/ops-alerts/delivery-audit",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/configs/{config_type}/ops-alerts/html-report",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/configs/{config_type}/ops-alerts/secret-checklist",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/configs/{config_type}/ops-alerts/secret-presence",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/configs/{config_type}/ops-alerts/simulate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/configs/{config_type}/ops-thresholds",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/configs/{config_type}/publish",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/configs/{config_type}/publish-audits",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/configs/{config_type}/rollback",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/logo-assets/cleanup",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/logo-assets/health",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/permissions",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/theme-assignments",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/theme-assignments",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/theme-assignments/{assignment_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/themes",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/themes",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/themes/{theme_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/themes/{theme_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/ui/themes/{theme_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/users",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/users",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/users/bulk-deactivate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/users/{user_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/users/{user_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/users/{user_id}/activate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/users/{user_id}/detail",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/users/{user_id}/risk-level",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/users/{user_id}/suspend",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/vehicle-import/apply",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/vehicle-import/dry-run",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/vehicle-makes",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/vehicle-makes",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/vehicle-makes/bulk-delete",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/vehicle-makes/{make_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/vehicle-makes/{make_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/vehicle-master-import/jobs",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/vehicle-master-import/jobs/api",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/vehicle-master-import/jobs/upload",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/vehicle-master-import/jobs/{job_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/vehicle-models",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/vehicle-models",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/vehicle-models/bulk-delete",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/vehicle-models/{model_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/vehicle-models/{model_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/webhooks/events/{event_id}/replay",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/ads",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/ads/{ad_id}/click",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/ads/{ad_id}/impression",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/analytics/events",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/applications",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/applications",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/applications/my",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/applications/{application_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/attributes",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/audit-logs",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/auth/login",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/auth/me",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/auth/refresh",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/auth/register/consumer",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/auth/register/dealer",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/auth/resend-verification",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/auth/verify-email",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/auth/verify-email/help-opened",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/catalog/schema",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/categories",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/categories/children",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/categories/search",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/categories/validate",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/countries",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/countries/public",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/countries/{country_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/dashboard/stats",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/consultant-tracking",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/customers",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/dashboard/metrics",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/dashboard/summary",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/favorites",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/invoices",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/invoices/{invoice_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/invoices/{invoice_id}/download-pdf",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/listings",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/listings",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dealer/listings/bulk",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dealer/listings/{listing_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/dealer/listings/{listing_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/dealer/listings/{listing_id}/status",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dealer/messages",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/messages/{conversation_id}/read",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dealer/payments",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/portal/config",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/quotas",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/reports",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/settings/blocked-accounts",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/dealer/settings/blocked-accounts",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dealer/settings/change-password",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dealer/settings/preferences",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/settings/preferences",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/dealer/settings/profile",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dealer/settings/profile",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/doping/placements",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/health",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/health/db",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/health/migrations",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/info/{slug}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/menu/top-items",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/menu/top-items/{item_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/payments/checkout/status/{session_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/payments/create-checkout-session",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/payments/create-intent",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/payments/runtime-config",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/payments/stripe/webhook",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/payments/webhook",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/payments/{payment_id}/reconcile",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/payments/{payment_id}/status",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/places/autocomplete",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/places/config",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/places/details",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/places/map-runtime",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/places/postal-lookup",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/pricing/checkout-session",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/pricing/packages",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/pricing/quote",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/reports",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/reports/messages",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/search/meili",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/search/suggest",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/site/assets/{asset_key:path}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/site/footer",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/site/header",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/site/home-category-layout",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/site/listing-design",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/site/showcase-layout",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/site/theme",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/sitemap.xml",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/sitemaps/{section}.xml",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/system-settings/effective",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/ui/themes",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/ui/themes/effective",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/ui/{config_type}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/users",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/users/change-password",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/users/me",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/users/me",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/users/me/2fa/disable",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/users/me/2fa/setup",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/users/me/2fa/status",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/users/me/2fa/verify",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/users/me/delete",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/users/me/export",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/users/{user_id}",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/v1/admin/vehicle-master/activate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/admin/vehicle-master/rollback",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/admin/vehicle-master/status",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/admin/vehicle-master/validate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/dealers/me/profile",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/dealers/me/profile",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/v1/doping/requests",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/favorites",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/favorites/count",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/favorites/{listing_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/v1/favorites/{listing_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/favorites/{listing_id}",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/doping/options",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/my",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/archive",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/doping",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/draft",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/draft",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/draft",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/extend",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/media",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/media/order",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/media/{media_id}/preview",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/preview",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/preview-ready",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/publish",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/request-publish",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/similar",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/submit",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/submit-review",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/unpublish",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/versions",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/listings/vehicle/{listing_id}/versions/{version_no}/rollback",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/messages/threads",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/messages/threads",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/messages/threads/{thread_id}/messages",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/messages/threads/{thread_id}/messages",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/messages/threads/{thread_id}/read",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/messages/unread-count",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/notifications",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/notifications/{notification_id}/read",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/push/subscribe",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/push/subscriptions",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/push/unsubscribe",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/push/vapid-public-key",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/saved-searches",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/saved-searches",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/saved-searches/count",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/saved-searches/{saved_search_id}",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/v1/saved-searches/{saved_search_id}/notifications",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/v1/users/me/2fa/disable",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/users/me/2fa/setup",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/users/me/2fa/status",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/users/me/2fa/verify",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/v1/users/me/account",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/v1/users/me/data-export",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/users/me/dealer-profile",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/users/me/dealer-profile",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/v1/users/me/gdpr-exports",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/users/me/gdpr-exports/{export_id}/download",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/users/me/profile",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/users/me/profile",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/v1/vehicle/makes",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v1/vehicle/models",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v2/categories/{slug}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v2/search",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v2/vehicle/makes",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v2/vehicle/models",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/vehicle/makes",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/vehicle/models",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/vehicle/options",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/vehicle/trims",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/vehicle/years",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/webhook/stripe",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/ws/messages",
+      "methods": []
+    }
+  ],
+  "demo_mode": true
+}

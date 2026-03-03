@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-03-03T08:04:30.532084+00:00",
+  "mode": "demo",
+  "status": "FAIL",
+  "alarm_triggered": true,
+  "demo_mode": true,
+  "fail_reasons": [
+    "unbound_rbac_policy_routes_detected",
+    "new_unbound_routes_detected_in_diff"
+  ],
+  "pytest": {
+    "passed": true,
+    "returncode": 0,
+    "command": "/root/.venv/bin/python -m pytest /app/backend/tests/test_p1_01_rbac_matrix.py -q --maxfail=1 --junitxml=/app/test_reports/pytest/rbac_suite_results.xml",
+    "junit_xml": "/app/test_reports/pytest/rbac_suite_results.xml"
+  },
+  "artifacts": {
+    "policy_snapshot": "/app/test_reports/rbac_policy_snapshot_20260303.json",
+    "policy_diff": "/app/test_reports/rbac_policy_diff.json",
+    "nightly_report": "/app/test_reports/rbac_nightly_20260303_demo_fail.json"
+  },
+  "rbac_summary": {
+    "allowlist_route_count": 283,
+    "missing_policy_route_count": 1,
+    "added_missing_routes": [
+      "/api/demo/synthetic-unprotected-route"
+    ]
+  },
+  "ci_gate": {
+    "merge_blocked": true,
+    "policy_diff_gate_active": true,
+    "nightly_gate_active": true
+  }
+}

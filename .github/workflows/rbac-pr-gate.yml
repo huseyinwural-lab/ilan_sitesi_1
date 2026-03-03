@@ -1,0 +1,44 @@
+name: RBAC PR Gate
+
+on:
+  pull_request:
+    paths:
+      - "backend/server.py"
+      - "backend/app/dependencies.py"
+      - "backend/tests/test_p1_01_rbac_matrix.py"
+      - "frontend/src/shared/adminRbac.js"
+      - "frontend/src/components/Layout.js"
+      - "frontend/src/pages/admin/**"
+      - "scripts/rbac_*.py"
+      - "Makefile"
+
+jobs:
+  rbac-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: RBAC Check (merge gate)
+        run: make rbac:check
+
+      - name: Upload RBAC gate artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rbac-pr-gate-artifacts
+          path: |
+            test_reports/rbac_check_latest.json
+            test_reports/rbac_policy_diff.json
+            test_reports/rbac_policy_snapshot_*.json
+            test_reports/pytest/rbac_suite_results.xml
