@@ -693,8 +693,8 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ## 2026-03-03 (P1.2 — RBAC Drift Nightly + CI Gate)
 - Tek komut + nightly + demo-fail aktif (`make rbac:check|rbac:nightly|rbac:drift-demo`); kanıtlar: `rbac_nightly_20260303*.json`, `rbac_policy_diff.json`, `iteration_91.json`.
 ## 2026-03-03 (A — Audit Dashboard MVP)
-- Super-admin only audit API/UI eklendi: `/api/admin/audit/dashboard/{schema,events,stats,anomalies}` + `/admin/audit` tek sayfa (Recent events + Stats + Anomalies + filtre).
-- Kanıtlar: `/app/test_reports/audit_smoke_report.json` + `/app/test_reports/iteration_92.json` (backend/frontend PASS, strict RBAC, forward-only no-backfill).
+- Super-admin only audit API/UI tamamlandı; kanıtlar: `/app/test_reports/audit_smoke_report.json` + `/app/test_reports/iteration_92.json`.
 ## 2026-03-03 (B — Permission-Flag MVP: finance+content)
-- SQL `user_permissions` modeli + resolver (`default deny + explicit allow`, `PERMISSION_FLAGS_ENABLED` ile kademeli fallback) + migration endpoint/script tamamlandı.
-- Kanıtlar: `/app/test_reports/permission_flag_diff.json` + `/app/test_reports/iteration_93.json` + güncellenmiş `make rbac:check` (permission testleri CI gate’e bağlı).
+- SQL `user_permissions` + resolver + migration tamamlandı; kanıtlar: `/app/test_reports/permission_flag_diff.json`, `/app/test_reports/iteration_93.json`, güncel `make rbac:check`.
+- 2026-03-03 (C-1) Ops/Health/Sitemap delegasyon: yeni router modülleri (`health_routes`, `sitemap_routes`, `ops_routes`) devrede; server.py geçici delegasyon aktif (register_handlers + include_router).
+- Kanıtlar: `/app/test_reports/c1_router_modularization_plan.json`, `/app/test_reports/c1_ops_health_sitemap_smoke.json`, `/app/test_reports/iteration_94.json`.
