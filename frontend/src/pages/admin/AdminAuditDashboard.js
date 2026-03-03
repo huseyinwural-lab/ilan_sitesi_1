@@ -11,37 +11,86 @@ export default function AdminAuditDashboard() {
   const [stats, setStats] = useState({ windows: { '24h': null, '7d': null } });
   const [anomalies, setAnomalies] = useState([]);
   const [schemaInfo, setSchemaInfo] = useState(null);
+  const [eventTypes, setEventTypes] = useState([]);
+  const [countries, setCountries] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, size: 20, total: 0, total_pages: 0, sort: 'created_at:desc' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filters, setFilters] = useState({ action: '', resource_type: '', q: '' });
+  const [filters, setFilters] = useState({
+    q: '',
+    actor: '',
+    role: 'all',
+    country: 'all',
+    event_type: '',
+    date_from: '',
+    date_to: '',
+    sort: 'created_at:desc',
+  });
 
   const authHeader = useMemo(
     () => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` }),
     [],
   );
 
-  const loadAuditData = async () => {
+  const queryParams = useMemo(() => {
+    const params = {
+      page: pagination.page,
+      size: pagination.size,
+      sort: filters.sort,
+    };
+    if (filters.q.trim()) params.q = filters.q.trim();
+    if (filters.actor.trim()) params.actor = filters.actor.trim();
+    if (filters.role !== 'all') params.role = filters.role;
+    if (filters.country !== 'all') params.country = filters.country;
+    if (filters.event_type.trim()) params.event_type = filters.event_type.trim();
+    if (filters.date_from) params.date_from = filters.date_from;
+    if (filters.date_to) params.date_to = filters.date_to;
+    return params;
+  }, [filters, pagination.page, pagination.size]);
+
+  const loadAuditData = async ({ withStaticData = false } = {}) => {
     setLoading(true);
     setError('');
     try {
-      const params = {
-        limit: 50,
-        ...(filters.action ? { action: filters.action } : {}),
-        ...(filters.resource_type ? { resource_type: filters.resource_type } : {}),
-        ...(filters.q ? { q: filters.q } : {}),
-      };
+      const dynamicCalls = [
+        axios.get(`${API}/api/admin/audit-logs`, { headers: authHeader, params: queryParams }),
+      ];
 
-      const [schemaRes, eventsRes, statsRes, anomaliesRes] = await Promise.all([
-        axios.get(`${API}/api/admin/audit/dashboard/schema`, { headers: authHeader }),
-        axios.get(`${API}/api/admin/audit/dashboard/events`, { headers: authHeader, params }),
-        axios.get(`${API}/api/admin/audit/dashboard/stats`, { headers: authHeader }),
-        axios.get(`${API}/api/admin/audit/dashboard/anomalies`, { headers: authHeader }),
-      ]);
+      if (withStaticData) {
+        dynamicCalls.push(
+          axios.get(`${API}/api/admin/audit/dashboard/schema`, { headers: authHeader }),
+          axios.get(`${API}/api/admin/audit/dashboard/stats`, { headers: authHeader }),
+          axios.get(`${API}/api/admin/audit/dashboard/anomalies`, { headers: authHeader }),
+          axios.get(`${API}/api/admin/audit-logs/event-types`, { headers: authHeader }),
+          axios.get(`${API}/api/countries`, { headers: authHeader }),
+        );
+      }
 
-      setSchemaInfo(schemaRes.data || null);
-      setEvents(eventsRes.data?.items || []);
-      setStats(statsRes.data || { windows: { '24h': null, '7d': null } });
-      setAnomalies(anomaliesRes.data?.anomalies || []);
+      const responses = await Promise.all(dynamicCalls);
+      const logsRes = responses[0];
+      setEvents(logsRes.data?.items || []);
+
+      const incomingPagination = logsRes.data?.pagination || {};
+      setPagination((prev) => ({
+        ...prev,
+        total: Number(incomingPagination.total || 0),
+        total_pages: Number(incomingPagination.total_pages || 0),
+        sort: incomingPagination.sort || prev.sort,
+      }));
+
+      if (withStaticData) {
+        const schemaRes = responses[1];
+        const statsRes = responses[2];
+        const anomaliesRes = responses[3];
+        const eventTypesRes = responses[4];
+        const countriesRes = responses[5];
+
+        setSchemaInfo(schemaRes.data || null);
+        setStats(statsRes.data || { windows: { '24h': null, '7d': null } });
+        setAnomalies(anomaliesRes.data?.anomalies || []);
+        setEventTypes(eventTypesRes.data?.event_types || []);
+        setCountries(countriesRes.data || []);
+      }
     } catch (err) {
       const detail = err?.response?.data?.detail;
       setError(typeof detail === 'string' ? detail : 'Audit dashboard verileri alınamadı.');
@@ -51,21 +100,39 @@ export default function AdminAuditDashboard() {
   };
 
   useEffect(() => {
-    loadAuditData();
+    loadAuditData({ withStaticData: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    loadAuditData({ withStaticData: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryParams]);
 
   const onFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const applyFilters = () => {
-    loadAuditData();
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const clearFilters = () => {
-    setFilters({ action: '', resource_type: '', q: '' });
-    setTimeout(() => loadAuditData(), 0);
+    setFilters({
+      q: '',
+      actor: '',
+      role: 'all',
+      country: 'all',
+      event_type: '',
+      date_from: '',
+      date_to: '',
+      sort: 'created_at:desc',
+    });
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const onPageMove = (nextPage) => {
+    setPagination((prev) => ({ ...prev, page: nextPage }));
   };
 
   const stats24h = stats?.windows?.['24h'] || {};
@@ -169,29 +236,117 @@ export default function AdminAuditDashboard() {
         <div className="mb-3 text-sm font-semibold" data-testid="admin-audit-events-title">Recent events</div>
         <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-4" data-testid="admin-audit-filters">
           <input
-            value={filters.action}
-            onChange={(e) => onFilterChange('action', e.target.value)}
-            placeholder="action"
-            className="h-9 rounded-md border px-3 text-sm"
-            data-testid="admin-audit-filter-action"
-          />
-          <input
-            value={filters.resource_type}
-            onChange={(e) => onFilterChange('resource_type', e.target.value)}
-            placeholder="resource_type"
-            className="h-9 rounded-md border px-3 text-sm"
-            data-testid="admin-audit-filter-resource"
-          />
-          <input
             value={filters.q}
             onChange={(e) => onFilterChange('q', e.target.value)}
-            placeholder="search"
+            placeholder="q"
             className="h-9 rounded-md border px-3 text-sm"
-            data-testid="admin-audit-filter-search"
+            data-testid="admin-audit-filter-q"
           />
+          <input
+            value={filters.actor}
+            onChange={(e) => onFilterChange('actor', e.target.value)}
+            placeholder="actor"
+            className="h-9 rounded-md border px-3 text-sm"
+            data-testid="admin-audit-filter-actor"
+          />
+          <select
+            value={filters.role}
+            onChange={(e) => onFilterChange('role', e.target.value)}
+            className="h-9 rounded-md border px-3 text-sm"
+            data-testid="admin-audit-filter-role"
+          >
+            <option value="all" data-testid="admin-audit-filter-role-option-all">all</option>
+            {['super_admin', 'country_admin', 'admin', 'finance', 'dealer', 'user', 'support', 'moderator'].map((role) => (
+              <option key={role} value={role} data-testid={`admin-audit-filter-role-option-${role}`}>{role}</option>
+            ))}
+          </select>
+          <select
+            value={filters.country}
+            onChange={(e) => onFilterChange('country', e.target.value)}
+            className="h-9 rounded-md border px-3 text-sm"
+            data-testid="admin-audit-filter-country"
+          >
+            <option value="all" data-testid="admin-audit-filter-country-option-all">all</option>
+            {countries.map((item) => (
+              <option key={item.code} value={item.code} data-testid={`admin-audit-filter-country-option-${item.code}`}>{item.code}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-4" data-testid="admin-audit-filters-2">
+          <select
+            value={filters.event_type}
+            onChange={(e) => onFilterChange('event_type', e.target.value)}
+            className="h-9 rounded-md border px-3 text-sm"
+            data-testid="admin-audit-filter-event-type"
+          >
+            <option value="" data-testid="admin-audit-filter-event-type-option-all">all event_type</option>
+            {eventTypes.map((item) => (
+              <option key={item} value={item} data-testid={`admin-audit-filter-event-type-option-${item}`}>{item}</option>
+            ))}
+          </select>
+          <input
+            type="date"
+            value={filters.date_from}
+            onChange={(e) => onFilterChange('date_from', e.target.value)}
+            className="h-9 rounded-md border px-3 text-sm"
+            data-testid="admin-audit-filter-date-from"
+          />
+          <input
+            type="date"
+            value={filters.date_to}
+            onChange={(e) => onFilterChange('date_to', e.target.value)}
+            className="h-9 rounded-md border px-3 text-sm"
+            data-testid="admin-audit-filter-date-to"
+          />
+          <select
+            value={filters.sort}
+            onChange={(e) => onFilterChange('sort', e.target.value)}
+            className="h-9 rounded-md border px-3 text-sm"
+            data-testid="admin-audit-filter-sort"
+          >
+            <option value="created_at:desc" data-testid="admin-audit-filter-sort-desc">created_at:desc</option>
+            <option value="created_at:asc" data-testid="admin-audit-filter-sort-asc">created_at:asc</option>
+          </select>
+        </div>
+
+        <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-3" data-testid="admin-audit-pagination-controls">
+          <select
+            value={pagination.size}
+            onChange={(e) => setPagination((prev) => ({ ...prev, page: 1, size: Number(e.target.value) }))}
+            className="h-9 rounded-md border px-3 text-sm"
+            data-testid="admin-audit-page-size"
+          >
+            {[10, 20, 50, 100].map((value) => (
+              <option key={value} value={value} data-testid={`admin-audit-page-size-option-${value}`}>{value}</option>
+            ))}
+          </select>
           <div className="flex gap-2">
             <button type="button" onClick={applyFilters} className="h-9 rounded-md border px-3 text-sm" data-testid="admin-audit-apply-filters">Uygula</button>
             <button type="button" onClick={clearFilters} className="h-9 rounded-md border px-3 text-sm" data-testid="admin-audit-clear-filters">Temizle</button>
+          </div>
+          <div className="flex items-center justify-end gap-2" data-testid="admin-audit-pagination-summary">
+            <span className="text-xs text-slate-500" data-testid="admin-audit-pagination-meta">
+              page {pagination.page}/{Math.max(1, pagination.total_pages || 1)} · total {pagination.total}
+            </span>
+            <button
+              type="button"
+              className="h-8 rounded-md border px-2 text-xs disabled:opacity-50"
+              disabled={pagination.page <= 1}
+              onClick={() => onPageMove(pagination.page - 1)}
+              data-testid="admin-audit-pagination-prev"
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              className="h-8 rounded-md border px-2 text-xs disabled:opacity-50"
+              disabled={pagination.page >= Math.max(1, pagination.total_pages || 1)}
+              onClick={() => onPageMove(pagination.page + 1)}
+              data-testid="admin-audit-pagination-next"
+            >
+              Next
+            </button>
           </div>
         </div>
 

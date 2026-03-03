@@ -1,0 +1,68 @@
+{
+  "task": "P1-Next-02 Audit/Permissions UX Genişletme - filter/pagination/performance",
+  "target_rows": 100000,
+  "seed": {
+    "after_count": 100000,
+    "explain_plans": {
+      "q1": {
+        "has_seq_scan": false,
+        "plan_excerpt": [
+          "Limit  (cost=0.42..64.86 rows=100 width=24) (actual time=0.036..0.667 rows=100 loops=1)",
+          "  Buffers: shared hit=219",
+          "  ->  Index Scan Backward using ix_audit_logs_created_at on audit_logs  (cost=0.42..8143.95 rows=12637 width=24) (actual time=0.034..0.657 rows=100 loops=1)",
+          "        Filter: ((action)::text = 'PERMISSION_FLAG_GRANT'::text)",
+          "        Rows Removed by Filter: 724",
+          "        Buffers: shared hit=219",
+          "Planning:",
+          "  Buffers: shared hit=19"
+        ]
+      },
+      "q2": {
+        "has_seq_scan": false,
+        "plan_excerpt": [
+          "Limit  (cost=0.42..215.96 rows=100 width=24) (actual time=0.123..0.941 rows=100 loops=1)",
+          "  Buffers: shared hit=163",
+          "  ->  Index Scan using ix_audit_logs_user_id_created_at on audit_logs  (cost=0.42..7014.29 rows=3254 width=24) (actual time=0.121..0.925 rows=100 loops=1)",
+          "        Index Cond: (user_id = '9dbd1bdc-9d5a-401c-a650-29ffda5e6b55'::uuid)",
+          "        Filter: ((action)::text = 'PERMISSION_FLAG_GRANT'::text)",
+          "        Rows Removed by Filter: 608",
+          "        Buffers: shared hit=163",
+          "Planning Time: 0.240 ms"
+        ]
+      },
+      "q3": {
+        "has_seq_scan": false,
+        "plan_excerpt": [
+          "Limit  (cost=0.42..16.69 rows=100 width=24) (actual time=0.032..0.330 rows=100 loops=1)",
+          "  Buffers: shared hit=169",
+          "  ->  Index Scan Backward using ix_audit_logs_created_at on audit_logs  (cost=0.42..8143.95 rows=50047 width=24) (actual time=0.031..0.319 rows=100 loops=1)",
+          "        Filter: ((country_scope)::text = 'DE'::text)",
+          "        Rows Removed by Filter: 131",
+          "        Buffers: shared hit=169",
+          "Planning Time: 0.192 ms",
+          "Execution Time: 0.358 ms"
+        ]
+      }
+    },
+    "full_table_scan_warnings": 0
+  },
+  "api_response_time_server_side": {
+    "login_status": 200,
+    "sample_count": 120,
+    "p95_ms": 2.81,
+    "avg_ms": 2.1824166666666662,
+    "min_ms": 1.81,
+    "max_ms": 3.54,
+    "pagination_stable": true,
+    "page_overlaps": {
+      "1-2": 0,
+      "2-3": 0
+    }
+  },
+  "criteria": {
+    "pagination_stable_100k": true,
+    "zero_full_table_scan_warning": true,
+    "p95_under_400_ms": true
+  },
+  "status": "PASS"
+}

@@ -39,10 +39,14 @@ export default function AdminPermissionsPage() {
   const [shadowDiff, setShadowDiff] = useState({ diff_count: 0, checked_user_count: 0, diffs: [] });
 
   const [filters, setFilters] = useState({
-    user: '',
+    q: '',
+    actor: '',
     role: 'all',
     country_scope: 'all',
+    sort: 'created_at:desc',
   });
+  const [usersPagination, setUsersPagination] = useState({ page: 1, size: 20, total: 0, total_pages: 0 });
+  const [overridesPagination, setOverridesPagination] = useState({ page: 1, size: 20, total: 0, total_pages: 0 });
 
   const [selectedUserId, setSelectedUserId] = useState('');
   const [draft, setDraft] = useState(null);
@@ -56,28 +60,55 @@ export default function AdminPermissionsPage() {
     [],
   );
 
-  const queryParams = useMemo(() => {
-    const params = new URLSearchParams();
-    if (filters.user.trim()) params.set('user', filters.user.trim());
-    if (filters.role !== 'all') params.set('role', filters.role);
-    if (filters.country_scope !== 'all') params.set('country_scope', filters.country_scope);
-    return params.toString();
-  }, [filters]);
-
   const loadData = async () => {
     setLoading(true);
     setError('');
     try {
+      const common = {
+        q: filters.q.trim() || undefined,
+        role: filters.role !== 'all' ? filters.role : undefined,
+        country_scope: filters.country_scope !== 'all' ? filters.country_scope : undefined,
+        sort: filters.sort,
+      };
+
       const [usersRes, overridesRes, flagsRes, shadowRes, countriesRes] = await Promise.all([
-        axios.get(`${API}/admin/permissions/users?${queryParams}`, { headers: authHeader }),
-        axios.get(`${API}/admin/permissions/overrides?${queryParams}`, { headers: authHeader }),
+        axios.get(`${API}/admin/permissions/users`, {
+          headers: authHeader,
+          params: { ...common, page: usersPagination.page, size: usersPagination.size },
+        }),
+        axios.get(`${API}/admin/permissions/overrides`, {
+          headers: authHeader,
+          params: {
+            ...common,
+            actor: filters.actor.trim() || undefined,
+            page: overridesPagination.page,
+            size: overridesPagination.size,
+          },
+        }),
         axios.get(`${API}/admin/permissions/flags`, { headers: authHeader }),
-        axios.get(`${API}/admin/permissions/shadow-diff?${queryParams}`, { headers: authHeader }),
+        axios.get(`${API}/admin/permissions/shadow-diff`, {
+          headers: authHeader,
+          params: { ...common, page: 1, size: 200 },
+        }),
         axios.get(`${API}/countries`, { headers: authHeader }),
       ]);
 
       setUsers(usersRes.data?.items || []);
       setOverrides(overridesRes.data?.items || []);
+
+      const userMeta = usersRes.data?.pagination || {};
+      const overrideMeta = overridesRes.data?.pagination || {};
+      setUsersPagination((prev) => ({
+        ...prev,
+        total: Number(userMeta.total || 0),
+        total_pages: Number(userMeta.total_pages || 0),
+      }));
+      setOverridesPagination((prev) => ({
+        ...prev,
+        total: Number(overrideMeta.total || 0),
+        total_pages: Number(overrideMeta.total_pages || 0),
+      }));
+
       setFlags(flagsRes.data || {});
       setShadowDiff(shadowRes.data || { diff_count: 0, checked_user_count: 0, diffs: [] });
       setCountries(countriesRes.data || []);
@@ -92,7 +123,7 @@ export default function AdminPermissionsPage() {
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryParams]);
+  }, [filters, usersPagination.page, usersPagination.size, overridesPagination.page, overridesPagination.size]);
 
   useEffect(() => {
     if (!users.length) {
@@ -302,14 +333,22 @@ export default function AdminPermissionsPage() {
       </div>
 
       <div className="rounded-lg border bg-white p-4" data-testid="admin-permissions-filters-card">
-        <div className="grid gap-3 md:grid-cols-4" data-testid="admin-permissions-filters-grid">
+        <div className="grid gap-3 md:grid-cols-5" data-testid="admin-permissions-filters-grid">
           <input
             type="text"
-            value={filters.user}
-            onChange={(event) => setFilters((prev) => ({ ...prev, user: event.target.value }))}
-            placeholder="User email veya ad"
+            value={filters.q}
+            onChange={(event) => setFilters((prev) => ({ ...prev, q: event.target.value }))}
+            placeholder="q (user/email/role)"
             className="h-9 rounded-md border px-3 text-sm"
-            data-testid="admin-permissions-filter-user"
+            data-testid="admin-permissions-filter-q"
+          />
+          <input
+            type="text"
+            value={filters.actor}
+            onChange={(event) => setFilters((prev) => ({ ...prev, actor: event.target.value }))}
+            placeholder="actor (created_by)"
+            className="h-9 rounded-md border px-3 text-sm"
+            data-testid="admin-permissions-filter-actor"
           />
           <select
             value={filters.role}
@@ -336,9 +375,22 @@ export default function AdminPermissionsPage() {
               </option>
             ))}
           </select>
+          <select
+            value={filters.sort}
+            onChange={(event) => setFilters((prev) => ({ ...prev, sort: event.target.value }))}
+            className="h-9 rounded-md border px-3 text-sm"
+            data-testid="admin-permissions-filter-sort"
+          >
+            <option value="created_at:desc" data-testid="admin-permissions-filter-sort-desc">created_at:desc</option>
+            <option value="created_at:asc" data-testid="admin-permissions-filter-sort-asc">created_at:asc</option>
+          </select>
           <button
             type="button"
-            onClick={loadData}
+            onClick={() => {
+              setUsersPagination((prev) => ({ ...prev, page: 1 }));
+              setOverridesPagination((prev) => ({ ...prev, page: 1 }));
+              loadData();
+            }}
             className="h-9 rounded-md border px-3 text-sm"
             data-testid="admin-permissions-filter-refresh"
           >
@@ -366,8 +418,63 @@ export default function AdminPermissionsPage() {
             <div className="flex items-center justify-between" data-testid="admin-permissions-explicit-list-header">
               <h2 className="text-base font-semibold" data-testid="admin-permissions-explicit-list-title">Explicit Override Listesi</h2>
               <span className="text-xs text-slate-500" data-testid="admin-permissions-explicit-list-count">
-                count: {overrides.length}
+                count: {overrides.length} / total: {overridesPagination.total}
               </span>
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-2" data-testid="admin-permissions-explicit-pagination-controls">
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-500" htmlFor="permissions-overrides-page-size">size</label>
+                <select
+                  id="permissions-overrides-page-size"
+                  value={overridesPagination.size}
+                  onChange={(event) => setOverridesPagination((prev) => ({ ...prev, page: 1, size: Number(event.target.value) }))}
+                  className="h-8 rounded-md border px-2 text-xs"
+                  data-testid="admin-permissions-overrides-page-size"
+                >
+                  {[10, 20, 50, 100].map((value) => (
+                    <option key={value} value={value} data-testid={`admin-permissions-overrides-page-size-option-${value}`}>{value}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="h-8 rounded-md border px-2 text-xs disabled:opacity-50"
+                  disabled={overridesPagination.page <= 1}
+                  onClick={() => setOverridesPagination((prev) => ({ ...prev, page: prev.page - 1 }))}
+                  data-testid="admin-permissions-overrides-page-prev"
+                >
+                  Prev
+                </button>
+                <span className="text-xs text-slate-500" data-testid="admin-permissions-overrides-page-meta">
+                  {overridesPagination.page}/{Math.max(1, overridesPagination.total_pages || 1)}
+                </span>
+                <button
+                  type="button"
+                  className="h-8 rounded-md border px-2 text-xs disabled:opacity-50"
+                  disabled={overridesPagination.page >= Math.max(1, overridesPagination.total_pages || 1)}
+                  onClick={() => setOverridesPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
+                  data-testid="admin-permissions-overrides-page-next"
+                >
+                  Next
+                </button>
+                <button
+                  type="button"
+                  className="h-8 rounded-md border px-2 text-xs"
+                  onClick={() => {
+                    const params = new URLSearchParams();
+                    if (filters.q.trim()) params.set('q', filters.q.trim());
+                    if (filters.actor.trim()) params.set('actor', filters.actor.trim());
+                    if (filters.role !== 'all') params.set('role', filters.role);
+                    if (filters.country_scope !== 'all') params.set('country_scope', filters.country_scope);
+                    if (filters.sort) params.set('sort', filters.sort);
+                    window.open(`${API}/admin/permissions/overrides/export?${params.toString()}`, '_blank');
+                  }}
+                  data-testid="admin-permissions-overrides-export-csv"
+                >
+                  Export CSV
+                </button>
+              </div>
             </div>
             <div className="mt-3 max-h-[420px] overflow-auto" data-testid="admin-permissions-explicit-list-wrap">
               {overrides.length === 0 ? (
@@ -404,18 +511,54 @@ export default function AdminPermissionsPage() {
           <div className="rounded-lg border bg-white p-4" data-testid="admin-permissions-matrix-card">
             <div className="flex items-center justify-between gap-2" data-testid="admin-permissions-matrix-header">
               <h2 className="text-base font-semibold" data-testid="admin-permissions-matrix-title">User Permission Matrix</h2>
-              <select
-                value={selectedUserId}
-                onChange={(event) => setSelectedUserId(event.target.value)}
-                className="h-8 rounded-md border px-2 text-xs"
-                data-testid="admin-permissions-selected-user"
+              <div className="flex items-center gap-2">
+                <select
+                  value={usersPagination.size}
+                  onChange={(event) => setUsersPagination((prev) => ({ ...prev, page: 1, size: Number(event.target.value) }))}
+                  className="h-8 rounded-md border px-2 text-xs"
+                  data-testid="admin-permissions-users-page-size"
+                >
+                  {[10, 20, 50, 100].map((value) => (
+                    <option key={value} value={value} data-testid={`admin-permissions-users-page-size-option-${value}`}>{value}</option>
+                  ))}
+                </select>
+                <select
+                  value={selectedUserId}
+                  onChange={(event) => setSelectedUserId(event.target.value)}
+                  className="h-8 rounded-md border px-2 text-xs"
+                  data-testid="admin-permissions-selected-user"
+                >
+                  {users.map((item) => (
+                    <option key={item.id} value={item.id} data-testid={`admin-permissions-selected-user-option-${item.id}`}>
+                      {item.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-2 flex items-center justify-end gap-2" data-testid="admin-permissions-users-pagination-controls">
+              <button
+                type="button"
+                className="h-8 rounded-md border px-2 text-xs disabled:opacity-50"
+                disabled={usersPagination.page <= 1}
+                onClick={() => setUsersPagination((prev) => ({ ...prev, page: prev.page - 1 }))}
+                data-testid="admin-permissions-users-page-prev"
               >
-                {users.map((item) => (
-                  <option key={item.id} value={item.id} data-testid={`admin-permissions-selected-user-option-${item.id}`}>
-                    {item.email}
-                  </option>
-                ))}
-              </select>
+                Prev
+              </button>
+              <span className="text-xs text-slate-500" data-testid="admin-permissions-users-page-meta">
+                {usersPagination.page}/{Math.max(1, usersPagination.total_pages || 1)} · total {usersPagination.total}
+              </span>
+              <button
+                type="button"
+                className="h-8 rounded-md border px-2 text-xs disabled:opacity-50"
+                disabled={usersPagination.page >= Math.max(1, usersPagination.total_pages || 1)}
+                onClick={() => setUsersPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
+                data-testid="admin-permissions-users-page-next"
+              >
+                Next
+              </button>
             </div>
 
             {selectedUser ? (

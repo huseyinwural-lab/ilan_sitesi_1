@@ -279,6 +279,10 @@ BILLING_AUDIT_ACTIONS = {
 _failed_login_attempts: Dict[str, List[float]] = {}
 _failed_login_blocked_until: Dict[str, float] = {}
 _meili_settings_last_sync_ts: float = 0.0
+_audit_perf_indexes_ready: bool = False
+_permissions_query_indexes_ready: bool = False
+_audit_list_cache: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+_audit_list_cache_ttl_seconds: int = 600
 
 # Dealer Application reasons (v1)
 DEALER_APP_REJECT_REASONS_V1 = {
@@ -2605,12 +2609,44 @@ async def _ensure_invoices_db_ready(session: AsyncSession) -> None:
 
 
 async def _ensure_permissions_db_ready(session: AsyncSession) -> None:
+    global _permissions_query_indexes_ready
+    if _permissions_query_indexes_ready:
+        return
+
     if not RAW_DATABASE_URL:
         raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Permissions database not ready"))
     try:
         await session.execute(select(1))
     except Exception:
         raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Permissions database not reachable"))
+
+    if not _permissions_query_indexes_ready:
+        await session.execute(text("CREATE INDEX IF NOT EXISTS ix_users_created_at_desc ON users (created_at DESC)"))
+        await session.execute(text("CREATE INDEX IF NOT EXISTS ix_user_permissions_updated_at_desc ON user_permissions (updated_at DESC)"))
+        await session.execute(text("CREATE INDEX IF NOT EXISTS ix_user_permissions_created_by ON user_permissions (created_by)"))
+        await session.commit()
+        _permissions_query_indexes_ready = True
+
+
+async def _ensure_audit_db_ready(session: AsyncSession) -> None:
+    global _audit_perf_indexes_ready
+    if _audit_perf_indexes_ready:
+        return
+
+    if not RAW_DATABASE_URL:
+        raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Audit database not ready"))
+    try:
+        await session.execute(select(1))
+    except Exception:
+        raise HTTPException(status_code=503, detail=_build_error_detail("DB_NOT_READY", "Audit database not reachable"))
+
+    if not _audit_perf_indexes_ready:
+        await session.execute(text("CREATE INDEX IF NOT EXISTS ix_audit_logs_created_at_desc ON audit_logs (created_at DESC)"))
+        await session.execute(text("CREATE INDEX IF NOT EXISTS ix_audit_logs_user_id_created_at ON audit_logs (user_id, created_at DESC)"))
+        await session.execute(text("CREATE INDEX IF NOT EXISTS ix_audit_logs_action_created_at ON audit_logs (action, created_at DESC)"))
+        await session.execute(text("CREATE INDEX IF NOT EXISTS ix_audit_logs_country_scope_created_at ON audit_logs (country_scope, created_at DESC)"))
+        await session.commit()
+        _audit_perf_indexes_ready = True
 
 
 def _fallback_permission_allowed(role: Optional[str], domain: str, action: str) -> bool:
@@ -11659,7 +11695,7 @@ async def list_audit_logs(
     if admin_user_id:
         filters.append(AuditLog.user_id == _safe_uuid(admin_user_id))
     if country:
-        filters.append(AuditLog.country_code == country.strip().upper())
+        filters.append(AuditLog.country_scope == country.strip().upper())
     if country_scope:
         filters.append(AuditLog.country_scope == country_scope)
 
@@ -11700,6 +11736,93 @@ def _parse_audit_date(value: Optional[str], is_end: bool = False) -> Optional[da
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed.astimezone(timezone.utc)
+
+
+def _normalize_page_size(page: int, size: int, *, max_size: int = 200) -> Tuple[int, int, int]:
+    try:
+        page_value = int(page)
+    except Exception:
+        page_value = 1
+    try:
+        size_value = int(size)
+    except Exception:
+        size_value = 20
+
+    page_value = max(1, page_value)
+    size_value = min(max(1, size_value), max_size)
+    offset = (page_value - 1) * size_value
+    return page_value, size_value, offset
+
+
+def _normalize_created_at_sort(sort: Optional[str]) -> str:
+    raw = (sort or "created_at:desc").strip().lower()
+    if raw in {"timestamp_desc", "created_at_desc", "created_at:desc"}:
+        return "desc"
+    if raw in {"timestamp_asc", "created_at_asc", "created_at:asc"}:
+        return "asc"
+    if ":" in raw:
+        field, direction = raw.split(":", 1)
+        if field.strip() == "created_at" and direction.strip() in {"asc", "desc"}:
+            return direction.strip()
+    return "desc"
+
+
+def _build_audit_sql_filters(
+    *,
+    q: Optional[str],
+    actor: Optional[str],
+    role: Optional[str],
+    country: Optional[str],
+    event_type: Optional[str],
+    action: Optional[str],
+    resource_type: Optional[str],
+    date_from: Optional[str],
+    date_to: Optional[str],
+) -> List[Any]:
+    filters: List[Any] = []
+
+    action_value = (action or event_type or "").strip()
+    if action_value:
+        filters.append(AuditLog.action == action_value)
+
+    if resource_type:
+        filters.append(AuditLog.resource_type == resource_type.strip())
+
+    if country:
+        filters.append(AuditLog.country_scope == country.strip().upper())
+
+    if actor:
+        actor_value = actor.strip()
+        actor_uuid = _safe_uuid(actor_value)
+        if actor_uuid:
+            filters.append(AuditLog.user_id == actor_uuid)
+        else:
+            actor_pattern = f"%{actor_value}%"
+            filters.append(AuditLog.user_email.ilike(actor_pattern))
+
+    if role:
+        filters.append(AuditLog.user_id.in_(select(SqlUser.id).where(SqlUser.role == role.strip())))
+
+    if q:
+        search_value = f"%{q.strip()}%"
+        filters.append(
+            or_(
+                AuditLog.action.ilike(search_value),
+                AuditLog.resource_type.ilike(search_value),
+                AuditLog.resource_id.ilike(search_value),
+                AuditLog.user_email.ilike(search_value),
+                AuditLog.country_scope.ilike(search_value),
+            )
+        )
+
+    parsed_from = _parse_audit_date(date_from, is_end=False)
+    parsed_to = _parse_audit_date(date_to, is_end=True)
+    if parsed_from:
+        filters.append(AuditLog.created_at >= parsed_from)
+    if parsed_to:
+        filters.append(AuditLog.created_at <= parsed_to)
+
+    return filters
 
 
 def _build_audit_query(
@@ -11948,41 +12071,62 @@ async def admin_audit_dashboard_schema(
 
 @api_router.get("/admin/audit/dashboard/events")
 async def admin_audit_dashboard_events(
-    limit: int = 50,
+    page: int = 1,
+    size: int = 20,
+    sort: Optional[str] = "created_at:desc",
     action: Optional[str] = None,
+    event_type: Optional[str] = None,
     resource_type: Optional[str] = None,
+    actor: Optional[str] = None,
+    role: Optional[str] = None,
+    country: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
     q: Optional[str] = None,
     session: AsyncSession = Depends(get_sql_session),
     current_user=Depends(check_permissions(["super_admin"])),
 ):
-    normalized_limit = min(200, max(1, int(limit)))
+    await _ensure_audit_db_ready(session)
+
+    normalized_page, normalized_size, offset = _normalize_page_size(page, size)
+    sort_direction = _normalize_created_at_sort(sort)
+
     filters = [AuditLog.created_at >= AUDIT_DASHBOARD_START_AT]
-    if action:
-        filters.append(AuditLog.action == action.strip())
-    if resource_type:
-        filters.append(AuditLog.resource_type == resource_type.strip())
-    if q:
-        pattern = f"%{q.strip()}%"
-        filters.append(
-            or_(
-                AuditLog.action.ilike(pattern),
-                AuditLog.resource_type.ilike(pattern),
-                AuditLog.resource_id.ilike(pattern),
-                AuditLog.user_email.ilike(pattern),
-            )
+    filters.extend(
+        _build_audit_sql_filters(
+            q=q,
+            actor=actor,
+            role=role,
+            country=country,
+            event_type=event_type,
+            action=action,
+            resource_type=resource_type,
+            date_from=date_from,
+            date_to=date_to,
         )
-    rows = (
-        await session.execute(
-            select(AuditLog)
-            .where(and_(*filters))
-            .order_by(desc(AuditLog.created_at))
-            .limit(normalized_limit)
-        )
-    ).scalars().all()
+    )
+
+    query_stmt = select(AuditLog).where(and_(*filters))
+    total_stmt = select(func.count()).select_from(AuditLog).where(and_(*filters))
+    if sort_direction == "asc":
+        query_stmt = query_stmt.order_by(AuditLog.created_at.asc())
+    else:
+        query_stmt = query_stmt.order_by(desc(AuditLog.created_at))
+
+    rows = (await session.execute(query_stmt.offset(offset).limit(normalized_size))).scalars().all()
+    total = int((await session.execute(total_stmt)).scalar_one() or 0)
+
     return {
         "schema_version": AUDIT_DASHBOARD_SCHEMA_VERSION,
         "collection_start_at": AUDIT_DASHBOARD_START_AT.isoformat(),
         "items": [_audit_dashboard_event_from_row(row) for row in rows],
+        "pagination": {
+            "total": total,
+            "page": normalized_page,
+            "size": normalized_size,
+            "total_pages": math.ceil(total / normalized_size) if normalized_size else 0,
+            "sort": f"created_at:{sort_direction}",
+        },
     }
 
 
@@ -12222,39 +12366,64 @@ async def admin_permissions_flags(
 
 @api_router.get("/admin/permissions/users")
 async def admin_permissions_users(
+    page: int = 1,
+    size: int = 20,
+    q: Optional[str] = None,
+    sort: Optional[str] = "created_at:desc",
     user: Optional[str] = None,
     role: Optional[str] = None,
     country_scope: Optional[str] = None,
-    skip: int = 0,
-    limit: int = 100,
+    skip: Optional[int] = None,
+    limit: Optional[int] = None,
     session: AsyncSession = Depends(get_sql_session),
     current_user=Depends(check_permissions(["super_admin"])),
 ):
     await _ensure_permissions_db_ready(session)
 
-    stmt = select(SqlUser)
-    if role:
-        stmt = stmt.where(SqlUser.role == role.strip())
-    if user:
-        pattern = f"%{user.strip()}%"
-        stmt = stmt.where(or_(SqlUser.email.ilike(pattern), SqlUser.full_name.ilike(pattern)))
+    if skip is not None and limit is not None:
+        normalized_size = min(max(int(limit), 1), 500)
+        normalized_page = max(1, int(skip) // normalized_size + 1)
+        offset = int(skip)
+    else:
+        normalized_page, normalized_size, offset = _normalize_page_size(page, size, max_size=500)
 
-    stmt = stmt.order_by(SqlUser.created_at.desc())
-    users = (await session.execute(stmt)).scalars().all()
+    search_value = (q or user or "").strip()
 
-    if country_scope:
+    filters: List[Any] = []
+    if role and role.strip() and role.strip().lower() != "all":
+        filters.append(SqlUser.role == role.strip())
+
+    if search_value:
+        pattern = f"%{search_value}%"
+        filters.append(
+            or_(
+                SqlUser.email.ilike(pattern),
+                SqlUser.full_name.ilike(pattern),
+                SqlUser.role.ilike(pattern),
+                SqlUser.country_code.ilike(pattern),
+            )
+        )
+
+    if country_scope and country_scope.strip().lower() != "all":
         code = country_scope.strip().upper()
-        users = [
-            item
-            for item in users
-            if code == (item.country_code or "").upper()
-            or code in _normalize_country_scope_codes(item.country_scope)
-            or "*" in _normalize_country_scope_codes(item.country_scope)
-        ]
+        filters.append(
+            or_(
+                SqlUser.country_code == code,
+                cast(SqlUser.country_scope, Text).ilike(f"%{code}%"),
+            )
+        )
 
-    safe_skip = max(skip, 0)
-    safe_limit = min(max(limit, 1), 500)
-    users = users[safe_skip : safe_skip + safe_limit]
+    sort_direction = _normalize_created_at_sort(sort)
+    query_stmt = select(SqlUser).where(and_(*filters)) if filters else select(SqlUser)
+    total_stmt = select(func.count()).select_from(SqlUser).where(and_(*filters)) if filters else select(func.count()).select_from(SqlUser)
+
+    if sort_direction == "asc":
+        query_stmt = query_stmt.order_by(SqlUser.created_at.asc())
+    else:
+        query_stmt = query_stmt.order_by(desc(SqlUser.created_at))
+
+    users = (await session.execute(query_stmt.offset(offset).limit(normalized_size))).scalars().all()
+    total = int((await session.execute(total_stmt)).scalar_one() or 0)
 
     return {
         "items": [
@@ -12270,23 +12439,44 @@ async def admin_permissions_users(
             for item in users
         ],
         "count": len(users),
+        "pagination": {
+            "total": total,
+            "page": normalized_page,
+            "size": normalized_size,
+            "total_pages": math.ceil(total / normalized_size) if normalized_size else 0,
+            "sort": f"created_at:{sort_direction}",
+        },
     }
 
 
 @api_router.get("/admin/permissions/overrides")
 async def admin_permissions_overrides(
+    page: int = 1,
+    size: int = 20,
+    q: Optional[str] = None,
+    sort: Optional[str] = "created_at:desc",
+    actor: Optional[str] = None,
     target_user_id: Optional[str] = None,
     user: Optional[str] = None,
     role: Optional[str] = None,
     country_scope: Optional[str] = None,
     domain: Optional[str] = None,
     action: Optional[str] = None,
-    skip: int = 0,
-    limit: int = 300,
+    skip: Optional[int] = None,
+    limit: Optional[int] = None,
     session: AsyncSession = Depends(get_sql_session),
     current_user=Depends(check_permissions(["super_admin"])),
 ):
     await _ensure_permissions_db_ready(session)
+
+    if skip is not None and limit is not None:
+        normalized_size = min(max(int(limit), 1), 1000)
+        normalized_page = max(1, int(skip) // normalized_size + 1)
+        offset = int(skip)
+    else:
+        normalized_page, normalized_size, offset = _normalize_page_size(page, size, max_size=1000)
+
+    search_value = (q or user or "").strip()
 
     stmt = select(UserPermission, SqlUser).join(SqlUser, SqlUser.id == UserPermission.user_id)
 
@@ -12296,14 +12486,14 @@ async def admin_permissions_overrides(
             raise HTTPException(status_code=400, detail="Invalid target_user_id")
         stmt = stmt.where(UserPermission.user_id == target_uuid)
 
-    if user:
-        pattern = f"%{user.strip()}%"
+    if search_value:
+        pattern = f"%{search_value}%"
         stmt = stmt.where(or_(SqlUser.email.ilike(pattern), SqlUser.full_name.ilike(pattern)))
 
-    if role:
+    if role and role.strip().lower() != "all":
         stmt = stmt.where(SqlUser.role == role.strip())
 
-    if country_scope:
+    if country_scope and country_scope.strip().lower() != "all":
         code = country_scope.strip().upper()
         stmt = stmt.where(
             or_(
@@ -12312,17 +12502,44 @@ async def admin_permissions_overrides(
             )
         )
 
+    if actor:
+        actor_pattern = f"%{actor.strip()}%"
+        stmt = stmt.where(UserPermission.created_by.ilike(actor_pattern))
+
     if domain:
         stmt = stmt.where(UserPermission.domain == domain.strip())
     if action:
         stmt = stmt.where(UserPermission.action == action.strip())
 
-    stmt = stmt.order_by(UserPermission.updated_at.desc())
-    rows = (await session.execute(stmt)).all()
+    sort_direction = _normalize_created_at_sort(sort)
+    if sort_direction == "asc":
+        stmt = stmt.order_by(UserPermission.updated_at.asc())
+    else:
+        stmt = stmt.order_by(desc(UserPermission.updated_at))
 
-    safe_skip = max(skip, 0)
-    safe_limit = min(max(limit, 1), 1000)
-    rows = rows[safe_skip : safe_skip + safe_limit]
+    total_stmt = select(func.count()).select_from(UserPermission).join(SqlUser, SqlUser.id == UserPermission.user_id)
+    if target_user_id:
+        target_uuid = _safe_uuid(target_user_id)
+        if target_uuid:
+            total_stmt = total_stmt.where(UserPermission.user_id == target_uuid)
+    if search_value:
+        pattern = f"%{search_value}%"
+        total_stmt = total_stmt.where(or_(SqlUser.email.ilike(pattern), SqlUser.full_name.ilike(pattern)))
+    if role and role.strip().lower() != "all":
+        total_stmt = total_stmt.where(SqlUser.role == role.strip())
+    if country_scope and country_scope.strip().lower() != "all":
+        code = country_scope.strip().upper()
+        total_stmt = total_stmt.where(or_(SqlUser.country_code == code, cast(SqlUser.country_scope, Text).ilike(f"%{code}%")))
+    if actor:
+        actor_pattern = f"%{actor.strip()}%"
+        total_stmt = total_stmt.where(UserPermission.created_by.ilike(actor_pattern))
+    if domain:
+        total_stmt = total_stmt.where(UserPermission.domain == domain.strip())
+    if action:
+        total_stmt = total_stmt.where(UserPermission.action == action.strip())
+
+    rows = (await session.execute(stmt.offset(offset).limit(normalized_size))).all()
+    total = int((await session.execute(total_stmt)).scalar_one() or 0)
 
     items = []
     for permission_row, user_row in rows:
@@ -12353,7 +12570,100 @@ async def admin_permissions_overrides(
         "permission_flags_enabled": PERMISSION_FLAGS_ENABLED,
         "count": len(items),
         "items": items,
+        "pagination": {
+            "total": total,
+            "page": normalized_page,
+            "size": normalized_size,
+            "total_pages": math.ceil(total / normalized_size) if normalized_size else 0,
+            "sort": f"created_at:{sort_direction}",
+        },
     }
+
+
+@api_router.get("/admin/permissions/overrides/export")
+async def admin_permissions_overrides_export(
+    q: Optional[str] = None,
+    actor: Optional[str] = None,
+    target_user_id: Optional[str] = None,
+    role: Optional[str] = None,
+    country_scope: Optional[str] = None,
+    domain: Optional[str] = None,
+    action: Optional[str] = None,
+    sort: Optional[str] = "created_at:desc",
+    session: AsyncSession = Depends(get_sql_session),
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    await _ensure_permissions_db_ready(session)
+
+    search_value = (q or "").strip()
+    stmt = select(UserPermission, SqlUser).join(SqlUser, SqlUser.id == UserPermission.user_id)
+
+    if target_user_id:
+        target_uuid = _safe_uuid(target_user_id)
+        if not target_uuid:
+            raise HTTPException(status_code=400, detail="Invalid target_user_id")
+        stmt = stmt.where(UserPermission.user_id == target_uuid)
+
+    if search_value:
+        pattern = f"%{search_value}%"
+        stmt = stmt.where(or_(SqlUser.email.ilike(pattern), SqlUser.full_name.ilike(pattern)))
+
+    if role and role.strip().lower() != "all":
+        stmt = stmt.where(SqlUser.role == role.strip())
+
+    if country_scope and country_scope.strip().lower() != "all":
+        code = country_scope.strip().upper()
+        stmt = stmt.where(or_(SqlUser.country_code == code, cast(SqlUser.country_scope, Text).ilike(f"%{code}%")))
+
+    if actor:
+        actor_pattern = f"%{actor.strip()}%"
+        stmt = stmt.where(UserPermission.created_by.ilike(actor_pattern))
+
+    if domain:
+        stmt = stmt.where(UserPermission.domain == domain.strip())
+    if action:
+        stmt = stmt.where(UserPermission.action == action.strip())
+
+    if _normalize_created_at_sort(sort) == "asc":
+        stmt = stmt.order_by(UserPermission.updated_at.asc())
+    else:
+        stmt = stmt.order_by(desc(UserPermission.updated_at))
+
+    rows = (await session.execute(stmt.limit(10000))).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "permission_id",
+        "target_user_id",
+        "target_user_email",
+        "target_role",
+        "domain",
+        "action",
+        "allowed",
+        "country_scope",
+        "actor",
+        "updated_at",
+    ])
+
+    for permission_row, user_row in rows:
+        writer.writerow([
+            str(permission_row.id),
+            str(permission_row.user_id),
+            user_row.email,
+            user_row.role,
+            permission_row.domain,
+            permission_row.action,
+            bool(permission_row.allowed),
+            ",".join(_normalize_country_scope_codes(permission_row.country_scope)),
+            permission_row.created_by or "",
+            permission_row.updated_at.isoformat() if permission_row.updated_at else "",
+        ])
+
+    filename = datetime.now(timezone.utc).strftime("permission-overrides-%Y%m%d-%H%M.csv")
+    response = StreamingResponse(iter([output.getvalue()]), media_type="text/csv")
+    response.headers["Content-Disposition"] = f"attachment; filename={filename}"
+    return response
 
 
 @api_router.post("/admin/permissions/grant")
@@ -12531,15 +12841,28 @@ async def admin_permissions_revoke(
 
 @api_router.get("/admin/permissions/shadow-diff")
 async def admin_permissions_shadow_diff(
+    page: int = 1,
+    size: int = 50,
+    q: Optional[str] = None,
+    sort: Optional[str] = "created_at:desc",
     user: Optional[str] = None,
     role: Optional[str] = None,
     country_scope: Optional[str] = None,
     target_user_id: Optional[str] = None,
-    limit: int = 200,
+    limit: Optional[int] = None,
     session: AsyncSession = Depends(get_sql_session),
     current_user=Depends(check_permissions(["super_admin"])),
 ):
     await _ensure_permissions_db_ready(session)
+
+    if limit is not None:
+        normalized_page = 1
+        normalized_size = min(max(int(limit), 1), 1000)
+        offset = 0
+    else:
+        normalized_page, normalized_size, offset = _normalize_page_size(page, size, max_size=1000)
+
+    search_value = (q or user or "").strip()
 
     users_stmt = select(SqlUser)
     if target_user_id:
@@ -12547,26 +12870,43 @@ async def admin_permissions_shadow_diff(
         if not target_uuid:
             raise HTTPException(status_code=400, detail="Invalid target_user_id")
         users_stmt = users_stmt.where(SqlUser.id == target_uuid)
-    if role:
+    if role and role.strip().lower() != "all":
         users_stmt = users_stmt.where(SqlUser.role == role.strip())
-    if user:
-        pattern = f"%{user.strip()}%"
+    if search_value:
+        pattern = f"%{search_value}%"
         users_stmt = users_stmt.where(or_(SqlUser.email.ilike(pattern), SqlUser.full_name.ilike(pattern)))
 
-    users_stmt = users_stmt.order_by(SqlUser.created_at.desc())
-    users = (await session.execute(users_stmt)).scalars().all()
-
-    if country_scope:
+    if country_scope and country_scope.strip().lower() != "all":
         code = country_scope.strip().upper()
-        users = [
-            item
-            for item in users
-            if code == (item.country_code or "").upper()
-            or code in _normalize_country_scope_codes(item.country_scope)
-            or "*" in _normalize_country_scope_codes(item.country_scope)
-        ]
+        users_stmt = users_stmt.where(
+            or_(
+                SqlUser.country_code == code,
+                cast(SqlUser.country_scope, Text).ilike(f"%{code}%"),
+            )
+        )
 
-    users = users[: min(max(limit, 1), 1000)]
+    total_stmt = select(func.count()).select_from(SqlUser)
+    if target_user_id:
+        target_uuid = _safe_uuid(target_user_id)
+        if target_uuid:
+            total_stmt = total_stmt.where(SqlUser.id == target_uuid)
+    if role and role.strip().lower() != "all":
+        total_stmt = total_stmt.where(SqlUser.role == role.strip())
+    if search_value:
+        pattern = f"%{search_value}%"
+        total_stmt = total_stmt.where(or_(SqlUser.email.ilike(pattern), SqlUser.full_name.ilike(pattern)))
+    if country_scope and country_scope.strip().lower() != "all":
+        code = country_scope.strip().upper()
+        total_stmt = total_stmt.where(or_(SqlUser.country_code == code, cast(SqlUser.country_scope, Text).ilike(f"%{code}%")))
+
+    sort_direction = _normalize_created_at_sort(sort)
+    if sort_direction == "asc":
+        users_stmt = users_stmt.order_by(SqlUser.created_at.asc())
+    else:
+        users_stmt = users_stmt.order_by(desc(SqlUser.created_at))
+
+    users = (await session.execute(users_stmt.offset(offset).limit(normalized_size))).scalars().all()
+    checked_user_total = int((await session.execute(total_stmt)).scalar_one() or 0)
 
     user_ids = [item.id for item in users]
     permissions = []
@@ -12608,9 +12948,17 @@ async def admin_permissions_shadow_diff(
     return {
         "permission_flags_enabled": PERMISSION_FLAGS_ENABLED,
         "checked_user_count": len(users),
+        "checked_user_total": checked_user_total,
         "diff_count": len(diffs),
         "diffs": diffs,
         "allowlist": [],
+        "pagination": {
+            "total": checked_user_total,
+            "page": normalized_page,
+            "size": normalized_size,
+            "total_pages": math.ceil(checked_user_total / normalized_size) if normalized_size else 0,
+            "sort": f"created_at:{sort_direction}",
+        },
     }
 
 
@@ -12751,30 +13099,73 @@ async def admin_permissions_migrate_from_roles(
 @api_router.get("/admin/audit-logs")
 async def admin_list_audit_logs(
     request: Request,
+    page: int = 1,
+    size: int = 20,
     q: Optional[str] = None,
+    actor: Optional[str] = None,
+    role: Optional[str] = None,
+    country: Optional[str] = None,
     event_type: Optional[str] = None,
     action: Optional[str] = None,
     resource_type: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    sort: Optional[str] = "created_at:desc",
+    # backward-compatible aliases
     country_code: Optional[str] = None,
     admin_user_id: Optional[str] = None,
     from_date: Optional[str] = None,
     to_date: Optional[str] = None,
-    sort: Optional[str] = "timestamp_desc",
-    page: int = 0,
-    page_size: int = 20,
+    page_size: Optional[int] = None,
     scope: Optional[str] = None,
     ref: Optional[str] = None,
     session: AsyncSession = Depends(get_sql_session),
     current_user=Depends(check_permissions(["super_admin", "finance", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
 ):
-    if scope == "billing":
-        role = current_user.get("role")
-        if role not in {"super_admin", "finance"}:
-            raise HTTPException(status_code=403, detail="Insufficient permissions")
+    await _ensure_audit_db_ready(session)
 
-        page_size = min(200, max(1, int(page_size)))
-        page = max(0, int(page))
-        skip = page * page_size
+    if page_size is not None:
+        size = page_size
+
+    actor_value = (actor or admin_user_id or None)
+    country_value = (country or country_code or None)
+    event_type_value = (event_type or action or None)
+    date_from_value = date_from or from_date
+    date_to_value = date_to or to_date
+    role_filter = role
+
+    normalized_page, normalized_size, offset = _normalize_page_size(page, size)
+    sort_direction = _normalize_created_at_sort(sort)
+
+    cache_key = json.dumps(
+        {
+            "scope": scope or "all",
+            "page": normalized_page,
+            "size": normalized_size,
+            "q": q or "",
+            "actor": actor_value or "",
+            "role": role_filter or "",
+            "country": country_value or "",
+            "event_type": event_type_value or "",
+            "resource_type": resource_type or "",
+            "date_from": date_from_value or "",
+            "date_to": date_to_value or "",
+            "sort": sort_direction,
+            "ref": ref or "",
+            "role_current": current_user.get("role"),
+        },
+        sort_keys=True,
+    )
+
+    cached = _audit_list_cache.get(cache_key)
+    now_ts = time.time()
+    if cached and (now_ts - cached[0]) <= _audit_list_cache_ttl_seconds:
+        return cached[1]
+
+    if scope == "billing":
+        current_role = current_user.get("role")
+        if current_role not in {"super_admin", "finance"}:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         base_conditions = [AuditLog.action.in_(BILLING_AUDIT_ACTIONS)]
         if ref:
@@ -12788,79 +13179,79 @@ async def admin_list_audit_logs(
                 )
             )
 
+        base_conditions.extend(
+            _build_audit_sql_filters(
+                q=q,
+                actor=actor_value,
+                role=role_filter,
+                country=country_value,
+                event_type=event_type_value,
+                action=action,
+                resource_type=resource_type,
+                date_from=date_from_value,
+                date_to=date_to_value,
+            )
+        )
+
         query_stmt = select(AuditLog).where(and_(*base_conditions))
         total_stmt = select(func.count()).select_from(AuditLog).where(and_(*base_conditions))
 
-        if sort == "timestamp_asc":
+        if sort_direction == "asc":
             query_stmt = query_stmt.order_by(AuditLog.created_at.asc())
         else:
             query_stmt = query_stmt.order_by(desc(AuditLog.created_at))
 
-        rows = (await session.execute(query_stmt.offset(skip).limit(page_size))).scalars().all()
+        rows = (await session.execute(query_stmt.offset(offset).limit(normalized_size))).scalars().all()
         total = (await session.execute(total_stmt)).scalar_one() or 0
 
-        return {
+        response_payload = {
             "items": [_audit_log_sql_to_dict(row) for row in rows],
-            "pagination": {"total": int(total), "page": page, "page_size": page_size},
+            "pagination": {
+                "total": int(total),
+                "page": normalized_page,
+                "size": normalized_size,
+                "total_pages": math.ceil(int(total) / normalized_size) if normalized_size else 0,
+                "sort": f"created_at:{sort_direction}",
+            },
         }
+        _audit_list_cache[cache_key] = (now_ts, response_payload)
+        return response_payload
 
-    await resolve_admin_country_context(request, current_user=current_user, session=session, )
-
-    page_size = min(200, max(1, int(page_size)))
-    page = max(0, int(page))
-    skip = page * page_size
-
-    filters = []
-    if action:
-        filters.append(AuditLog.action == action)
-    if event_type:
-        filters.append(AuditLog.action == event_type)
-    if resource_type:
-        filters.append(AuditLog.resource_type == resource_type)
-    if country_code:
-        filters.append(AuditLog.country_code == country_code.strip().upper())
-
-    if admin_user_id:
-        admin_uuid = _safe_uuid(admin_user_id)
-        if admin_uuid:
-            filters.append(AuditLog.user_id == admin_uuid)
-        else:
-            filters.append(AuditLog.user_email.ilike(f"%{admin_user_id}%"))
-
-    if q:
-        search_value = f"%{q}%"
-        filters.append(
-            or_(
-                AuditLog.action.ilike(search_value),
-                AuditLog.resource_type.ilike(search_value),
-                AuditLog.resource_id.ilike(search_value),
-                AuditLog.user_email.ilike(search_value),
-                AuditLog.country_code.ilike(search_value),
-            )
-        )
-
-    date_from = _parse_audit_date(from_date, is_end=False)
-    date_to = _parse_audit_date(to_date, is_end=True)
-    if date_from:
-        filters.append(AuditLog.created_at >= date_from)
-    if date_to:
-        filters.append(AuditLog.created_at <= date_to)
+    filters = _build_audit_sql_filters(
+        q=q,
+        actor=actor_value,
+        role=role_filter,
+        country=country_value,
+        event_type=event_type_value,
+        action=action,
+        resource_type=resource_type,
+        date_from=date_from_value,
+        date_to=date_to_value,
+    )
 
     query_stmt = select(AuditLog).where(and_(*filters)) if filters else select(AuditLog)
     total_stmt = select(func.count()).select_from(AuditLog).where(and_(*filters)) if filters else select(func.count()).select_from(AuditLog)
 
-    if sort == "timestamp_asc":
+    if sort_direction == "asc":
         query_stmt = query_stmt.order_by(AuditLog.created_at.asc())
     else:
         query_stmt = query_stmt.order_by(desc(AuditLog.created_at))
 
-    rows = (await session.execute(query_stmt.offset(skip).limit(page_size))).scalars().all()
+    rows = (await session.execute(query_stmt.offset(offset).limit(normalized_size))).scalars().all()
     total = (await session.execute(total_stmt)).scalar_one() or 0
 
-    return {
+    response_payload = {
         "items": [_audit_log_sql_to_dict(row) for row in rows],
-        "pagination": {"total": int(total), "page": page, "page_size": page_size},
+        "pagination": {
+            "total": int(total),
+            "page": normalized_page,
+            "size": normalized_size,
+            "total_pages": math.ceil(int(total) / normalized_size) if normalized_size else 0,
+            "sort": f"created_at:{sort_direction}",
+        },
     }
+    _audit_list_cache[cache_key] = (now_ts, response_payload)
+    return response_payload
 
 
 @api_router.get("/admin/audit-logs/event-types")
@@ -12919,58 +13310,45 @@ async def admin_audit_log_detail(
 @api_router.get("/admin/audit-logs/export")
 async def admin_export_audit_logs(
     request: Request,
+    actor: Optional[str] = None,
+    role: Optional[str] = None,
+    country: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    sort: Optional[str] = "created_at:desc",
     q: Optional[str] = None,
     event_type: Optional[str] = None,
     action: Optional[str] = None,
     resource_type: Optional[str] = None,
+    # backward-compatible aliases
     country_code: Optional[str] = None,
     admin_user_id: Optional[str] = None,
     from_date: Optional[str] = None,
     to_date: Optional[str] = None,
-    sort: Optional[str] = "timestamp_desc",
     current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    await resolve_admin_country_context(request, current_user=current_user, session=session, )
+    await _ensure_audit_db_ready(session)
+    actor_value = actor or admin_user_id
+    country_value = country or country_code
+    event_type_value = event_type or action
+    date_from_value = date_from or from_date
+    date_to_value = date_to or to_date
 
-    filters = []
-    if action:
-        filters.append(AuditLog.action == action)
-    if event_type:
-        filters.append(AuditLog.action == event_type)
-    if resource_type:
-        filters.append(AuditLog.resource_type == resource_type)
-    if country_code:
-        filters.append(AuditLog.country_code == country_code.strip().upper())
-
-    if admin_user_id:
-        admin_uuid = _safe_uuid(admin_user_id)
-        if admin_uuid:
-            filters.append(AuditLog.user_id == admin_uuid)
-        else:
-            filters.append(AuditLog.user_email.ilike(f"%{admin_user_id}%"))
-
-    if q:
-        search_value = f"%{q}%"
-        filters.append(
-            or_(
-                AuditLog.action.ilike(search_value),
-                AuditLog.resource_type.ilike(search_value),
-                AuditLog.resource_id.ilike(search_value),
-                AuditLog.user_email.ilike(search_value),
-                AuditLog.country_code.ilike(search_value),
-            )
-        )
-
-    date_from = _parse_audit_date(from_date, is_end=False)
-    date_to = _parse_audit_date(to_date, is_end=True)
-    if date_from:
-        filters.append(AuditLog.created_at >= date_from)
-    if date_to:
-        filters.append(AuditLog.created_at <= date_to)
+    filters = _build_audit_sql_filters(
+        q=q,
+        actor=actor_value,
+        role=role,
+        country=country_value,
+        event_type=event_type_value,
+        action=action,
+        resource_type=resource_type,
+        date_from=date_from_value,
+        date_to=date_to_value,
+    )
 
     query_stmt = select(AuditLog).where(and_(*filters)) if filters else select(AuditLog)
-    if sort == "timestamp_asc":
+    if _normalize_created_at_sort(sort) == "asc":
         query_stmt = query_stmt.order_by(AuditLog.created_at.asc())
     else:
         query_stmt = query_stmt.order_by(desc(AuditLog.created_at))
@@ -12987,7 +13365,7 @@ async def admin_export_audit_logs(
         "resource_id",
         "user_id",
         "user_email",
-        "country_code",
+        "country_scope",
     ]
     writer.writerow(headers)
 
@@ -13000,7 +13378,7 @@ async def admin_export_audit_logs(
             row.resource_id,
             str(row.user_id) if row.user_id else "",
             row.user_email or "",
-            row.country_code or "",
+            row.country_scope or "",
         ])
 
     filename = datetime.now(timezone.utc).strftime("audit-logs-%Y%m%d-%H%M.csv")
