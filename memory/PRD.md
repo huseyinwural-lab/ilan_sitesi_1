@@ -698,3 +698,16 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - SQL `user_permissions` + resolver + migration tamamlandı; kanıtlar: `/app/test_reports/permission_flag_diff.json`, `/app/test_reports/iteration_93.json`, güncel `make rbac:check`.
 - 2026-03-03 (C-1) Ops/Health/Sitemap delegasyon: yeni router modülleri (`health_routes`, `sitemap_routes`, `ops_routes`) devrede; server.py geçici delegasyon aktif (register_handlers + include_router).
 - Kanıtlar: `/app/test_reports/c1_router_modularization_plan.json`, `/app/test_reports/c1_ops_health_sitemap_smoke.json`, `/app/test_reports/iteration_94.json`.
+## 2026-03-03 (C-2 — Content + Category Route Taşıma)
+- `backend/app/routers/category/routes.py` ve `backend/app/routers/content/routes.py` eklendi.
+- `server.py` içinde C-2 delegasyon adımı aktif: content/category endpointleri `api_router` içinden ayrıştırılıp dedicated router’lara taşındı; kontrat/path korunumu sağlandı.
+- Delegasyon envanteri: Category **30 route**, Content **41 route** (`app.state.c2_router_migration`).
+- Kanıt/test dosyaları:
+  - `/app/test_reports/c2_route_inventory.json`
+  - `/app/test_reports/c2_backend_regression.json` (PASS)
+  - `/app/test_reports/c2_frontend_e2e.json` (PASS)
+  - `/app/test_reports/iteration_95.json` (Testing Agent: backend 50/50 PASS, frontend PASS)
+
+### Sonraki Öncelik (P1)
+- C-3: Finance route modüler taşıma (yüksek risk) + ödeme uçtan uca regresyonu.
+- Permission-flag değişikliklerinden sonra User/Dealer akış doğrulaması.

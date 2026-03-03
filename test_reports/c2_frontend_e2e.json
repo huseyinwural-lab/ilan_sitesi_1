@@ -1,0 +1,39 @@
+{
+  "suite": "c2_frontend_e2e",
+  "source_iteration": "/app/test_reports/iteration_95.json",
+  "result": "PASS",
+  "scope": "ilan-ver category regression (4 DE + 2 FR) + homepage content route rendering sanity",
+  "ilan_ver_e2e_regression": {
+    "de_categories": {
+      "list": "PASS",
+      "children": "PASS",
+      "catalog_schema": "PASS (409 for categories without schema)",
+      "validate": "PASS"
+    },
+    "fr_categories": {
+      "list": "PASS",
+      "children": "PASS",
+      "catalog_schema": "PASS (409 for categories without schema)",
+      "validate": "PASS"
+    }
+  },
+  "frontend_verification": {
+    "homepage": {
+      "categories_sidebar": "WORKING - Vasıta, Emlak, Diğer visible",
+      "sub_categories": "WORKING - P0-05 Oto Genel, P0-05 Motosiklet Genel visible",
+      "acil_filter": "WORKING - ACİL (71) visible",
+      "site_header": "WORKING - Logo, search bar, login/register buttons",
+      "listings": "WORKING - 21 Vitrin labels, 20 price elements"
+    },
+    "content_routes_frontend": {
+      "header": "PASS - annonceia.com logo rendered",
+      "theme": "PASS - consistent styling applied",
+      "footer": "PASS - footer rendered",
+      "showcase": "PASS - vitrin listings displayed"
+    }
+  },
+  "notes": [
+    "Kategori sidebar, alt kategoriler, header ve vitrin listing blokları çalışıyor.",
+    "Content route delegasyonu sonrası frontend entegrasyon regresyonu tespit edilmedi."
+  ]
+}
