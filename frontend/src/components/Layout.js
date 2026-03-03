@@ -535,7 +535,7 @@ export default function Layout({ children }) {
 
     { divider: true, label: 'Sistem', roles: roles.system },
     { path: '/admin/countries', icon: Globe, label: 'Ülkeler', roles: roles.system, testId: 'system-countries' },
-    { path: '/admin/audit', icon: Clock, label: 'Denetim Kayıtları', roles: roles.auditViewer, testId: 'system-audit-logs' },
+    { path: '/admin/audit', icon: Clock, label: 'Audit Dashboard', roles: roles.adminOnly, testId: 'system-audit-dashboard' },
     { path: '/admin/system-settings', icon: Settings, label: 'Sistem Ayarları', roles: roles.system, testId: 'system-settings' },
     { path: '/admin/system-settings?focus=google-maps', icon: Settings, label: 'Google Maps Ayarları', roles: roles.system, testId: 'system-google-maps-settings' },
   ];

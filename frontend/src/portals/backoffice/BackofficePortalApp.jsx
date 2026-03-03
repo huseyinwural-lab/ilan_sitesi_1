@@ -15,6 +15,7 @@ import AdminVehicleModels from '@/pages/admin/AdminVehicleModels';
 import AdminVehicleMasterImport from '@/pages/admin/AdminVehicleMasterImport';
 
 import AuditLogs from '@/pages/AuditLogs';
+import AdminAuditDashboard from '@/pages/admin/AdminAuditDashboard';
 import ModerationQueue from '@/pages/ModerationQueue';
 import AdminReportsPage from '@/pages/admin/AdminReports';
 import DealersPage from '@/pages/admin/Dealers';
@@ -71,8 +72,8 @@ export default function BackofficePortalApp() {
       <Route path="/dealer-portal-config" element={<AdminLayout><AdminDealerPortalConfig /></AdminLayout>} />
       <Route path="/audit" element={
         <AdminLayout>
-          <AdminRouteGuard roles={["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"]}>
-            <AuditLogs />
+          <AdminRouteGuard roles={["super_admin"]}>
+            <AdminAuditDashboard />
           </AdminRouteGuard>
         </AdminLayout>
       } />

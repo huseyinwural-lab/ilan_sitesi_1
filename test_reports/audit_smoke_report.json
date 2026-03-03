@@ -1,0 +1,94 @@
+{
+  "generated_at": "2026-03-03T08:37:15.793858+00:00",
+  "checks": [
+    {
+      "role": "super_admin",
+      "path": "/api/admin/audit/dashboard/schema",
+      "http": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "role": "country_admin",
+      "path": "/api/admin/audit/dashboard/schema",
+      "http": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "role": "admin",
+      "path": "/api/admin/audit/dashboard/schema",
+      "http": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "role": "super_admin",
+      "path": "/api/admin/audit/dashboard/events",
+      "http": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "role": "country_admin",
+      "path": "/api/admin/audit/dashboard/events",
+      "http": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "role": "admin",
+      "path": "/api/admin/audit/dashboard/events",
+      "http": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "role": "super_admin",
+      "path": "/api/admin/audit/dashboard/stats",
+      "http": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "role": "country_admin",
+      "path": "/api/admin/audit/dashboard/stats",
+      "http": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "role": "admin",
+      "path": "/api/admin/audit/dashboard/stats",
+      "http": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "role": "super_admin",
+      "path": "/api/admin/audit/dashboard/anomalies",
+      "http": 200,
+      "expected": 200,
+      "pass": true
+    },
+    {
+      "role": "country_admin",
+      "path": "/api/admin/audit/dashboard/anomalies",
+      "http": 403,
+      "expected": 403,
+      "pass": true
+    },
+    {
+      "role": "admin",
+      "path": "/api/admin/audit/dashboard/anomalies",
+      "http": 403,
+      "expected": 403,
+      "pass": true
+    }
+  ],
+  "summary": {
+    "total": 12,
+    "pass": 12,
+    "fail": 0
+  }
+}

@@ -11650,6 +11650,304 @@ def _audit_log_sql_to_dict(row: AuditLog) -> Dict[str, Any]:
     }
 
 
+AUDIT_DASHBOARD_SCHEMA_VERSION = "audit-dashboard-v1"
+AUDIT_DASHBOARD_START_AT = datetime.now(timezone.utc)
+AUDIT_DASHBOARD_REQUIRED_FIELDS = [
+    "id",
+    "occurred_at",
+    "action",
+    "resource_type",
+    "resource_id",
+    "actor_email_masked",
+    "country_scope",
+    "severity",
+    "metadata_masked",
+]
+AUDIT_DASHBOARD_MASKED_FIELDS = [
+    "email",
+    "user_email",
+    "phone",
+    "gsm",
+    "identity_number",
+    "tax_number",
+    "iban",
+    "ip_address",
+    "token",
+    "authorization",
+]
+
+
+def _mask_email(value: Optional[str]) -> Optional[str]:
+    if not value or "@" not in value:
+        return value
+    local, domain = value.split("@", 1)
+    if len(local) <= 2:
+        local_masked = "*" * len(local)
+    else:
+        local_masked = f"{local[:2]}***"
+    return f"{local_masked}@{domain}"
+
+
+def _mask_ip(value: Optional[str]) -> Optional[str]:
+    if not value:
+        return value
+    if ":" in value:
+        parts = value.split(":")
+        if len(parts) > 2:
+            return ":".join(parts[:2] + ["****"])
+        return "****"
+    chunks = value.split(".")
+    if len(chunks) == 4:
+        return ".".join(chunks[:3] + ["***"])
+    return "***"
+
+
+def _mask_audit_metadata(metadata: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    if not isinstance(metadata, dict):
+        return {}
+    masked: Dict[str, Any] = {}
+    for key, value in metadata.items():
+        normalized_key = str(key).lower()
+        if normalized_key in AUDIT_DASHBOARD_MASKED_FIELDS:
+            masked[key] = "***"
+            continue
+        if isinstance(value, str) and normalized_key.endswith("email"):
+            masked[key] = _mask_email(value)
+            continue
+        if isinstance(value, str) and normalized_key.endswith("ip"):
+            masked[key] = _mask_ip(value)
+            continue
+        masked[key] = value
+    return masked
+
+
+def _audit_severity(action: str) -> str:
+    upper = (action or "").upper()
+    if upper in {"RBAC_POLICY_MISSING", "RBAC_DENY"}:
+        return "high"
+    if "FAIL" in upper or "ERROR" in upper:
+        return "high"
+    if "EXPORT" in upper or "PUBLISH" in upper:
+        return "medium"
+    return "low"
+
+
+def _is_publish_failure(action: str, metadata: Optional[Dict[str, Any]]) -> bool:
+    upper = (action or "").upper()
+    if "PUBLISH" not in upper:
+        return False
+    if "FAIL" in upper or "ERROR" in upper or "CONFLICT" in upper or "DENY" in upper:
+        return True
+    status = None
+    if isinstance(metadata, dict):
+        status = str(metadata.get("status") or "").lower()
+    return status in {"failed", "error", "conflict", "denied"}
+
+
+def _is_export_attempt(action: str) -> bool:
+    return "EXPORT" in (action or "").upper()
+
+
+def _is_403_event(action: str) -> bool:
+    upper = (action or "").upper()
+    return upper in {"RBAC_DENY", "RBAC_POLICY_MISSING"}
+
+
+def _audit_dashboard_event_from_row(row: AuditLog) -> Dict[str, Any]:
+    metadata_masked = _mask_audit_metadata(row.metadata_info or {})
+    return {
+        "id": str(row.id),
+        "occurred_at": row.created_at.isoformat() if row.created_at else None,
+        "action": row.action,
+        "resource_type": row.resource_type,
+        "resource_id": row.resource_id,
+        "actor_email_masked": _mask_email(row.user_email),
+        "country_scope": row.country_scope,
+        "severity": _audit_severity(row.action),
+        "metadata_masked": metadata_masked,
+        "is_pii_scrubbed": bool(row.is_pii_scrubbed),
+        "ip_masked": _mask_ip(row.ip_address),
+    }
+
+
+def _audit_stats_from_rows(rows: List[AuditLog]) -> Dict[str, Any]:
+    unique_actors = {row.user_email for row in rows if row.user_email}
+    denied_403 = 0
+    publish_failures = 0
+    export_attempts = 0
+    for row in rows:
+        if _is_403_event(row.action):
+            denied_403 += 1
+        if _is_publish_failure(row.action, row.metadata_info or {}):
+            publish_failures += 1
+        if _is_export_attempt(row.action):
+            export_attempts += 1
+    return {
+        "total_events": len(rows),
+        "unique_actors": len(unique_actors),
+        "denied_403_events": denied_403,
+        "publish_failure_events": publish_failures,
+        "export_attempt_events": export_attempts,
+    }
+
+
+@api_router.get("/admin/audit/dashboard/schema")
+async def admin_audit_dashboard_schema(
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    return {
+        "schema_version": AUDIT_DASHBOARD_SCHEMA_VERSION,
+        "required_fields": AUDIT_DASHBOARD_REQUIRED_FIELDS,
+        "masking_standard": {
+            "masked_fields": AUDIT_DASHBOARD_MASKED_FIELDS,
+            "email_mask": "first_2_chars_visible",
+            "ip_mask": "last_octet_or_suffix_hidden",
+        },
+        "collection_start_at": AUDIT_DASHBOARD_START_AT.isoformat(),
+        "collector_mode": "forward_only_no_backfill",
+    }
+
+
+@api_router.get("/admin/audit/dashboard/events")
+async def admin_audit_dashboard_events(
+    limit: int = 50,
+    action: Optional[str] = None,
+    resource_type: Optional[str] = None,
+    q: Optional[str] = None,
+    session: AsyncSession = Depends(get_sql_session),
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    normalized_limit = min(200, max(1, int(limit)))
+    filters = [AuditLog.created_at >= AUDIT_DASHBOARD_START_AT]
+    if action:
+        filters.append(AuditLog.action == action.strip())
+    if resource_type:
+        filters.append(AuditLog.resource_type == resource_type.strip())
+    if q:
+        pattern = f"%{q.strip()}%"
+        filters.append(
+            or_(
+                AuditLog.action.ilike(pattern),
+                AuditLog.resource_type.ilike(pattern),
+                AuditLog.resource_id.ilike(pattern),
+                AuditLog.user_email.ilike(pattern),
+            )
+        )
+    rows = (
+        await session.execute(
+            select(AuditLog)
+            .where(and_(*filters))
+            .order_by(desc(AuditLog.created_at))
+            .limit(normalized_limit)
+        )
+    ).scalars().all()
+    return {
+        "schema_version": AUDIT_DASHBOARD_SCHEMA_VERSION,
+        "collection_start_at": AUDIT_DASHBOARD_START_AT.isoformat(),
+        "items": [_audit_dashboard_event_from_row(row) for row in rows],
+    }
+
+
+@api_router.get("/admin/audit/dashboard/stats")
+async def admin_audit_dashboard_stats(
+    session: AsyncSession = Depends(get_sql_session),
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    now = datetime.now(timezone.utc)
+
+    async def _rows_for_window(hours: int) -> List[AuditLog]:
+        start_dt = max(AUDIT_DASHBOARD_START_AT, now - timedelta(hours=hours))
+        rows = (
+            await session.execute(
+                select(AuditLog)
+                .where(AuditLog.created_at >= start_dt)
+                .order_by(desc(AuditLog.created_at))
+            )
+        ).scalars().all()
+        return rows
+
+    rows_24h = await _rows_for_window(24)
+    rows_7d = await _rows_for_window(24 * 7)
+
+    return {
+        "schema_version": AUDIT_DASHBOARD_SCHEMA_VERSION,
+        "collection_start_at": AUDIT_DASHBOARD_START_AT.isoformat(),
+        "windows": {
+            "24h": _audit_stats_from_rows(rows_24h),
+            "7d": _audit_stats_from_rows(rows_7d),
+        },
+    }
+
+
+@api_router.get("/admin/audit/dashboard/anomalies")
+async def admin_audit_dashboard_anomalies(
+    window_hours: int = 24,
+    deny_403_threshold: int = 20,
+    publish_failure_threshold: int = 10,
+    export_attempt_threshold: int = 15,
+    session: AsyncSession = Depends(get_sql_session),
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    normalized_window = max(1, min(24 * 7, int(window_hours)))
+    start_dt = max(AUDIT_DASHBOARD_START_AT, datetime.now(timezone.utc) - timedelta(hours=normalized_window))
+
+    rows = (
+        await session.execute(
+            select(AuditLog)
+            .where(AuditLog.created_at >= start_dt)
+            .order_by(desc(AuditLog.created_at))
+        )
+    ).scalars().all()
+
+    stats = _audit_stats_from_rows(rows)
+    anomalies = []
+
+    if stats["denied_403_events"] >= deny_403_threshold:
+        anomalies.append(
+            {
+                "type": "RBAC_403_SPIKE",
+                "severity": "high",
+                "count": stats["denied_403_events"],
+                "threshold": deny_403_threshold,
+                "description": "RBAC deny / policy missing olaylarında spike tespit edildi.",
+            }
+        )
+
+    if stats["publish_failure_events"] >= publish_failure_threshold:
+        anomalies.append(
+            {
+                "type": "PUBLISH_FAILURE_SPIKE",
+                "severity": "high",
+                "count": stats["publish_failure_events"],
+                "threshold": publish_failure_threshold,
+                "description": "Publish failure olaylarında spike tespit edildi.",
+            }
+        )
+
+    if stats["export_attempt_events"] >= export_attempt_threshold:
+        anomalies.append(
+            {
+                "type": "EXPORT_ATTEMPT_SPIKE",
+                "severity": "medium",
+                "count": stats["export_attempt_events"],
+                "threshold": export_attempt_threshold,
+                "description": "Export attempt olaylarında spike tespit edildi.",
+            }
+        )
+
+    return {
+        "schema_version": AUDIT_DASHBOARD_SCHEMA_VERSION,
+        "collection_start_at": AUDIT_DASHBOARD_START_AT.isoformat(),
+        "window_hours": normalized_window,
+        "thresholds": {
+            "deny_403_threshold": deny_403_threshold,
+            "publish_failure_threshold": publish_failure_threshold,
+            "export_attempt_threshold": export_attempt_threshold,
+        },
+        "anomalies": anomalies,
+    }
+
+
 @api_router.get("/admin/audit-logs")
 async def admin_list_audit_logs(
     request: Request,
