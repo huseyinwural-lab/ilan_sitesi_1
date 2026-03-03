@@ -38,7 +38,7 @@ from fastapi.routing import APIRoute
 from starlette.middleware.cors import CORSMiddleware
 from starlette.routing import Match
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from alembic.config import Config as AlembicConfig
 from alembic.script import ScriptDirectory
 from emergentintegrations.payments.stripe.checkout import (
@@ -1369,7 +1369,7 @@ async def _upsert_seed_user(
     session: AsyncSession,
     *,
     email: str,
-    password: str,
+    password: Optional[str],
     role: str,
     full_name: str,
     country_code: str,
@@ -1379,7 +1379,10 @@ async def _upsert_seed_user(
     phone_e164: Optional[str] = None,
 ) -> SqlUser:
     now_dt = datetime.now(timezone.utc)
-    hashed = get_password_hash(password)
+    resolved_password = (password or "").strip() or secrets.token_urlsafe(24)
+    if len(resolved_password) < 12:
+        raise RuntimeError("Fixture password must be at least 12 chars")
+    hashed = get_password_hash(resolved_password)
     result = await session.execute(select(SqlUser).where(SqlUser.email == email))
     user = result.scalar_one_or_none()
     if user:
@@ -1426,11 +1429,20 @@ async def _upsert_seed_user(
     return user
 
 
+def _fixture_password_from_env(env_key: str) -> str:
+    raw = (os.environ.get(env_key) or "").strip()
+    if raw:
+        if len(raw) < 12:
+            raise RuntimeError(f"{env_key} must be at least 12 chars")
+        return raw
+    return secrets.token_urlsafe(24)
+
+
 async def _ensure_admin_user(session: AsyncSession):
     await _upsert_seed_user(
         session,
         email="admin@platform.com",
-        password="Admin123!",
+        password=_fixture_password_from_env("FIXTURE_ADMIN_PASSWORD"),
         role="super_admin",
         full_name="System Administrator",
         country_code="TR",
@@ -1443,7 +1455,7 @@ async def _ensure_dealer_user(session: AsyncSession):
     await _upsert_seed_user(
         session,
         email="dealer@platform.com",
-        password="Dealer123!",
+        password=_fixture_password_from_env("FIXTURE_DEALER_PASSWORD"),
         role="dealer",
         full_name="Dealer Demo",
         country_code="DE",
@@ -1455,7 +1467,7 @@ async def _ensure_test_user(session: AsyncSession):
     await _upsert_seed_user(
         session,
         email="user@platform.com",
-        password="User123!",
+        password=_fixture_password_from_env("FIXTURE_USER_PASSWORD"),
         role="individual",
         full_name="Test User",
         first_name="Test",
@@ -1470,7 +1482,7 @@ async def _ensure_test_user_two(session: AsyncSession):
     await _upsert_seed_user(
         session,
         email="user2@platform.com",
-        password="User123!",
+        password=_fixture_password_from_env("FIXTURE_USER2_PASSWORD"),
         role="individual",
         full_name="Test User 2",
         first_name="Test",
@@ -1524,7 +1536,7 @@ async def _ensure_individual_fixtures(session: AsyncSession):
         await _upsert_seed_user(
             session,
             email=fixture["email"],
-            password="User123!",
+            password=_fixture_password_from_env("FIXTURE_INDIVIDUAL_PASSWORD"),
             role="individual",
             full_name=f"{fixture['first_name']} {fixture['last_name']}",
             first_name=fixture["first_name"],
@@ -1539,7 +1551,7 @@ async def _ensure_country_admin_user(session: AsyncSession):
     await _upsert_seed_user(
         session,
         email="countryadmin@platform.com",
-        password="Country123!",
+        password=_fixture_password_from_env("FIXTURE_COUNTRY_ADMIN_PASSWORD"),
         role="country_admin",
         full_name="Country Admin",
         country_code="DE",
@@ -1703,7 +1715,8 @@ async def _ensure_dealer_portal_config_seed(session: AsyncSession) -> None:
 
 async def lifespan(app: FastAPI):
     logging.getLogger("runtime").warning(
-        "APP_ENV=%s AUTH_PROVIDER=%s APPLICATIONS_PROVIDER=%s",
+        "ENVIRONMENT=%s APP_ENV=%s AUTH_PROVIDER=%s APPLICATIONS_PROVIDER=%s",
+        ENVIRONMENT,
         APP_ENV,
         AUTH_PROVIDER,
         APPLICATIONS_PROVIDER,
@@ -1758,16 +1771,10 @@ async def lifespan(app: FastAPI):
 
     try:
         async with AsyncSessionLocal() as session:
-            await _ensure_admin_user(session)
-            await _ensure_dealer_user(session)
-            await _ensure_test_user(session)
-            await _ensure_test_user_two(session)
-            await _ensure_individual_fixtures(session)
-            await _ensure_country_admin_user(session)
             await _ensure_dealer_portal_config_seed(session)
             await _seed_finance_defaults(session)
     except Exception as exc:
-        logging.getLogger("runtime").warning("Seed users skipped: %s", exc)
+        logging.getLogger("runtime").warning("Startup seed skipped: %s", exc)
 
     app.state.db = None
     app.state.category_bulk_worker_task = asyncio.create_task(_category_bulk_job_worker_loop())
@@ -4094,7 +4101,8 @@ _application_submit_attempts: Dict[str, List[float]] = {}
 
 VEHICLE_TYPE_SET = {"car", "suv", "offroad", "pickup", "truck", "bus"}
 
-APP_ENV = (os.environ.get("APP_ENV") or "dev").lower()
+ENVIRONMENT = settings.ENVIRONMENT
+APP_ENV = settings.APP_ENV
 AUTH_PROVIDER = "sql"
 APPLICATIONS_PROVIDER = "sql"
 PERMISSION_FLAGS_ENABLED = (os.environ.get("PERMISSION_FLAGS_ENABLED") or "false").lower() in {"1", "true", "yes"}
@@ -4153,6 +4161,7 @@ STRIPE_WEBHOOK_SECRET_PRESENT = bool(STRIPE_WEBHOOK_SECRET)
 STRIPE_SECRET_KEY_VALID = _looks_like_stripe_key(STRIPE_SECRET_KEY, ("sk_test_", "sk_live_"), 30)
 STRIPE_PUBLIC_KEY_VALID = _looks_like_stripe_key(STRIPE_PUBLIC_KEY, ("pk_test_", "pk_live_"), 30)
 STRIPE_WEBHOOK_SECRET_VALID = _looks_like_stripe_key(STRIPE_WEBHOOK_SECRET, ("whsec_",), 20)
+STRIPE_WEBHOOK_MAX_AGE_SECONDS = max(60, int((os.environ.get("STRIPE_WEBHOOK_MAX_AGE_SECONDS") or "300").strip() or "300"))
 PAYMENTS_RUNTIME_ENABLED = STRIPE_SECRET_KEY_VALID and STRIPE_PUBLIC_KEY_VALID and STRIPE_WEBHOOK_SECRET_VALID
 PAYMENTS_RUNTIME_STATUS = "enabled" if PAYMENTS_RUNTIME_ENABLED else "disabled"
 
@@ -4246,11 +4255,8 @@ if EMAIL_PROVIDER == "sendgrid":
 
 if RAW_DATABASE_URL:
     DATABASE_URL = RAW_DATABASE_URL
-elif APP_ENV in {"preview", "prod"}:
-    raise RuntimeError("DATABASE_URL must be set for preview/prod")
 else:
-    logging.getLogger("sql_config").warning("DATABASE_URL not set – running with local fallback")
-    DATABASE_URL = "postgresql://admin_user:admin_pass@localhost:5432/admin_panel"
+    raise RuntimeError("DATABASE_URL must be set")
 
 try:
     DB_POOL_SIZE = int(DB_POOL_SIZE_RAW) if DB_POOL_SIZE_RAW else 10
@@ -11523,7 +11529,7 @@ async def admin_approve_individual_application(
             user = SqlUser(
                 id=uuid.uuid4(),
                 email=applicant_email,
-                hashed_password=get_password_hash("User123!"),
+                hashed_password=get_password_hash(secrets.token_urlsafe(24)),
                 full_name=applicant_name or applicant_email,
                 role="individual",
                 status="active",
@@ -18408,8 +18414,11 @@ class DealerStoreUserCreatePayload(BaseModel):
 
 
 class DealerSavedCardPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     holder_name: str = Field(..., min_length=2, max_length=255)
-    card_number: str = Field(..., min_length=12, max_length=25)
+    payment_method_id: str = Field(..., pattern=r"^pm_[A-Za-z0-9]+$")
+    last4: str = Field(..., pattern=r"^[0-9]{4}$")
     expiry_month: int = Field(..., ge=1, le=12)
     expiry_year: int = Field(..., ge=2024, le=2100)
     brand: Optional[str] = "visa"
@@ -22706,11 +22715,11 @@ async def dealer_settings_blocked_accounts_remove(
     return {"ok": True, "blocked_accounts": blocked_accounts}
 
 
-def _mask_card_last4(value: str) -> str:
-    digits = re.sub(r"\D", "", str(value or ""))
-    if len(digits) < 4:
-        raise HTTPException(status_code=400, detail="card_number invalid")
-    return digits[-4:]
+def _normalize_card_brand(value: Optional[str]) -> str:
+    normalized = (value or "visa").strip().lower()
+    if normalized not in {"visa", "mastercard", "amex", "discover", "diners", "jcb", "unionpay", "unknown"}:
+        return "unknown"
+    return normalized
 
 
 @api_router.get("/dealer/settings/saved-cards")
@@ -22765,11 +22774,11 @@ async def dealer_settings_saved_cards_create(
     row = DealerSavedCard(
         dealer_id=dealer_uuid,
         holder_name=payload.holder_name.strip(),
-        brand=(payload.brand or "visa").strip().lower(),
-        last4=_mask_card_last4(payload.card_number),
+        brand=_normalize_card_brand(payload.brand),
+        last4=payload.last4,
         expiry_month=int(payload.expiry_month),
         expiry_year=int(payload.expiry_year),
-        token_ref=f"manual_{uuid.uuid4().hex[:16]}",
+        token_ref=payload.payment_method_id,
         is_default=bool(payload.is_default),
         auto_payment_enabled=bool(payload.auto_payment_enabled),
         billing_address_json=payload.billing_address_json or {},
@@ -22783,7 +22792,12 @@ async def dealer_settings_saved_cards_create(
         actor=current_user,
         resource_type="dealer_saved_card",
         resource_id=str(row.id),
-        metadata={"brand": row.brand, "last4": row.last4, "is_default": row.is_default},
+        metadata={
+            "brand": row.brand,
+            "last4": row.last4,
+            "is_default": row.is_default,
+            "token_ref": row.token_ref,
+        },
         request=request,
         country_code=current_user.get("country_code"),
     )
@@ -23369,6 +23383,27 @@ def _resolve_webhook_request_id(request: Request, event_data: Dict[str, Any]) ->
     return None
 
 
+def _parse_stripe_signature_timestamp(signature: str) -> Optional[int]:
+    if not signature:
+        return None
+    for part in signature.split(","):
+        part = part.strip()
+        if part.startswith("t="):
+            raw_value = (part.split("=", 1)[1] or "").strip()
+            if raw_value.isdigit():
+                return int(raw_value)
+    return None
+
+
+def _ensure_stripe_webhook_not_replayed(signature: str) -> None:
+    timestamp = _parse_stripe_signature_timestamp(signature)
+    if not timestamp:
+        raise HTTPException(status_code=400, detail="Invalid Stripe signature timestamp")
+    now_ts = int(datetime.now(timezone.utc).timestamp())
+    if abs(now_ts - timestamp) > STRIPE_WEBHOOK_MAX_AGE_SECONDS:
+        raise HTTPException(status_code=400, detail="Stale Stripe webhook signature")
+
+
 def _ensure_object_storage_ready() -> None:
     if not EMERGENT_LLM_KEY:
         raise HTTPException(status_code=503, detail="Object storage key not configured")
@@ -23757,6 +23792,7 @@ async def stripe_payment_intent_webhook(
     signature = request.headers.get("stripe-signature")
     if not signature:
         raise HTTPException(status_code=400, detail="Missing Stripe signature")
+    _ensure_stripe_webhook_not_replayed(signature)
 
     raw_body = await request.body()
 
@@ -24157,6 +24193,9 @@ async def stripe_webhook(
     stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=f"{origin}/api/webhook/stripe")
 
     signature = request.headers.get("stripe-signature")
+    if not signature:
+        raise HTTPException(status_code=400, detail="Missing Stripe signature")
+    _ensure_stripe_webhook_not_replayed(signature)
     raw_body = await request.body()
 
     try:

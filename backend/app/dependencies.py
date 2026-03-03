@@ -8,13 +8,14 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_token
+from app.core.config import settings
 from app.core.database import get_db
 from app.models.user import User as SqlUser
 
 security = HTTPBearer()
 security_optional = HTTPBearer(auto_error=False)
 
-APP_ENV = (os.environ.get("APP_ENV") or "dev").lower()
+APP_ENV = settings.APP_ENV
 TOKEN_VERSION = os.environ.get("TOKEN_VERSION", "v2")
 
 ADMIN_ROLES = {

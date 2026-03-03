@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js';
+import { CardElement, Elements, useElements, useStripe } from '@stripe/react-stripe-js';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -50,6 +52,113 @@ const formatDate = (value) => {
   return parsed.toLocaleString('tr-TR');
 };
 
+const cardElementOptions = {
+  style: {
+    base: {
+      color: '#0f172a',
+      fontSize: '14px',
+      fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif',
+      '::placeholder': {
+        color: '#94a3b8',
+      },
+    },
+    invalid: {
+      color: '#b91c1c',
+    },
+  },
+  hidePostalCode: true,
+};
+
+function DealerStripeCardCaptureForm({
+  holderName,
+  setHolderName,
+  isDefault,
+  setIsDefault,
+  autoPaymentEnabled,
+  setAutoPaymentEnabled,
+  billingEmail,
+  submitting,
+  onSubmitTokenizedCard,
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [formError, setFormError] = useState('');
+
+  return (
+    <form
+      className="grid gap-3 md:grid-cols-2"
+      data-testid="dealer-settings-saved-card-form"
+      onSubmit={async (event) => {
+        event.preventDefault();
+        setFormError('');
+        if (!stripe || !elements) {
+          setFormError('Stripe formu henüz hazır değil.');
+          return;
+        }
+        if (!holderName.trim()) {
+          setFormError('Kart üzerindeki isim zorunludur.');
+          return;
+        }
+
+        const cardElement = elements.getElement(CardElement);
+        if (!cardElement) {
+          setFormError('Kart alanı bulunamadı.');
+          return;
+        }
+
+        const result = await stripe.createPaymentMethod({
+          type: 'card',
+          card: cardElement,
+          billing_details: {
+            name: holderName,
+            email: billingEmail || undefined,
+          },
+        });
+
+        if (result.error) {
+          setFormError(result.error.message || 'Kart bilgisi doğrulanamadı.');
+          return;
+        }
+
+        const pm = result.paymentMethod;
+        if (!pm || !pm.id || !pm.card) {
+          setFormError('Ödeme yöntemi oluşturulamadı.');
+          return;
+        }
+
+        await onSubmitTokenizedCard({
+          holder_name: holderName.trim(),
+          payment_method_id: pm.id,
+          last4: pm.card.last4,
+          expiry_month: Number(pm.card.exp_month),
+          expiry_year: Number(pm.card.exp_year),
+          brand: pm.card.brand || 'unknown',
+          is_default: Boolean(isDefault),
+          auto_payment_enabled: Boolean(autoPaymentEnabled),
+        });
+
+        cardElement.clear();
+      }}
+    >
+      <input
+        value={holderName}
+        onChange={(event) => setHolderName(event.target.value)}
+        placeholder="Kart Üzerindeki İsim"
+        className="h-10 rounded-md border border-slate-300 px-3 text-sm"
+        data-testid="dealer-settings-card-holder-name"
+        required
+      />
+      <div className="rounded-md border border-slate-300 bg-white px-3 py-2" data-testid="dealer-settings-card-element-wrap">
+        <CardElement options={cardElementOptions} data-testid="dealer-settings-card-element" />
+      </div>
+      <label className="flex items-center gap-2 text-sm" data-testid="dealer-settings-card-default-wrap"><input type="checkbox" checked={Boolean(isDefault)} onChange={(event) => setIsDefault(event.target.checked)} data-testid="dealer-settings-card-is-default" /> Varsayılan kart</label>
+      <label className="flex items-center gap-2 text-sm" data-testid="dealer-settings-card-auto-pay-wrap"><input type="checkbox" checked={Boolean(autoPaymentEnabled)} onChange={(event) => setAutoPaymentEnabled(event.target.checked)} data-testid="dealer-settings-card-auto-pay" /> Otomatik ödeme onayı</label>
+      {formError ? <div className="md:col-span-2 rounded-md border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700" data-testid="dealer-settings-card-form-error">{formError}</div> : null}
+      <button type="submit" disabled={submitting || !stripe} className="h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white md:col-span-2 disabled:opacity-60" data-testid="dealer-settings-card-submit">{submitting ? 'Kaydediliyor...' : 'Stripe ile Kart Kaydet'}</button>
+    </form>
+  );
+}
+
 export default function DealerSettings() {
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedSection = (searchParams.get('section') || '').toLowerCase();
@@ -70,10 +179,13 @@ export default function DealerSettings() {
   const [payments, setPayments] = useState([]);
   const [savedCards, setSavedCards] = useState([]);
   const [paymentApplications, setPaymentApplications] = useState([]);
+  const [stripePublishableKey, setStripePublishableKey] = useState('');
+  const [stripeLoading, setStripeLoading] = useState(true);
 
   const [passwordForm, setPasswordForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
   const [storeUserForm, setStoreUserForm] = useState({ full_name: '', email: '', password: '', role: 'staff' });
-  const [cardForm, setCardForm] = useState({ holder_name: '', card_number: '', expiry_month: '', expiry_year: '', brand: 'visa', is_default: false, auto_payment_enabled: false });
+  const [cardForm, setCardForm] = useState({ holder_name: '', is_default: false, auto_payment_enabled: false });
+  const [cardSaving, setCardSaving] = useState(false);
   const [blockedEmailInput, setBlockedEmailInput] = useState('');
   const [applicationForm, setApplicationForm] = useState({ application_type: 'auto_payment', note: '', auto_payment_day: '', iban: '', file: null });
 
@@ -106,6 +218,7 @@ export default function DealerSettings() {
         paymentRes,
         cardsRes,
         appRes,
+        stripeConfigRes,
       ] = await Promise.all([
         fetch(`${API}/dealer/settings/profile`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API}/dealer/settings/preferences`, { headers: { Authorization: `Bearer ${token}` } }),
@@ -115,6 +228,7 @@ export default function DealerSettings() {
         fetch(`${API}/dealer/payments`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API}/dealer/settings/saved-cards`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API}/dealer/settings/payment-applications`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API}/payments/runtime-config`),
       ]);
 
       const profilePayload = await profileRes.json().catch(() => ({}));
@@ -125,6 +239,7 @@ export default function DealerSettings() {
       const paymentPayload = await paymentRes.json().catch(() => ({}));
       const cardsPayload = await cardsRes.json().catch(() => ({}));
       const appPayload = await appRes.json().catch(() => ({}));
+      const stripeConfigPayload = await stripeConfigRes.json().catch(() => ({}));
 
       if (!profileRes.ok) throw new Error(profilePayload?.detail || 'Profil alınamadı');
       if (!prefRes.ok) throw new Error(prefPayload?.detail || 'Tercihler alınamadı');
@@ -134,6 +249,7 @@ export default function DealerSettings() {
       if (!paymentRes.ok) throw new Error(paymentPayload?.detail || 'Hareketler alınamadı');
       if (!cardsRes.ok) throw new Error(cardsPayload?.detail || 'Kartlar alınamadı');
       if (!appRes.ok) throw new Error(appPayload?.detail || 'Başvurular alınamadı');
+      if (!stripeConfigRes.ok) throw new Error(stripeConfigPayload?.detail || 'Stripe ayarları alınamadı');
 
       setProfile({ ...defaultProfile, ...(profilePayload.profile || {}) });
       setPrefs({ ...defaultPrefs, ...(prefPayload.notification_prefs || {}) });
@@ -145,12 +261,19 @@ export default function DealerSettings() {
       setPayments(Array.isArray(paymentPayload.items) ? paymentPayload.items : []);
       setSavedCards(Array.isArray(cardsPayload.items) ? cardsPayload.items : []);
       setPaymentApplications(Array.isArray(appPayload.items) ? appPayload.items : []);
+      setStripePublishableKey((stripeConfigPayload?.publishable_key || '').trim());
     } catch (requestError) {
       setError(requestError?.message || 'Hesap verisi alınamadı');
     } finally {
       setLoading(false);
+      setStripeLoading(false);
     }
   };
+
+  const stripePromise = useMemo(
+    () => (stripePublishableKey ? loadStripe(stripePublishableKey) : null),
+    [stripePublishableKey],
+  );
 
   useEffect(() => {
     fetchAll();
@@ -357,39 +480,42 @@ export default function DealerSettings() {
 
             {!loading && section === 'saved_cards' ? (
               <div className="space-y-3" data-testid="dealer-settings-saved-cards-section">
-                <form
-                  className="grid gap-3 md:grid-cols-2"
-                  data-testid="dealer-settings-saved-card-form"
-                  onSubmit={async (event) => {
-                    event.preventDefault();
-                    setError('');
-                    setSuccess('');
-                    try {
-                      await requestJson(`${API}/dealer/settings/saved-cards`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          ...cardForm,
-                          expiry_month: Number(cardForm.expiry_month),
-                          expiry_year: Number(cardForm.expiry_year),
-                        }),
-                      });
-                      setCardForm({ holder_name: '', card_number: '', expiry_month: '', expiry_year: '', brand: 'visa', is_default: false, auto_payment_enabled: false });
-                      setSuccess('Kart kaydedildi.');
-                      await fetchAll();
-                    } catch (requestError) {
-                      setError(requestError?.message || 'Kart kaydedilemedi');
-                    }
-                  }}
-                >
-                  <input value={cardForm.holder_name} onChange={(event) => setCardForm((prev) => ({ ...prev, holder_name: event.target.value }))} placeholder="Kart Üzerindeki İsim" className="h-10 rounded-md border border-slate-300 px-3 text-sm" data-testid="dealer-settings-card-holder-name" required />
-                  <input value={cardForm.card_number} onChange={(event) => setCardForm((prev) => ({ ...prev, card_number: event.target.value }))} placeholder="Kart Numarası" className="h-10 rounded-md border border-slate-300 px-3 text-sm" data-testid="dealer-settings-card-number" required />
-                  <input type="number" value={cardForm.expiry_month} onChange={(event) => setCardForm((prev) => ({ ...prev, expiry_month: event.target.value }))} placeholder="Ay" className="h-10 rounded-md border border-slate-300 px-3 text-sm" data-testid="dealer-settings-card-expiry-month" required />
-                  <input type="number" value={cardForm.expiry_year} onChange={(event) => setCardForm((prev) => ({ ...prev, expiry_year: event.target.value }))} placeholder="Yıl" className="h-10 rounded-md border border-slate-300 px-3 text-sm" data-testid="dealer-settings-card-expiry-year" required />
-                  <label className="flex items-center gap-2 text-sm" data-testid="dealer-settings-card-default-wrap"><input type="checkbox" checked={Boolean(cardForm.is_default)} onChange={(event) => setCardForm((prev) => ({ ...prev, is_default: event.target.checked }))} data-testid="dealer-settings-card-is-default" /> Varsayılan kart</label>
-                  <label className="flex items-center gap-2 text-sm" data-testid="dealer-settings-card-auto-pay-wrap"><input type="checkbox" checked={Boolean(cardForm.auto_payment_enabled)} onChange={(event) => setCardForm((prev) => ({ ...prev, auto_payment_enabled: event.target.checked }))} data-testid="dealer-settings-card-auto-pay" /> Otomatik ödeme onayı</label>
-                  <button type="submit" className="h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white md:col-span-2" data-testid="dealer-settings-card-submit">Kart Kaydet</button>
-                </form>
+                <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700" data-testid="dealer-settings-card-pci-note">Kart numarası ve CVV sunucumuza gelmez. Stripe tokenization (Elements) kullanılır.</div>
+                {stripeLoading ? <div className="rounded-md border border-slate-200 bg-white p-3 text-sm text-slate-600" data-testid="dealer-settings-card-stripe-loading">Stripe formu hazırlanıyor...</div> : null}
+                {!stripeLoading && !stripePromise ? <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700" data-testid="dealer-settings-card-stripe-error">Stripe publishable key bulunamadı.</div> : null}
+                {!stripeLoading && stripePromise ? (
+                  <Elements stripe={stripePromise}>
+                    <DealerStripeCardCaptureForm
+                      holderName={cardForm.holder_name}
+                      setHolderName={(value) => setCardForm((prev) => ({ ...prev, holder_name: value }))}
+                      isDefault={cardForm.is_default}
+                      setIsDefault={(value) => setCardForm((prev) => ({ ...prev, is_default: value }))}
+                      autoPaymentEnabled={cardForm.auto_payment_enabled}
+                      setAutoPaymentEnabled={(value) => setCardForm((prev) => ({ ...prev, auto_payment_enabled: value }))}
+                      billingEmail={profile.contact_email}
+                      submitting={cardSaving}
+                      onSubmitTokenizedCard={async (payload) => {
+                        setError('');
+                        setSuccess('');
+                        setCardSaving(true);
+                        try {
+                          await requestJson(`${API}/dealer/settings/saved-cards`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload),
+                          });
+                          setCardForm({ holder_name: '', is_default: false, auto_payment_enabled: false });
+                          setSuccess('Kart token ile kaydedildi.');
+                          await fetchAll();
+                        } catch (requestError) {
+                          setError(requestError?.message || 'Kart kaydedilemedi');
+                        } finally {
+                          setCardSaving(false);
+                        }
+                      }}
+                    />
+                  </Elements>
+                ) : null}
 
                 <div className="rounded-md border border-slate-200 overflow-x-auto" data-testid="dealer-settings-saved-cards-table-wrap">
                   <table className="w-full text-sm" data-testid="dealer-settings-saved-cards-table">

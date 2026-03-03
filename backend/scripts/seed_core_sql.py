@@ -2,6 +2,7 @@ import asyncio
 import os
 import sys
 import uuid
+import secrets
 from datetime import datetime, timezone
 
 from sqlalchemy import select
@@ -48,7 +49,7 @@ COUNTRIES = [
 USERS = [
     {
         "email": "admin@platform.com",
-        "password": "Admin123!",
+        "password_env": "SEED_ADMIN_PASSWORD",
         "full_name": "System Administrator",
         "role": "super_admin",
         "country_scope": ["*"],
@@ -57,7 +58,7 @@ USERS = [
     },
     {
         "email": "dealer@platform.com",
-        "password": "Dealer123!",
+        "password_env": "SEED_DEALER_PASSWORD",
         "full_name": "Dealer Demo",
         "role": "dealer",
         "country_scope": ["DE"],
@@ -66,7 +67,7 @@ USERS = [
     },
     {
         "email": "user@platform.com",
-        "password": "User123!",
+        "password_env": "SEED_USER_PASSWORD",
         "full_name": "Test User",
         "role": "individual",
         "country_scope": ["DE"],
@@ -74,6 +75,13 @@ USERS = [
         "preferred_language": "tr",
     },
 ]
+
+
+def _seed_password_from_env(key: str) -> str:
+    raw = (os.environ.get(key) or "").strip()
+    if raw:
+        return raw
+    return secrets.token_urlsafe(24)
 
 
 async def seed() -> None:
@@ -109,7 +117,7 @@ async def seed() -> None:
         for user_data in USERS:
             result = await session.execute(select(User).where(User.email == user_data["email"]))
             existing = result.scalar_one_or_none()
-            hashed = get_password_hash(user_data["password"])
+            hashed = get_password_hash(_seed_password_from_env(user_data["password_env"]))
             if not existing:
                 session.add(
                     User(

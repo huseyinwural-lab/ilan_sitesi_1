@@ -1,7 +1,16 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+import os
+import secrets
 from app.models.user import User, UserRole
 from app.models.core import FeatureFlag, FeatureScope, Country
 from app.core.security import get_password_hash
+
+
+def _seed_password_from_env(key: str) -> str:
+    raw = (os.environ.get(key) or "").strip()
+    if raw:
+        return raw
+    return secrets.token_urlsafe(24)
 
 async def seed_default_data(db: AsyncSession):
     """Seed default data for the application"""
@@ -75,7 +84,7 @@ async def seed_default_data(db: AsyncSession):
     # Seed Super Admin User
     admin_user = User(
         email="admin@platform.com",
-        hashed_password=get_password_hash("Admin123!"),
+        hashed_password=get_password_hash(_seed_password_from_env("SEED_ADMIN_PASSWORD")),
         full_name="System Administrator",
         role=UserRole.SUPER_ADMIN,
         country_scope=["*"],
@@ -95,7 +104,7 @@ async def seed_default_data(db: AsyncSession):
     for user_data in demo_users:
         user = User(
             **user_data,
-            hashed_password=get_password_hash("Demo123!"),
+            hashed_password=get_password_hash(_seed_password_from_env("SEED_DEMO_PASSWORD")),
             is_active=True,
             is_verified=True
         )

@@ -6,10 +6,26 @@ ROOT_DIR = Path(__file__).parent.parent.parent
 load_dotenv(ROOT_DIR / '.env')
 load_dotenv(ROOT_DIR / '.env.local', override=False)
 
+_ENVIRONMENT_RAW = (os.environ.get('ENVIRONMENT') or '').strip().lower()
+if not _ENVIRONMENT_RAW:
+    raise RuntimeError('CONFIG_MISSING: ENVIRONMENT (development|staging|production)')
+if _ENVIRONMENT_RAW not in {'development', 'staging', 'production'}:
+    raise RuntimeError('CONFIG_INVALID: ENVIRONMENT must be development|staging|production')
+
+_APP_ENV_MAP = {
+    'development': 'dev',
+    'staging': 'preview',
+    'production': 'prod',
+}
+
+# Legacy compatibility for modules still reading APP_ENV directly.
+os.environ['APP_ENV'] = _APP_ENV_MAP[_ENVIRONMENT_RAW]
+
 class Settings:
-    APP_ENV: str = os.environ.get('APP_ENV', 'dev').lower()
+    ENVIRONMENT: str = _ENVIRONMENT_RAW
+    APP_ENV: str = _APP_ENV_MAP[_ENVIRONMENT_RAW]
     DATABASE_URL: str = os.environ.get('DATABASE_URL')
-    SECRET_KEY: str = os.environ.get('SECRET_KEY', 'change-this-in-production')
+    SECRET_KEY: str = (os.environ.get('SECRET_KEY') or '').strip()
     ALGORITHM: str = os.environ.get('ALGORITHM', 'HS256')
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.environ.get('ACCESS_TOKEN_EXPIRE_MINUTES', 30))
     REFRESH_TOKEN_EXPIRE_DAYS: int = int(os.environ.get('REFRESH_TOKEN_EXPIRE_DAYS', 7))
@@ -32,12 +48,17 @@ class Settings:
     }
 
 settings = Settings()
-if settings.APP_ENV in {"preview", "prod"}:
+if not settings.SECRET_KEY:
+    raise RuntimeError('CONFIG_MISSING: SECRET_KEY')
+if len(settings.SECRET_KEY.encode('utf-8')) < 32:
+    raise RuntimeError('CONFIG_INVALID: SECRET_KEY must be at least 32 bytes')
+
+if settings.ENVIRONMENT in {"staging", "production"}:
     if not settings.DATABASE_URL:
         raise RuntimeError("CONFIG_MISSING: DATABASE_URL")
     lowered_url = settings.DATABASE_URL.lower()
     if "localhost" in lowered_url or "127.0.0.1" in lowered_url:
         raise RuntimeError("CONFIG_MISSING: DATABASE_URL")
 
-if settings.APP_ENV == "prod" and not os.environ.get("DATABASE_URL"):
+if settings.ENVIRONMENT == "production" and not os.environ.get("DATABASE_URL"):
     raise RuntimeError("CONFIG_MISSING: DATABASE_URL")
