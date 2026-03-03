@@ -957,3 +957,40 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Test Sonucu (Kişiselleştirme)
 - Smoke test PASS: favori ekle/çıkar + sekmeler arası geçiş + navigasyon doğrulandı.
 - `auto_frontend_testing_agent` PASS: 5/5, bug yok, console error yok.
+
+## 2026-03-03 (FAZ 1 — P0 Güvenlik Kapatmaları)
+
+### Kapatılan P0 Maddeleri
+1. **P0-1 Seed güvenliği**
+   - Startup içindeki otomatik kullanıcı seed çağrıları kaldırıldı.
+   - Seed akışı manual script’e taşındı: `backend/scripts/seed_manual_fixtures.py`
+   - Script prod’da çalışmaz, ayrıca `ALLOW_MANUAL_FIXTURE_SEED=true` zorunludur.
+   - Runtime hardcoded şifreler kaldırıldı; fixture şifreleri env üzerinden veya random üretilir.
+
+2. **P0-2 SECRET_KEY zorunluluğu**
+   - `SECRET_KEY` fallback kaldırıldı.
+   - `ENVIRONMENT` zorunlu hale getirildi (`development|staging|production`).
+   - `SECRET_KEY` min 32-byte kontrolü eklendi.
+   - Eski fallback key ile token geçersizliği için test eklendi: `backend/tests/test_p0_secret_key_invalidation.py`.
+
+3. **P0-6 Stripe/PCI hardening**
+   - Frontend kart alanı Stripe Elements (CardElement) ile tokenization’a geçti.
+   - Backend saved-cards kontratı tokenized payload olarak değiştirildi (`payment_method_id`, `last4`, `brand`, `expiry_*`).
+   - Raw `card_number` gönderimi artık reddediliyor (`extra=forbid`).
+   - Stripe webhook replay koruması eklendi (`stripe-signature` timestamp window).
+
+### Doğrulama/Kanıt
+- Self-test:
+  - Raw card payload -> `422` (reddedildi)
+  - Tokenized payload -> kart kaydı başarılı
+  - Stale webhook signature -> `400 Stale Stripe webhook signature`
+  - Config import testleri: missing/short secret fail-fast
+  - `pytest -q backend/tests/test_p0_secret_key_invalidation.py` -> `2 passed`
+- Smoke screenshot PASS: `p0-stripe-tokenized-card-form.png`
+- Testing agent PASS: `/app/test_reports/iteration_104.json` (backend/frontend %100)
+- `auto_frontend_testing_agent` PASS
+- `deep_testing_backend_v2` PASS
+
+### Notlar
+- `academy.modules` halen kullanıcı onayı doğrultusunda **MOCKED**.
+- Kalan kritik operasyon maddeleri: `No response returned` middleware hatası ve meili settings timeout stabilizasyonu.

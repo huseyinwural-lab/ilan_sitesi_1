@@ -1,6 +1,13 @@
 # CHANGELOG
 
 ## Uygulanan Özellikler
+- **FAZ 1 P0 Güvenlik Kapatmaları (2026-03-03):**
+  - Otomatik kullanıcı seed çağrıları startup’tan kaldırıldı (manual-only fixture).
+  - `ENVIRONMENT` zorunlu hale getirildi (`development|staging|production`), `SECRET_KEY` fallback kaldırıldı ve min 32-byte kontrolü eklendi.
+  - Hardcoded runtime şifre referansları temizlendi; fixture şifreleri env/random mantığına geçirildi.
+  - Stripe tokenization’a geçildi: frontend `Stripe CardElement`, backend `payment_method_id + last4 + brand` kontratı; raw `card_number` artık reddediliyor.
+  - Stripe webhook replay koruması eklendi (`stripe-signature` timestamp window).
+  - Manual güvenlik testi eklendi: `backend/tests/test_p0_secret_key_invalidation.py`.
 - **Kişisel Hızlı Menü Kişiselleştirme (2026-03-03):** Kullanıcı talebiyle quick menu genişletildi: `Son Kullanılanlar` ve `Favorilerim` sekmeleri eklendi. Kullanıcı artık hızlı menüye öğe ekleyip çıkarabiliyor (`Düzenle` paneli + arama). Favori/usage verisi localStorage’da tutuluyor.
 - **Kişisel Hızlı Menü (2026-03-03):** Kullanıcı onayıyla row4 sol panelin en üstüne `Kişisel Hızlı Menü` eklendi (6 öğe). Menü kullanımına göre localStorage tabanlı sıralama yapılıyor; tıklamada ilgili route açılıp row4 bağlamsal menü kökü senkron kalıyor.
 - **Kurumsal Portal Menü Mimarisi Revizyonu (2026-03-03 / Iteration 103):** Kullanıcı talebine göre row2 menü tamamen yeniden yapılandırıldı (11 modül), `Sanal Turlar` kaldırıldı. Row2 seçimine bağlı row4 bağlamsal alt menü ağacı aktif edildi. Footer row5 olarak admin site footer kaynağıyla korundu.

@@ -2,8 +2,9 @@
 **Son güncelleme:** 2026-03-03 18:55:00 UTC
 
 ## P0 (Aktif)
-- Kurumsal (ticari) portal row2/row4 yeni menü davranışı için son kullanıcı UAT (piksel + içerik tamlık onayı)
-- Hesabım alt kırılımlarında alan bazlı metin/polish (özellikle bildirim izin metinleri ve ticari ileti consent açıklamaları)
+- Middleware kaynaklı `RuntimeError: No response returned` kök neden analizi ve kalıcı fix
+- Meilisearch settings timeout/retry stabilizasyonu (ops alarmlarını azaltma)
+- Kurumsal portal row2/row4 yeni menü davranışı için son kullanıcı UAT (piksel + içerik tamlık onayı)
 
 ## P1 (Sıradaki)
 - Permission **What-if Simulator** (save öncesi etki önizleme)
@@ -19,6 +20,7 @@
 - SRE pack (SLO/SLA dashboard), DR/backup drill, security/cost audit paketleri
 
 ## Next Action Items
+- FAZ 1 sonrası kalan P0 operasyon hatalarını kapat (`No response returned`, meili settings)
 - Kurumsal portalın yeni 11 modüllü row2 yapısı için kullanıcıdan final onayı al
 - Hesabım alt modüllerinde kullanıcıdan istenen ekstra metin/alan düzeltmelerini kapat
 - What-if simulator için veri modeli/endpoint kontratını netleştir
