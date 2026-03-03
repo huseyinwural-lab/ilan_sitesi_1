@@ -17,7 +17,7 @@ import hashlib
 from datetime import datetime, timezone
 
 # Configuration
-BASE_URL = "https://marketplace-admin-13.preview.emergentagent.com"
+BASE_URL = "https://header-config-1.preview.emergentagent.com"
 API_BASE = f"{BASE_URL}/api"
 
 def test_health_endpoint():

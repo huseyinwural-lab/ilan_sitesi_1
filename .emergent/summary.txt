@@ -1,66 +1,81 @@
 <analysis>**original_problem_statement:**
-The user's primary goal is to build a full-stack application similar to sahibinden.com, with a heavy focus on admin-configurable features. The project follows a strict, phase-based development plan (bitirme planı) provided by the user via explicit, multi-step task orders (GÖREV EMRİ).
+The user's primary goal is to build a full-stack application similar to sahibinden.com. The project's focus has recently shifted to hardening the application for a production release and implementing major new features based on explicit, phased GÖREV EMRİ (Task Orders).
 
-PRODUCT REQUIREMENTS:
-The application has completed its core feature development, a Go-Live Critical (P0) hardening phase, and a significant P1 phase focusing on quality, operations, and architectural improvements (monolith refactoring, permissions UI, audit UX).
+After a user-requested audit identified critical security and stability issues, the development was divided into phases:
+-   **FAZ 1 & 2 (Completed):** Focused on resolving P0 security and stability blockers (e.g., removing hardcoded credentials, making environment secrets mandatory, fixing middleware errors, and stabilizing search indexing).
+-   **FAZ 3 (Current):** A final hardening task to remove mock data.
 
-The current requirement is to refactor the Kurumsal Portal (Corporate/Dealer Dashboard) UI to exactly match a user-provided PDF design (). This involves a specific 5-row page structure, populating all sidebar menu items as detailed in the PDF, and ensuring UI behaviors (like menu dropdowns) match the user's explicit instructions.
+In parallel, the user has requested several significant new features:
+1.  **Dynamic, Admin-Managed Headers:** Create a system within the admin panel to allow manual editing (add, remove, reorder items, manage logos) for three distinct headers: Guest, Authenticated, and a new Kurumsal (Corporate) header.
+2.  **Full-App Internationalization (i18n):** Implement language support for German, French, and Turkish across the entire application for both individual and corporate users.
+3.  **UI Simplification:** Remove a specific, redundant menu column from the corporate dashboard UI.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-The application is feature-complete and has undergone extensive refactoring and hardening.
-- **Backend Refactoring:** The monolithic  has been successfully broken down. Routes for , , , , , and  have all been moved into their own dedicated, modular routers.
-- **Admin Features:**
-    - A granular, flag-based permission system is live, complete with a  UI for managing user permissions ().
-    - The Audit dashboard () has been enhanced with server-side pagination, filtering, and performance improvements.
-- **Testing:** The CI pipeline has been expanded with a new suite of nightly E2E tests covering critical user, dealer, and finance flows.
-- **UI/UX:** Previous UI tasks, including standardizing admin components and fixing React hydration warnings, have been completed.
+The application is functionally rich, with a dealer portal, admin panels, and user-facing features. The previous session successfully completed a major hardening initiative (FAZ 1 & FAZ 2), resolving critical P0 security and stability issues identified in a pre-launch audit.
+
+-   **Security Hardening (FAZ 1):**
+    -   Automatic user seeding with hardcoded credentials has been removed from production builds and is now conditional on .
+    -   The  for JWT is now a mandatory environment variable, and the application will not start without it.
+    -   PCI compliance has been improved by moving to a Stripe Elements/tokenization flow, preventing raw credit card details from being sent to the backend.
+-   **Stability Hardening (FAZ 2):**
+    -   A  in the  middleware has been fixed by adding a fail-safe middleware and ensuring all code paths return a response.
+    -   Meilisearch stability has been improved by making index setting updates asynchronous, adding a dedicated health check endpoint (), and implementing a degrade mode.
+    -   Sentry integration has been added to capture runtime errors when a  is provided.
+
+The Kurumsal Portal UI was significantly refactored, and a localStorage-based customizable quick-access menu was added.
 
 **Last working item**:
--   **Last item agent was working:** The agent was tasked with implementing the new design for the Kurumsal Portal (Corporate/Dealer Dashboard) based on a detailed PDF provided by the user. The user has given explicit instructions () to populate all menus from the PDF, use mock data where necessary, and ensure the backend can support the required data structures. This is a complete UI overhaul for this specific section.
--   **Status:** IN PROGRESS
+-   **Last item agent was working:** The agent was in the planning stage for implementing FAZ 3 and the major new features requested by the user. This involved analyzing the existing header components and site design architecture to prepare for the dynamic header management system and researching the integration of  for internationalization.
+-   **Status:** NOT STARTED
 -   **Agent Testing Done:** N
 -   **Which testing method agent to use?** both
-    - **Backend:** Create or verify endpoints to supply the data needed for all the new menu items in the dealer dashboard as specified in the PDF.
-    - **Frontend:** Use the testing agent to perform a comprehensive visual and functional regression. The tests must confirm that all menu items from the PDF are present and populated, the 5-row layout is correctly implemented, navigation works, and the UI is an exact match for the user's design.
+    -   The dynamic header and i18n features require significant frontend and backend changes. The agent should use  to test the new backend endpoints for header configuration and use the  to perform a thorough visual and functional verification of the multi-language support and the new header rendering across all user roles (guest, authenticated, corporate).
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-*No active blocking issues.*
+-   **Issue 1: P0 - Dynamic Admin-Managed Headers (Highest Priority)**
+    -   **Description:** The user wants a new section in the admin panel () to manage the content of three headers: Guest, Authenticated, and a new Corporate header. This includes adding/removing/reordering links and managing the logo for each.
+    -   **Status:** NOT STARTED
+-   **Issue 2: P0 - Full-App Internationalization (i18n) (High Priority)**
+    -   **Description:** Implement language switching (German, French, Turkish) across the entire application using .
+    -   **Status:** NOT STARTED
+-   **Issue 3: P0 - FAZ 3: Remove Mock Data (High Priority)**
+    -   **Description:** The last remaining task from the audit. The mocked  data needs to be removed from production builds, controlled by a feature flag ().
+    -   **Status:** NOT STARTED
+-   **Issue 4: P1 - UI Simplification (Medium Priority)**
+    -   **Description:** As per the user's screenshot and request, a specific menu column in the corporate dashboard needs to be removed to de-clutter the UI.
+    -   **Status:** NOT STARTED
 
 **In progress Task List**:
--   **Task 1: P1 Kurumsal Portal UI Implementation (P0, HIGHEST Priority)**
-    -   **Where to resume:** Begin implementation based on the user's final instructions (). The primary source of truth is the .
-    -   **What will be achieved with this?** The dealer dashboard UI will be completely rebuilt to match the user's exact specification, improving usability and fulfilling the user's design requirements. This includes populating all specified menus with data, which may require creating new backend endpoints or using mock data as a placeholder.
-    -   **Status:** IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on something:** None
+There are no partially completed tasks. The agent was in the planning phase for the issues listed above.
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
--   **P1.1 Permission What-if Simulator (User-interested):** Create a UI to preview the impact of permission changes before they are saved.
--   **P1.1 Two-Factor Approval for Permissions (User-interested):** Implement a 4-eyes principle for critical permission changes, requiring a second admin's approval.
--   **P1 User/Dealer Flow Validation:** A formal validation pass on user/dealer flows after the recent permission and UI changes.
--   **P1 HTML/CSS Standardization:** Final polish on the new admin and dealer UIs.
+-   **P1.1 Permission What-if Simulator**: UI to preview the impact of permission changes.
+-   **P1.1 Two-Factor Approval for Permissions**: 4-eyes principle for critical permission changes.
+-   **P1 User/Dealer Flow Validation**: Formal validation pass on user/dealer flows.
+-   **P1 HTML/CSS Standardization**: Final polish on admin and dealer UIs.
 
 **Future Tasks:**
--   **P2 (Business Growth):** Implement advanced financial analytics, conversion funnel tracking, and A/B testing infrastructure.
--   **P3 (Enterprise Scale):** Implement an SRE pack (SLO/SLA dashboards), conduct DR/Backup drills, and perform security/cost audits.
--   **P1.1 Policy Snapshot & Rollback:** Version control for permission sets to allow for single-click rollbacks.
+-   **P2 (Business Growth):** Advanced financial analytics, conversion funnel tracking, A/B testing.
+-   **P3 (Enterprise Scale):** SRE pack (SLO/SLA dashboards), DR/Backup drills, security/cost audits.
 
 **Completed work in this session**
-- **Monolith Refactoring (C-2 & C-3):** Successfully refactored all , , and  routes from  into modular routers. (DONE)
-- **User/Dealer Flow Validation (P1-Next-01):** Validated positive and negative permission scenarios for user and dealer roles. (DONE)
-- **Admin UI Standardization (P1-Next-02):** Standardized UI components across Audit and Permissions pages. (DONE)
-- **Hydration Warning Fix (P1-Next-03):** Addressed and resolved the long-standing React hydration warnings in . (DONE)
-- **Granular Permission UI (GÖREV 1):** Implemented a full CRUD interface for  to manage user-specific permission flags. (DONE)
-- **Audit/Permissions UX Enhancement (GÖREV 2):** Added server-side pagination, filtering, and performance indexing to the Audit and Permissions pages. (DONE)
-- **Nightly E2E Test Expansion (GÖREV 3):** Expanded the nightly CI test suite to include critical finance, dealer, and admin flows. (DONE)
-- **Corporate Header/Layout Fixes:** Iteratively fixed the corporate header layout, logo navigation, menu behavior, and color scheme based on user feedback. (DONE)
+-   **FAZ 1 - Security Hardening (P0-1, P0-2, P0-6):**
+    -   Removed automatic user seeding from production startup ().
+    -   Made  a mandatory environment variable (, ).
+    -   Refactored payment flow to use Stripe Elements, preventing card data from reaching the server ().
+-   **FAZ 2 - Stability Hardening (P0-3, P0-4):**
+    -   Fixed  by implementing a  and auditing the .
+    -   Improved Meilisearch stability with async updates, a circuit breaker, and a new health endpoint at .
+    -   Added optional Sentry integration in .
+-   **Customizable Quick Access Menu:** Added a -based menu for users to add/remove frequently used items.
+-   **Pre-Launch Audit:** Performed a detailed audit of the application, identifying the P0 issues that were subsequently fixed in FAZ 1 and FAZ 2.
 
 **Earlier issues found/mentioned but not fixed**
-- No outstanding issues remain from this session; previously mentioned items like hydration warnings have been addressed and completed.
+-   The user-requested quick-access menu () is currently based on . It lacks cross-device synchronization, which could be a future enhancement.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork**: Platform failure to inject  secret.
@@ -71,78 +86,67 @@ The application is feature-complete and has undergone extensive refactoring and 
 
 
 **Key Technical Concepts**
--   **Monolith Refactoring:** Phased decomposition of a large  into domain-specific FastAPI routers.
--   **Granular Permissions (Permission Flags):** A flexible permission system allowing per-user overrides on top of standard role-based access.
--   **Policy Drift Prevention:** Using automated nightly E2E tests as a CI gate to prevent security regressions.
--   **PDF-Driven UI Development:** The current development process is strictly dictated by a visual design document (), requiring pixel-perfect implementation.
+-   **Environment-Specific Configuration:** Using a Pydantic  class () to manage different behaviors for , , and  environments.
+-   **Security Hardening:** Proactively identifying and fixing security vulnerabilities like hardcoded secrets and insecure data handling (PCI).
+-   **System Stability:** Building resilient systems with fail-safe middleware, asynchronous background tasks for non-critical operations (Meilisearch), and external monitoring (Sentry).
+-   **Dynamic UI Configuration:** The upcoming task to build a backend-driven system for managing header content.
+-   **Internationalization (i18n):** The upcoming task to use a library like  to provide multi-language support.
 
 **key DB schema**
--   **audit_events**: 
--   **user_permissions**: 
+-   A new table will likely be required to store the configurations for the dynamic headers.
+    -   **header_configurations**: 
 
 **All files of reference**
--   : **The primary source of truth** for the current UI task.
--   : The page being refactored.
--   : The layout component being refactored.
--   : Directory containing all modularized backend API routes.
--   : The new E2E test suite.
--   : The product requirements document, updated after each major task.
+-   : The main header component that will need significant refactoring.
+-   : The layout containing the admin sidebar, where the new header management UI will be linked.
+-   : The central place for managing environment variables.
+-   : Contains the logic for conditional database seeding.
+-   : Directory containing the recently added/modified middleware for stability.
 
 **Critical Info for New Agent**
--   **Follow GÖREV EMRİ (Task Orders) Exactly:** The user provides very specific, non-negotiable task lists. Communication must be in Turkish.
--   **PDF is the SOLE Authority for UI:** The current task is to implement the UI shown in . Do not improvise or deviate. All menu items, layouts, and styles must match the PDF.
--   **Data Population is Required:** The user expects all menus in the dashboard to be filled with data. You must either implement the necessary backend endpoints or use realistic mock data ( confirmation) and clearly state which approach was taken.
--   **Backend Support for UI:** The user expects the backend to be updated to support the data requirements of the new UI ( confirmation).
+-   **USER'S TEMPERAMENT & COMMUNICATION:** The user is extremely direct, has high expectations for precision, and can get very frustrated by misunderstandings or slow progress. Communication must be in **Turkish**. Adhere strictly to the user's GÖREV EMRİ (Task Orders). Over-communicate your plan before implementing to ensure alignment.
+-   **PRIORITY SHIFT:** The project has just completed a critical hardening phase (FAZ 1 & 2). You are now starting a new phase of major feature development (dynamic headers, i18n). These are complex tasks and the user expects them to be done correctly.
+-   **TASK ORDER:** The user has provided a clear set of new tasks. Address them in the order of priority outlined: Dynamic Headers, i18n, and then the FAZ-3 mock data cleanup. Confirm the plan before starting.
+-   **AVOID REPEATING MISTAKES:** The previous agent's failure to identify critical issues until a user-prompted audit caused significant user frustration. Be proactive in identifying potential issues with your implementation plan.
 
 **documents and test reports created in this job**
--   
--   
--   
--   
--   
--   
--   
--   
--   
--   
--   Iteration reports:  through 
+-   : The last full test report confirming the state before the hardening phase. Many subsequent self-tests were performed via logs and .
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **#992:** User provides the final PDF and gives instructions:  (use mocks if needed for menus) and  (ensure backend supports the UI). (IN PROGRESS)
-2.  **#991:** User confirms the plan to use the PDF as the single source of truth for the dashboard UI. (RESOLVED)
-3.  **#989:** User uploads a PDF, stating this is the desired model and asks the agent to implement all menus as shown, noting that some are currently empty. (PENDING)
-4.  **#988:** Agent confirms previous fixes (color scheme, footer) are done and asks for next steps. (RESOLVED)
-5.  **#971:** User confirms the color scheme fixes and points out the footer is still wrong; it should be a separate 5th row and pull from the admin footer source. (RESOLVED)
-6.  **#968:** User points out a color scheme issue in the Hesabım menu. (RESOLVED)
-7.  **#967:** Agent confirms previous layout and menu behavior fixes are done and asks for confirmation. (RESOLVED)
-8.  **#923:** User provides a very specific 5-row layout structure, clarifies background/text colors, and re-iterates the desired structure after the agent's misunderstanding. (RESOLVED)
-9.  **#904:** User clarifies: header background should remain, logo click goes to home, Hesabım menu should be thinner and open to the right, not below. (RESOLVED)
-10. **#901:** User expresses frustration with the agent's misunderstanding of the layout, re-uploads an image, and gives explicit instructions: white background, logo navigates to home. (RESOLVED)
+1.  **#770:** User provides final decisions for the new tasks: use a feature flag for mock data, add the new header management to the existing admin UI, use  for i18n, and self-test to save costs. (RESOLVED)
+2.  **#767:** User gives the GÖREV EMRİ for FAZ 3 (mock data cleanup) and adds three major new requests: remove a UI column, implement fully editable dynamic headers, and add full-app i18n support (German, French, Turkish). (PENDING IMPLEMENTATION)
+3.  **#572:** User provides final decisions for FAZ 2: use  for the health endpoint, have search return 503 on failure, and add Sentry integration. (RESOLVED, IMPLEMENTED)
+4.  **#569:** User gives the GÖREV EMRİ for FAZ 2 to fix the middleware  and stabilize Meilisearch. (RESOLVED, IMPLEMENTED)
+5.  **#400:** User approves the plan for FAZ 1: use  for , disable all automatic user seeding, and use Stripe Elements for payments. (RESOLVED, IMPLEMENTED)
+6.  **#397:** User gives the detailed GÖREV EMRİ for FAZ 1, focusing on critical security blockers: removing seed users, making  mandatory, and fixing PCI compliance issues. (RESOLVED, IMPLEMENTED)
+7.  **#393:** User expresses extreme frustration that the agent didn't find the P0 issues earlier and commands the agent to fix them. (CONTEXT)
+8.  **#392:** Agent delivers a detailed pre-launch audit report, identifying 6 critical P0 issues. (CONTEXT)
+9.  **#375:** User asks for a detailed report of all missing items before a production launch. (CONTEXT)
+10. **#328:** User requests a customizable quick access menu with recently used and favorites tabs. (RESOLVED, IMPLEMENTED)
 
 **Project Health Check:**
--   **Broken:** None
--   **Mocked:** User has approved mocking data for the dealer dashboard menus to facilitate UI development.
+-   **Broken:** None. The app is in a more stable and secure state than ever before.
+-   **Mocked:**  data is still mocked. This is the target of the FAZ 3 task (P0-5).
 
 **3rd Party Integrations**
+-   Stripe (Payments)
+-   MongoDB (Primary DB)
 -   PostgreSQL
--   MongoDB
--   Meilisearch
--   Stripe
--   Google Places API
--   react-beautiful-dnd
--   WeasyPrint
--   Boto3
+-   Meilisearch (Search)
+-   Sentry (Error Tracking - newly added)
+-    (To be added for i18n)
 
 **Testing status**
--   **Testing agent used after significant changes:** YES.
+-   **Testing agent used after significant changes:** YES (before the hardening phase). The hardening phase was tested via  and log analysis as per user's cost-saving instructions.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** Yes, numerous reports in  and a new E2E test file at .
+-   **Test files created:** None in this session, but core logic was heavily modified.
 -   **Known regressions:** None.
 
 **Credentials to test flow:**
+-   User seeding is disabled in production/staging. For development, the agent would need to use the manual fixture script (if created) or register users manually.
 -   **Super Admin:**  / 
--   **User:**  / 
 -   **Dealer/Corporate User:**  / 
+-   **User:**  / 
 
 **What agent forgot to execute**
-The agent repeatedly failed to correctly interpret the user's UI layout instructions for the corporate portal, requiring multiple attempts and corrections from the user. It incorrectly placed the footer within the main content area and struggled with the overall page structure until the user provided a definitive PDF. The next agent must prioritize pixel-perfect adherence to the provided PDF to avoid repeating these mistakes.</analysis>
+The agent has not forgotten any tasks; it was in the process of planning the next major set of features (dynamic headers, i18n) and the final hardening task (FAZ 3) when the session ended. The immediate priority is to create a robust plan for these complex features and get user approval before implementation.</analysis>

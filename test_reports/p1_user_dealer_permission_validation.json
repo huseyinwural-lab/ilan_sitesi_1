@@ -1,6 +1,6 @@
 {
   "task": "P1-Next-01 Permission-Flag Sonrası User/Dealer Akış Validasyonu",
-  "base_url": "https://marketplace-admin-13.preview.emergentagent.com",
+  "base_url": "https://header-config-1.preview.emergentagent.com",
   "user_positive": {
     "account_invoices_list": {
       "status": 200,

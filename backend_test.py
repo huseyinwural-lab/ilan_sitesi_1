@@ -5,7 +5,7 @@ import json
 import sys
 
 # Configuration
-BASE_URL = "https://marketplace-admin-13.preview.emergentagent.com/api"
+BASE_URL = "https://header-config-1.preview.emergentagent.com/api"
 DEALER_CREDENTIALS = {
     "email": "dealer@platform.com",
     "password": "Dealer123!"

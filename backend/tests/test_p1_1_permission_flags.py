@@ -3,7 +3,7 @@ import uuid
 import requests
 
 
-BASE_URL = "https://marketplace-admin-13.preview.emergentagent.com"
+BASE_URL = "https://header-config-1.preview.emergentagent.com"
 
 CREDS = {
     "super_admin": {"email": "admin@platform.com", "password": "Admin123!"},
