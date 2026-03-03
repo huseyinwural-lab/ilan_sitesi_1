@@ -20666,6 +20666,194 @@ async def dealer_dashboard_summary(
         )
 
 
+@api_router.get("/dealer/dashboard/navigation-summary")
+async def dealer_dashboard_navigation_summary(
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        dealer_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="dealer invalid") from exc
+
+    active_listing_count = (
+        await session.execute(
+            select(func.count()).select_from(DealerListing).where(
+                DealerListing.dealer_id == dealer_uuid,
+                DealerListing.status == "active",
+                DealerListing.deleted_at.is_(None),
+            )
+        )
+    ).scalar_one()
+    total_listing_count = (
+        await session.execute(
+            select(func.count()).select_from(DealerListing).where(
+                DealerListing.dealer_id == dealer_uuid,
+                DealerListing.deleted_at.is_(None),
+            )
+        )
+    ).scalar_one()
+    favorite_count = (
+        await session.execute(
+            select(func.count())
+            .select_from(Favorite)
+            .join(Listing, Favorite.listing_id == Listing.id)
+            .where(Listing.dealer_id == dealer_uuid)
+        )
+    ).scalar_one()
+    unread_message_count = (
+        await session.execute(
+            select(func.count())
+            .select_from(Message)
+            .join(Conversation, Message.conversation_id == Conversation.id)
+            .where(
+                Conversation.seller_id == dealer_uuid,
+                Message.sender_id != dealer_uuid,
+                Message.is_read.is_(False),
+            )
+        )
+    ).scalar_one()
+    customer_count = (
+        await session.execute(
+            select(func.count(func.distinct(Conversation.buyer_id))).where(
+                Conversation.seller_id == dealer_uuid,
+                Conversation.buyer_id.is_not(None),
+            )
+        )
+    ).scalar_one()
+    cart_count = (
+        await session.execute(
+            select(func.count())
+            .select_from(AdminInvoice)
+            .where(
+                AdminInvoice.user_id == dealer_uuid,
+                AdminInvoice.status.in_(["issued", "open", "overdue", "draft"]),
+                or_(
+                    AdminInvoice.payment_status.is_(None),
+                    ~AdminInvoice.payment_status.in_(["paid", "succeeded"]),
+                ),
+            )
+        )
+    ).scalar_one()
+    announcement_count = (
+        await session.execute(
+            select(func.count()).select_from(Notification).where(
+                Notification.user_id == dealer_uuid,
+                Notification.read_at.is_(None),
+            )
+        )
+    ).scalar_one()
+
+    academy_modules = [
+        {
+            "id": "academy-listing-optimization",
+            "title": "İlan Optimizasyonu",
+            "description": "Başlık, fotoğraf ve açıklama kalite skoru için 10 dakikalık rehber.",
+            "progress": 0,
+            "duration_minutes": 10,
+            "tag": "Başlangıç",
+            "source": "mocked",
+        },
+        {
+            "id": "academy-conversion-playbook",
+            "title": "Lead Dönüşüm Playbook",
+            "description": "Mesaj dönüş oranını artırmak için cevap şablonları ve akış önerileri.",
+            "progress": 0,
+            "duration_minutes": 14,
+            "tag": "Satış",
+            "source": "mocked",
+        },
+        {
+            "id": "academy-reporting-basics",
+            "title": "Rapor Okuma Temelleri",
+            "description": "Ziyaret, favori ve mesaj metriklerinin yorumlanması için mini eğitim.",
+            "progress": 0,
+            "duration_minutes": 8,
+            "tag": "Analitik",
+            "source": "mocked",
+        },
+    ]
+
+    return {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "badges": {
+            "active_listings": int(active_listing_count or 0),
+            "total_listings": int(total_listing_count or 0),
+            "favorites_total": int(favorite_count or 0),
+            "unread_messages": int(unread_message_count or 0),
+            "customers_total": int(customer_count or 0),
+            "cart_total": int(cart_count or 0),
+            "announcements_total": int(announcement_count or 0),
+        },
+        "left_menu": {
+            "ofisim_ozet": int(active_listing_count or 0),
+            "ilanlarim": int(total_listing_count or 0),
+            "favorilerim": int(favorite_count or 0),
+            "sepetim": int(cart_count or 0),
+            "musteri_yonetimi": int(customer_count or 0),
+            "duyurular": int(announcement_count or 0),
+        },
+        "academy": {
+            "data_source": "mocked",
+            "modules": academy_modules,
+        },
+    }
+
+
+@api_router.get("/dealer/virtual-tours")
+async def dealer_virtual_tours(
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    try:
+        dealer_uuid = uuid.UUID(current_user.get("id"))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="dealer invalid") from exc
+
+    listing_rows = (
+        await session.execute(
+            select(DealerListing)
+            .where(
+                DealerListing.dealer_id == dealer_uuid,
+                DealerListing.deleted_at.is_(None),
+            )
+            .order_by(desc(DealerListing.updated_at), desc(DealerListing.created_at))
+            .limit(200)
+        )
+    ).scalars().all()
+
+    items = []
+    for row in listing_rows:
+        status_value = (row.status or "draft").strip().lower()
+        readiness = 100 if status_value == "active" else 65 if status_value == "draft" else 45
+        items.append(
+            {
+                "tour_id": f"tour-{row.id}",
+                "listing_id": str(row.id),
+                "listing_title": row.title,
+                "status": status_value,
+                "readiness_score": readiness,
+                "last_updated": row.updated_at.isoformat() if row.updated_at else None,
+                "source": "derived",
+            }
+        )
+
+    active_count = sum(1 for item in items if item.get("status") == "active")
+    draft_count = sum(1 for item in items if item.get("status") == "draft")
+
+    return {
+        "summary": {
+            "total": len(items),
+            "active": active_count,
+            "draft": draft_count,
+        },
+        "items": items,
+        "data_source": "derived",
+    }
+
+
 @api_router.get("/dealer/messages")
 async def dealer_messages(
     request: Request,

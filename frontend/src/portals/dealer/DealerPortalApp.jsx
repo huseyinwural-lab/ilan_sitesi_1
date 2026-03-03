@@ -12,17 +12,20 @@ import DealerSettings from '@/pages/dealer/DealerSettings';
 import DealerInvoices from '@/pages/dealer/DealerInvoices';
 import DealerCompanyProfile from '@/pages/dealer/DealerCompanyProfile';
 import DealerPrivacyCenter from '@/pages/dealer/DealerPrivacyCenter';
+import DealerVirtualTours from '@/pages/dealer/DealerVirtualTours';
+import DealerAcademy from '@/pages/dealer/DealerAcademy';
 import PaymentSuccess from '@/pages/dealer/PaymentSuccess';
 import PaymentCancel from '@/pages/dealer/PaymentCancel';
-import DealerLayout from '@/layouts/DealerLayout';
+import DealerLayoutV2 from '@/layouts/DealerLayoutV2';
 
 export default function DealerPortalApp() {
   return (
     <Routes>
-      <Route path="/" element={<DealerLayout />}>
+      <Route path="/" element={<DealerLayoutV2 />}>
         <Route index element={<Navigate to="overview" replace />} />
         <Route path="overview" element={<DealerOverview />} />
         <Route path="listings" element={<DealerListings />} />
+        <Route path="virtual-tours" element={<DealerVirtualTours />} />
         <Route path="messages" element={<DealerMessages />} />
         <Route path="customers" element={<DealerCustomers />} />
         <Route path="favorites" element={<DealerFavorites />} />
@@ -31,6 +34,7 @@ export default function DealerPortalApp() {
         <Route path="purchase" element={<DealerPurchase />} />
         <Route path="settings" element={<DealerSettings />} />
         <Route path="invoices" element={<DealerInvoices />} />
+        <Route path="academy" element={<DealerAcademy />} />
         <Route path="company" element={<DealerCompanyProfile />} />
         <Route path="privacy" element={<DealerPrivacyCenter />} />
         <Route path="payments/success" element={<PaymentSuccess />} />
