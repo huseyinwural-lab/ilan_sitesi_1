@@ -942,3 +942,18 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - Smoke screenshot PASS (`dealer-quick-menu-row4-top.png`): hızlı menü görünür ve 6 öğe doğrulandı.
 - `auto_frontend_testing_agent` PASS: 5/5 (hızlı menü + row2/row4 davranışı + row5 footer).
 - `deep_testing_backend_v2` PASS: login + kritik dealer endpointlerinde regresyon yok.
+
+## 2026-03-03 (Ek Talep: Hızlı Menü Kişiselleştirme + Sekmeler)
+- Kullanıcı isteği uygulandı:
+  - Kişisel hızlı menüde iki sekme: `Son Kullanılanlar` ve `Favorilerim`
+  - Kullanıcı tarafında hızlı menü öğesi ekleme/çıkarma (Düzenle paneli)
+  - Menü arama alanı ile favori öğe seçimi
+- Teknik davranış:
+  - `Son Kullanılanlar`: kullanım skoruna göre 6 öğe
+  - `Favorilerim`: kullanıcı favori listesi
+  - Hızlı menü tıklamalarında route + row4 bağlamsal menü senkronu korunur
+  - localStorage anahtarları: `dealer-v2-quick-menu-usage`, `dealer-v2-quick-menu-favorites`
+
+### Test Sonucu (Kişiselleştirme)
+- Smoke test PASS: favori ekle/çıkar + sekmeler arası geçiş + navigasyon doğrulandı.
+- `auto_frontend_testing_agent` PASS: 5/5, bug yok, console error yok.
