@@ -1,6 +1,9 @@
 # CHANGELOG
 
 ## Uygulanan Özellikler
+- **Kurumsal Portal Menü Mimarisi Revizyonu (2026-03-03 / Iteration 103):** Kullanıcı talebine göre row2 menü tamamen yeniden yapılandırıldı (11 modül), `Sanal Turlar` kaldırıldı. Row2 seçimine bağlı row4 bağlamsal alt menü ağacı aktif edildi. Footer row5 olarak admin site footer kaynağıyla korundu.
+- **Kurumsal Portal Gerçek Backend CRUD Genişletmesi (2026-03-03 / Iteration 103):** Yeni gerçek endpointler eklendi: mesaj klasör yönetimi, potansiyel müşteri CRUD, sözleşme CRUD, mağaza kullanıcı ekleme, kayıtlı kart ekle/liste/sil, ödeme başvuruları oluştur/liste. Hesabım bölümleri bu endpointlere bağlandı.
+- **Kalite Doğrulama (2026-03-03 / Iteration 103):** `/app/test_reports/iteration_103.json` ile backend+frontend 100% PASS. Row2/row4 davranışı, bölüm yapıları, CRUD akışları ve data-testid kapsamı doğrulandı.
 - **Kurumsal Portal Dashboard PDF Refactor (2026-03-03):** Dealer portal layout V2 uygulandı. 5 satır yapı (`row1 header`, `row2 üst menü`, `row3 kullanıcı/aksiyon`, `row4 sol ince menü + içerik`, `row5 footer`) canlıya alındı. PDF menüleri tam kapsandı: üst menüde 10/10 öğe, sol menüde 10/10 + çıkış. Yeni route’lar eklendi: `/dealer/virtual-tours`, `/dealer/academy`.
 - **Kurumsal Portal Backend Data Support (2026-03-03):** Yeni endpointler eklendi: `GET /api/dealer/dashboard/navigation-summary` (badges + left_menu + academy), `GET /api/dealer/virtual-tours` (summary + items). UI menü sayaçları backend verisine bağlandı. Academy modülleri kullanıcı onayı (2B) kapsamında **MOCKED** döndürülüyor.
 - **Kurumsal Portal Test Kapanışı (2026-03-03):** `/app/test_reports/iteration_102.json` ile backend ve frontend doğrulaması PASS (100%). PDF menü varlığı, route erişimi, endpoint kontratları ve data-testid kapsamı doğrulandı.

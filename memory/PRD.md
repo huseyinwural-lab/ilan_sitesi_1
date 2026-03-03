@@ -898,3 +898,35 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Dealer settings içinde `dealer-settings-quick-links` artık yok.
 - `auto_frontend_testing_agent` PASS: tüm kullanıcı talepleri doğrulandı.
 - `deep_testing_backend_v2` PASS: dealer backend endpoint regresyonu temiz.
+
+## 2026-03-03 (Kurumsal Portal Row2/Row4 Nihai Yapılandırma)
+- Kullanıcının yeni kapsamlı menü talebi birebir uygulandı:
+  - Row2: 11 ana modül (`Özet Dashboard`, `İlanlar`, `Mesajlar`, `Müşteri Yönetimi`, `Favoriler`, `Raporlar`, `Paket Raporları`, `Doping Kullanım Raporu`, `Danışman Takibi`, `Satın Al`, `Hesabım`)
+  - `Sanal Turlar` row2’den kaldırıldı.
+  - Row4: Row2’de seçilen modülün alt menü ağacı bağlamsal olarak açılıyor; sağ panelde ilgili içerik route’u yükleniyor.
+
+### Yeni/Genisletilen Gerçek Backend CRUD
+- Mesaj klasör yönetimi:
+  - `GET /api/dealer/messages?folder=inbox|sent|archive|spam`
+  - `PATCH /api/dealer/messages/{conversation_id}/folder`
+- Müşteri yönetimi:
+  - `GET/POST /api/dealer/customers/potential`
+  - `GET/POST /api/dealer/customers/contracts`
+  - `POST /api/dealer/customers/store-users`
+- Hesabım ödeme alanı:
+  - `GET/POST/DELETE /api/dealer/settings/saved-cards`
+  - `GET/POST /api/dealer/settings/payment-applications`
+- Tercihler genişletildi (notification matrix + electronic consent + recovery email + session list)
+
+### Frontend Kapsamı
+- `DealerLayoutV2`: Row2 menü yeniden kuruldu, row4 bağlamsal menü davranışı güncellendi, admin config sıralama/aktiflik desteklendi.
+- `DealerMessages`: Gelen/Gönderilen/Arşiv/Spam klasörleri ve klasör taşıma işlemleri.
+- `DealerCustomers`: Müşteri listesi + müşteri ekle + potansiyel müşteri + sözleşmeler sekmeleri.
+- `DealerSettings`: Hesap, güvenlik, kullanıcılar, paket/hizmetler, kayıtlı kartlar, faturalar, hesap hareketleri, bildirim tercihleri, engellenen hesaplar.
+- `DealerPurchase/DealerReports/DealerListings`: yeni menü alt akışlarıyla uyumlu query-tab/section desteği.
+
+### Test Sonucu (Iteration 103)
+- Rapor: `/app/test_reports/iteration_103.json`
+- Backend: 100% PASS
+- Frontend: 100% PASS
+- Row2/row4 davranışı, CRUD akışları, footer row5 ve data-testid kapsamı doğrulandı.
