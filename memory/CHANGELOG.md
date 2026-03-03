@@ -1,6 +1,14 @@
 # CHANGELOG
 
 ## Uygulanan Özellikler
+- **FAZ 2 P0-3/P0-4 Stabilite Kapatmaları (2026-03-03):**
+  - `rbac_hard_lock` middleware deterministic response contract’e alındı (tüm path’lerde response, exception branch JSON 500).
+  - Global fail-safe middleware eklendi: response `None` veya middleware exception durumunda JSON 500 döner.
+  - Meili settings update akışı non-blocking queue modeline taşındı (request path bloklanmıyor).
+  - Retry + circuit breaker eklendi (exponential backoff, 3 fail sonrası degrade/open circuit).
+  - Yeni endpoint: `GET /api/health/search` (deterministic 200/503).
+  - Sentry gate eklendi: `SENTRY_DSN` varsa init, yoksa kapalı.
+- **FAZ 2 Test Kapanışı (2026-03-03):** `testing_agent` raporu `/app/test_reports/iteration_105.json` PASS (backend/frontend %100).
 - **FAZ 1 P0 Güvenlik Kapatmaları (2026-03-03):**
   - Otomatik kullanıcı seed çağrıları startup’tan kaldırıldı (manual-only fixture).
   - `ENVIRONMENT` zorunlu hale getirildi (`development|staging|production`), `SECRET_KEY` fallback kaldırıldı ve min 32-byte kontrolü eklendi.

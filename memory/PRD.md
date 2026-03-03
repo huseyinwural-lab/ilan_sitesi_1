@@ -994,3 +994,31 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Notlar
 - `academy.modules` halen kullanıcı onayı doğrultusunda **MOCKED**.
 - Kalan kritik operasyon maddeleri: `No response returned` middleware hatası ve meili settings timeout stabilizasyonu.
+
+## 2026-03-03 (FAZ 2 — P0-3/P0-4 Stabilite & Orta Risk Kapanışı)
+
+### Kullanıcı Seçimleri (Uygulandı)
+- Health yolu: `/api/health/search`
+- Degrade davranışı: Arama endpointleri 503 + makine-okur body (`error_code`, `degraded`, `retry_after_seconds`)
+- Sentry: `SENTRY_DSN` varsa aktif, yoksa kapalı
+
+### Uygulanan Teknik Değişiklikler
+1. **P0-3 Middleware deterministic response contract**
+   - `rbac_hard_lock` tüm code-pathlerde response garanti edecek şekilde refactor edildi.
+   - Exception branch’lerde JSON 500 dönülüyor (`RBAC_GUARD_ERROR`/`RBAC_RESPONSE_NONE`).
+   - Global fail-safe middleware eklendi (`fail_safe_response_guard`): response `None` veya unhandled exception → JSON 500 (`MIDDLEWARE_RESPONSE_NONE` / `MIDDLEWARE_GUARD_ERROR`).
+
+2. **P0-4 Meilisearch timeout/settings hardening**
+   - Blocking settings update request path’ten kaldırıldı; async queue + background worker modeline taşındı.
+   - Retry: exponential backoff ile 3 deneme.
+   - Circuit breaker: 3 ardışık başarısızlık sonrası open-circuit (degrade mode).
+   - `/api/health/search` endpoint eklendi (200 healthy / 503 degraded deterministic).
+
+3. **Sentry gate**
+   - `SENTRY_DSN` set ise `sentry_sdk.init(...)` çalışır; set değilse no-op.
+
+### Doğrulama
+- Self-test: health/search, v2 search, RBAC authsuz path, degrade payload alanları.
+- Testing agent PASS: `/app/test_reports/iteration_105.json` (backend/frontend 100%).
+- `auto_frontend_testing_agent` PASS (regresyon temiz).
+- `deep_testing_backend_v2` PASS (FAZ 2 backend regresyon temiz).
