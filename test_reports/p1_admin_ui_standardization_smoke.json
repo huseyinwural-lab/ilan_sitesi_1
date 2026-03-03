@@ -1,6 +1,6 @@
 {
   "task": "P1-Next-02 Admin UI Standardizasyonu Smoke",
-  "base_url": "https://monolith-modular-5.preview.emergentagent.com",
+  "base_url": "https://marketplace-admin-13.preview.emergentagent.com",
   "backend_enforcement": [
     {
       "name": "super_admin_permissions_snapshot",

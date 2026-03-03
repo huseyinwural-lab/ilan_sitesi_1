@@ -15,30 +15,30 @@
     {
       "ok": true,
       "initial_url": "http://marketplace-finance-3.preview.emergentagent.com/",
-      "final_url": "https://monolith-modular-5.preview.emergentagent.com:443/",
+      "final_url": "https://marketplace-admin-13.preview.emergentagent.com:443/",
       "hop_count": 1,
       "chain": [
         {
           "status": 301,
           "url": "http://marketplace-finance-3.preview.emergentagent.com/",
-          "location": "https://monolith-modular-5.preview.emergentagent.com:443/"
+          "location": "https://marketplace-admin-13.preview.emergentagent.com:443/"
         },
         {
           "status": 200,
-          "url": "https://monolith-modular-5.preview.emergentagent.com:443/",
+          "url": "https://marketplace-admin-13.preview.emergentagent.com:443/",
           "location": null
         }
       ]
     },
     {
       "ok": true,
-      "initial_url": "https://monolith-modular-5.preview.emergentagent.com/",
-      "final_url": "https://monolith-modular-5.preview.emergentagent.com/",
+      "initial_url": "https://marketplace-admin-13.preview.emergentagent.com/",
+      "final_url": "https://marketplace-admin-13.preview.emergentagent.com/",
       "hop_count": 0,
       "chain": [
         {
           "status": 200,
-          "url": "https://monolith-modular-5.preview.emergentagent.com/",
+          "url": "https://marketplace-admin-13.preview.emergentagent.com/",
           "location": null
         }
       ]
@@ -48,28 +48,28 @@
   "canonical_checks": {
     "rows": [
       {
-        "url": "https://monolith-modular-5.preview.emergentagent.com/",
-        "canonical": "https://monolith-modular-5.preview.emergentagent.com/"
+        "url": "https://marketplace-admin-13.preview.emergentagent.com/",
+        "canonical": "https://marketplace-admin-13.preview.emergentagent.com/"
       },
       {
-        "url": "https://monolith-modular-5.preview.emergentagent.com/trust",
-        "canonical": "https://monolith-modular-5.preview.emergentagent.com/trust"
+        "url": "https://marketplace-admin-13.preview.emergentagent.com/trust",
+        "canonical": "https://marketplace-admin-13.preview.emergentagent.com/trust"
       },
       {
-        "url": "https://monolith-modular-5.preview.emergentagent.com/kurumsal",
-        "canonical": "https://monolith-modular-5.preview.emergentagent.com/kurumsal"
+        "url": "https://marketplace-admin-13.preview.emergentagent.com/kurumsal",
+        "canonical": "https://marketplace-admin-13.preview.emergentagent.com/kurumsal"
       },
       {
-        "url": "https://monolith-modular-5.preview.emergentagent.com/seo",
-        "canonical": "https://monolith-modular-5.preview.emergentagent.com/seo"
+        "url": "https://marketplace-admin-13.preview.emergentagent.com/seo",
+        "canonical": "https://marketplace-admin-13.preview.emergentagent.com/seo"
       },
       {
-        "url": "https://monolith-modular-5.preview.emergentagent.com/bilgi/gizlilik-politikasi",
-        "canonical": "https://monolith-modular-5.preview.emergentagent.com/bilgi/gizlilik-politikasi"
+        "url": "https://marketplace-admin-13.preview.emergentagent.com/bilgi/gizlilik-politikasi",
+        "canonical": "https://marketplace-admin-13.preview.emergentagent.com/bilgi/gizlilik-politikasi"
       },
       {
-        "url": "https://monolith-modular-5.preview.emergentagent.com/kategori/tarla",
-        "canonical": "https://monolith-modular-5.preview.emergentagent.com/kategori/tarla"
+        "url": "https://marketplace-admin-13.preview.emergentagent.com/kategori/tarla",
+        "canonical": "https://marketplace-admin-13.preview.emergentagent.com/kategori/tarla"
       }
     ],
     "mismatch_count": 0,
@@ -80,26 +80,26 @@
       "url_count": 1219,
       "wrong_host_count": 0,
       "sample_20": [
-        "https://monolith-modular-5.preview.emergentagent.com/",
-        "https://monolith-modular-5.preview.emergentagent.com/search",
-        "https://monolith-modular-5.preview.emergentagent.com/trust",
-        "https://monolith-modular-5.preview.emergentagent.com/kurumsal",
-        "https://monolith-modular-5.preview.emergentagent.com/seo",
-        "https://monolith-modular-5.preview.emergentagent.com/maintenance",
-        "https://monolith-modular-5.preview.emergentagent.com/500",
-        "https://monolith-modular-5.preview.emergentagent.com/DE/vasita",
-        "https://monolith-modular-5.preview.emergentagent.com/DE/vasita/otomobil",
-        "https://monolith-modular-5.preview.emergentagent.com/kategori/maps-acceptance-fr",
-        "https://monolith-modular-5.preview.emergentagent.com/kategori/maps-acceptance-tr",
-        "https://monolith-modular-5.preview.emergentagent.com/kategori/maps-acceptance-de",
-        "https://monolith-modular-5.preview.emergentagent.com/kategori/tarla",
-        "https://monolith-modular-5.preview.emergentagent.com/kategori/imara-acik",
-        "https://monolith-modular-5.preview.emergentagent.com/kategori/arsa",
-        "https://monolith-modular-5.preview.emergentagent.com/kategori/kiralik-ofis",
-        "https://monolith-modular-5.preview.emergentagent.com/kategori/satilik-dukkan",
-        "https://monolith-modular-5.preview.emergentagent.com/kategori/ticari",
-        "https://monolith-modular-5.preview.emergentagent.com/kategori/kiralik-daire",
-        "https://monolith-modular-5.preview.emergentagent.com/kategori/satilik-daire"
+        "https://marketplace-admin-13.preview.emergentagent.com/",
+        "https://marketplace-admin-13.preview.emergentagent.com/search",
+        "https://marketplace-admin-13.preview.emergentagent.com/trust",
+        "https://marketplace-admin-13.preview.emergentagent.com/kurumsal",
+        "https://marketplace-admin-13.preview.emergentagent.com/seo",
+        "https://marketplace-admin-13.preview.emergentagent.com/maintenance",
+        "https://marketplace-admin-13.preview.emergentagent.com/500",
+        "https://marketplace-admin-13.preview.emergentagent.com/DE/vasita",
+        "https://marketplace-admin-13.preview.emergentagent.com/DE/vasita/otomobil",
+        "https://marketplace-admin-13.preview.emergentagent.com/kategori/maps-acceptance-fr",
+        "https://marketplace-admin-13.preview.emergentagent.com/kategori/maps-acceptance-tr",
+        "https://marketplace-admin-13.preview.emergentagent.com/kategori/maps-acceptance-de",
+        "https://marketplace-admin-13.preview.emergentagent.com/kategori/tarla",
+        "https://marketplace-admin-13.preview.emergentagent.com/kategori/imara-acik",
+        "https://marketplace-admin-13.preview.emergentagent.com/kategori/arsa",
+        "https://marketplace-admin-13.preview.emergentagent.com/kategori/kiralik-ofis",
+        "https://marketplace-admin-13.preview.emergentagent.com/kategori/satilik-dukkan",
+        "https://marketplace-admin-13.preview.emergentagent.com/kategori/ticari",
+        "https://marketplace-admin-13.preview.emergentagent.com/kategori/kiralik-daire",
+        "https://marketplace-admin-13.preview.emergentagent.com/kategori/satilik-daire"
       ]
     },
     "simulated_hosts": [

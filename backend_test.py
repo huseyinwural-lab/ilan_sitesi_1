@@ -11,7 +11,7 @@ import os
 from typing import Dict, Any, List
 
 # Get backend URL from frontend .env file
-BACKEND_URL = "https://monolith-modular-5.preview.emergentagent.com/api"
+BACKEND_URL = "https://marketplace-admin-13.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_EMAIL = "admin@platform.com"

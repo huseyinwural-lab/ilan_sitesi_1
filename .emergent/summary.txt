@@ -2,60 +2,65 @@
 The user's primary goal is to build a full-stack application similar to sahibinden.com, with a heavy focus on admin-configurable features. The project follows a strict, phase-based development plan (bitirme planı) provided by the user via explicit, multi-step task orders (GÖREV EMRİ).
 
 PRODUCT REQUIREMENTS:
-The application has completed its core feature development and a Go-Live Critical (P0) hardening phase. It has now moved into a structured P1 phase focusing on quality, operations, and architectural improvements. The user dictates the precise order and execution of tasks, including architectural decisions, testing requirements, and acceptance criteria for each step. The current work involves a major refactoring of the backend monolith.
+The application has completed its core feature development, a Go-Live Critical (P0) hardening phase, and a significant P1 phase focusing on quality, operations, and architectural improvements (monolith refactoring, permissions UI, audit UX).
+
+The current requirement is to refactor the Kurumsal Portal (Corporate/Dealer Dashboard) UI to exactly match a user-provided PDF design (). This involves a specific 5-row page structure, populating all sidebar menu items as detailed in the PDF, and ensuring UI behaviors (like menu dropdowns) match the user's explicit instructions.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-The application is feature-rich and has undergone significant hardening.
-- **Core Modules**: Stable modules for Finance (Stripe), Content Management, Category Management, and a Corporate (Dealer) Dashboard are in place.
-- **Go-Live Hardening (P0)**: All P0 tasks are complete, including legacy billing code removal (P0-04) and category-to-form mapping validation (P0-05).
-- **RBAC & Security (P1)**: A sophisticated Role-Based Access Control (RBAC) system has been implemented, moving beyond simple roles to a granular, flag-based permission model (). This is supported by a CI gate () that runs nightly tests to prevent permission drift and ensures new endpoints are protected.
-- **Audit Trail (P1)**: An MVP for an -only audit dashboard is live at . It logs critical events (e.g., auth failures, content changes), displays statistics, and flags anomalies.
-- **Monolith Refactoring (P1)**: A systematic refactoring of the monolithic  is in progress. The first phase, moving low-risk routes (ops, health, sitemap), is complete.
+The application is feature-complete and has undergone extensive refactoring and hardening.
+- **Backend Refactoring:** The monolithic  has been successfully broken down. Routes for , , , , , and  have all been moved into their own dedicated, modular routers.
+- **Admin Features:**
+    - A granular, flag-based permission system is live, complete with a  UI for managing user permissions ().
+    - The Audit dashboard () has been enhanced with server-side pagination, filtering, and performance improvements.
+- **Testing:** The CI pipeline has been expanded with a new suite of nightly E2E tests covering critical user, dealer, and finance flows.
+- **UI/UX:** Previous UI tasks, including standardizing admin components and fixing React hydration warnings, have been completed.
 
 **Last working item**:
--   **Last item agent was working:** The agent was executing step **C-2** of the monolith refactoring plan: moving **Content and Category routes** from the main  file into dedicated router modules. The user just gave the final approval () to proceed with the implementation.
+-   **Last item agent was working:** The agent was tasked with implementing the new design for the Kurumsal Portal (Corporate/Dealer Dashboard) based on a detailed PDF provided by the user. The user has given explicit instructions () to populate all menus from the PDF, use mock data where necessary, and ensure the backend can support the required data structures. This is a complete UI overhaul for this specific section.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
 -   **Which testing method agent to use?** both
-    - Backend: After refactoring, run regression tests via  or scripts to ensure all content, category, and listing-creation endpoints work as before. The OpenAPI schema should be checked to confirm no routes were lost.
-    - Frontend: Use the testing agent to run a regression on the ilan-ver (create listing) E2E flow for the specified set of categories (4 DE, 2 FR) to ensure the frontend's interaction with the newly located backend routes is seamless.
+    - **Backend:** Create or verify endpoints to supply the data needed for all the new menu items in the dealer dashboard as specified in the PDF.
+    - **Frontend:** Use the testing agent to perform a comprehensive visual and functional regression. The tests must confirm that all menu items from the PDF are present and populated, the 5-row layout is correctly implemented, navigation works, and the UI is an exact match for the user's design.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
 *No active blocking issues.*
 
 **In progress Task List**:
--   **Task 1: P1 Monolith Refactoring - Step C-2 (P1, HIGHEST Priority)**
-    -   **Where to resume:** Begin the implementation as per the user's  confirmation. The first step is to create an inventory of all content and category-related routes, then create the new router files ( and ), and finally move the code.
-    -   **What will be achieved with this?** This will further modularize the backend, making the codebase easier to maintain and reducing the complexity of .
+-   **Task 1: P1 Kurumsal Portal UI Implementation (P0, HIGHEST Priority)**
+    -   **Where to resume:** Begin implementation based on the user's final instructions (). The primary source of truth is the .
+    -   **What will be achieved with this?** The dealer dashboard UI will be completely rebuilt to match the user's exact specification, improving usability and fulfilling the user's design requirements. This includes populating all specified menus with data, which may require creating new backend endpoints or using mock data as a placeholder.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
     -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
-**Upcoming Tasks (P1):**
--   **P1 Monolith Refactoring - Step C-3:** After C-2 is complete, the final and most critical step is to move the **Finance routes** into their own dedicated module. This will require extensive regression testing on all payment flows.
--   **P1 User/Dealer Flow Validation:** Verify user and dealer account functionalities after the permission-flag model changes.
--   **P1 HTML/CSS Standardization:** Refine and standardize the UI for the new admin panels (Audit, Permissions).
+**Upcoming Tasks:**
+-   **P1.1 Permission What-if Simulator (User-interested):** Create a UI to preview the impact of permission changes before they are saved.
+-   **P1.1 Two-Factor Approval for Permissions (User-interested):** Implement a 4-eyes principle for critical permission changes, requiring a second admin's approval.
+-   **P1 User/Dealer Flow Validation:** A formal validation pass on user/dealer flows after the recent permission and UI changes.
+-   **P1 HTML/CSS Standardization:** Final polish on the new admin and dealer UIs.
 
-**Future Tasks (P2-P3):**
--   **P1.1 Granular Permissions UI:** Build an admin interface for managing the new permission flags.
+**Future Tasks:**
 -   **P2 (Business Growth):** Implement advanced financial analytics, conversion funnel tracking, and A/B testing infrastructure.
 -   **P3 (Enterprise Scale):** Implement an SRE pack (SLO/SLA dashboards), conduct DR/Backup drills, and perform security/cost audits.
+-   **P1.1 Policy Snapshot & Rollback:** Version control for permission sets to allow for single-click rollbacks.
 
 **Completed work in this session**
--   **P0-04 Legacy Billing Cleanup:** Successfully identified and completely removed all legacy (non-Stripe) billing code, UI components, and mock endpoints. (DONE)
--   **P0-05 Category Final Validation:** Performed comprehensive E2E tests for the category-leaf-to-form-template mapping, generating inventory and test matrix reports. (DONE)
--   **P1-01 Authorization Matrix (RBAC):** Established a formal RBAC policy, enforced it in the backend, and conducted negative tests. Key decisions:  role is view-only for finance;  rights are limited to  and . (DONE)
--   **P1.2 RBAC Policy Drift CI Gate:** Implemented an automated CI pipeline to run RBAC tests nightly and on relevant PRs to prevent security policy drift. (DONE)
--   **Audit Dashboard (Task A):** Implemented an MVP audit dashboard for , including event logging middleware, backend APIs for stats/anomalies, and a frontend UI. (DONE)
--   **Permission-Flag Model (Task B):** Architected and implemented the core logic for a granular, flag-based permission system to replace the rigid role-based model, controlled by a feature flag. (DONE)
--   **Monolith Refactoring (Task C-1):** Successfully refactored , , and  routes from  into separate, modular router files. (DONE)
+- **Monolith Refactoring (C-2 & C-3):** Successfully refactored all , , and  routes from  into modular routers. (DONE)
+- **User/Dealer Flow Validation (P1-Next-01):** Validated positive and negative permission scenarios for user and dealer roles. (DONE)
+- **Admin UI Standardization (P1-Next-02):** Standardized UI components across Audit and Permissions pages. (DONE)
+- **Hydration Warning Fix (P1-Next-03):** Addressed and resolved the long-standing React hydration warnings in . (DONE)
+- **Granular Permission UI (GÖREV 1):** Implemented a full CRUD interface for  to manage user-specific permission flags. (DONE)
+- **Audit/Permissions UX Enhancement (GÖREV 2):** Added server-side pagination, filtering, and performance indexing to the Audit and Permissions pages. (DONE)
+- **Nightly E2E Test Expansion (GÖREV 3):** Expanded the nightly CI test suite to include critical finance, dealer, and admin flows. (DONE)
+- **Corporate Header/Layout Fixes:** Iteratively fixed the corporate header layout, logo navigation, menu behavior, and color scheme based on user feedback. (DONE)
 
 **Earlier issues found/mentioned but not fixed**
--   **React Hydration Warnings:** This known technical debt from a previous session, related to  and the visual editor, remains unaddressed as it has not been prioritized by the user.
+- No outstanding issues remain from this session; previously mentioned items like hydration warnings have been addressed and completed.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork**: Platform failure to inject  secret.
@@ -66,29 +71,28 @@ The application is feature-rich and has undergone significant hardening.
 
 
 **Key Technical Concepts**
--   **Monolith Refactoring:** A phased approach to breaking down a large  file into domain-specific routers (, , , , etc.) while ensuring zero downtime or contract changes.
--   **Granular Permissions (Permission Flags):** Moving from role-based access control (RBAC) to a more flexible system where individual permissions (e.g., , ) can be granted to users, independent of their primary role.
--   **Policy Drift Prevention:** Using automated CI/CD pipelines to run security/policy tests () on a schedule and as a merge gate, preventing unprotected endpoints or unintended permission changes from reaching production.
--   **Audit Trail:** Implementing middleware to capture significant user and system actions, storing them in a dedicated collection () for security monitoring and operational insight.
+-   **Monolith Refactoring:** Phased decomposition of a large  into domain-specific FastAPI routers.
+-   **Granular Permissions (Permission Flags):** A flexible permission system allowing per-user overrides on top of standard role-based access.
+-   **Policy Drift Prevention:** Using automated nightly E2E tests as a CI gate to prevent security regressions.
+-   **PDF-Driven UI Development:** The current development process is strictly dictated by a visual design document (), requiring pixel-perfect implementation.
 
 **key DB schema**
--   **audit_events** (MongoDB Collection): 
--   **user_permissions** (SQL Table): 
+-   **audit_events**: 
+-   **user_permissions**: 
 
 **All files of reference**
--    & : The monolith being refactored.
--   : The destination for the refactored route modules.
--   : Contains the core logic for the RBAC and permission-flag system.
--   : The middleware for logging audit events.
--   : The automated test script for the CI gate.
--   : The new UI for the audit dashboard.
--   : Frontend hook to check for granular permissions.
+-   : **The primary source of truth** for the current UI task.
+-   : The page being refactored.
+-   : The layout component being refactored.
+-   : Directory containing all modularized backend API routes.
+-   : The new E2E test suite.
+-   : The product requirements document, updated after each major task.
 
 **Critical Info for New Agent**
--   **Follow GÖREV EMRİ (Task Orders) Exactly:** The user provides very specific, non-negotiable task lists with architectural decisions. Do not deviate. All communication must be in Turkish.
--   **Phased Refactoring is in Progress:** You are in the middle of a multi-step refactoring of . The current step is  (Content & Category). Follow the established pattern: inventory -> create modules -> delegate -> test.
--   **Default Deny Security Posture:** The new permission system is built on a default deny principle. Access must be explicitly granted via a permission flag. UI hiding is not enough; backend enforcement is mandatory.
--   **Use Test Reports as Proof:** The user requires specific test report files (, ) as evidence of completion for each major step. Follow the naming conventions provided.
+-   **Follow GÖREV EMRİ (Task Orders) Exactly:** The user provides very specific, non-negotiable task lists. Communication must be in Turkish.
+-   **PDF is the SOLE Authority for UI:** The current task is to implement the UI shown in . Do not improvise or deviate. All menu items, layouts, and styles must match the PDF.
+-   **Data Population is Required:** The user expects all menus in the dashboard to be filled with data. You must either implement the necessary backend endpoints or use realistic mock data ( confirmation) and clearly state which approach was taken.
+-   **Backend Support for UI:** The user expects the backend to be updated to support the data requirements of the new UI ( confirmation).
 
 **documents and test reports created in this job**
 -   
@@ -96,26 +100,28 @@ The application is feature-rich and has undergone significant hardening.
 -   
 -   
 -   
--    (RBAC negative tests)
 -   
 -   
--   Multiple iteration reports from  to .
+-   
+-   
+-   
+-   Iteration reports:  through 
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **#863:** User confirms the plan for task  (Content/Category refactor), specifying the delegation model and the E2E test set (4 DE, 2 FR). (IN PROGRESS)
-2.  **#862:** Agent asks for confirmation on the C-2 plan. (RESOLVED)
-3.  **#860:** User provides the task order for . (IN PROGRESS)
-4.  **#859:** Agent finished task C-1, confirming the successful refactoring of ops/health/sitemap routes and is awaiting the next command. (RESOLVED)
-5.  **... (Messages #767-858):** Agent works through task  (Monolith refactoring for ops/health/sitemap), following the user's detailed instructions. (COMPLETED)
-6.  **#769:** User confirms the plan for task , agreeing to a phased delegation. (COMPLETED)
-7.  **#766:** User gives the command to start task  (Monolith Refactoring). (COMPLETED)
-8.  **... (Messages #610-765):** Agent works through task  (Permission-Flag Model), including DB changes, policy resolver, and migration scripts. (COMPLETED)
-9.  **#613:** User confirms the plan for task , specifying an MVP scope and a feature-flagged rollout. (COMPLETED)
-10. **#610:** User gives the command to continue with task  (Permission-Flag Model). (COMPLETED)
+1.  **#992:** User provides the final PDF and gives instructions:  (use mocks if needed for menus) and  (ensure backend supports the UI). (IN PROGRESS)
+2.  **#991:** User confirms the plan to use the PDF as the single source of truth for the dashboard UI. (RESOLVED)
+3.  **#989:** User uploads a PDF, stating this is the desired model and asks the agent to implement all menus as shown, noting that some are currently empty. (PENDING)
+4.  **#988:** Agent confirms previous fixes (color scheme, footer) are done and asks for next steps. (RESOLVED)
+5.  **#971:** User confirms the color scheme fixes and points out the footer is still wrong; it should be a separate 5th row and pull from the admin footer source. (RESOLVED)
+6.  **#968:** User points out a color scheme issue in the Hesabım menu. (RESOLVED)
+7.  **#967:** Agent confirms previous layout and menu behavior fixes are done and asks for confirmation. (RESOLVED)
+8.  **#923:** User provides a very specific 5-row layout structure, clarifies background/text colors, and re-iterates the desired structure after the agent's misunderstanding. (RESOLVED)
+9.  **#904:** User clarifies: header background should remain, logo click goes to home, Hesabım menu should be thinner and open to the right, not below. (RESOLVED)
+10. **#901:** User expresses frustration with the agent's misunderstanding of the layout, re-uploads an image, and gives explicit instructions: white background, logo navigates to home. (RESOLVED)
 
 **Project Health Check:**
 -   **Broken:** None
--   **Mocked:** None
+-   **Mocked:** User has approved mocking data for the dealer dashboard menus to facilitate UI development.
 
 **3rd Party Integrations**
 -   PostgreSQL
@@ -128,9 +134,9 @@ The application is feature-rich and has undergone significant hardening.
 -   Boto3
 
 **Testing status**
--   **Testing agent used after significant changes:** YES (implicitly, by running extensive regression tests as part of the user's task orders).
+-   **Testing agent used after significant changes:** YES.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** Yes, numerous test/evidence files have been created in  for each completed task (e.g., , , ).
+-   **Test files created:** Yes, numerous reports in  and a new E2E test file at .
 -   **Known regressions:** None.
 
 **Credentials to test flow:**
@@ -139,4 +145,4 @@ The application is feature-rich and has undergone significant hardening.
 -   **Dealer/Corporate User:**  / 
 
 **What agent forgot to execute**
-The agent is following the user's explicit and sequential GÖREV EMRİ (Task Orders) meticulously. Nothing has been forgotten; tasks are being executed in the precise order dictated by the user.</analysis>
+The agent repeatedly failed to correctly interpret the user's UI layout instructions for the corporate portal, requiring multiple attempts and corrections from the user. It incorrectly placed the footer within the main content area and struggled with the overall page structure until the user provided a definitive PDF. The next agent must prioritize pixel-perfect adherence to the provided PDF to avoid repeating these mistakes.</analysis>

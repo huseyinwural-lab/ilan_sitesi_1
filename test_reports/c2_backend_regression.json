@@ -1,5 +1,5 @@
 {
-  "base_url": "https://monolith-modular-5.preview.emergentagent.com",
+  "base_url": "https://marketplace-admin-13.preview.emergentagent.com",
   "suite": "c2_backend_regression",
   "checks": [
     {
@@ -45,7 +45,7 @@
     {
       "name": "categories_validate_fake",
       "method": "GET",
-      "path": "/api/categories/validate?category_id=9853f177-a280-4966-8e91-e01ff9ab5e58&country=DE",
+      "path": "/api/categories/validate?category_id=marketplace-admin-13&country=DE",
       "status": 404,
       "expected": [
         404
