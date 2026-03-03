@@ -443,7 +443,7 @@ export default function DealerLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-warm)]" data-testid="dealer-layout-root">
+    <div className="min-h-screen bg-white text-black" data-testid="dealer-layout-root">
       <header className="border-b bg-white" data-testid="dealer-layout-header">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 lg:px-6" data-testid="dealer-layout-header-rows">
           <div className="flex items-center justify-between gap-3" data-testid="dealer-layout-header-row1">
@@ -524,9 +524,8 @@ export default function DealerLayout() {
           </div>
 
           {showRow2Modules ? (
-            <div className="border-t border-slate-200 pt-2" data-testid="dealer-layout-header-row2">
-              <div className="flex flex-col gap-2 lg:flex-row lg:items-start" data-testid="dealer-layout-row2-combined">
-                <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto pb-1" data-testid="dealer-layout-row2-primary-menu">
+            <div className="relative border-t border-slate-200 pt-2" data-testid="dealer-layout-header-row2">
+              <div className="flex min-w-0 items-center gap-1 overflow-x-auto pb-1" data-testid="dealer-layout-row2-primary-menu">
                   {primaryMenuItems.map((item) => {
                     const Icon = iconMap[item.icon] || LayoutDashboard;
                     const hasChildren = Array.isArray(item.children) && item.children.length > 0;
@@ -559,16 +558,15 @@ export default function DealerLayout() {
                       </button>
                     );
                   })}
-                </div>
+              </div>
 
-                {openPrimaryMenu?.children?.length ? (
-                  <div className="w-full rounded-xl border border-slate-200 bg-white p-2 lg:ml-auto lg:w-[360px]" data-testid={`dealer-layout-row2-submenu-${openPrimaryMenu.key}`}>
+              {openPrimaryMenu?.children?.length ? (
+                  <div className="absolute right-0 top-[calc(100%+6px)] z-40 w-full rounded-xl border border-slate-200 bg-white p-2 shadow-lg lg:w-[360px]" data-testid={`dealer-layout-row2-submenu-${openPrimaryMenu.key}`}>
                     <div className="space-y-1" data-testid="dealer-layout-row2-submenu-items">
                       {openPrimaryMenu.children.map((child) => renderSecondaryMenuItem(child, 0))}
                     </div>
                   </div>
                 ) : null}
-              </div>
             </div>
           ) : null}
 
@@ -700,10 +698,21 @@ export default function DealerLayout() {
           <div className="mb-3 text-xs text-rose-700" data-testid="dealer-layout-content-error">{error}</div>
         ) : null}
 
-        <section className="rounded-2xl bg-white p-6 shadow-sm" data-testid="dealer-layout-content">
+        <section className="rounded-2xl border border-slate-200 bg-white p-6" data-testid="dealer-layout-content">
           <Outlet />
         </section>
       </main>
+
+      <footer className="border-t border-slate-200 bg-white" data-testid="dealer-layout-footer">
+        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm text-black lg:px-6" data-testid="dealer-layout-footer-content">
+          <span data-testid="dealer-layout-footer-copyright">© {new Date().getFullYear()} Kurumsal Portal</span>
+          <div className="flex items-center gap-3" data-testid="dealer-layout-footer-links">
+            <a href="/bilgi/kullanim-kosullari" className="hover:underline" data-testid="dealer-layout-footer-link-terms">Kullanım Koşulları</a>
+            <a href="/bilgi/gizlilik-politikasi" className="hover:underline" data-testid="dealer-layout-footer-link-privacy">Gizlilik</a>
+            <a href="/bilgi/yardim-merkezi" className="hover:underline" data-testid="dealer-layout-footer-link-help">Yardım</a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

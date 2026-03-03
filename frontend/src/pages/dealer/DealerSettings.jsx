@@ -325,53 +325,54 @@ export default function DealerSettings() {
   }, [requestedSection, activeSection, setSearchParams]);
 
   return (
-    <div className="space-y-4" data-testid="dealer-settings-page">
-      <div className="flex flex-wrap items-center justify-between gap-3" data-testid="dealer-settings-header">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900" data-testid="dealer-settings-title">Hesabım</h1>
-          <p className="text-sm font-medium text-slate-700" data-testid="dealer-settings-subtitle">Kurumsal hesap, güvenlik ve bildirim ayarlarınızı yönetin.</p>
-        </div>
-        <button
-          type="button"
-          onClick={fetchAll}
-          className="h-9 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-900"
-          data-testid="dealer-settings-refresh-button"
-        >
-          Yenile
-        </button>
-      </div>
-
-      <div className="rounded-lg border border-slate-200 bg-white p-4" data-testid="dealer-settings-quick-links-card">
-        <div className="text-xs font-semibold text-slate-700" data-testid="dealer-settings-quick-links-title">Kurumsal Kısayollar</div>
-        <div className="mt-2 flex flex-wrap items-center gap-2" data-testid="dealer-settings-quick-links">
-          <Link to="/dealer/company" className="h-9 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-900 inline-flex items-center" data-testid="dealer-settings-quick-link-company">
-            Şirket Profili
-          </Link>
-          <Link to="/dealer/privacy" className="h-9 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-900 inline-flex items-center" data-testid="dealer-settings-quick-link-privacy">
-            Gizlilik Merkezi
-          </Link>
-          <Link to="/dealer/invoices" className="h-9 rounded-md border border-slate-300 px-3 text-sm font-semibold text-slate-900 inline-flex items-center" data-testid="dealer-settings-quick-link-invoices">
-            Faturalar ve Hareketler
-          </Link>
-        </div>
-      </div>
-
-      <div className="rounded-lg border border-slate-200 bg-white p-4" data-testid="dealer-settings-sections-card">
-        <div className="flex flex-wrap items-center gap-2" data-testid="dealer-settings-section-tabs">
-          {Object.entries(sectionConfig).map(([key, section]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => handleSectionChange(key)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${activeSection === key ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-800'}`}
-              data-testid={`dealer-settings-section-tab-${key}`}
-            >
-              {section.label}
-            </button>
-          ))}
+    <div className="space-y-4 bg-white text-black" data-testid="dealer-settings-page">
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white" data-testid="dealer-settings-sections-card">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3" data-testid="dealer-settings-header">
+          <div className="flex items-center gap-3">
+            <div className="inline-flex h-8 w-8 items-center justify-center rounded bg-amber-400 text-black" data-testid="dealer-settings-title-icon">👤</div>
+            <div>
+              <h1 className="text-2xl font-semibold text-black" data-testid="dealer-settings-title">Hesabım</h1>
+              <p className="text-sm font-medium text-black" data-testid="dealer-settings-subtitle">Kurumsal hesap, güvenlik ve bildirim ayarlarınızı yönetin.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={fetchAll}
+            className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-black"
+            data-testid="dealer-settings-refresh-button"
+          >
+            Yenile
+          </button>
         </div>
 
-        {loading ? (
+        <div className="grid gap-0 lg:grid-cols-[280px_minmax(0,1fr)]" data-testid="dealer-settings-layout-grid">
+          <aside className="border-b border-slate-200 bg-white p-3 lg:border-b-0 lg:border-r" data-testid="dealer-settings-section-tabs">
+            <div className="space-y-1">
+              {Object.entries(sectionConfig).map(([key, section]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => handleSectionChange(key)}
+                  className={`flex w-full items-center rounded-md border px-3 py-2 text-left text-sm font-semibold ${activeSection === key ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-black hover:bg-slate-50'}`}
+                  data-testid={`dealer-settings-section-tab-${key}`}
+                >
+                  {section.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-3 border-t border-slate-200 pt-3 text-xs text-black" data-testid="dealer-settings-quick-links">
+              <div className="mb-2 font-semibold" data-testid="dealer-settings-quick-links-title">Kısayollar</div>
+              <div className="flex flex-col gap-2">
+                <Link to="/dealer/company" className="text-black hover:underline" data-testid="dealer-settings-quick-link-company">Şirket Profili</Link>
+                <Link to="/dealer/privacy" className="text-black hover:underline" data-testid="dealer-settings-quick-link-privacy">Gizlilik Merkezi</Link>
+                <Link to="/dealer/invoices" className="text-black hover:underline" data-testid="dealer-settings-quick-link-invoices">Faturalar ve Hareketler</Link>
+              </div>
+            </div>
+          </aside>
+
+          <div className="bg-white p-4" data-testid="dealer-settings-right-panel">
+            {loading ? (
           <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500" data-testid="dealer-settings-loading">Yükleniyor...</div>
         ) : (
           <div className="mt-3 space-y-3" data-testid="dealer-settings-content">
@@ -546,6 +547,8 @@ export default function DealerSettings() {
           </div>
         )}
       </div>
+      </div>
+    </div>
     </div>
   );
 }
