@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -49,6 +50,7 @@ const emptyForm = {
 };
 
 export default function AdminPlans() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const urlCountry = searchParams.get('country') || '';
   const defaultCountry = urlCountry ? urlCountry.toUpperCase() : 'DE';
@@ -69,6 +71,7 @@ export default function AdminPlans() {
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
+  const canEditFinance = ['super_admin', 'finance'].includes(user?.role);
 
   const authHeader = useMemo(() => {
     const token = localStorage.getItem('access_token');
@@ -144,6 +147,7 @@ export default function AdminPlans() {
   }, [dbReady, filterScope, filterCountry, filterStatus, searchQuery]);
 
   const openCreate = () => {
+    if (!canEditFinance) return;
     setEditing(null);
     const scope = filterScope === 'country' ? 'country' : 'global';
     const country = scope === 'country' ? filterCountry : '';
@@ -159,6 +163,7 @@ export default function AdminPlans() {
   };
 
   const openEdit = (item) => {
+    if (!canEditFinance) return;
     setEditing(item);
     const scope = item.country_scope || 'global';
     const country = scope === 'country' ? item.country_code || '' : '';
@@ -195,6 +200,7 @@ export default function AdminPlans() {
   };
 
   const submitForm = async ({ forceActive = false } = {}) => {
+    if (!canEditFinance) return;
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
@@ -231,7 +237,7 @@ export default function AdminPlans() {
   };
 
   const toggleActive = async (item) => {
-    if (disabled) return;
+    if (disabled || !canEditFinance) return;
     try {
       await axios.post(`${API_BASE_URL}/api/admin/plans/${item.id}/toggle-active`, {}, { headers: authHeader });
       fetchItems();
@@ -241,7 +247,7 @@ export default function AdminPlans() {
   };
 
   const archivePlan = async (item) => {
-    if (disabled) return;
+    if (disabled || !canEditFinance) return;
     const confirmed = window.confirm('Bu planı arşivlemek mevcut abonelikleri etkilemez. Devam edilsin mi?');
     if (!confirmed) return;
     try {
@@ -279,15 +285,17 @@ export default function AdminPlans() {
           <h1 className="text-2xl font-semibold" data-testid="plans-title">Planlar</h1>
           <p className="text-sm text-muted-foreground" data-testid="plans-subtitle">Country: {urlCountry || 'Global'}</p>
         </div>
-        <button
-          className="px-4 py-2 rounded bg-primary text-white disabled:opacity-60"
-          onClick={openCreate}
-          disabled={disabled}
-          title={disabled ? 'DB hazır değil' : 'Yeni Plan'}
-          data-testid="plans-create-button"
-        >
-          Yeni Plan
-        </button>
+        {canEditFinance ? (
+          <button
+            className="px-4 py-2 rounded bg-primary text-white disabled:opacity-60"
+            onClick={openCreate}
+            disabled={disabled}
+            title={disabled ? 'DB hazır değil' : 'Yeni Plan'}
+            data-testid="plans-create-button"
+          >
+            Yeni Plan
+          </button>
+        ) : null}
       </div>
 
       {!dbReady && (
@@ -453,33 +461,37 @@ export default function AdminPlans() {
                     {formatDate(item.updated_at || item.created_at)}
                   </td>
                   <td className="px-3 py-2 text-right space-x-2" data-testid={`plans-actions-${item.id}`}>
-                    <button
-                      className="px-2 py-1 border rounded"
-                      onClick={() => openEdit(item)}
-                      disabled={disabled}
-                      title={disabled ? 'DB hazır değil' : 'Düzenle'}
-                      data-testid={`plans-edit-${item.id}`}
-                    >
-                      Düzenle
-                    </button>
-                    <button
-                      className="px-2 py-1 border rounded"
-                      onClick={() => toggleActive(item)}
-                      disabled={disabled}
-                      title={disabled ? 'DB hazır değil' : 'Aktif/Pasif'}
-                      data-testid={`plans-toggle-${item.id}`}
-                    >
-                      {item.active_flag ? 'Pasif Yap' : 'Aktif Yap'}
-                    </button>
-                    <button
-                      className="px-2 py-1 border rounded text-red-600"
-                      onClick={() => archivePlan(item)}
-                      disabled={disabled}
-                      title={disabled ? 'DB hazır değil' : 'Arşivle'}
-                      data-testid={`plans-archive-${item.id}`}
-                    >
-                      Arşivle
-                    </button>
+                    {canEditFinance ? (
+                      <>
+                        <button
+                          className="px-2 py-1 border rounded"
+                          onClick={() => openEdit(item)}
+                          disabled={disabled}
+                          title={disabled ? 'DB hazır değil' : 'Düzenle'}
+                          data-testid={`plans-edit-${item.id}`}
+                        >
+                          Düzenle
+                        </button>
+                        <button
+                          className="px-2 py-1 border rounded"
+                          onClick={() => toggleActive(item)}
+                          disabled={disabled}
+                          title={disabled ? 'DB hazır değil' : 'Aktif/Pasif'}
+                          data-testid={`plans-toggle-${item.id}`}
+                        >
+                          {item.active_flag ? 'Pasif Yap' : 'Aktif Yap'}
+                        </button>
+                        <button
+                          className="px-2 py-1 border rounded text-red-600"
+                          onClick={() => archivePlan(item)}
+                          disabled={disabled}
+                          title={disabled ? 'DB hazır değil' : 'Arşivle'}
+                          data-testid={`plans-archive-${item.id}`}
+                        >
+                          Arşivle
+                        </button>
+                      </>
+                    ) : null}
                   </td>
                 </tr>
               ))
@@ -488,7 +500,7 @@ export default function AdminPlans() {
         </table>
       </div>
 
-      {showForm && (
+      {showForm && canEditFinance ? (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" data-testid="plans-form-modal">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-xl p-6 space-y-4" data-testid="plans-form-card">
             <div className="flex items-center justify-between">
@@ -618,7 +630,7 @@ export default function AdminPlans() {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

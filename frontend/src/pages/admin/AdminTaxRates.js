@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 export default function AdminTaxRatesPage() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const urlCountry = (searchParams.get('country') || '').toUpperCase();
 
@@ -20,6 +22,7 @@ export default function AdminTaxRatesPage() {
     active_flag: true,
   });
   const [error, setError] = useState(null);
+  const canEditFinance = ['super_admin', 'finance'].includes(user?.role);
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
@@ -42,6 +45,7 @@ export default function AdminTaxRatesPage() {
   };
 
   const openCreate = () => {
+    if (!canEditFinance) return;
     setEditing(null);
     setForm({ country_code: urlCountry, rate: '', effective_date: '', active_flag: true });
     setError(null);
@@ -49,6 +53,7 @@ export default function AdminTaxRatesPage() {
   };
 
   const openEdit = (item) => {
+    if (!canEditFinance) return;
     setEditing(item);
     setForm({
       country_code: item.country_code,
@@ -61,6 +66,7 @@ export default function AdminTaxRatesPage() {
   };
 
   const submitForm = async () => {
+    if (!canEditFinance) return;
     if (!form.country_code) {
       setError('Country zorunlu');
       return;
@@ -100,6 +106,7 @@ export default function AdminTaxRatesPage() {
   };
 
   const deleteTaxRate = async (item) => {
+    if (!canEditFinance) return;
     if (!window.confirm('Tax rate silinsin mi?')) return;
     try {
       await axios.delete(`${API}/admin/tax-rates/${item.id}`, { headers: authHeader });
@@ -123,13 +130,15 @@ export default function AdminTaxRatesPage() {
             Country: <span className="font-semibold">{urlCountry || 'Global'}</span>
           </div>
         </div>
-        <button
-          onClick={openCreate}
-          className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
-          data-testid="tax-create-open"
-        >
-          Yeni Tax Rate
-        </button>
+        {canEditFinance ? (
+          <button
+            onClick={openCreate}
+            className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
+            data-testid="tax-create-open"
+          >
+            Yeni Tax Rate
+          </button>
+        ) : null}
       </div>
 
       <div className="rounded-md border bg-card overflow-hidden" data-testid="tax-table">
@@ -157,20 +166,24 @@ export default function AdminTaxRatesPage() {
                 <div>{item.effective_date}</div>
                 <div>{item.active_flag ? 'yes' : 'no'}</div>
                 <div className="flex gap-2 justify-end">
-                  <button
-                    onClick={() => openEdit(item)}
-                    className="h-8 px-2.5 rounded-md border text-xs"
-                    data-testid={`tax-edit-${item.id}`}
-                  >
-                    Düzenle
-                  </button>
-                  <button
-                    onClick={() => deleteTaxRate(item)}
-                    className="h-8 px-2.5 rounded-md border text-xs text-rose-600"
-                    data-testid={`tax-delete-${item.id}`}
-                  >
-                    Sil
-                  </button>
+                  {canEditFinance ? (
+                    <>
+                      <button
+                        onClick={() => openEdit(item)}
+                        className="h-8 px-2.5 rounded-md border text-xs"
+                        data-testid={`tax-edit-${item.id}`}
+                      >
+                        Düzenle
+                      </button>
+                      <button
+                        onClick={() => deleteTaxRate(item)}
+                        className="h-8 px-2.5 rounded-md border text-xs text-rose-600"
+                        data-testid={`tax-delete-${item.id}`}
+                      >
+                        Sil
+                      </button>
+                    </>
+                  ) : null}
                 </div>
               </div>
             ))
@@ -178,7 +191,7 @@ export default function AdminTaxRatesPage() {
         </div>
       </div>
 
-      {modalOpen && (
+      {modalOpen && canEditFinance ? (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" data-testid="tax-modal">
           <div className="bg-card rounded-lg border shadow-xl w-full max-w-lg">
             <div className="p-4 border-b flex items-center justify-between">
@@ -235,7 +248,7 @@ export default function AdminTaxRatesPage() {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

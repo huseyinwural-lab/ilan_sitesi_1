@@ -212,7 +212,7 @@ export default function BackofficePortalApp() {
         path="/info-pages"
         element={
           <AdminLayout>
-            <AdminRouteGuard roles={["super_admin"]}>
+            <AdminRouteGuard roles={["super_admin", "country_admin"]}>
               <AdminInfoPages />
             </AdminRouteGuard>
           </AdminLayout>

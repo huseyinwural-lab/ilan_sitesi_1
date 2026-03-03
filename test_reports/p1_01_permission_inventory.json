@@ -1,0 +1,70 @@
+{
+  "generated_at": "2026-03-02T23:20:00Z",
+  "task": "P1-01 Yetki Matrisi Envanteri",
+  "roles": [
+    "super_admin",
+    "country_admin",
+    "admin",
+    "dealer",
+    "user"
+  ],
+  "decisions": {
+    "finance_admin": "view_only",
+    "publish_roles": [
+      "super_admin",
+      "country_admin"
+    ],
+    "export_is_separate_permission": true,
+    "ui_hiding_plus_backend_enforce": true
+  },
+  "finance_policy": {
+    "view": {
+      "allowed_roles": ["super_admin", "country_admin", "admin"],
+      "notes": "country_admin scoped; admin read-only"
+    },
+    "edit": {
+      "allowed_roles": ["super_admin"],
+      "notes": "country_admin/admin edit yok"
+    },
+    "export": {
+      "allowed_roles": ["super_admin", "country_admin"],
+      "notes": "admin export yok"
+    },
+    "delete": {
+      "allowed_roles": ["super_admin"],
+      "notes": "kritik silme operasyonları"
+    }
+  },
+  "content_policy": {
+    "publish": {
+      "allowed_roles": ["super_admin", "country_admin"],
+      "notes": "implicit inheritance yok"
+    }
+  },
+  "backend_endpoint_matrix": [
+    {"endpoint": "/api/admin/finance/overview", "action": "view", "allowed_roles": ["super_admin", "country_admin", "admin"]},
+    {"endpoint": "/api/admin/invoices", "action": "view", "allowed_roles": ["super_admin", "country_admin", "admin"]},
+    {"endpoint": "/api/admin/invoices/export.csv", "action": "export", "allowed_roles": ["super_admin", "country_admin"]},
+    {"endpoint": "/api/admin/payments", "action": "view", "allowed_roles": ["super_admin", "country_admin", "admin"]},
+    {"endpoint": "/api/admin/payments/export.csv", "action": "export", "allowed_roles": ["super_admin", "country_admin"]},
+    {"endpoint": "/api/admin/finance/subscriptions", "action": "view", "allowed_roles": ["super_admin", "country_admin", "admin"]},
+    {"endpoint": "/api/admin/finance/ledger", "action": "view", "allowed_roles": ["super_admin", "country_admin", "admin"]},
+    {"endpoint": "/api/admin/finance/ledger/export.csv", "action": "export", "allowed_roles": ["super_admin", "country_admin"]},
+    {"endpoint": "/api/admin/tax-rates", "action": "view", "allowed_roles": ["super_admin", "country_admin", "admin"]},
+    {"endpoint": "/api/admin/plans", "action": "view", "allowed_roles": ["super_admin", "country_admin", "admin"]},
+    {"endpoint": "/api/admin/plans (POST/PUT/PATCH/DELETE)", "action": "edit/delete", "allowed_roles": ["super_admin"]},
+    {"endpoint": "/api/admin/info-pages/*", "action": "publish", "allowed_roles": ["super_admin", "country_admin"]},
+    {"endpoint": "/api/admin/site-design/*/publish", "action": "publish", "allowed_roles": ["super_admin", "country_admin"]},
+    {"endpoint": "/api/account/invoices", "action": "view_own", "allowed_roles": ["dealer", "user"]},
+    {"endpoint": "/api/account/payments", "action": "view_own", "allowed_roles": ["dealer", "user"]},
+    {"endpoint": "/api/account/subscription", "action": "view_own", "allowed_roles": ["dealer", "user"]}
+  ],
+  "ui_action_matrix": [
+    {"ui": "Admin Finance Overview", "action": "view", "visible_roles": ["super_admin", "country_admin", "admin"]},
+    {"ui": "Admin Finance Export Buttons", "action": "export", "visible_roles": ["super_admin", "country_admin"]},
+    {"ui": "Admin Invoices Create/MarkPaid/Cancel/Refund", "action": "edit", "visible_roles": ["super_admin"]},
+    {"ui": "Admin Plans CRUD", "action": "edit/delete", "visible_roles": ["super_admin"]},
+    {"ui": "Admin Tax Rates CRUD", "action": "edit/delete", "visible_roles": ["super_admin"]},
+    {"ui": "Info Pages Publish", "action": "publish", "visible_roles": ["super_admin", "country_admin"]}
+  ]
+}

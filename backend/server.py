@@ -3896,7 +3896,7 @@ message_ws_manager = MessageConnectionManager()
 ADMIN_INVITE_RATE_LIMIT_WINDOW_SECONDS = 60
 ADMIN_INVITE_RATE_LIMIT_MAX_ATTEMPTS = 5
 
-ADMIN_ROLE_OPTIONS = {"super_admin", "country_admin", "finance", "support", "moderator", "campaigns_admin", "campaigns_supervisor", "ROLE_AUDIT_VIEWER", "ads_manager", "pricing_manager", "masterdata_manager"}
+ADMIN_ROLE_OPTIONS = {"super_admin", "admin", "country_admin", "finance", "support", "moderator", "campaigns_admin", "campaigns_supervisor", "ROLE_AUDIT_VIEWER", "ads_manager", "pricing_manager", "masterdata_manager"}
 
 CAMPAIGN_STATUS_SET = {"draft", "active", "paused", "ended"}
 CAMPAIGN_STATUS_TRANSITIONS = {
@@ -16362,7 +16362,7 @@ async def admin_list_invoices(
     product_id: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
-    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin", "admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_invoices_db_ready(session)
@@ -16452,7 +16452,7 @@ async def admin_list_invoices(
 async def admin_invoice_detail(
     invoice_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin", "admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_invoices_db_ready(session)
@@ -21974,7 +21974,7 @@ async def admin_list_payments(
     listing_id: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
-    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin", "admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_invoices_db_ready(session)
@@ -22467,7 +22467,7 @@ async def admin_finance_overview(
     country: Optional[str] = None,
     currency: Optional[str] = None,
     product_id: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin", "admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -22558,7 +22558,7 @@ async def admin_finance_subscriptions(
     status: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
-    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin", "admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -22610,7 +22610,7 @@ async def admin_finance_subscriptions(
 async def admin_finance_subscription_detail(
     subscription_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin", "admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -22699,7 +22699,7 @@ async def admin_finance_ledger_list(
     reference_id: Optional[str] = None,
     skip: int = 0,
     limit: int = 100,
-    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin", "admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -22996,7 +22996,7 @@ async def admin_finance_create_product_price(
 async def admin_finance_trace(
     invoice_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin"])),
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin", "admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -23083,7 +23083,7 @@ async def admin_revenue(
 async def admin_list_tax_rates(
     request: Request,
     country: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin", "admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await resolve_admin_country_context(request, current_user=current_user, session=session)
@@ -23108,7 +23108,6 @@ async def admin_list_tax_rates(
                 "rate": float(row.rate) if row.rate is not None else None,
                 "effective_date": row.valid_from.isoformat() if row.valid_from else None,
                 "active_flag": row.is_active,
-                "created_at": row.created_at.isoformat() if row.created_at else None,
             }
         )
     return {"items": items}
@@ -23160,7 +23159,6 @@ async def admin_create_tax_rate(
             "rate": float(tax_rate.rate) if tax_rate.rate is not None else None,
             "effective_date": tax_rate.valid_from.isoformat() if tax_rate.valid_from else None,
             "active_flag": tax_rate.is_active,
-            "created_at": tax_rate.created_at.isoformat() if tax_rate.created_at else None,
         },
     }
 
@@ -23261,21 +23259,31 @@ async def admin_list_plans(
     status: Optional[str] = None,
     period: Optional[str] = None,
     q: Optional[str] = None,
-    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin", "admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_plans_db_ready(session)
 
     query = select(Plan)
 
-    if scope:
+    country_admin_scope_filter_applied = False
+    if current_user.get("role") == "country_admin":
+        country_scope_list = [str(code).upper() for code in (current_user.get("country_scope") or [])]
+        if "*" not in country_scope_list:
+            query = query.where(or_(Plan.country_scope == "global", Plan.country_code.in_(country_scope_list)))
+            country_admin_scope_filter_applied = True
+
+    if scope and not country_admin_scope_filter_applied:
         scope_value = scope.strip().lower()
         if scope_value not in PLAN_SCOPE_SET:
             raise HTTPException(status_code=400, detail="country_scope invalid")
         query = query.where(Plan.country_scope == scope_value)
 
     if country_code:
-        query = query.where(Plan.country_code == country_code.strip().upper())
+        country_value = country_code.strip().upper()
+        if current_user.get("role") == "country_admin":
+            _assert_country_scope(country_value, current_user)
+        query = query.where(Plan.country_code == country_value)
 
     if period:
         period_value = period.strip().lower()
@@ -23309,13 +23317,15 @@ async def admin_list_plans(
 async def admin_get_plan(
     plan_id: str,
     request: Request,
-    current_user=Depends(check_permissions(["super_admin", "finance"])),
+    current_user=Depends(check_permissions(["super_admin", "finance", "country_admin", "admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     await _ensure_plans_db_ready(session)
     plan = await session.get(Plan, plan_id)
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
+    if current_user.get("role") == "country_admin" and plan.country_scope == "country":
+        _assert_country_scope(plan.country_code, current_user)
     return {"plan": _plan_to_dict(plan)}
 
 
@@ -32366,7 +32376,7 @@ def _serialize_listing_version_snapshot(listing: Listing) -> dict:
     }
 
 
-def _parse_iso_datetime(value: Any) -> Optional[datetime]:
+def _parse_iso_datetime_optional(value: Any) -> Optional[datetime]:
     if not value:
         return None
     try:
@@ -32391,8 +32401,8 @@ def _apply_listing_version_snapshot(listing: Listing, snapshot: dict) -> None:
     listing.contact_option_phone = bool(snapshot.get("contact_option_phone"))
     listing.contact_option_message = bool(snapshot.get("contact_option_message"))
     listing.images = list(snapshot.get("images") or [])
-    listing.expires_at = _parse_iso_datetime(snapshot.get("expires_at"))
-    listing.published_at = _parse_iso_datetime(snapshot.get("published_at"))
+    listing.expires_at = _parse_iso_datetime_optional(snapshot.get("expires_at"))
+    listing.published_at = _parse_iso_datetime_optional(snapshot.get("published_at"))
 
     category_value = snapshot.get("category_id")
     listing.category_id = uuid.UUID(category_value) if category_value else None

@@ -125,6 +125,8 @@ export default function AdminInvoicesPage() {
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
   }), []);
   const locale = resolveLocaleByCountry(urlCountry || user?.country_code || 'TR');
+  const canExportFinance = ['super_admin', 'country_admin'].includes(user?.role);
+  const canEditFinance = ['super_admin', 'finance'].includes(user?.role);
 
   const toTestId = (value) => String(value || 'all')
     .toLowerCase()
@@ -236,7 +238,7 @@ export default function AdminInvoicesPage() {
   };
 
   const markPaid = async (invoiceId) => {
-    if (disabledActions) return;
+    if (disabledActions || !canEditFinance) return;
     const reason = window.prompt('Ödeme işaretleme nedeni');
     if (!reason) return;
     setStatusError(null);
@@ -254,7 +256,7 @@ export default function AdminInvoicesPage() {
   };
 
   const cancelInvoice = async (invoiceId) => {
-    if (disabledActions) return;
+    if (disabledActions || !canEditFinance) return;
     setStatusError(null);
     try {
       await axios.post(`${API}/admin/invoices/${invoiceId}/cancel`, {}, { headers: authHeader });
@@ -266,7 +268,7 @@ export default function AdminInvoicesPage() {
   };
 
   const refundInvoice = async (invoiceId) => {
-    if (disabledActions) return;
+    if (disabledActions || !canEditFinance) return;
     setStatusError(null);
     try {
       await axios.post(`${API}/admin/invoices/${invoiceId}/refund`, {}, { headers: authHeader });
@@ -278,7 +280,7 @@ export default function AdminInvoicesPage() {
   };
 
   const generatePdf = async (invoiceId, regenerate = false) => {
-    if (disabledActions) return;
+    if (disabledActions || !canEditFinance) return;
     setPdfActionLoading(true);
     setStatusError(null);
     try {
@@ -293,6 +295,7 @@ export default function AdminInvoicesPage() {
   };
 
   const downloadPdf = async (invoiceId, invoiceNo) => {
+    if (!canExportFinance) return;
     setPdfActionLoading(true);
     setStatusError(null);
     try {
@@ -313,7 +316,7 @@ export default function AdminInvoicesPage() {
   };
 
   const openCreate = () => {
-    if (createDisabled) return;
+    if (createDisabled || !canEditFinance) return;
     setCreateOpen(true);
     setCreateError(null);
     setCreatePayload({
@@ -383,7 +386,7 @@ export default function AdminInvoicesPage() {
             Scope: {user?.role === 'country_admin' ? (user?.country_code || urlCountry || 'COUNTRY') : 'Global'}
           </div>
         </div>
-        {user?.role !== 'country_admin' ? (
+        {canEditFinance ? (
           <button
             onClick={openCreate}
             className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm disabled:opacity-60"
@@ -602,7 +605,7 @@ export default function AdminInvoicesPage() {
                   >
                     Görüntüle
                   </button>
-                  {inv.status === 'issued' && (
+                  {canEditFinance && inv.status === 'issued' && (
                     <button
                       onClick={() => markPaid(inv.id)}
                       className="h-8 px-2.5 rounded-md border text-xs hover:bg-muted disabled:opacity-60"
@@ -612,7 +615,7 @@ export default function AdminInvoicesPage() {
                       Ödendi
                     </button>
                   )}
-                  {inv.status === 'issued' && (
+                  {canEditFinance && inv.status === 'issued' && (
                     <button
                       onClick={() => cancelInvoice(inv.id)}
                       className="h-8 px-2.5 rounded-md border text-xs hover:bg-muted disabled:opacity-60"
@@ -622,7 +625,7 @@ export default function AdminInvoicesPage() {
                       İptal
                     </button>
                   )}
-                  {inv.status === 'paid' && (
+                  {canEditFinance && inv.status === 'paid' && (
                     <button
                       onClick={() => refundInvoice(inv.id)}
                       className="h-8 px-2.5 rounded-md border text-xs hover:bg-muted disabled:opacity-60"
@@ -736,7 +739,7 @@ export default function AdminInvoicesPage() {
                     <div className="text-xs text-destructive" data-testid="invoice-status-error">{statusError}</div>
                   )}
                   <div className="flex flex-wrap gap-2" data-testid="invoice-detail-actions">
-                    {detailData.invoice.status === 'issued' && (
+                    {canEditFinance && detailData.invoice.status === 'issued' && (
                       <button
                         onClick={() => markPaid(detailData.invoice.id)}
                         className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
@@ -746,7 +749,7 @@ export default function AdminInvoicesPage() {
                         Mark Paid
                       </button>
                     )}
-                    {detailData.invoice.status === 'issued' && (
+                    {canEditFinance && detailData.invoice.status === 'issued' && (
                       <button
                         onClick={() => cancelInvoice(detailData.invoice.id)}
                         className="h-9 px-3 rounded-md border text-sm"
@@ -756,7 +759,7 @@ export default function AdminInvoicesPage() {
                         Cancel
                       </button>
                     )}
-                    {detailData.invoice.status === 'paid' && (
+                    {canEditFinance && detailData.invoice.status === 'paid' && (
                       <button
                         onClick={() => refundInvoice(detailData.invoice.id)}
                         className="h-9 px-3 rounded-md border text-sm"
@@ -766,7 +769,7 @@ export default function AdminInvoicesPage() {
                         Refund
                       </button>
                     )}
-                    {detailData.invoice.pdf_url ? (
+                    {detailData.invoice.pdf_url && canExportFinance ? (
                       <button
                         onClick={() => downloadPdf(detailData.invoice.id, detailData.invoice.invoice_no)}
                         className="h-9 px-3 rounded-md border text-sm"
@@ -776,7 +779,7 @@ export default function AdminInvoicesPage() {
                         Download PDF
                       </button>
                     ) : null}
-                    {!detailData.invoice.pdf_url && user?.role === 'super_admin' ? (
+                    {!detailData.invoice.pdf_url && canEditFinance ? (
                       <button
                         onClick={() => generatePdf(detailData.invoice.id, false)}
                         className="h-9 px-3 rounded-md border text-sm"
@@ -786,7 +789,7 @@ export default function AdminInvoicesPage() {
                         Generate PDF
                       </button>
                     ) : null}
-                    {detailData.invoice.pdf_url && user?.role === 'super_admin' ? (
+                    {detailData.invoice.pdf_url && canEditFinance ? (
                       <button
                         onClick={() => generatePdf(detailData.invoice.id, true)}
                         className="h-9 px-3 rounded-md border text-sm"

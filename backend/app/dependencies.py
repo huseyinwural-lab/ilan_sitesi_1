@@ -19,6 +19,7 @@ TOKEN_VERSION = os.environ.get("TOKEN_VERSION", "v2")
 
 ADMIN_ROLES = {
     "super_admin",
+    "admin",
     "country_admin",
     "ops",
     "moderator",

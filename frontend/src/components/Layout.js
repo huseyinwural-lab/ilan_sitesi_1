@@ -510,8 +510,8 @@ export default function Layout({ children }) {
     { divider: true, label: 'Operasyon', roles: roles.opsReliability },
     { path: '/admin/ops/publish-health', icon: Activity, label: 'Publish Health', roles: roles.opsReliability, testId: 'ops-publish-health' },
 
-    { divider: true, label: 'İçerik Yönetimi', roles: roles.adminOnly },
-    { path: '/admin/info-pages', icon: FileText, label: 'Bilgi Sayfaları', roles: roles.adminOnly, testId: 'content-info-pages' },
+    { divider: true, label: 'İçerik Yönetimi', roles: roles.contentPublish },
+    { path: '/admin/info-pages', icon: FileText, label: 'Bilgi Sayfaları', roles: roles.contentPublish, testId: 'content-info-pages' },
 
     { divider: true, label: 'Katalog & İçerik', roles: roles.catalogView },
     { path: '/admin/categories', icon: FolderTree, label: 'Kategoriler', roles: roles.catalogView, testId: 'catalog-categories' },
