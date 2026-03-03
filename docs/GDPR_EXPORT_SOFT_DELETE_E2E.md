@@ -1,7 +1,7 @@
 # GDPR_EXPORT_SOFT_DELETE_E2E
 
 **Tarih:** 2026-02-24 12:51:30 UTC
-**Ortam URL:** https://billing-cleanup.preview.emergentagent.com
+**Ortam URL:** https://monolith-modular-5.preview.emergentagent.com
 
 ## Scope
 - Kullanıcı veri exportu oluşturma

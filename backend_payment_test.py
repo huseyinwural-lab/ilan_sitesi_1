@@ -14,7 +14,7 @@ import uuid
 from datetime import datetime
 from typing import Dict, List, Any
 
-BASE_URL = "https://billing-cleanup.preview.emergentagent.com/api"
+BASE_URL = "https://monolith-modular-5.preview.emergentagent.com/api"
 
 # Test credentials
 USER_CREDENTIALS = {"email": "user@platform.com", "password": "User123!"}

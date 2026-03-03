@@ -8,7 +8,7 @@ import time
 import json
 
 def test_rate_limit_debug():
-    base_url = "https://billing-cleanup.preview.emergentagent.com"
+    base_url = "https://monolith-modular-5.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     print("🔍 Debug Rate Limiting Test")

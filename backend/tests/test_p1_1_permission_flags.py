@@ -3,7 +3,7 @@ import uuid
 import requests
 
 
-BASE_URL = "https://billing-cleanup.preview.emergentagent.com"
+BASE_URL = "https://monolith-modular-5.preview.emergentagent.com"
 
 CREDS = {
     "super_admin": {"email": "admin@platform.com", "password": "Admin123!"},

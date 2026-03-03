@@ -1,0 +1,156 @@
+{
+  "base_url": "https://monolith-modular-5.preview.emergentagent.com",
+  "suite": "c2_backend_regression",
+  "checks": [
+    {
+      "name": "login_admin",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true
+    },
+    {
+      "name": "login_user",
+      "method": "POST",
+      "path": "/api/auth/login",
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true
+    },
+    {
+      "name": "categories",
+      "method": "GET",
+      "path": "/api/categories?module=vehicle&country=DE",
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true
+    },
+    {
+      "name": "categories_children",
+      "method": "GET",
+      "path": "/api/categories/children?module=vehicle&country=DE",
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true
+    },
+    {
+      "name": "categories_validate_fake",
+      "method": "GET",
+      "path": "/api/categories/validate?category_id=9853f177-a280-4966-8e91-e01ff9ab5e58&country=DE",
+      "status": 404,
+      "expected": [
+        404
+      ],
+      "ok": true
+    },
+    {
+      "name": "catalog_schema_invalid",
+      "method": "GET",
+      "path": "/api/catalog/schema?category_id=bad-id&country=DE",
+      "status": 400,
+      "expected": [
+        400,
+        404,
+        422
+      ],
+      "ok": true
+    },
+    {
+      "name": "recent_category_get",
+      "method": "GET",
+      "path": "/api/account/recent-category",
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true
+    },
+    {
+      "name": "admin_categories",
+      "method": "GET",
+      "path": "/api/admin/categories?country=DE&module=vehicle",
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true
+    },
+    {
+      "name": "admin_categories_export_json",
+      "method": "GET",
+      "path": "/api/admin/categories/import-export/export/json",
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true
+    },
+    {
+      "name": "menu_top",
+      "method": "GET",
+      "path": "/api/menu/top-items?country=DE",
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true
+    },
+    {
+      "name": "site_listing_design",
+      "method": "GET",
+      "path": "/api/site/listing-design",
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true
+    },
+    {
+      "name": "admin_site_listing_design",
+      "method": "GET",
+      "path": "/api/admin/site/listing-design",
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true
+    },
+    {
+      "name": "admin_info_pages",
+      "method": "GET",
+      "path": "/api/admin/info-pages",
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true
+    },
+    {
+      "name": "admin_menu_items",
+      "method": "GET",
+      "path": "/api/admin/menu-items",
+      "status": 403,
+      "expected": [
+        200,
+        403
+      ],
+      "ok": true
+    }
+  ],
+  "openapi": {
+    "status": 200,
+    "source": "local_backend",
+    "missing": [],
+    "ok": true
+  },
+  "passed": true
+}

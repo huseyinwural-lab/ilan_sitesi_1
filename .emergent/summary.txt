@@ -1,84 +1,61 @@
 <analysis>**original_problem_statement:**
-The user's primary goal is to build a full-stack application similar to sahibinden.com, with a heavy focus on admin-configurable features. The project follows a strict, phase-based development plan (bitirme planı) provided by the user, aiming to implement a comprehensive inventory of over 30 page templates and features.
+The user's primary goal is to build a full-stack application similar to sahibinden.com, with a heavy focus on admin-configurable features. The project follows a strict, phase-based development plan (bitirme planı) provided by the user via explicit, multi-step task orders (GÖREV EMRİ).
 
 PRODUCT REQUIREMENTS:
-1.  **Phase 0 - Stabilization:**
-    *   Implement a Draft/Publish/Rollback system for the İlan Tasarım (Ad Design) admin configurations.
-    *   Fix a persistent bug where Vitrin Yönetimi (Showcase Management) changes don't reflect on the homepage.
-    *   Stabilize the light/dark mode theming across all components and viewports.
-2.  **Phase 1 - Core Public Features:**
-    *   Build Template #2: Category Landing Page.
-    *   Build Template #5: Polish Listing Detail Page (add seller card, similar listings, sticky CTA).
-    *   Build Template #4: Implement Map View Search with list/map synchronization and clustering.
-    *   Build Template #8: Create a full-featured Listing Edit page with version history and rollback.
-    *   Build Template #16: Implement Saved Searches functionality for users.
-3.  **Phase 2 - Transactions & Content:**
-    *   Build out a complete secure checkout flow (Template #17) and payment result pages (Template #18) using Stripe.
-    *   Implement all legal, policy, corporate, and SEO page templates.
+The application has completed its core feature development and a Go-Live Critical (P0) hardening phase. It has now moved into a structured P1 phase focusing on quality, operations, and architectural improvements. The user dictates the precise order and execution of tasks, including architectural decisions, testing requirements, and acceptance criteria for each step. The current work involves a major refactoring of the backend monolith.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-The agent has successfully completed all tasks for Phase 0 (Stabilization) and Phase 1 (Core Public Features).
-- **Phase 0:** A robust draft/publish/rollback system for ad design configurations is in place. The long-standing showcase update bug has been fixed. Dark mode is now stable and consistent.
-- **Phase 1:** The following features have been implemented and verified by the user:
-    - Category-specific landing pages ().
-    - A polished listing detail page with a seller card, similar listings, and a sticky mobile CTA.
-    - A synchronized map and list view on the search page with pin clustering.
-    - A complete listing edit page with version history and rollback capabilities.
-    - A full CRUD system for user-saved searches in their account area.
-The agent has now started work on Phase 2, beginning with the foundational setup for Stripe payments.
+The application is feature-rich and has undergone significant hardening.
+- **Core Modules**: Stable modules for Finance (Stripe), Content Management, Category Management, and a Corporate (Dealer) Dashboard are in place.
+- **Go-Live Hardening (P0)**: All P0 tasks are complete, including legacy billing code removal (P0-04) and category-to-form mapping validation (P0-05).
+- **RBAC & Security (P1)**: A sophisticated Role-Based Access Control (RBAC) system has been implemented, moving beyond simple roles to a granular, flag-based permission model (). This is supported by a CI gate () that runs nightly tests to prevent permission drift and ensures new endpoints are protected.
+- **Audit Trail (P1)**: An MVP for an -only audit dashboard is live at . It logs critical events (e.g., auth failures, content changes), displays statistics, and flags anomalies.
+- **Monolith Refactoring (P1)**: A systematic refactoring of the monolithic  is in progress. The first phase, moving low-risk routes (ops, health, sitemap), is complete.
 
 **Last working item**:
--   **Last item agent was working:** The agent started the **Stripe Foundation Setup**, which is the first task of Phase 2 (Transactions). The goal is to establish the core backend infrastructure for processing payments, including creating PaymentIntents, handling subscriptions, and processing webhooks.
+-   **Last item agent was working:** The agent was executing step **C-2** of the monolith refactoring plan: moving **Content and Category routes** from the main  file into dedicated router modules. The user just gave the final approval () to proceed with the implementation.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
 -   **Which testing method agent to use?** both
-    -   Backend: Use  to test the new payment endpoints (, ) with Stripe test card data. Verify idempotency and correct status updates in the database.
-    -   Frontend: After backend is ready, create a basic payment form to trigger the  flow and redirect to the Stripe checkout page. Test the  and  redirect pages.
+    - Backend: After refactoring, run regression tests via  or scripts to ensure all content, category, and listing-creation endpoints work as before. The OpenAPI schema should be checked to confirm no routes were lost.
+    - Frontend: Use the testing agent to run a regression on the ilan-ver (create listing) E2E flow for the specified set of categories (4 DE, 2 FR) to ensure the frontend's interaction with the newly located backend routes is seamless.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-*No active issues. The previously pending Showcase Management and Dark Mode bugs were resolved in this session.*
+*No active blocking issues.*
 
 **In progress Task List**:
--   **Task 1: Implement Stripe Foundation (P0 - CRITICAL)**
-    -   **Where to resume:** The agent has installed the  Python package. The next step is to implement the backend logic as per the user's detailed task order (Message #795).
-        1.  Create environment variables for Stripe keys (, , ).
-        2.  Create a new  domain in the backend.
-        3.  Implement the  endpoint.
-        4.  Implement the  endpoint with signature verification and idempotency checks.
-        5.  Define the database model for .
-        6.  Define logic for updating  and  statuses based on webhook events (, , etc.).
-    -   **What will be achieved with this?** This will create the fundamental infrastructure required for all future payment-related features, such as one-time listing fees, doping (featured listing) purchases, and corporate subscriptions.
+-   **Task 1: P1 Monolith Refactoring - Step C-2 (P1, HIGHEST Priority)**
+    -   **Where to resume:** Begin the implementation as per the user's  confirmation. The first step is to create an inventory of all content and category-related routes, then create the new router files ( and ), and finally move the code.
+    -   **What will be achieved with this?** This will further modularize the backend, making the codebase easier to maintain and reducing the complexity of .
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
     -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
-**Upcoming Tasks (Phase 2):**
--   **P1 - Template #17 & #18: Transactional Pages:** Build the full secure checkout flow and payment result pages (, ) on the frontend, integrating with the new Stripe backend.
--   **P1 - Trust & Policy Templates (#20, #21, #22):** Finalize and link all legal and policy pages.
--   **P1 - Corporate & SEO Templates (#23-28):** Implement corporate profiles, store pages, and marketing/SEO landing pages.
--   **P2 - System Templates (#30, #31):** Create standard 500 error and maintenance pages.
+**Upcoming Tasks (P1):**
+-   **P1 Monolith Refactoring - Step C-3:** After C-2 is complete, the final and most critical step is to move the **Finance routes** into their own dedicated module. This will require extensive regression testing on all payment flows.
+-   **P1 User/Dealer Flow Validation:** Verify user and dealer account functionalities after the permission-flag model changes.
+-   **P1 HTML/CSS Standardization:** Refine and standardize the UI for the new admin panels (Audit, Permissions).
 
-**Future Tasks (Phase 3):**
--   **P2 - Category Builder Drag & Drop:** Add drag-and-drop reordering to the category management UI.
+**Future Tasks (P2-P3):**
+-   **P1.1 Granular Permissions UI:** Build an admin interface for managing the new permission flags.
+-   **P2 (Business Growth):** Implement advanced financial analytics, conversion funnel tracking, and A/B testing infrastructure.
+-   **P3 (Enterprise Scale):** Implement an SRE pack (SLO/SLA dashboards), conduct DR/Backup drills, and perform security/cost audits.
 
 **Completed work in this session**
--   **Phase 0: Stabilization**
-    -   **Draft/Publish System for İlan Tasarım:** Implemented backend models (), APIs, and frontend UI for a complete versioning system. (DONE)
-    -   **Showcase Management Bug Fix:** Reworked the showcase publishing logic to use events and cache-busting, ensuring homepage updates immediately. (DONE)
-    -   **Theme/Dark Mode Stabilization:** Refactored theme handling to a single source of truth (), fixed component-level inconsistencies, and ensured correct override behavior. (DONE)
--   **Phase 1: Core Features**
-    -   **Category Landing Page (Template #2):** Created the  route, backend endpoint, and frontend page to display sub-categories. (DONE)
-    -   **Listing Detail Page Polish (Template #5):** Added , , and  components to the listing detail page. (DONE)
-    -   **Map View Search (Template #4):** Integrated a synchronized map/list view on the search page with marker clustering and viewport-based filtering. (DONE)
-    -   **Full Listing Edit Page (Template #8):** Built the  page with version history, rollback, and correct state management (publish/unpublish, pending review). (DONE)
-    -   **Saved Searches (Template #16):** Implemented full CRUD functionality for users to save, view, and delete search queries from their account page. (DONE)
+-   **P0-04 Legacy Billing Cleanup:** Successfully identified and completely removed all legacy (non-Stripe) billing code, UI components, and mock endpoints. (DONE)
+-   **P0-05 Category Final Validation:** Performed comprehensive E2E tests for the category-leaf-to-form-template mapping, generating inventory and test matrix reports. (DONE)
+-   **P1-01 Authorization Matrix (RBAC):** Established a formal RBAC policy, enforced it in the backend, and conducted negative tests. Key decisions:  role is view-only for finance;  rights are limited to  and . (DONE)
+-   **P1.2 RBAC Policy Drift CI Gate:** Implemented an automated CI pipeline to run RBAC tests nightly and on relevant PRs to prevent security policy drift. (DONE)
+-   **Audit Dashboard (Task A):** Implemented an MVP audit dashboard for , including event logging middleware, backend APIs for stats/anomalies, and a frontend UI. (DONE)
+-   **Permission-Flag Model (Task B):** Architected and implemented the core logic for a granular, flag-based permission system to replace the rigid role-based model, controlled by a feature flag. (DONE)
+-   **Monolith Refactoring (Task C-1):** Successfully refactored , , and  routes from  into separate, modular router files. (DONE)
 
 **Earlier issues found/mentioned but not fixed**
--   **React Hydration Warnings:** Technical debt from a previous fork related to  and . This has not been prioritized by the user.
+-   **React Hydration Warnings:** This known technical debt from a previous session, related to  and the visual editor, remains unaddressed as it has not been prioritized by the user.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork**: Platform failure to inject  secret.
@@ -89,69 +66,77 @@ The agent has now started work on Phase 2, beginning with the foundational setup
 
 
 **Key Technical Concepts**
--   **Config-Driven Architecture:** The İlan Ver flow is dynamically rendered based on a JSON config from the admin.
--   **Draft/Publish/Rollback Workflow:** A versioning system for critical configurations () and content ().
--   **Event-Driven Cache Invalidation:** Using  events to trigger data re-fetching across browser tabs (e.g., showcase updates).
--   **Synchronized UI (Map/List):** Bi-directional state updates between a map viewport and a search result list.
--   **Stripe Integration:** Using PaymentIntents for one-time payments and Webhooks for reliable, asynchronous order fulfillment.
--   **Idempotency:** Ensuring payment creation and webhook processing are safe from duplicate requests.
+-   **Monolith Refactoring:** A phased approach to breaking down a large  file into domain-specific routers (, , , , etc.) while ensuring zero downtime or contract changes.
+-   **Granular Permissions (Permission Flags):** Moving from role-based access control (RBAC) to a more flexible system where individual permissions (e.g., , ) can be granted to users, independent of their primary role.
+-   **Policy Drift Prevention:** Using automated CI/CD pipelines to run security/policy tests () on a schedule and as a merge gate, preventing unprotected endpoints or unintended permission changes from reaching production.
+-   **Audit Trail:** Implementing middleware to capture significant user and system actions, storing them in a dedicated collection () for security monitoring and operational insight.
 
 **key DB schema**
--   **listing_design_configs:** 
--   **listing_versions:** 
--   **saved_searches:** 
--   **(IN-PROGRESS) payments:** 
+-   **audit_events** (MongoDB Collection): 
+-   **user_permissions** (SQL Table): 
 
 **All files of reference**
--    (To be created)
--    (To be modified to include payment router)
--    (To be created for success/fail pages)
--    (Modified for map view)
--    (Created)
--    (Created)
--    (Created)
+-    & : The monolith being refactored.
+-   : The destination for the refactored route modules.
+-   : Contains the core logic for the RBAC and permission-flag system.
+-   : The middleware for logging audit events.
+-   : The automated test script for the CI gate.
+-   : The new UI for the audit dashboard.
+-   : Frontend hook to check for granular permissions.
 
 **Critical Info for New Agent**
--   **Follow User GÖREV EMRİ (Task Orders) Exactly:** The user provides very specific, non-negotiable task lists. Do not deviate, add features, or change the scope.
--   **Use the PASS Raporu Format:** Upon completing all tests for a given task, respond ONLY with the PASS/FAIL status for each required test case, as demonstrated by the previous agent. Do not add extra explanations or summaries.
--   **One Task at a Time:** Focus exclusively on the current active task (e.g., FAZ 2 / İŞ 1 — Stripe Foundation). Do not work on anything else until the user gives the next order.
--   **Communication is in Turkish ONLY.**
+-   **Follow GÖREV EMRİ (Task Orders) Exactly:** The user provides very specific, non-negotiable task lists with architectural decisions. Do not deviate. All communication must be in Turkish.
+-   **Phased Refactoring is in Progress:** You are in the middle of a multi-step refactoring of . The current step is  (Content & Category). Follow the established pattern: inventory -> create modules -> delegate -> test.
+-   **Default Deny Security Posture:** The new permission system is built on a default deny principle. Access must be explicitly granted via a permission flag. UI hiding is not enough; backend enforcement is mandatory.
+-   **Use Test Reports as Proof:** The user requires specific test report files (, ) as evidence of completion for each major step. Follow the naming conventions provided.
 
 **documents and test reports created in this job**
--   No new documents or reports were created in this session.
+-   
+-   
+-   
+-   
+-   
+-    (RBAC negative tests)
+-   
+-   
+-   Multiple iteration reports from  to .
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **#798 (User):**  (Confirmation to proceed with Stripe setup).
-2.  **#796 (Agent):**  proposing the plan for Stripe foundation setup.
-3.  **#795 (User):** GÖREV EMRİ (Task Order) for the Stripe Foundation setup, detailing all backend requirements, endpoints, webhook handling, and test criteria. (COMPLETED - work started)
-4.  **#794 (Agent):** PASS report for the Saved Searches task.
-5.  **#791 (Agent):**  confirming the plan for the Saved Searches task.
-6.  **#675 (User):**  (Confirmation to proceed).
-7.  **#673 (Agent):**  proposing the plan for Saved Searches.
-8.  **#672 (User):** GÖREV EMRİ (Task Order) for Saved Searches Full feature. (COMPLETED)
-9.  **#671 (Agent):** PASS report for the Listing Edit Full task.
-10. **#512 (User):**  (Confirmation to proceed).
+1.  **#863:** User confirms the plan for task  (Content/Category refactor), specifying the delegation model and the E2E test set (4 DE, 2 FR). (IN PROGRESS)
+2.  **#862:** Agent asks for confirmation on the C-2 plan. (RESOLVED)
+3.  **#860:** User provides the task order for . (IN PROGRESS)
+4.  **#859:** Agent finished task C-1, confirming the successful refactoring of ops/health/sitemap routes and is awaiting the next command. (RESOLVED)
+5.  **... (Messages #767-858):** Agent works through task  (Monolith refactoring for ops/health/sitemap), following the user's detailed instructions. (COMPLETED)
+6.  **#769:** User confirms the plan for task , agreeing to a phased delegation. (COMPLETED)
+7.  **#766:** User gives the command to start task  (Monolith Refactoring). (COMPLETED)
+8.  **... (Messages #610-765):** Agent works through task  (Permission-Flag Model), including DB changes, policy resolver, and migration scripts. (COMPLETED)
+9.  **#613:** User confirms the plan for task , specifying an MVP scope and a feature-flagged rollout. (COMPLETED)
+10. **#610:** User gives the command to continue with task  (Permission-Flag Model). (COMPLETED)
 
 **Project Health Check:**
--   **Broken:** None. The application's core features are stable.
--   **Mocked:** None.
+-   **Broken:** None
+-   **Mocked:** None
 
 **3rd Party Integrations**
 -   PostgreSQL
+-   MongoDB
 -   Meilisearch
--   Stripe (Implementation in progress)
+-   Stripe
 -   Google Places API
 -   react-beautiful-dnd
+-   WeasyPrint
+-   Boto3
 
 **Testing status**
--   **Testing agent used after significant changes:** NO (Agent performed manual testing as per user's strict reporting format).
+-   **Testing agent used after significant changes:** YES (implicitly, by running extensive regression tests as part of the user's task orders).
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** None
+-   **Test files created:** Yes, numerous test/evidence files have been created in  for each completed task (e.g., , , ).
 -   **Known regressions:** None.
 
 **Credentials to test flow:**
--   **Admin:**  / 
+-   **Super Admin:**  / 
 -   **User:**  / 
+-   **Dealer/Corporate User:**  / 
 
 **What agent forgot to execute**
--   The long-standing React Hydration Warnings issue has not been addressed, as it has not been prioritized by the user in any of the task orders. The agent has correctly followed the user's priorities.</analysis>
+The agent is following the user's explicit and sequential GÖREV EMRİ (Task Orders) meticulously. Nothing has been forgotten; tasks are being executed in the precise order dictated by the user.</analysis>

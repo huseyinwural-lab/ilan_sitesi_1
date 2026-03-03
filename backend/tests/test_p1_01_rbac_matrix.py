@@ -9,7 +9,7 @@ import os
 import pytest
 import requests
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://billing-cleanup.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://monolith-modular-5.preview.emergentagent.com')
 API = f"{BASE_URL}/api"
 
 # Test credentials - expected seed data

@@ -208,6 +208,8 @@ from app.routers.ui_designer_routes import router as ui_designer_router
 from app.routers.system import health_routes as system_health_routes
 from app.routers.system import ops_routes as system_ops_routes
 from app.routers.system import sitemap_routes as system_sitemap_routes
+from app.routers.category import routes as category_routes
+from app.routers.content import routes as content_routes
 
 
 from fastapi import UploadFile, File, BackgroundTasks, Form
@@ -39641,6 +39643,17 @@ async def get_info_page(slug: str, session: AsyncSession = Depends(get_sql_sessi
     }
 
 # --- Router binding + RBAC allowlist (must be after all route definitions) ---
+c2_category_routes = category_routes.delegate_routes(api_router)
+c2_content_routes = content_routes.delegate_routes(api_router)
+
+app.include_router(category_routes.router)
+app.include_router(content_routes.router)
+
+app.state.c2_router_migration = {
+    "category_routes": c2_category_routes,
+    "content_routes": c2_content_routes,
+}
+
 app.include_router(ui_designer_router)
 app.include_router(api_router)
 

@@ -61,41 +61,41 @@
       "prod_total_urls": "1213"
     },
     "CANONICAL_DETERMINISTIC": {
-      "home_page": "PASS - https://billing-cleanup.preview.emergentagent.com/",
-      "category_page": "PASS - https://billing-cleanup.preview.emergentagent.com/kategori/{slug}",
-      "info_page": "PASS - https://billing-cleanup.preview.emergentagent.com/bilgi/{slug}",
-      "trust_page": "PASS - https://billing-cleanup.preview.emergentagent.com/trust",
+      "home_page": "PASS - https://monolith-modular-5.preview.emergentagent.com/",
+      "category_page": "PASS - https://monolith-modular-5.preview.emergentagent.com/kategori/{slug}",
+      "info_page": "PASS - https://monolith-modular-5.preview.emergentagent.com/bilgi/{slug}",
+      "trust_page": "PASS - https://monolith-modular-5.preview.emergentagent.com/trust",
       "trailing_slash_standard": "PASS - No trailing slashes except root"
     }
   },
   "verification_evidence": {
     "sitemap_index_sample": {
       "sections": [
-        "https://billing-cleanup.preview.emergentagent.com/sitemaps/core.xml",
-        "https://billing-cleanup.preview.emergentagent.com/sitemaps/categories.xml",
-        "https://billing-cleanup.preview.emergentagent.com/sitemaps/listings.xml",
-        "https://billing-cleanup.preview.emergentagent.com/sitemaps/info.xml"
+        "https://monolith-modular-5.preview.emergentagent.com/sitemaps/core.xml",
+        "https://monolith-modular-5.preview.emergentagent.com/sitemaps/categories.xml",
+        "https://monolith-modular-5.preview.emergentagent.com/sitemaps/listings.xml",
+        "https://monolith-modular-5.preview.emergentagent.com/sitemaps/info.xml"
       ]
     },
     "core_xml_sample_urls": [
-      "https://billing-cleanup.preview.emergentagent.com/",
-      "https://billing-cleanup.preview.emergentagent.com/search",
-      "https://billing-cleanup.preview.emergentagent.com/trust",
-      "https://billing-cleanup.preview.emergentagent.com/kurumsal",
-      "https://billing-cleanup.preview.emergentagent.com/DE/vasita"
+      "https://monolith-modular-5.preview.emergentagent.com/",
+      "https://monolith-modular-5.preview.emergentagent.com/search",
+      "https://monolith-modular-5.preview.emergentagent.com/trust",
+      "https://monolith-modular-5.preview.emergentagent.com/kurumsal",
+      "https://monolith-modular-5.preview.emergentagent.com/DE/vasita"
     ],
     "categories_xml_sample_urls": [
-      "https://billing-cleanup.preview.emergentagent.com/kategori/tarla",
-      "https://billing-cleanup.preview.emergentagent.com/kategori/konut",
-      "https://billing-cleanup.preview.emergentagent.com/kategori/ticari"
+      "https://monolith-modular-5.preview.emergentagent.com/kategori/tarla",
+      "https://monolith-modular-5.preview.emergentagent.com/kategori/konut",
+      "https://monolith-modular-5.preview.emergentagent.com/kategori/ticari"
     ],
     "listings_xml_sample_urls": [
-      "https://billing-cleanup.preview.emergentagent.com/ilan/5d2a45b9-51c4-4c25-9bc5-51493975f203"
+      "https://monolith-modular-5.preview.emergentagent.com/ilan/5d2a45b9-51c4-4c25-9bc5-51493975f203"
     ],
     "info_xml_sample_urls": [
-      "https://billing-cleanup.preview.emergentagent.com/trust",
-      "https://billing-cleanup.preview.emergentagent.com/kurumsal",
-      "https://billing-cleanup.preview.emergentagent.com/bilgi/gizlilik-politikasi"
+      "https://monolith-modular-5.preview.emergentagent.com/trust",
+      "https://monolith-modular-5.preview.emergentagent.com/kurumsal",
+      "https://monolith-modular-5.preview.emergentagent.com/bilgi/gizlilik-politikasi"
     ]
   }
 }

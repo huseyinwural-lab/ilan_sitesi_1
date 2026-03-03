@@ -1,0 +1,506 @@
+{
+  "task": "C-2 content+category route delegation inventory",
+  "category_route_count": 30,
+  "content_route_count": 41,
+  "category_routes": [
+    {
+      "path": "/api/categories",
+      "name": "list_categories",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/categories/children",
+      "name": "list_category_children",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/categories/search",
+      "name": "search_categories",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/v2/categories/{slug}",
+      "name": "get_category_by_slug_v2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/categories/validate",
+      "name": "validate_category_selection",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/account/recent-category",
+      "name": "set_recent_category",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/account/recent-category",
+      "name": "get_recent_category",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/catalog/schema",
+      "name": "catalog_schema_endpoint",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories",
+      "name": "admin_list_categories",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/seed/real-estate-standard",
+      "name": "admin_seed_real_estate_standard_hierarchy",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/vehicle-segment/link-status",
+      "name": "admin_category_vehicle_segment_link_status",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/order-index/preview",
+      "name": "admin_category_order_index_preview",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/bulk-actions",
+      "name": "admin_categories_bulk_actions",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/bulk-actions/jobs/{job_id}",
+      "name": "admin_categories_bulk_action_job_status",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/import-export/export/json",
+      "name": "admin_export_categories_json",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/import-export/export/csv",
+      "name": "admin_export_categories_csv",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/import-export/export/xlsx",
+      "name": "admin_export_categories_xlsx",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/import-export/sample/csv",
+      "name": "admin_export_category_sample_csv",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/import-export/sample/xlsx",
+      "name": "admin_export_category_sample_xlsx",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/image-upload",
+      "name": "admin_upload_category_image",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/categories",
+      "name": "admin_create_category",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/{category_id}",
+      "name": "admin_update_category",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/{category_id}/versions",
+      "name": "admin_list_category_versions",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/{category_id}/versions/{version_id}",
+      "name": "admin_get_category_version",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/{category_id}/export/pdf",
+      "name": "admin_export_category_pdf",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/{category_id}/export/csv",
+      "name": "admin_export_category_csv",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/{category_id}",
+      "name": "admin_delete_category",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/import-export/import/dry-run",
+      "name": "admin_import_categories_dry_run",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/import-export/import/dry-run/pdf",
+      "name": "admin_import_categories_dry_run_pdf",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/categories/import-export/import/commit",
+      "name": "admin_import_categories_commit",
+      "methods": [
+        "POST"
+      ]
+    }
+  ],
+  "content_routes": [
+    {
+      "path": "/api/menu/top-items",
+      "name": "get_top_menu_items",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/menu/top-items/{item_id}",
+      "name": "toggle_menu_item",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/menu-items",
+      "name": "admin_list_menu_items",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/menu-items",
+      "name": "admin_create_menu_item",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/menu-items/{menu_id}",
+      "name": "admin_update_menu_item",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/menu-items/{menu_id}",
+      "name": "admin_delete_menu_item",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/site/header",
+      "name": "get_site_header",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/header",
+      "name": "admin_get_site_header",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/header/logo",
+      "name": "upload_site_header_logo",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/site/assets/{asset_key:path}",
+      "name": "get_site_asset",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/site/theme",
+      "name": "get_site_theme",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/theme",
+      "name": "get_site_theme_admin",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/theme/configs",
+      "name": "list_site_theme_configs",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/theme/config/{theme_id}",
+      "name": "get_site_theme_config",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/theme/config",
+      "name": "save_site_theme_config",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/admin/site/theme/config/{theme_id}/publish",
+      "name": "publish_site_theme_config",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/site/showcase-layout",
+      "name": "get_site_showcase_layout",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/site/home-category-layout",
+      "name": "get_site_home_category_layout",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/site/listing-design",
+      "name": "get_site_listing_design",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/home-category-layout",
+      "name": "get_home_category_layout_admin",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/home-category-layout",
+      "name": "save_home_category_layout_admin",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/admin/site/listing-design",
+      "name": "get_admin_listing_design",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/listing-design",
+      "name": "save_admin_listing_design",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/admin/site/showcase-layout",
+      "name": "get_showcase_layout_admin",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/showcase-layout/configs",
+      "name": "list_showcase_layout_configs",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/showcase-layout/config/{layout_id}",
+      "name": "get_showcase_layout_config",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/site/showcase-layout/config",
+      "name": "save_showcase_layout_config",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/admin/site/showcase-layout/config/{layout_id}/publish",
+      "name": "publish_showcase_layout_config",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/site/showcase-layout/config/{layout_id}",
+      "name": "delete_showcase_layout_config",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/site/footer",
+      "name": "get_footer_layout",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/footer/layout",
+      "name": "get_footer_layout_admin",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/footer/layouts",
+      "name": "list_footer_layouts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/footer/layout/{layout_id}",
+      "name": "get_footer_layout_version",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/footer/layout",
+      "name": "save_footer_layout",
+      "methods": [
+        "PUT"
+      ]
+    },
+    {
+      "path": "/api/admin/footer/layout/publish",
+      "name": "publish_footer_layout",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/footer/layout/{layout_id}/publish",
+      "name": "publish_footer_layout_version",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/info-pages",
+      "name": "list_info_pages",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/info-pages/{page_id}",
+      "name": "get_info_page_admin",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/info-pages",
+      "name": "create_info_page",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/info-pages/{page_id}",
+      "name": "update_info_page",
+      "methods": [
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/info/{slug}",
+      "name": "get_info_page",
+      "methods": [
+        "GET"
+      ]
+    }
+  ]
+}

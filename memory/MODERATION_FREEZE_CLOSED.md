@@ -2,7 +2,7 @@
 
 **Status:** CLOSED ✅
 **Commit:** c906a8ec
-**Environment:** https://billing-cleanup.preview.emergentagent.com
+**Environment:** https://monolith-modular-5.preview.emergentagent.com
 **Evidence File:** /app/memory/MODERATION_FREEZE_EVIDENCE.md
 
 ## Verification Summary
