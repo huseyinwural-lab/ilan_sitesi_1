@@ -688,11 +688,13 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - Finans tarafında aktif tek giriş seti: güncel Stripe tabanlı canonical endpointler.
 
 ## 2026-03-02 (P0-05 — Kategori Leaf → Form Template Final Doğrulama)
-- Kanıt dosyaları üretildi: `/app/test_reports/p0_05_leaf_template_inventory.json`, `/app/test_reports/p0_05_leaf_template_e2e_matrix.json`, `/app/test_reports/iteration_89.json`.
-- Sonuç: `unmapped_publishable_count=0` (PASS), 12 leaf E2E matrisi `12/12 PASS` (6 emlak + 6 vasıta), negatif API 4xx + UI kontrollü hata doğrulandı (blank screen yok).
-- Kapsam: DE+FR ülke kapsamı ve leaf bazlı adım matrisi (select→schema→draft→validation→preview→submit_publish_request→publish_admin_approve→public detail) tamamlandı.
+- Kanıtlar: `/app/test_reports/p0_05_leaf_template_inventory.json`, `/app/test_reports/p0_05_leaf_template_e2e_matrix.json`, `/app/test_reports/iteration_89.json`; sonuç `unmapped_publishable_count=0` + `12/12 PASS` + negatif UI/API PASS.
 
 ## 2026-03-02 (P1-01 — Yetki Matrisi Hardening)
 - Envanter: `/app/test_reports/p1_01_permission_inventory.json` (role-action-endpoint matrisi).
 - Uygulanan karar: finans `admin=view only`, `country_admin=view/export`, `super_admin=global view/edit/export`; publish sadece `super_admin + country_admin`.
 - Negatif yetki paketi PASS: `/app/test_reports/iteration_90.json` (backend 39/39 PASS, frontend UI gizleme doğrulandı, 0 role bypass).
+
+## 2026-03-03 (P1.2 — RBAC Drift Nightly + CI Gate)
+- Tek komut standardı aktif: `make rbac:check`; nightly: `make rbac:nightly`; kontrollü fail demo: `make rbac:drift-demo`.
+- Kanıtlar: `/app/test_reports/rbac_nightly_20260303.json` (PASS), `/app/test_reports/rbac_nightly_20260303_demo_fail.json` (beklenen FAIL+alarm), `/app/test_reports/rbac_policy_diff.json`, `/app/test_reports/iteration_91.json`.
