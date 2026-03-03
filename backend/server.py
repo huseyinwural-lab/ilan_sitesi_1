@@ -12130,6 +12130,490 @@ def _permission_scope_for_user(user: SqlUser) -> List[str]:
     return ["*"]
 
 
+def _permission_reason_or_400(reason: Optional[str]) -> str:
+    normalized = (reason or "").strip()
+    if len(normalized) < 10:
+        raise HTTPException(status_code=400, detail="Reason must be at least 10 characters")
+    return normalized
+
+
+def _serialize_permission_override(
+    row: Optional[UserPermission],
+    *,
+    user: Optional[SqlUser] = None,
+    domain: Optional[str] = None,
+    action: Optional[str] = None,
+) -> Dict[str, Any]:
+    domain_value = domain or (row.domain if row else "")
+    action_value = action or (row.action if row else "")
+
+    if not row:
+        return {
+            "explicit_override": False,
+            "domain": domain_value,
+            "action": action_value,
+            "allowed": None,
+            "country_scope": [],
+            "source_role": user.role if user else None,
+            "updated_at": None,
+        }
+
+    return {
+        "id": str(row.id),
+        "user_id": str(row.user_id),
+        "domain": row.domain,
+        "action": row.action,
+        "allowed": bool(row.allowed),
+        "country_scope": _normalize_country_scope_codes(row.country_scope),
+        "source_role": row.source_role,
+        "created_by": row.created_by,
+        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+        "explicit_override": True,
+    }
+
+
+def _scope_allows_user_country(user: SqlUser, scope_codes: List[str]) -> bool:
+    if not scope_codes or "*" in scope_codes:
+        return True
+    country_code = (user.country_code or "").upper()
+    return bool(country_code and country_code in scope_codes)
+
+
+def _permission_flag_on_decision(user: SqlUser, row: Optional[UserPermission], domain: str, action: str) -> bool:
+    fallback = _fallback_permission_allowed(user.role, domain, action)
+    if not row:
+        return fallback
+
+    if not bool(row.allowed):
+        return fallback
+
+    scope_codes = _normalize_country_scope_codes(row.country_scope)
+    if _scope_allows_user_country(user, scope_codes):
+        return True
+    return False
+
+
+class AdminPermissionGrantPayload(BaseModel):
+    target_user_id: str
+    domain: str
+    action: str
+    country_scope: List[str] = Field(default_factory=list)
+    reason: str = Field(min_length=10, max_length=500)
+
+
+class AdminPermissionRevokePayload(BaseModel):
+    target_user_id: str
+    domain: str
+    action: str
+    reason: str = Field(min_length=10, max_length=500)
+
+
+@api_router.get("/admin/permissions/flags")
+async def admin_permissions_flags(
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    return {
+        "permission_flags_enabled": PERMISSION_FLAGS_ENABLED,
+        "domains": PERMISSION_DOMAIN_ACTIONS,
+        "fallback_matrix": PERMISSION_FALLBACK_MATRIX,
+        "supported_actions": ["view", "edit", "publish", "export", "delete"],
+    }
+
+
+@api_router.get("/admin/permissions/users")
+async def admin_permissions_users(
+    user: Optional[str] = None,
+    role: Optional[str] = None,
+    country_scope: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100,
+    session: AsyncSession = Depends(get_sql_session),
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    await _ensure_permissions_db_ready(session)
+
+    stmt = select(SqlUser)
+    if role:
+        stmt = stmt.where(SqlUser.role == role.strip())
+    if user:
+        pattern = f"%{user.strip()}%"
+        stmt = stmt.where(or_(SqlUser.email.ilike(pattern), SqlUser.full_name.ilike(pattern)))
+
+    stmt = stmt.order_by(SqlUser.created_at.desc())
+    users = (await session.execute(stmt)).scalars().all()
+
+    if country_scope:
+        code = country_scope.strip().upper()
+        users = [
+            item
+            for item in users
+            if code == (item.country_code or "").upper()
+            or code in _normalize_country_scope_codes(item.country_scope)
+            or "*" in _normalize_country_scope_codes(item.country_scope)
+        ]
+
+    safe_skip = max(skip, 0)
+    safe_limit = min(max(limit, 1), 500)
+    users = users[safe_skip : safe_skip + safe_limit]
+
+    return {
+        "items": [
+            {
+                "id": str(item.id),
+                "email": item.email,
+                "full_name": item.full_name,
+                "role": item.role,
+                "country_code": item.country_code,
+                "country_scope": _normalize_country_scope_codes(item.country_scope),
+                "is_active": bool(item.is_active),
+            }
+            for item in users
+        ],
+        "count": len(users),
+    }
+
+
+@api_router.get("/admin/permissions/overrides")
+async def admin_permissions_overrides(
+    target_user_id: Optional[str] = None,
+    user: Optional[str] = None,
+    role: Optional[str] = None,
+    country_scope: Optional[str] = None,
+    domain: Optional[str] = None,
+    action: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 300,
+    session: AsyncSession = Depends(get_sql_session),
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    await _ensure_permissions_db_ready(session)
+
+    stmt = select(UserPermission, SqlUser).join(SqlUser, SqlUser.id == UserPermission.user_id)
+
+    if target_user_id:
+        target_uuid = _safe_uuid(target_user_id)
+        if not target_uuid:
+            raise HTTPException(status_code=400, detail="Invalid target_user_id")
+        stmt = stmt.where(UserPermission.user_id == target_uuid)
+
+    if user:
+        pattern = f"%{user.strip()}%"
+        stmt = stmt.where(or_(SqlUser.email.ilike(pattern), SqlUser.full_name.ilike(pattern)))
+
+    if role:
+        stmt = stmt.where(SqlUser.role == role.strip())
+
+    if country_scope:
+        code = country_scope.strip().upper()
+        stmt = stmt.where(
+            or_(
+                SqlUser.country_code == code,
+                cast(SqlUser.country_scope, Text).ilike(f"%{code}%"),
+            )
+        )
+
+    if domain:
+        stmt = stmt.where(UserPermission.domain == domain.strip())
+    if action:
+        stmt = stmt.where(UserPermission.action == action.strip())
+
+    stmt = stmt.order_by(UserPermission.updated_at.desc())
+    rows = (await session.execute(stmt)).all()
+
+    safe_skip = max(skip, 0)
+    safe_limit = min(max(limit, 1), 1000)
+    rows = rows[safe_skip : safe_skip + safe_limit]
+
+    items = []
+    for permission_row, user_row in rows:
+        inherited_allowed = _fallback_permission_allowed(user_row.role, permission_row.domain, permission_row.action)
+        flag_on_allowed = _permission_flag_on_decision(
+            user=user_row,
+            row=permission_row,
+            domain=permission_row.domain,
+            action=permission_row.action,
+        )
+        items.append(
+            {
+                "user": {
+                    "id": str(user_row.id),
+                    "email": user_row.email,
+                    "full_name": user_row.full_name,
+                    "role": user_row.role,
+                    "country_code": user_row.country_code,
+                    "country_scope": _normalize_country_scope_codes(user_row.country_scope),
+                },
+                "override": _serialize_permission_override(permission_row, user=user_row),
+                "inherit_from_role": inherited_allowed,
+                "effective_when_flag_on": flag_on_allowed,
+            }
+        )
+
+    return {
+        "permission_flags_enabled": PERMISSION_FLAGS_ENABLED,
+        "count": len(items),
+        "items": items,
+    }
+
+
+@api_router.post("/admin/permissions/grant")
+async def admin_permissions_grant(
+    payload: AdminPermissionGrantPayload,
+    request: Request,
+    session: AsyncSession = Depends(get_sql_session),
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    await _ensure_permissions_db_ready(session)
+
+    if payload.domain not in PERMISSION_DOMAIN_ACTIONS:
+        raise HTTPException(status_code=400, detail="Invalid domain")
+    if payload.action not in PERMISSION_DOMAIN_ACTIONS[payload.domain]:
+        raise HTTPException(status_code=400, detail="Invalid action")
+
+    reason_value = _permission_reason_or_400(payload.reason)
+    target_uuid = _safe_uuid(payload.target_user_id)
+    if not target_uuid:
+        raise HTTPException(status_code=400, detail="Invalid target_user_id")
+
+    target_user = await session.get(SqlUser, target_uuid)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Target user not found")
+
+    current_user_id = str(current_user.get("id") or "")
+    if current_user_id and current_user_id == str(target_user.id):
+        raise HTTPException(status_code=403, detail="Self-edit is forbidden")
+
+    existing = (
+        await session.execute(
+            select(UserPermission).where(
+                UserPermission.user_id == target_user.id,
+                UserPermission.domain == payload.domain,
+                UserPermission.action == payload.action,
+            )
+        )
+    ).scalar_one_or_none()
+
+    before = _serialize_permission_override(existing, user=target_user, domain=payload.domain, action=payload.action)
+    normalized_scope = _normalize_country_scope_codes(payload.country_scope)
+
+    if existing:
+        existing.allowed = True
+        existing.country_scope = normalized_scope
+        existing.source_role = target_user.role
+        existing.created_by = current_user.get("email")
+        existing.updated_at = datetime.now(timezone.utc)
+        row = existing
+    else:
+        row = UserPermission(
+            user_id=target_user.id,
+            domain=payload.domain,
+            action=payload.action,
+            allowed=True,
+            country_scope=normalized_scope,
+            source_role=target_user.role,
+            created_by=current_user.get("email"),
+        )
+        session.add(row)
+        await session.flush()
+
+    after = _serialize_permission_override(row, user=target_user)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="PERMISSION_FLAG_GRANT",
+        actor=current_user,
+        resource_type="permission_flag",
+        resource_id=f"{target_user.id}:{payload.domain}:{payload.action}",
+        metadata={
+            "target_user": {
+                "id": str(target_user.id),
+                "email": target_user.email,
+                "role": target_user.role,
+            },
+            "before": before,
+            "after": after,
+            "reason": reason_value,
+        },
+        request=request,
+        country_code=target_user.country_code,
+    )
+
+    await session.commit()
+
+    return {
+        "ok": True,
+        "target_user_id": str(target_user.id),
+        "domain": payload.domain,
+        "action": payload.action,
+        "before": before,
+        "after": after,
+    }
+
+
+@api_router.post("/admin/permissions/revoke")
+async def admin_permissions_revoke(
+    payload: AdminPermissionRevokePayload,
+    request: Request,
+    session: AsyncSession = Depends(get_sql_session),
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    await _ensure_permissions_db_ready(session)
+
+    if payload.domain not in PERMISSION_DOMAIN_ACTIONS:
+        raise HTTPException(status_code=400, detail="Invalid domain")
+    if payload.action not in PERMISSION_DOMAIN_ACTIONS[payload.domain]:
+        raise HTTPException(status_code=400, detail="Invalid action")
+
+    reason_value = _permission_reason_or_400(payload.reason)
+    target_uuid = _safe_uuid(payload.target_user_id)
+    if not target_uuid:
+        raise HTTPException(status_code=400, detail="Invalid target_user_id")
+
+    target_user = await session.get(SqlUser, target_uuid)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Target user not found")
+
+    current_user_id = str(current_user.get("id") or "")
+    if current_user_id and current_user_id == str(target_user.id):
+        raise HTTPException(status_code=403, detail="Self-edit is forbidden")
+
+    if target_user.role == "super_admin":
+        raise HTTPException(status_code=403, detail="Super admin permission revoke is forbidden")
+
+    existing = (
+        await session.execute(
+            select(UserPermission).where(
+                UserPermission.user_id == target_user.id,
+                UserPermission.domain == payload.domain,
+                UserPermission.action == payload.action,
+            )
+        )
+    ).scalar_one_or_none()
+
+    before = _serialize_permission_override(existing, user=target_user, domain=payload.domain, action=payload.action)
+
+    if existing:
+        await session.delete(existing)
+
+    after = _serialize_permission_override(None, user=target_user, domain=payload.domain, action=payload.action)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="PERMISSION_FLAG_REVOKE",
+        actor=current_user,
+        resource_type="permission_flag",
+        resource_id=f"{target_user.id}:{payload.domain}:{payload.action}",
+        metadata={
+            "target_user": {
+                "id": str(target_user.id),
+                "email": target_user.email,
+                "role": target_user.role,
+            },
+            "before": before,
+            "after": after,
+            "reason": reason_value,
+        },
+        request=request,
+        country_code=target_user.country_code,
+    )
+
+    await session.commit()
+
+    return {
+        "ok": True,
+        "target_user_id": str(target_user.id),
+        "domain": payload.domain,
+        "action": payload.action,
+        "before": before,
+        "after": after,
+    }
+
+
+@api_router.get("/admin/permissions/shadow-diff")
+async def admin_permissions_shadow_diff(
+    user: Optional[str] = None,
+    role: Optional[str] = None,
+    country_scope: Optional[str] = None,
+    target_user_id: Optional[str] = None,
+    limit: int = 200,
+    session: AsyncSession = Depends(get_sql_session),
+    current_user=Depends(check_permissions(["super_admin"])),
+):
+    await _ensure_permissions_db_ready(session)
+
+    users_stmt = select(SqlUser)
+    if target_user_id:
+        target_uuid = _safe_uuid(target_user_id)
+        if not target_uuid:
+            raise HTTPException(status_code=400, detail="Invalid target_user_id")
+        users_stmt = users_stmt.where(SqlUser.id == target_uuid)
+    if role:
+        users_stmt = users_stmt.where(SqlUser.role == role.strip())
+    if user:
+        pattern = f"%{user.strip()}%"
+        users_stmt = users_stmt.where(or_(SqlUser.email.ilike(pattern), SqlUser.full_name.ilike(pattern)))
+
+    users_stmt = users_stmt.order_by(SqlUser.created_at.desc())
+    users = (await session.execute(users_stmt)).scalars().all()
+
+    if country_scope:
+        code = country_scope.strip().upper()
+        users = [
+            item
+            for item in users
+            if code == (item.country_code or "").upper()
+            or code in _normalize_country_scope_codes(item.country_scope)
+            or "*" in _normalize_country_scope_codes(item.country_scope)
+        ]
+
+    users = users[: min(max(limit, 1), 1000)]
+
+    user_ids = [item.id for item in users]
+    permissions = []
+    if user_ids:
+        permissions = (
+            await session.execute(
+                select(UserPermission).where(UserPermission.user_id.in_(user_ids))
+            )
+        ).scalars().all()
+
+    permission_map: Dict[Tuple[uuid.UUID, str, str], UserPermission] = {}
+    for row in permissions:
+        permission_map[(row.user_id, row.domain, row.action)] = row
+
+    diffs: List[Dict[str, Any]] = []
+    for item in users:
+        for domain, actions in PERMISSION_DOMAIN_ACTIONS.items():
+            for action_name in actions:
+                row = permission_map.get((item.id, domain, action_name))
+                fallback_allowed = _fallback_permission_allowed(item.role, domain, action_name)
+                flag_on_allowed = _permission_flag_on_decision(item, row, domain, action_name)
+                if flag_on_allowed == fallback_allowed:
+                    continue
+
+                diffs.append(
+                    {
+                        "user_id": str(item.id),
+                        "email": item.email,
+                        "role": item.role,
+                        "domain": domain,
+                        "action": action_name,
+                        "fallback_allowed": fallback_allowed,
+                        "flag_on_allowed": flag_on_allowed,
+                        "explicit_override": bool(row),
+                        "override_scope": _normalize_country_scope_codes(row.country_scope if row else []),
+                    }
+                )
+
+    return {
+        "permission_flags_enabled": PERMISSION_FLAGS_ENABLED,
+        "checked_user_count": len(users),
+        "diff_count": len(diffs),
+        "diffs": diffs,
+        "allowlist": [],
+    }
+
+
 @api_router.get("/admin/permissions/me")
 async def admin_permissions_me(
     country: Optional[str] = None,

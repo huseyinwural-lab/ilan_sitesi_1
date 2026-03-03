@@ -35,6 +35,7 @@ import AdminDashboardPage from '@/pages/admin/AdminDashboard';
 import AdminCountryComparePage from '@/pages/admin/AdminCountryCompare';
 import AdminRolesPage from '@/pages/admin/AdminRoles';
 import RBACMatrixPage from '@/pages/admin/RBACMatrix';
+import AdminPermissionsPage from '@/pages/admin/AdminPermissions';
 import IndividualUsersPage from '@/pages/admin/IndividualUsers';
 import IndividualApplicationsPage from '@/pages/admin/IndividualApplications';
 import IndividualListingApplicationsPage from '@/pages/admin/IndividualListingApplications';
@@ -63,6 +64,13 @@ export default function BackofficePortalApp() {
       <Route path="/admin-users" element={<AdminLayout><AdminUsersPage /></AdminLayout>} />
       <Route path="/roles" element={<AdminLayout><AdminRolesPage /></AdminLayout>} />
       <Route path="/rbac-matrix" element={<AdminLayout><RBACMatrixPage /></AdminLayout>} />
+      <Route path="/permissions" element={
+        <AdminLayout>
+          <AdminRouteGuard roles={["super_admin"]}>
+            <AdminPermissionsPage />
+          </AdminRouteGuard>
+        </AdminLayout>
+      } />
       <Route path="/individual-users" element={<AdminLayout><IndividualUsersPage /></AdminLayout>} />
       <Route path="/individual-applications" element={<AdminLayout><IndividualApplicationsPage /></AdminLayout>} />
       <Route path="/feature-flags" element={<AdminLayout><FeatureFlags /></AdminLayout>} />

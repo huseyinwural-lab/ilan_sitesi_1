@@ -1,0 +1,137 @@
+{
+  "task": "P1.1 Granular Permission UI CRUD",
+  "base_url": "https://monolith-modular-5.preview.emergentagent.com",
+  "sample_users": [
+    {
+      "id": "2aab6675-9004-422f-9f2a-86809aefa37b",
+      "email": "admin_view@platform.com",
+      "full_name": "Admin View",
+      "role": "admin",
+      "country_code": "DE",
+      "country_scope": [
+        "DE"
+      ],
+      "is_active": true
+    },
+    {
+      "id": "4fe50aca-e49c-4d2e-97f7-5dca319c799b",
+      "email": "dealer1772201722@example.com",
+      "full_name": "Demo Dealer",
+      "role": "dealer",
+      "country_code": "DE",
+      "country_scope": [
+        "DE"
+      ],
+      "is_active": true
+    },
+    {
+      "id": "0937f566-c5e7-4bca-b946-b9041063de00",
+      "email": "test.account@platform.com",
+      "full_name": "Test Account",
+      "role": "individual",
+      "country_code": "DE",
+      "country_scope": [
+        "DE"
+      ],
+      "is_active": true
+    },
+    {
+      "id": "145fcdf8-f4c1-4397-b4df-0e9a5b767b23",
+      "email": "ads_manager@platform.com",
+      "full_name": "Ads Manager",
+      "role": "ads_manager",
+      "country_code": "DE",
+      "country_scope": [],
+      "is_active": true
+    },
+    {
+      "id": "0acc03a3-854a-4e2d-98be-ef99cb79572d",
+      "email": "pricing_manager@platform.com",
+      "full_name": "Pricing Manager",
+      "role": "pricing_manager",
+      "country_code": "DE",
+      "country_scope": [],
+      "is_active": true
+    }
+  ],
+  "grant_revoke_results": [
+    {
+      "target_user_id": "2aab6675-9004-422f-9f2a-86809aefa37b",
+      "target_user_email": "admin_view@platform.com",
+      "target_role": "admin",
+      "domain": "finance",
+      "action": "view",
+      "grant_status": 200,
+      "revoke_status": 200,
+      "ok": true
+    },
+    {
+      "target_user_id": "4fe50aca-e49c-4d2e-97f7-5dca319c799b",
+      "target_user_email": "dealer1772201722@example.com",
+      "target_role": "dealer",
+      "domain": "content",
+      "action": "edit",
+      "grant_status": 200,
+      "revoke_status": 200,
+      "ok": true
+    },
+    {
+      "target_user_id": "0937f566-c5e7-4bca-b946-b9041063de00",
+      "target_user_email": "test.account@platform.com",
+      "target_role": "individual",
+      "domain": "finance",
+      "action": "view",
+      "grant_status": 200,
+      "revoke_status": 200,
+      "ok": true
+    },
+    {
+      "target_user_id": "145fcdf8-f4c1-4397-b4df-0e9a5b767b23",
+      "target_user_email": "ads_manager@platform.com",
+      "target_role": "ads_manager",
+      "domain": "content",
+      "action": "edit",
+      "grant_status": 200,
+      "revoke_status": 200,
+      "ok": true
+    },
+    {
+      "target_user_id": "0acc03a3-854a-4e2d-98be-ef99cb79572d",
+      "target_user_email": "pricing_manager@platform.com",
+      "target_role": "pricing_manager",
+      "domain": "finance",
+      "action": "view",
+      "grant_status": 200,
+      "revoke_status": 200,
+      "ok": true
+    }
+  ],
+  "guards": {
+    "self_edit_forbidden_status": 403,
+    "self_edit_forbidden_ok": true,
+    "super_admin_revoke_forbidden_status": null,
+    "super_admin_revoke_forbidden_ok": "not_applicable_single_super_admin"
+  },
+  "shadow_diff": {
+    "status": 200,
+    "checked_user_count": 22,
+    "diff_count": 0,
+    "ok": true
+  },
+  "unauthorized_access": {
+    "user_status": 403,
+    "dealer_status": 403,
+    "ok": true
+  },
+  "overall_pass": true,
+  "auth": {
+    "admin": 200,
+    "user": 200,
+    "dealer": 200
+  },
+  "users_endpoint_status": 200,
+  "audit_check": {
+    "status": 200,
+    "ok": true
+  }
+}

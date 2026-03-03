@@ -466,6 +466,7 @@ export default function Layout({ children }) {
     { path: '/admin/admin-users', icon: Users, label: 'Admin Kullanıcıları', roles: roles.adminOnly, testId: 'management-admin-users' },
     { path: '/admin/roles', icon: ShieldCheck, label: 'Rol Tanımları', roles: roles.adminOnly, testId: 'management-roles' },
     { path: '/admin/rbac-matrix', icon: MenuSquare, label: 'Yetki Atama (RBAC Matrix)', roles: roles.adminOnly, testId: 'management-rbac-matrix' },
+    { path: '/admin/permissions', icon: ShieldCheck, label: 'Permission Yönetimi', roles: roles.adminOnly, testId: 'management-permissions' },
 
     { divider: true, label: 'Üyeler', roles: roles.userOps },
   { path: '/admin/individual-users', icon: Users, label: 'Bireysel Kullanıcılar', roles: roles.userOps, testId: 'members-individual-users' },
@@ -618,6 +619,7 @@ export default function Layout({ children }) {
       '/admin/admin-users',
       '/admin/roles',
       '/admin/rbac-matrix',
+      '/admin/permissions',
       '/admin/individual-users',
       '/admin/individual-applications',
       '/admin/individual-listing-applications',
