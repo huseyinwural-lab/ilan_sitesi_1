@@ -842,3 +842,15 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - Kurumsal portal header, bireysel header ile aynı admin tasarım kaynağından beslenecek şekilde güncellendi (`useUIHeaderConfig segment='individual'`).
 - Dealer header row1 sağ aksiyonlarında hizalama iyileştirildi: sağ blok `justify-end + nowrap + overflow-x-auto` ile alta düşme sorunu giderildi.
 - Smoke + frontend test doğrulaması PASS (dealer overview/listings/settings sayfalarında tutarlı görünüm, console error=0).
+
+## 2026-03-03 (UI Revizyon — 5 Satır Düzeni ve Hesabım Paneli)
+- İstenen satır yapısı uygulandı:
+  1) Header
+  2) Ana menü satırı
+  3) Dealer Demo + Mağaza Filtresi + Yardım satırı
+  4) İçerik alanı (solda ince menü, sağda içerik)
+  5) Footer
+- Hesabım menüsü kompaktlaştırıldı (ince görünüm) ve sağ panel alanında açılacak şekilde konumlandırıldı.
+- Logo tıklama davranışı güncellendi: ana sayfaya (`/`) yönlendirme.
+- Dealer settings sayfası iki kolonlu, beyaz zemin/siyah metin yapısına geçirildi; footer eklendi.
+- Frontend doğrulama PASS: satır yapısı, sağ panel menü, logo yönlendirme, white/black tema ve console error=0.
