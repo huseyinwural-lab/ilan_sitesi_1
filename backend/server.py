@@ -13290,23 +13290,6 @@ async def admin_audit_resources(
     return {"resource_types": resources}
 
 
-@api_router.get("/admin/audit-logs/{log_id}")
-async def admin_audit_log_detail(
-    log_id: str,
-    request: Request,
-    current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
-    session: AsyncSession = Depends(get_sql_session),
-):
-    await resolve_admin_country_context(request, current_user=current_user, session=session, )
-    log_uuid = _safe_uuid(log_id)
-    if not log_uuid:
-        raise HTTPException(status_code=400, detail="Invalid audit log id")
-    log = await session.get(AuditLog, log_uuid)
-    if not log:
-        raise HTTPException(status_code=404, detail="Audit log not found")
-    return {"log": _audit_log_sql_to_dict(log)}
-
-
 @api_router.get("/admin/audit-logs/export")
 async def admin_export_audit_logs(
     request: Request,
@@ -13385,6 +13368,23 @@ async def admin_export_audit_logs(
     response = StreamingResponse(iter([output.getvalue()]), media_type="text/csv")
     response.headers["Content-Disposition"] = f"attachment; filename={filename}"
     return response
+
+
+@api_router.get("/admin/audit-logs/{log_id}")
+async def admin_audit_log_detail(
+    log_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "ROLE_AUDIT_VIEWER", "audit_viewer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session, )
+    log_uuid = _safe_uuid(log_id)
+    if not log_uuid:
+        raise HTTPException(status_code=400, detail="Invalid audit log id")
+    log = await session.get(AuditLog, log_uuid)
+    if not log:
+        raise HTTPException(status_code=404, detail="Audit log not found")
+    return {"log": _audit_log_sql_to_dict(log)}
 
 
 # =====================
