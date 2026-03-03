@@ -881,3 +881,20 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Mock Durumu
 - **MOCKED:** `GET /api/dealer/dashboard/navigation-summary -> academy.modules`
 - Not: Kullanıcı 2B onayı kapsamında mock kullanımını kabul etti; diğer sayaçlar gerçek DB verisinden geliyor.
+
+## 2026-03-03 (Kurumsal Portal UX Revizyonu — Kullanıcı Geri Bildirimi)
+- Kullanıcı işaretlediği iki alan kaldırıldı:
+  1) Row4’te statik “Kurumsal Menü” listesi kaldırıldı.
+  2) Hesabım içindeki “Kısayollar” bloğu kaldırıldı (`DealerSettings`).
+- Yeni davranış uygulandı:
+  - Row2’de seçilen üst menüye göre Row4 sol panel **bağlamsal menü** gösteriyor.
+  - Örn. `Favoriler` seçildiğinde solda yalnız Favoriler ve alt menüleri; sağda ilgili içerik route’u açılıyor.
+  - `Hesabım` seçildiğinde solda Hesabım + tüm alt kırılımlar; sağda Hesabım içeriği.
+- Row5 footer korunarak `SiteFooter` (admin site tasarım footer kaynağı) ile devam ediyor.
+
+### Doğrulama
+- Smoke test (Playwright screenshot) PASS:
+  - Favoriler tıklandığında row4 sol panel başlığı `Favoriler` ve alt menüler görünür.
+  - Dealer settings içinde `dealer-settings-quick-links` artık yok.
+- `auto_frontend_testing_agent` PASS: tüm kullanıcı talepleri doğrulandı.
+- `deep_testing_backend_v2` PASS: dealer backend endpoint regresyonu temiz.
