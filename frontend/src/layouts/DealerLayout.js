@@ -260,7 +260,7 @@ export default function DealerLayout() {
     modules,
   } = useDealerPortalConfig();
   const { configData: corporateHeaderConfig, logoUrl: corporateLogoUrl } = useUIHeaderConfig({
-    segment: 'corporate',
+    segment: 'individual',
     authRequired: true,
   });
   const [selectedStore, setSelectedStore] = useState('all');
@@ -446,13 +446,13 @@ export default function DealerLayout() {
     <div className="min-h-screen bg-[var(--bg-warm)]" data-testid="dealer-layout-root">
       <header className="border-b bg-white" data-testid="dealer-layout-header">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 lg:px-6" data-testid="dealer-layout-header-rows">
-          <div className="flex flex-wrap items-center justify-between gap-3" data-testid="dealer-layout-header-row1">
-            <div className="flex items-center gap-3" data-testid="dealer-layout-brand-wrap">
+          <div className="flex items-center justify-between gap-3" data-testid="dealer-layout-header-row1">
+            <div className="flex min-w-0 items-center gap-3" data-testid="dealer-layout-brand-wrap">
               {showRow1Logo ? (
                 <button
                   type="button"
                   onClick={() => navigate('/dealer/overview')}
-                  className="flex h-10 min-w-28 items-center justify-center rounded bg-yellow-400 px-2 text-sm font-bold text-slate-900"
+                  className="flex h-10 min-w-28 shrink-0 items-center justify-center rounded bg-yellow-400 px-2 text-sm font-bold text-slate-900"
                   data-testid="dealer-layout-brand-button"
                 >
                   {corporateLogoUrl ? (
@@ -477,13 +477,13 @@ export default function DealerLayout() {
                   Ana Menü
                 </button>
               ) : null}
-              <span className="text-xs uppercase tracking-[0.2em] text-slate-500" data-testid="dealer-layout-portal-label">
+              <span className="shrink-0 text-xs uppercase tracking-[0.2em] text-slate-500" data-testid="dealer-layout-portal-label">
                 Kurumsal Portal
               </span>
             </div>
 
             {(showRow1QuickActions || showRow1Language) ? (
-              <div className="flex flex-wrap items-center gap-2" data-testid="dealer-layout-quick-actions">
+              <div className="ml-auto flex max-w-full items-center justify-end gap-2 overflow-x-auto whitespace-nowrap" data-testid="dealer-layout-quick-actions">
                 {showRow1QuickActions ? row1Actions.map((item) => {
                   const Icon = iconMap[item.icon] || LayoutDashboard;
                   return (
@@ -505,7 +505,7 @@ export default function DealerLayout() {
                 }) : null}
 
                 {showRow1Language ? (
-                  <div className="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1" data-testid="dealer-layout-language-toggle">
+                  <div className="flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-1" data-testid="dealer-layout-language-toggle">
                     {languageOptions.map((option) => (
                       <button
                         key={option.key}
