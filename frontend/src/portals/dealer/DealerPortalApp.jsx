@@ -12,7 +12,6 @@ import DealerSettings from '@/pages/dealer/DealerSettings';
 import DealerInvoices from '@/pages/dealer/DealerInvoices';
 import DealerCompanyProfile from '@/pages/dealer/DealerCompanyProfile';
 import DealerPrivacyCenter from '@/pages/dealer/DealerPrivacyCenter';
-import DealerVirtualTours from '@/pages/dealer/DealerVirtualTours';
 import DealerAcademy from '@/pages/dealer/DealerAcademy';
 import PaymentSuccess from '@/pages/dealer/PaymentSuccess';
 import PaymentCancel from '@/pages/dealer/PaymentCancel';
@@ -25,7 +24,6 @@ export default function DealerPortalApp() {
         <Route index element={<Navigate to="overview" replace />} />
         <Route path="overview" element={<DealerOverview />} />
         <Route path="listings" element={<DealerListings />} />
-        <Route path="virtual-tours" element={<DealerVirtualTours />} />
         <Route path="messages" element={<DealerMessages />} />
         <Route path="customers" element={<DealerCustomers />} />
         <Route path="favorites" element={<DealerFavorites />} />

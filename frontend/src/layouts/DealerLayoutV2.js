@@ -60,16 +60,66 @@ const iconMap = {
 };
 
 const corporateTopMenu = [
-  { key: 'overview', label: 'Özet', icon: 'LayoutDashboard', route: '/dealer/overview' },
-  { key: 'listings', label: 'İlanlar', icon: 'ListChecks', route: '/dealer/listings' },
-  { key: 'virtual_tours', label: 'Sanal Turlar', icon: 'Sparkles', route: '/dealer/virtual-tours' },
-  { key: 'messages', label: 'Mesajlar', icon: 'MessageCircle', route: '/dealer/messages' },
+  {
+    key: 'overview',
+    label: 'Özet Dashboard',
+    icon: 'LayoutDashboard',
+    route: '/dealer/overview',
+    children: [
+      { key: 'visit_count', label: 'Ziyaret Sayısı', icon: 'BarChart3', route: '/dealer/overview?widget=visit_count' },
+      { key: 'store_performance', label: 'Mağaza Performansı', icon: 'BarChart3', route: '/dealer/overview?widget=store_performance' },
+      { key: 'active_listing_count', label: 'Yayındaki İlan Sayısı', icon: 'ListChecks', route: '/dealer/overview?widget=active_listing_count' },
+      { key: 'demanded_customer_count', label: 'Talep Olan Müşteri Sayısı', icon: 'Users', route: '/dealer/overview?widget=demanded_customer_count' },
+      { key: 'matching_listings', label: 'Müşteriye Uygun İlanlar', icon: 'Sparkles', route: '/dealer/overview?widget=matching_listings' },
+      { key: 'extra_widgets', label: 'Eklenebilir Widget Alanı', icon: 'LayoutDashboard', route: '/dealer/overview?widget=custom' },
+    ],
+  },
+  {
+    key: 'listings',
+    label: 'İlanlar',
+    icon: 'ListChecks',
+    route: '/dealer/listings',
+    children: [
+      { key: 'listings_active', label: 'Yayında Olan İlanlar', icon: 'ListChecks', route: '/dealer/listings?status=active' },
+      { key: 'listings_inactive', label: 'Yayında Olmayanlar', icon: 'ListChecks', route: '/dealer/listings?status=inactive' },
+      { key: 'listings_draft', label: 'Taslak İlanlar', icon: 'ListChecks', route: '/dealer/listings?status=draft' },
+      { key: 'listings_expired', label: 'Süresi Dolanlar', icon: 'ListChecks', route: '/dealer/listings?status=expired' },
+      { key: 'listings_archive', label: 'Arşiv', icon: 'ListChecks', route: '/dealer/listings?status=archived' },
+    ],
+  },
+  {
+    key: 'messages',
+    label: 'Mesajlar',
+    icon: 'MessageCircle',
+    route: '/dealer/messages',
+    children: [
+      { key: 'messages_inbox', label: 'Gelen Mesajlar', icon: 'MessageCircle', route: '/dealer/messages?folder=inbox' },
+      { key: 'messages_sent', label: 'Gönderilen Mesajlar', icon: 'MessageCircle', route: '/dealer/messages?folder=sent' },
+      { key: 'messages_archive', label: 'Arşiv', icon: 'MessageCircle', route: '/dealer/messages?folder=archive' },
+      { key: 'messages_spam', label: 'Spam', icon: 'Shield', route: '/dealer/messages?folder=spam' },
+    ],
+  },
   {
     key: 'customers',
     label: 'Müşteri Yönetimi',
     icon: 'Users',
     route: '/dealer/customers',
-    children: [{ key: 'contracts', label: 'Sözleşmeler', icon: 'FileText', route: '/dealer/customers' }],
+    children: [
+      { key: 'customer_list', label: 'Müşteri Listesi', icon: 'Users', route: '/dealer/customers?tab=list' },
+      { key: 'customer_add', label: 'Müşteri Ekle', icon: 'Users', route: '/dealer/customers?tab=add' },
+      { key: 'customer_potential', label: 'Potansiyel Müşteriler', icon: 'Users', route: '/dealer/customers?tab=potential' },
+      {
+        key: 'contracts',
+        label: 'Sözleşmeler',
+        icon: 'FileText',
+        route: '/dealer/customers?tab=contracts',
+        children: [
+          { key: 'contracts_active', label: 'Aktif', icon: 'FileText', route: '/dealer/customers?tab=contracts&status=active' },
+          { key: 'contracts_expired', label: 'Süresi Dolan', icon: 'FileText', route: '/dealer/customers?tab=contracts&status=expired' },
+          { key: 'contracts_draft', label: 'Taslak', icon: 'FileText', route: '/dealer/customers?tab=contracts&status=draft' },
+        ],
+      },
+    ],
   },
   {
     key: 'favorites',
@@ -86,16 +136,45 @@ const corporateTopMenu = [
     key: 'reports',
     label: 'Raporlar',
     icon: 'BarChart3',
-    route: '/dealer/reports',
+    route: '/dealer/reports?section=listing_report',
     children: [
-      { key: 'hourly_visit_report', label: 'Saatlik Ziyaret Sayısı', icon: 'BarChart3', route: '/dealer/reports?section=listing_report' },
-      { key: 'live_listing_report', label: 'Yayındaki İlan Raporu', icon: 'BarChart3', route: '/dealer/reports?section=listing_report' },
-      { key: 'view_report', label: 'Görüntüleme Raporu', icon: 'BarChart3', route: '/dealer/reports?section=views_report' },
-      { key: 'favorite_report', label: 'Favoriye Alınma Raporu', icon: 'BarChart3', route: '/dealer/reports?section=favorites_report' },
-      { key: 'message_report', label: 'Gelen Mesaj Raporu', icon: 'BarChart3', route: '/dealer/reports?section=messages_report' },
-      { key: 'mobile_call_report', label: 'Gelen Arama Raporu (Mobil)', icon: 'BarChart3', route: '/dealer/reports?section=mobile_calls_report' },
-      { key: 'package_reports', label: 'Paket Raporları', icon: 'BarChart3', route: '/dealer/reports?section=package_reports' },
-      { key: 'doping_usage_report', label: 'Doping Kullanım Raporu', icon: 'BarChart3', route: '/dealer/reports?section=doping_usage' },
+      { key: 'hourly_visit_report', label: 'Saatlik Ziyaret Sayısı', icon: 'BarChart3', route: '/dealer/reports?section=hourly_visit_report' },
+      {
+        key: 'performance_reports',
+        label: 'Performans Raporları',
+        icon: 'BarChart3',
+        route: '/dealer/reports?section=views_report',
+        children: [
+          { key: 'view_report', label: 'Görüntülenme', icon: 'BarChart3', route: '/dealer/reports?section=views_report' },
+          { key: 'favorite_report', label: 'Favori Alma', icon: 'Heart', route: '/dealer/reports?section=favorites_report' },
+          { key: 'message_report', label: 'Gelen Mesaj', icon: 'MessageCircle', route: '/dealer/reports?section=messages_report' },
+          { key: 'mobile_call_report', label: 'Gelen Arama (Mobil)', icon: 'BarChart3', route: '/dealer/reports?section=mobile_calls_report' },
+          { key: 'total_show_report', label: 'Toplam Gösterim', icon: 'BarChart3', route: '/dealer/reports?section=listing_report' },
+        ],
+      },
+    ],
+  },
+  {
+    key: 'package_reports',
+    label: 'Paket Raporları',
+    icon: 'BarChart3',
+    route: '/dealer/reports?section=package_reports',
+    children: [
+      { key: 'package_summary', label: 'Paket Özeti', icon: 'BarChart3', route: '/dealer/reports?section=package_reports' },
+      { key: 'package_usage_counts', label: 'Kullanım Adetleri', icon: 'BarChart3', route: '/dealer/reports?section=package_reports' },
+      { key: 'extra_listing_usage', label: 'Ek İlan Kullanımı', icon: 'BarChart3', route: '/dealer/reports?section=package_reports' },
+    ],
+  },
+  {
+    key: 'doping_usage',
+    label: 'Doping Kullanım Raporu',
+    icon: 'Sparkles',
+    route: '/dealer/reports?section=doping_usage',
+    children: [
+      { key: 'active_doping', label: 'Aktif Dopingler', icon: 'Sparkles', route: '/dealer/reports?section=doping_usage' },
+      { key: 'history_doping', label: 'Geçmiş Dopingler', icon: 'Sparkles', route: '/dealer/reports?section=doping_usage' },
+      { key: 'user_based_doping', label: 'Kullanıcı Bazlı Liste', icon: 'Users', route: '/dealer/reports?section=doping_usage' },
+      { key: 'date_filter_doping', label: 'Tarih Filtresi', icon: 'BarChart3', route: '/dealer/reports?section=doping_usage' },
     ],
   },
   {
@@ -117,7 +196,12 @@ const corporateTopMenu = [
     label: 'Satın Al',
     icon: 'ShoppingCart',
     route: '/dealer/purchase',
-    children: [{ key: 'bulk_doping_purchase', label: 'Toplu Doping Satın Al', icon: 'ShoppingCart', route: '/dealer/purchase' }],
+    children: [
+      { key: 'bulk_doping_purchase', label: 'Toplu Doping Satın Al', icon: 'ShoppingCart', route: '/dealer/purchase?tab=bulk_doping' },
+      { key: 'package_upgrade', label: 'Paket Yükseltme', icon: 'ShoppingCart', route: '/dealer/purchase?tab=package_upgrade' },
+      { key: 'cart', label: 'Sepet', icon: 'ShoppingCart', route: '/dealer/purchase?tab=cart' },
+      { key: 'payment_info', label: 'Ödeme Bilgileri', icon: 'FileText', route: '/dealer/purchase?tab=payment_info' },
+    ],
   },
   {
     key: 'account',
@@ -129,21 +213,28 @@ const corporateTopMenu = [
       { key: 'account_email', label: 'E-Posta', icon: 'UserRound', route: '/dealer/settings?section=profile' },
       { key: 'account_phone', label: 'Cep Telefonu', icon: 'UserRound', route: '/dealer/settings?section=profile' },
       { key: 'password_change', label: 'Şifre Değişikliği', icon: 'Shield', route: '/dealer/settings?section=security' },
+      { key: 'profile_photo', label: 'Profil Fotoğrafı', icon: 'UserRound', route: '/dealer/settings?section=profile' },
       { key: 'account_verification', label: 'Hesap Doğrulama', icon: 'Shield', route: '/dealer/settings?section=security' },
-      { key: 'academy_certificates', label: 'S-Akademi Sertifikalarım', icon: 'BookOpen', route: '/dealer/academy' },
       { key: 'two_factor', label: '2 Aşamalı Doğrulama', icon: 'Shield', route: '/dealer/settings?section=security' },
       { key: 'recovery_email', label: 'Kurtarma E-Postası', icon: 'Shield', route: '/dealer/settings?section=security' },
       { key: 'sessions_devices', label: 'Oturumlar ve Cihazlar', icon: 'Shield', route: '/dealer/settings?section=security' },
       { key: 'store_content', label: 'Mağaza İçeriği', icon: 'Store', route: '/dealer/company' },
       { key: 'custom_categories', label: 'Özel Kategoriler', icon: 'Store', route: '/dealer/settings?section=address' },
       { key: 'business_info', label: 'İşletme Bilgileri', icon: 'Store', route: '/dealer/settings?section=address' },
-      { key: 'store_users', label: 'Kullanıcılar', icon: 'UserSquare2', route: '/dealer/customers' },
-      { key: 'packages_services', label: 'Paket ve Ek Hizmetler', icon: 'ShoppingCart', route: '/dealer/purchase' },
-      { key: 'saved_cards', label: 'Kayıtlı Kartlarım', icon: 'FileText', route: '/dealer/invoices' },
-      { key: 'my_invoices', label: 'Faturalarım', icon: 'FileText', route: '/dealer/invoices' },
-      { key: 'account_movements', label: 'Hesap Hareketlerim', icon: 'FileText', route: '/dealer/invoices' },
+      { key: 'store_users', label: 'Kullanıcılar', icon: 'UserSquare2', route: '/dealer/settings?section=store_users' },
+      { key: 'packages_services', label: 'Paket ve Ek Hizmetler', icon: 'ShoppingCart', route: '/dealer/settings?section=packages_services' },
+      { key: 'saved_cards', label: 'Kayıtlı Kartlarım', icon: 'FileText', route: '/dealer/settings?section=saved_cards' },
+      { key: 'my_invoices', label: 'Faturalarım', icon: 'FileText', route: '/dealer/settings?section=invoices' },
+      { key: 'account_movements', label: 'Hesap Hareketlerim', icon: 'FileText', route: '/dealer/settings?section=account_movements' },
       { key: 'my_permissions', label: 'İzinlerim', icon: 'Shield', route: '/dealer/settings?section=security' },
-      { key: 'electronic_messages', label: 'Elektronik İleti', icon: 'Bell', route: '/dealer/settings?section=notifications' },
+      { key: 'notif_listing', label: 'Bildirim: İlan', icon: 'Bell', route: '/dealer/settings?section=notifications' },
+      { key: 'notif_store', label: 'Bildirim: Mağaza', icon: 'Bell', route: '/dealer/settings?section=notifications' },
+      { key: 'notif_favorite', label: 'Bildirim: Favori', icon: 'Bell', route: '/dealer/settings?section=notifications' },
+      { key: 'notif_native_ad', label: 'Bildirim: Doğal Reklam', icon: 'Bell', route: '/dealer/settings?section=notifications' },
+      { key: 'notif_virtual_tour', label: 'Bildirim: Sanal Tur', icon: 'Bell', route: '/dealer/settings?section=notifications' },
+      { key: 'electronic_sms', label: 'Ticari İleti: SMS', icon: 'Bell', route: '/dealer/settings?section=notifications' },
+      { key: 'electronic_email', label: 'Ticari İleti: E-Posta', icon: 'Bell', route: '/dealer/settings?section=notifications' },
+      { key: 'electronic_call', label: 'Ticari İleti: Arama', icon: 'Bell', route: '/dealer/settings?section=notifications' },
       { key: 'read_receipt', label: 'Mesaj Okundu Bilgisi', icon: 'Bell', route: '/dealer/settings?section=notifications' },
       { key: 'blocked_accounts', label: 'Engellediğim Hesap Sahipleri', icon: 'Shield', route: '/dealer/settings?section=blocked' },
     ],
@@ -237,15 +328,30 @@ export default function DealerLayoutV2() {
   const showRow3StoreFilter = hasCorporateBlock('row3', 'store_filter', true);
   const showRow3UserMenu = hasCorporateBlock('row3', 'user_menu', true);
 
-  const sidebarRouteOverrides = useMemo(
-    () => Object.fromEntries((sidebarItems || []).map((item) => [item.key, item.route])),
-    [sidebarItems],
-  );
+  const topMenuItems = useMemo(() => {
+    const navRows = Array.isArray(sidebarItems) ? sidebarItems : [];
+    const overrides = Object.fromEntries(
+      navRows.map((item) => [item.key === 'settings' ? 'account' : item.key, item.route]),
+    );
+    const merged = mergeMenuRoutes(corporateTopMenu, overrides);
 
-  const topMenuItems = useMemo(
-    () => mergeMenuRoutes(corporateTopMenu, sidebarRouteOverrides),
-    [sidebarRouteOverrides],
-  );
+    if (!navRows.length) return merged;
+
+    const byKey = new Map(merged.map((item) => [item.key, item]));
+    const orderedKeys = navRows
+      .map((item) => (item.key === 'settings' ? 'account' : item.key))
+      .filter((key) => byKey.has(key));
+
+    return orderedKeys.map((key) => {
+      const rawConfig = navRows.find((item) => (item.key === 'settings' ? 'account' : item.key) === key) || {};
+      const baseItem = byKey.get(key);
+      return {
+        ...baseItem,
+        route: rawConfig.route || baseItem.route,
+        icon: rawConfig.icon || baseItem.icon,
+      };
+    });
+  }, [sidebarItems]);
 
   const activeTopMenu = useMemo(
     () => topMenuItems.find((item) => isMenuNodeActive(item, location.pathname, location.search)) || null,
@@ -280,7 +386,12 @@ export default function DealerLayoutV2() {
     messages: navSummary?.badges?.unread_messages,
     customers: navSummary?.badges?.customers_total,
     favorites: navSummary?.badges?.favorites_total,
+    reports: navSummary?.badges?.total_listings,
+    package_reports: navSummary?.badges?.total_listings,
+    doping_usage: navSummary?.badges?.total_listings,
+    consultant_tracking: navSummary?.badges?.customers_total,
     purchase: navSummary?.badges?.cart_total,
+    account: navSummary?.badges?.announcements_total,
   };
 
   useEffect(() => {

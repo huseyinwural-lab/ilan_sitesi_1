@@ -15,7 +15,9 @@ const formatPrice = (value) => {
 
 const statusLabels = {
   active: 'Aktif',
+  inactive: 'Pasif',
   draft: 'Taslak',
+  expired: 'Süresi Dolan',
   archived: 'Arşiv',
 };
 
@@ -27,7 +29,13 @@ const computeExpiry = (createdAt) => {
   return date.toLocaleDateString('tr-TR');
 };
 
-const inactiveStatuses = new Set(['draft', 'archived']);
+const inactiveStatuses = new Set(['draft', 'archived', 'inactive', 'expired', 'unpublished']);
+
+const resolveStatusFilterFromQuery = (searchParams) => {
+  const raw = (searchParams.get('status') || '').toLowerCase();
+  if (['active', 'inactive', 'all', 'draft', 'expired', 'archived'].includes(raw)) return raw;
+  return 'active';
+};
 
 export default function DealerListings() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -39,7 +47,7 @@ export default function DealerListings() {
   const [form, setForm] = useState({ title: '', price: '' });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
-  const [statusFilter, setStatusFilter] = useState('active');
+  const [statusFilter, setStatusFilter] = useState(resolveStatusFilterFromQuery(searchParams));
   const [query, setQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkLoading, setBulkLoading] = useState(false);
@@ -82,6 +90,13 @@ export default function DealerListings() {
       }, { replace: true });
     }
   }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const nextStatus = resolveStatusFilterFromQuery(searchParams);
+    if (nextStatus !== statusFilter) {
+      setStatusFilter(nextStatus);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     setSelectedIds((prev) => prev.filter((id) => allItems.some((item) => item.id === id)));

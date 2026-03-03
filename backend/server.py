@@ -158,6 +158,12 @@ from app.models.search_sync_job import SearchSyncJob
 from app.models.system_setting import SystemSetting
 from app.models.dealer_portal_config import DealerNavItem, DealerModule
 from app.models.dealer_config_revision import DealerConfigRevision
+from app.models.dealer_portal_entities import (
+    DealerPotentialCustomer,
+    DealerCustomerContract,
+    DealerSavedCard,
+    DealerPaymentApplication,
+)
 from app.models.category_bulk_job import CategoryBulkJob
 from app.models.admin_invite import AdminInvite
 from app.models.menu_item import MenuItem
@@ -18370,6 +18376,48 @@ class DealerBlockedAccountPayload(BaseModel):
     email: EmailStr
 
 
+class DealerMessageFolderPayload(BaseModel):
+    folder: Literal["inbox", "archive", "spam"]
+
+
+class DealerPotentialCustomerPayload(BaseModel):
+    full_name: str = Field(..., min_length=2, max_length=255)
+    email: EmailStr
+    phone: Optional[str] = None
+    notes: Optional[str] = None
+    status: str = Field(default="new", pattern="^(new|contacted|qualified|converted|lost)$")
+
+
+class DealerCustomerContractPayload(BaseModel):
+    customer_name: str = Field(..., min_length=2, max_length=255)
+    customer_email: EmailStr
+    title: str = Field(..., min_length=2, max_length=255)
+    status: str = Field(default="draft", pattern="^(active|expired|draft)$")
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    amount: Optional[float] = None
+    currency: Optional[str] = "EUR"
+    notes: Optional[str] = None
+
+
+class DealerStoreUserCreatePayload(BaseModel):
+    full_name: str = Field(..., min_length=2, max_length=255)
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=128)
+    role: str = Field(default="staff", pattern="^(staff|consultant|dealer_agent|sales_agent)$")
+
+
+class DealerSavedCardPayload(BaseModel):
+    holder_name: str = Field(..., min_length=2, max_length=255)
+    card_number: str = Field(..., min_length=12, max_length=25)
+    expiry_month: int = Field(..., ge=1, le=12)
+    expiry_year: int = Field(..., ge=2024, le=2100)
+    brand: Optional[str] = "visa"
+    is_default: bool = False
+    auto_payment_enabled: bool = False
+    billing_address_json: Optional[Dict[str, Any]] = None
+
+
 def _dealer_role_allowed(role_scope: Optional[str], role: str) -> bool:
     raw = (role_scope or "dealer").strip()
     if not raw or raw == "*":
@@ -18462,6 +18510,77 @@ def _dealer_default_header_fixed_blocks() -> List[Dict[str, Any]]:
         {"key": "main_menu", "label": "Ana Menü", "order_index": 20},
         {"key": "quick_actions", "label": "Hızlı Aksiyon", "order_index": 30},
     ]
+
+
+def _dealer_required_top_nav_items() -> List[Dict[str, Any]]:
+    return [
+        {"key": "overview", "label_i18n_key": "dealer.nav.overview", "route": "/dealer/overview", "icon": "LayoutDashboard", "order_index": 10, "location": "sidebar"},
+        {"key": "listings", "label_i18n_key": "dealer.nav.listings", "route": "/dealer/listings", "icon": "ListChecks", "order_index": 20, "location": "sidebar"},
+        {"key": "messages", "label_i18n_key": "dealer.nav.messages", "route": "/dealer/messages", "icon": "MessageCircle", "order_index": 30, "location": "sidebar"},
+        {"key": "customers", "label_i18n_key": "dealer.nav.customers", "route": "/dealer/customers", "icon": "Users", "order_index": 40, "location": "sidebar"},
+        {"key": "favorites", "label_i18n_key": "dealer.nav.favorites", "route": "/dealer/favorites", "icon": "Heart", "order_index": 50, "location": "sidebar"},
+        {"key": "reports", "label_i18n_key": "dealer.nav.reports", "route": "/dealer/reports?section=listing_report", "icon": "BarChart3", "order_index": 60, "location": "sidebar"},
+        {"key": "package_reports", "label_i18n_key": "dealer.nav.package_reports", "route": "/dealer/reports?section=package_reports", "icon": "BarChart3", "order_index": 70, "location": "sidebar"},
+        {"key": "doping_usage", "label_i18n_key": "dealer.nav.doping_usage", "route": "/dealer/reports?section=doping_usage", "icon": "Sparkles", "order_index": 80, "location": "sidebar"},
+        {"key": "consultant_tracking", "label_i18n_key": "dealer.nav.consultant_tracking", "route": "/dealer/consultant-tracking", "icon": "Users", "order_index": 90, "location": "sidebar"},
+        {"key": "purchase", "label_i18n_key": "dealer.nav.purchase", "route": "/dealer/purchase", "icon": "ShoppingCart", "order_index": 100, "location": "sidebar"},
+        {"key": "account", "label_i18n_key": "dealer.nav.account", "route": "/dealer/settings?section=profile", "icon": "CircleUserRound", "order_index": 110, "location": "sidebar"},
+    ]
+
+
+async def _ensure_dealer_portal_nav_baseline(session: AsyncSession) -> None:
+    nav_rows = (
+        await session.execute(select(DealerNavItem).order_by(DealerNavItem.created_at.asc()))
+    ).scalars().all()
+    nav_by_key = {row.key: row for row in nav_rows}
+    now_dt = datetime.now(timezone.utc)
+    touched = False
+
+    for row in _dealer_required_top_nav_items():
+        existing = nav_by_key.get(row["key"])
+        if existing:
+            if not existing.route:
+                existing.route = row["route"]
+                touched = True
+            if not existing.icon:
+                existing.icon = row["icon"]
+                touched = True
+            if not existing.location:
+                existing.location = row["location"]
+                touched = True
+            continue
+
+        session.add(
+            DealerNavItem(
+                key=row["key"],
+                label_i18n_key=row["label_i18n_key"],
+                route=row["route"],
+                icon=row["icon"],
+                order_index=row["order_index"],
+                visible=True,
+                role_scope="dealer",
+                feature_flag=None,
+                location=row["location"],
+                created_at=now_dt,
+                updated_at=now_dt,
+            )
+        )
+        touched = True
+
+    legacy_virtual = nav_by_key.get("virtual_tours")
+    if legacy_virtual and legacy_virtual.visible:
+        legacy_virtual.visible = False
+        legacy_virtual.updated_at = now_dt
+        touched = True
+
+    legacy_settings = nav_by_key.get("settings")
+    if legacy_settings and legacy_settings.visible:
+        legacy_settings.visible = False
+        legacy_settings.updated_at = now_dt
+        touched = True
+
+    if touched:
+        await session.commit()
 
 
 def _setting_value_to_bool(value: Any) -> bool:
@@ -19099,6 +19218,7 @@ async def dealer_portal_config(
 ):
     role = current_user.get("role") or "dealer"
     country_code = (current_user.get("country_code") or "").upper() or None
+    await _ensure_dealer_portal_nav_baseline(session)
     resolved = await _resolve_dealer_portal_config(session, role=role, country_code=country_code)
     row3_controls = await _dealer_header_row3_controls(
         session,
@@ -19123,6 +19243,7 @@ async def admin_dealer_portal_config(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    await _ensure_dealer_portal_nav_baseline(session)
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     country_code = getattr(ctx, "country", None) if getattr(ctx, "mode", "global") == "country" else None
     scope_key = _dealer_scope_key(country_code)
@@ -19166,6 +19287,7 @@ async def admin_dealer_portal_config_preview(
     current_user=Depends(check_permissions(["super_admin", "country_admin"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    await _ensure_dealer_portal_nav_baseline(session)
     ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
     country_code = getattr(ctx, "country", None) if getattr(ctx, "mode", "global") == "country" else None
     scope_key = _dealer_scope_key(country_code)
@@ -20857,63 +20979,67 @@ async def dealer_virtual_tours(
 @api_router.get("/dealer/messages")
 async def dealer_messages(
     request: Request,
+    folder: str = Query(default="inbox"),
     current_user=Depends(check_permissions(["dealer"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
     dealer_uuid = uuid.UUID(current_user.get("id"))
-    conversations = (
+    folder_value = (folder or "inbox").strip().lower()
+    if folder_value not in {"inbox", "sent", "archive", "spam"}:
+        raise HTTPException(status_code=400, detail="folder invalid")
+
+    all_conversations = (
         await session.execute(
             select(Conversation)
             .where(Conversation.seller_id == dealer_uuid)
             .order_by(desc(Conversation.created_at))
-            .limit(100)
+            .limit(400)
         )
     ).scalars().all()
-    conversation_ids = [row.id for row in conversations]
-    if not conversation_ids:
-        notification_rows = (
-            await session.execute(
-                select(Notification)
-                .where(Notification.user_id == dealer_uuid)
-                .order_by(desc(Notification.created_at))
-                .limit(100)
-            )
-        ).scalars().all()
-        notification_items = [
-            {
-                "notification_id": str(row.id),
-                "title": row.title,
-                "message": row.message,
-                "source_type": row.source_type,
-                "action_url": row.action_url,
-                "created_at": row.created_at.isoformat() if row.created_at else None,
-                "read": bool(row.read_at),
-            }
-            for row in notification_rows
-        ]
-        return {
-            "items": [],
-            "notification_items": notification_items,
-            "summary": {
-                "listing_messages": 0,
-                "notifications": len(notification_items),
-                "unread_listing_messages": 0,
-            },
-        }
 
+    status_counts = {
+        "inbox": 0,
+        "archive": 0,
+        "spam": 0,
+    }
+    for row in all_conversations:
+        if row.status == "archived":
+            status_counts["archive"] += 1
+        elif row.status == "blocked":
+            status_counts["spam"] += 1
+        else:
+            status_counts["inbox"] += 1
+
+    conversations = []
+    for row in all_conversations:
+        if folder_value == "archive" and row.status != "archived":
+            continue
+        if folder_value == "spam" and row.status != "blocked":
+            continue
+        if folder_value in {"inbox", "sent"} and row.status in {"archived", "blocked"}:
+            continue
+        conversations.append(row)
+
+    conversation_ids = [row.id for row in conversations]
     messages = (
         await session.execute(
             select(Message)
             .where(Message.conversation_id.in_(conversation_ids))
             .order_by(desc(Message.created_at))
         )
-    ).scalars().all()
+    ).scalars().all() if conversation_ids else []
 
     message_count: Dict[uuid.UUID, int] = defaultdict(int)
     unread_count_by_conversation: Dict[uuid.UUID, int] = defaultdict(int)
+    dealer_sent_count: Dict[uuid.UUID, int] = defaultdict(int)
+    buyer_sent_count: Dict[uuid.UUID, int] = defaultdict(int)
     last_message: Dict[uuid.UUID, Message] = {}
     for msg in messages:
         message_count[msg.conversation_id] += 1
+        if msg.sender_id == dealer_uuid:
+            dealer_sent_count[msg.conversation_id] += 1
+        else:
+            buyer_sent_count[msg.conversation_id] += 1
         if (not msg.is_read) and msg.sender_id != dealer_uuid:
             unread_count_by_conversation[msg.conversation_id] += 1
         if msg.conversation_id not in last_message:
@@ -20921,22 +21047,20 @@ async def dealer_messages(
 
     listing_ids = {row.listing_id for row in conversations if row.listing_id}
     buyer_ids = {row.buyer_id for row in conversations if row.buyer_id}
-
-    listing_map = {}
-    if listing_ids:
-        listing_map = {
-            row.id: row
-            for row in (await session.execute(select(Listing).where(Listing.id.in_(listing_ids)))).scalars().all()
-        }
-    buyer_map = {}
-    if buyer_ids:
-        buyer_map = {
-            row.id: row
-            for row in (await session.execute(select(SqlUser).where(SqlUser.id.in_(buyer_ids)))).scalars().all()
-        }
+    listing_map = {
+        row.id: row
+        for row in (await session.execute(select(Listing).where(Listing.id.in_(listing_ids)))).scalars().all()
+    } if listing_ids else {}
+    buyer_map = {
+        row.id: row
+        for row in (await session.execute(select(SqlUser).where(SqlUser.id.in_(buyer_ids)))).scalars().all()
+    } if buyer_ids else {}
 
     items = []
     for conv in conversations:
+        sent_count = int(dealer_sent_count.get(conv.id) or 0)
+        if folder_value == "sent" and sent_count <= 0:
+            continue
         last = last_message.get(conv.id)
         listing = listing_map.get(conv.listing_id) if conv.listing_id else None
         buyer = buyer_map.get(conv.buyer_id) if conv.buyer_id else None
@@ -20949,10 +21073,14 @@ async def dealer_messages(
                 "buyer_id": str(conv.buyer_id) if conv.buyer_id else None,
                 "buyer_email": buyer.email if buyer else None,
                 "message_count": int(message_count.get(conv.id) or 0),
+                "dealer_sent_count": sent_count,
+                "buyer_message_count": int(buyer_sent_count.get(conv.id) or 0),
                 "last_message": (last.body if last else None),
                 "last_message_at": last.created_at.isoformat() if last and last.created_at else None,
+                "last_sender": "dealer" if last and last.sender_id == dealer_uuid else "buyer",
                 "unread_count": unread_count,
                 "read_status": "okunmadı" if unread_count > 0 else "okundu",
+                "folder": "archive" if conv.status == "archived" else "spam" if conv.status == "blocked" else "inbox",
             }
         )
 
@@ -20979,12 +21107,15 @@ async def dealer_messages(
     return {
         "items": items,
         "notification_items": notification_items,
+        "folder": folder_value,
         "summary": {
             "listing_messages": len(items),
             "notifications": len(notification_items),
-            "unread_listing_messages": int(
-                sum(1 for item in items if int(item.get("unread_count") or 0) > 0)
-            ),
+            "unread_listing_messages": int(sum(1 for item in items if int(item.get("unread_count") or 0) > 0)),
+            "inbox_count": int(status_counts.get("inbox") or 0),
+            "sent_count": int(sum(1 for item in items if int(item.get("dealer_sent_count") or 0) > 0)) if folder_value == "sent" else int(sum(1 for conv in all_conversations if conv.status not in {"archived", "blocked"})),
+            "archive_count": int(status_counts.get("archive") or 0),
+            "spam_count": int(status_counts.get("spam") or 0),
         },
     }
 
@@ -21023,6 +21154,40 @@ async def dealer_mark_conversation_read(
     }
 
 
+@api_router.patch("/dealer/messages/{conversation_id}/folder")
+async def dealer_message_update_folder(
+    conversation_id: str,
+    payload: DealerMessageFolderPayload,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    try:
+        conversation_uuid = uuid.UUID(conversation_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="conversation_id invalid") from exc
+
+    conversation = await session.get(Conversation, conversation_uuid)
+    if not conversation or conversation.seller_id != dealer_uuid:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    target = payload.folder
+    if target == "archive":
+        conversation.status = "archived"
+    elif target == "spam":
+        conversation.status = "blocked"
+    else:
+        conversation.status = "active"
+    await session.commit()
+
+    return {
+        "ok": True,
+        "conversation_id": str(conversation_uuid),
+        "folder": payload.folder,
+        "status": conversation.status,
+    }
+
+
 @api_router.get("/dealer/customers")
 async def dealer_customers(
     request: Request,
@@ -21030,6 +21195,40 @@ async def dealer_customers(
     session: AsyncSession = Depends(get_sql_session),
 ):
     dealer_uuid = uuid.UUID(current_user.get("id"))
+    potential_total = (
+        await session.execute(
+            select(func.count()).select_from(DealerPotentialCustomer).where(DealerPotentialCustomer.dealer_id == dealer_uuid)
+        )
+    ).scalar_one()
+    contract_total = (
+        await session.execute(
+            select(func.count()).select_from(DealerCustomerContract).where(DealerCustomerContract.dealer_id == dealer_uuid)
+        )
+    ).scalar_one()
+    contract_active = (
+        await session.execute(
+            select(func.count()).select_from(DealerCustomerContract).where(
+                DealerCustomerContract.dealer_id == dealer_uuid,
+                DealerCustomerContract.status == "active",
+            )
+        )
+    ).scalar_one()
+    contract_expired = (
+        await session.execute(
+            select(func.count()).select_from(DealerCustomerContract).where(
+                DealerCustomerContract.dealer_id == dealer_uuid,
+                DealerCustomerContract.status == "expired",
+            )
+        )
+    ).scalar_one()
+    contract_draft = (
+        await session.execute(
+            select(func.count()).select_from(DealerCustomerContract).where(
+                DealerCustomerContract.dealer_id == dealer_uuid,
+                DealerCustomerContract.status == "draft",
+            )
+        )
+    ).scalar_one()
     conversations = (
         await session.execute(select(Conversation).where(Conversation.seller_id == dealer_uuid))
     ).scalars().all()
@@ -21062,6 +21261,11 @@ async def dealer_customers(
             "summary": {
                 "users_count": 0,
                 "non_store_users_count": len(non_store_users),
+                "potential_customers_count": int(potential_total or 0),
+                "contracts_count": int(contract_total or 0),
+                "contracts_active_count": int(contract_active or 0),
+                "contracts_expired_count": int(contract_expired or 0),
+                "contracts_draft_count": int(contract_draft or 0),
             },
         }
 
@@ -21147,8 +21351,220 @@ async def dealer_customers(
         "summary": {
             "users_count": len(items),
             "non_store_users_count": len(non_store_users),
+            "potential_customers_count": int(potential_total or 0),
+            "contracts_count": int(contract_total or 0),
+            "contracts_active_count": int(contract_active or 0),
+            "contracts_expired_count": int(contract_expired or 0),
+            "contracts_draft_count": int(contract_draft or 0),
         },
     }
+
+
+@api_router.get("/dealer/customers/potential")
+async def dealer_potential_customers(
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    rows = (
+        await session.execute(
+            select(DealerPotentialCustomer)
+            .where(DealerPotentialCustomer.dealer_id == dealer_uuid)
+            .order_by(desc(DealerPotentialCustomer.created_at))
+            .limit(300)
+        )
+    ).scalars().all()
+    return {
+        "items": [
+            {
+                "id": str(row.id),
+                "full_name": row.full_name,
+                "email": row.email,
+                "phone": row.phone,
+                "notes": row.notes,
+                "status": row.status,
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+            }
+            for row in rows
+        ],
+        "summary": {
+            "total": len(rows),
+            "qualified": sum(1 for row in rows if row.status == "qualified"),
+            "converted": sum(1 for row in rows if row.status == "converted"),
+        },
+    }
+
+
+@api_router.post("/dealer/customers/potential")
+async def dealer_potential_customers_create(
+    payload: DealerPotentialCustomerPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    row = DealerPotentialCustomer(
+        dealer_id=dealer_uuid,
+        full_name=payload.full_name.strip(),
+        email=str(payload.email).strip().lower(),
+        phone=(payload.phone or "").strip() or None,
+        notes=(payload.notes or "").strip() or None,
+        status=payload.status,
+    )
+    session.add(row)
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_POTENTIAL_CUSTOMER_CREATE",
+        actor=current_user,
+        resource_type="dealer_potential_customer",
+        resource_id=str(row.id),
+        metadata={"email": row.email, "status": row.status},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+    return {"ok": True, "id": str(row.id)}
+
+
+@api_router.get("/dealer/customers/contracts")
+async def dealer_customer_contracts(
+    status: Optional[str] = None,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    query = select(DealerCustomerContract).where(DealerCustomerContract.dealer_id == dealer_uuid)
+    if status:
+        status_value = status.strip().lower()
+        if status_value not in {"active", "expired", "draft"}:
+            raise HTTPException(status_code=400, detail="status invalid")
+        query = query.where(DealerCustomerContract.status == status_value)
+    rows = (await session.execute(query.order_by(desc(DealerCustomerContract.created_at)).limit(300))).scalars().all()
+    return {
+        "items": [
+            {
+                "id": str(row.id),
+                "customer_name": row.customer_name,
+                "customer_email": row.customer_email,
+                "title": row.title,
+                "status": row.status,
+                "start_date": row.start_date.isoformat() if row.start_date else None,
+                "end_date": row.end_date.isoformat() if row.end_date else None,
+                "amount": float(row.amount) if row.amount is not None else None,
+                "currency": row.currency,
+                "notes": row.notes,
+            }
+            for row in rows
+        ],
+        "summary": {
+            "total": len(rows),
+            "active": sum(1 for row in rows if row.status == "active"),
+            "expired": sum(1 for row in rows if row.status == "expired"),
+            "draft": sum(1 for row in rows if row.status == "draft"),
+        },
+    }
+
+
+@api_router.post("/dealer/customers/contracts")
+async def dealer_customer_contracts_create(
+    payload: DealerCustomerContractPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    start_date = _parse_iso_datetime(payload.start_date, "start_date") if payload.start_date else None
+    end_date = _parse_iso_datetime(payload.end_date, "end_date") if payload.end_date else None
+    if start_date and end_date and end_date < start_date:
+        raise HTTPException(status_code=400, detail="end_date must be after start_date")
+
+    row = DealerCustomerContract(
+        dealer_id=dealer_uuid,
+        customer_name=payload.customer_name.strip(),
+        customer_email=str(payload.customer_email).strip().lower(),
+        title=payload.title.strip(),
+        status=payload.status,
+        start_date=start_date,
+        end_date=end_date,
+        amount=float(payload.amount) if payload.amount is not None else None,
+        currency=(payload.currency or "EUR").upper(),
+        notes=(payload.notes or "").strip() or None,
+    )
+    session.add(row)
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_CUSTOMER_CONTRACT_CREATE",
+        actor=current_user,
+        resource_type="dealer_customer_contract",
+        resource_id=str(row.id),
+        metadata={"customer_email": row.customer_email, "status": row.status},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+    return {"ok": True, "id": str(row.id)}
+
+
+@api_router.post("/dealer/customers/store-users")
+async def dealer_store_users_create(
+    payload: DealerStoreUserCreatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    dealer_profile = (
+        await session.execute(select(DealerProfile).where(DealerProfile.user_id == dealer_uuid))
+    ).scalar_one_or_none()
+
+    email = str(payload.email).strip().lower()
+    existing = (await session.execute(select(SqlUser).where(SqlUser.email == email))).scalar_one_or_none()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already exists")
+
+    now_dt = datetime.now(timezone.utc)
+    new_user = SqlUser(
+        email=email,
+        hashed_password=get_password_hash(payload.password),
+        full_name=payload.full_name.strip(),
+        role=payload.role,
+        user_type="dealer",
+        is_active=True,
+        is_verified=True,
+        country_code=(current_user.get("country_code") or "TR"),
+        created_at=now_dt,
+        updated_at=now_dt,
+    )
+    session.add(new_user)
+    await session.flush()
+
+    if dealer_profile and dealer_profile.company_name:
+        session.add(
+            DealerProfile(
+                user_id=new_user.id,
+                company_name=dealer_profile.company_name,
+                authorized_person=payload.full_name.strip(),
+                contact_email=email,
+                address_country=dealer_profile.address_country or (current_user.get("country_code") or "TR"),
+                contact_phone=dealer_profile.contact_phone,
+                address_street=dealer_profile.address_street,
+                address_zip=dealer_profile.address_zip,
+                address_city=dealer_profile.address_city,
+            )
+        )
+
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_STORE_USER_CREATE",
+        actor=current_user,
+        resource_type="dealer_store_user",
+        resource_id=str(new_user.id),
+        metadata={"email": email, "role": payload.role},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+    return {"ok": True, "user_id": str(new_user.id), "email": email}
 
 
 @api_router.get("/dealer/consultant-tracking")
@@ -21929,6 +22345,9 @@ def _normalize_dealer_settings_prefs(payload: Optional[Dict[str, Any]], existing
     existing_prefs = existing or {}
     incoming = payload or {}
 
+    existing_matrix = existing_prefs.get("notification_matrix") if isinstance(existing_prefs.get("notification_matrix"), dict) else {}
+    existing_consent = existing_prefs.get("electronic_consent") if isinstance(existing_prefs.get("electronic_consent"), dict) else {}
+
     base = {
         "push_enabled": bool(existing_prefs.get("push_enabled", True)),
         "email_enabled": bool(existing_prefs.get("email_enabled", True)),
@@ -21936,7 +22355,23 @@ def _normalize_dealer_settings_prefs(payload: Optional[Dict[str, Any]], existing
         "marketing_email_enabled": bool(existing_prefs.get("marketing_email_enabled", False)),
         "read_receipt_enabled": bool(existing_prefs.get("read_receipt_enabled", True)),
         "sms_enabled": bool(existing_prefs.get("sms_enabled", False)),
+        "recovery_email": str(existing_prefs.get("recovery_email") or "").strip().lower(),
+        "display_name_mode": str(existing_prefs.get("display_name_mode") or "full_name").strip() or "full_name",
+        "profile_photo_url": str(existing_prefs.get("profile_photo_url") or "").strip(),
         "blocked_accounts": _normalize_dealer_blocked_accounts(existing_prefs.get("blocked_accounts", [])),
+        "notification_matrix": {
+            "listing": bool(existing_matrix.get("listing", True)),
+            "store": bool(existing_matrix.get("store", True)),
+            "favorite": bool(existing_matrix.get("favorite", True)),
+            "native_ad": bool(existing_matrix.get("native_ad", False)),
+            "virtual_tour": bool(existing_matrix.get("virtual_tour", False)),
+        },
+        "electronic_consent": {
+            "sms": bool(existing_consent.get("sms", False)),
+            "email": bool(existing_consent.get("email", False)),
+            "call": bool(existing_consent.get("call", False)),
+        },
+        "active_sessions": existing_prefs.get("active_sessions") if isinstance(existing_prefs.get("active_sessions"), list) else [],
     }
 
     for key in [
@@ -21952,6 +22387,46 @@ def _normalize_dealer_settings_prefs(payload: Optional[Dict[str, Any]], existing
 
     if "blocked_accounts" in incoming:
         base["blocked_accounts"] = _normalize_dealer_blocked_accounts(incoming.get("blocked_accounts"))
+
+    if "recovery_email" in incoming:
+        value = str(incoming.get("recovery_email") or "").strip().lower()
+        base["recovery_email"] = value if (not value or ("@" in value and "." in value.split("@")[-1])) else base["recovery_email"]
+
+    if "display_name_mode" in incoming:
+        value = str(incoming.get("display_name_mode") or "").strip().lower()
+        if value in {"full_name", "initials", "anonymous"}:
+            base["display_name_mode"] = value
+
+    if "profile_photo_url" in incoming:
+        base["profile_photo_url"] = str(incoming.get("profile_photo_url") or "").strip()
+
+    if "notification_matrix" in incoming and isinstance(incoming.get("notification_matrix"), dict):
+        matrix = incoming.get("notification_matrix") or {}
+        for key in ["listing", "store", "favorite", "native_ad", "virtual_tour"]:
+            if key in matrix:
+                base["notification_matrix"][key] = bool(matrix.get(key))
+
+    if "electronic_consent" in incoming and isinstance(incoming.get("electronic_consent"), dict):
+        consent = incoming.get("electronic_consent") or {}
+        for key in ["sms", "email", "call"]:
+            if key in consent:
+                base["electronic_consent"][key] = bool(consent.get(key))
+
+    if "active_sessions" in incoming and isinstance(incoming.get("active_sessions"), list):
+        normalized_sessions = []
+        for row in incoming.get("active_sessions"):
+            if not isinstance(row, dict):
+                continue
+            normalized_sessions.append(
+                {
+                    "session_id": str(row.get("session_id") or uuid.uuid4()),
+                    "device": str(row.get("device") or "Bilinmeyen Cihaz"),
+                    "ip": str(row.get("ip") or "-"),
+                    "last_seen_at": str(row.get("last_seen_at") or datetime.now(timezone.utc).isoformat()),
+                    "is_current": bool(row.get("is_current", False)),
+                }
+            )
+        base["active_sessions"] = normalized_sessions[:20]
 
     return base
 
@@ -22097,6 +22572,12 @@ async def dealer_settings_preferences_get(
             "marketing_email_enabled": prefs.get("marketing_email_enabled", False),
             "read_receipt_enabled": prefs.get("read_receipt_enabled", True),
             "sms_enabled": prefs.get("sms_enabled", False),
+            "recovery_email": prefs.get("recovery_email", ""),
+            "display_name_mode": prefs.get("display_name_mode", "full_name"),
+            "profile_photo_url": prefs.get("profile_photo_url", ""),
+            "notification_matrix": prefs.get("notification_matrix", {}),
+            "electronic_consent": prefs.get("electronic_consent", {}),
+            "active_sessions": prefs.get("active_sessions", []),
         },
         "blocked_accounts": prefs.get("blocked_accounts", []),
         "security": {
@@ -22143,6 +22624,12 @@ async def dealer_settings_preferences_update(
             "marketing_email_enabled": next_prefs.get("marketing_email_enabled", False),
             "read_receipt_enabled": next_prefs.get("read_receipt_enabled", True),
             "sms_enabled": next_prefs.get("sms_enabled", False),
+            "recovery_email": next_prefs.get("recovery_email", ""),
+            "display_name_mode": next_prefs.get("display_name_mode", "full_name"),
+            "profile_photo_url": next_prefs.get("profile_photo_url", ""),
+            "notification_matrix": next_prefs.get("notification_matrix", {}),
+            "electronic_consent": next_prefs.get("electronic_consent", {}),
+            "active_sessions": next_prefs.get("active_sessions", []),
         },
         "blocked_accounts": next_prefs.get("blocked_accounts", []),
     }
@@ -22217,6 +22704,212 @@ async def dealer_settings_blocked_accounts_remove(
     )
     await session.commit()
     return {"ok": True, "blocked_accounts": blocked_accounts}
+
+
+def _mask_card_last4(value: str) -> str:
+    digits = re.sub(r"\D", "", str(value or ""))
+    if len(digits) < 4:
+        raise HTTPException(status_code=400, detail="card_number invalid")
+    return digits[-4:]
+
+
+@api_router.get("/dealer/settings/saved-cards")
+async def dealer_settings_saved_cards(
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    rows = (
+        await session.execute(
+            select(DealerSavedCard)
+            .where(DealerSavedCard.dealer_id == dealer_uuid)
+            .order_by(desc(DealerSavedCard.is_default), desc(DealerSavedCard.created_at))
+        )
+    ).scalars().all()
+    return {
+        "items": [
+            {
+                "id": str(row.id),
+                "holder_name": row.holder_name,
+                "brand": row.brand,
+                "last4": row.last4,
+                "expiry_month": row.expiry_month,
+                "expiry_year": row.expiry_year,
+                "is_default": bool(row.is_default),
+                "auto_payment_enabled": bool(row.auto_payment_enabled),
+                "billing_address_json": row.billing_address_json or {},
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+            }
+            for row in rows
+        ]
+    }
+
+
+@api_router.post("/dealer/settings/saved-cards")
+async def dealer_settings_saved_cards_create(
+    payload: DealerSavedCardPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    now_dt = datetime.now(timezone.utc)
+
+    if payload.is_default:
+        await session.execute(
+            update(DealerSavedCard)
+            .where(DealerSavedCard.dealer_id == dealer_uuid)
+            .values(is_default=False, updated_at=now_dt)
+        )
+
+    row = DealerSavedCard(
+        dealer_id=dealer_uuid,
+        holder_name=payload.holder_name.strip(),
+        brand=(payload.brand or "visa").strip().lower(),
+        last4=_mask_card_last4(payload.card_number),
+        expiry_month=int(payload.expiry_month),
+        expiry_year=int(payload.expiry_year),
+        token_ref=f"manual_{uuid.uuid4().hex[:16]}",
+        is_default=bool(payload.is_default),
+        auto_payment_enabled=bool(payload.auto_payment_enabled),
+        billing_address_json=payload.billing_address_json or {},
+        created_at=now_dt,
+        updated_at=now_dt,
+    )
+    session.add(row)
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_SAVED_CARD_CREATE",
+        actor=current_user,
+        resource_type="dealer_saved_card",
+        resource_id=str(row.id),
+        metadata={"brand": row.brand, "last4": row.last4, "is_default": row.is_default},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+    return {"ok": True, "id": str(row.id)}
+
+
+@api_router.delete("/dealer/settings/saved-cards/{card_id}")
+async def dealer_settings_saved_cards_delete(
+    card_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    try:
+        card_uuid = uuid.UUID(card_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="card_id invalid") from exc
+
+    row = await session.get(DealerSavedCard, card_uuid)
+    if not row or row.dealer_id != dealer_uuid:
+        raise HTTPException(status_code=404, detail="Card not found")
+
+    await session.delete(row)
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_SAVED_CARD_DELETE",
+        actor=current_user,
+        resource_type="dealer_saved_card",
+        resource_id=str(card_uuid),
+        metadata={"last4": row.last4},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+    return {"ok": True}
+
+
+@api_router.get("/dealer/settings/payment-applications")
+async def dealer_settings_payment_applications(
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    rows = (
+        await session.execute(
+            select(DealerPaymentApplication)
+            .where(DealerPaymentApplication.dealer_id == dealer_uuid)
+            .order_by(desc(DealerPaymentApplication.created_at))
+            .limit(100)
+        )
+    ).scalars().all()
+    return {
+        "items": [
+            {
+                "id": str(row.id),
+                "application_type": row.application_type,
+                "status": row.status,
+                "note": row.note,
+                "document_url": row.document_url,
+                "metadata_json": row.metadata_json or {},
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+            }
+            for row in rows
+        ]
+    }
+
+
+@api_router.post("/dealer/settings/payment-applications")
+async def dealer_settings_payment_applications_create(
+    request: Request,
+    application_type: str = Form(default="auto_payment"),
+    note: Optional[str] = Form(default=None),
+    auto_payment_day: Optional[int] = Form(default=None),
+    iban: Optional[str] = Form(default=None),
+    file: Optional[UploadFile] = File(default=None),
+    current_user=Depends(check_permissions(["dealer"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    dealer_uuid = uuid.UUID(current_user.get("id"))
+    app_type = (application_type or "auto_payment").strip().lower()
+    if app_type not in {"auto_payment", "card_registration", "corporate_document"}:
+        raise HTTPException(status_code=400, detail="application_type invalid")
+
+    document_url = None
+    metadata_json: Dict[str, Any] = {}
+    if auto_payment_day is not None:
+        metadata_json["auto_payment_day"] = int(auto_payment_day)
+    if iban:
+        metadata_json["iban"] = (iban or "").strip().upper()
+
+    if file is not None:
+        raw = await file.read()
+        if not raw:
+            raise HTTPException(status_code=400, detail="file empty")
+        if len(raw) > 8 * 1024 * 1024:
+            raise HTTPException(status_code=413, detail="file too large")
+        safe_name = re.sub(r"[^a-zA-Z0-9._-]", "_", file.filename or "document.bin")
+        storage_key = f"{OBJECT_STORAGE_APP_PREFIX}/dealer-payment-applications/{dealer_uuid}/{uuid.uuid4().hex}-{safe_name}"
+        uploaded = _storage_put_object(storage_key, raw, file.content_type or "application/octet-stream")
+        document_url = uploaded.get("path") or uploaded.get("download_url") or uploaded.get("url") or storage_key
+
+    row = DealerPaymentApplication(
+        dealer_id=dealer_uuid,
+        application_type=app_type,
+        status="pending",
+        note=(note or "").strip() or None,
+        document_url=document_url,
+        metadata_json=metadata_json,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+    session.add(row)
+    await _write_audit_log_sql(
+        session=session,
+        action="DEALER_PAYMENT_APPLICATION_CREATE",
+        actor=current_user,
+        resource_type="dealer_payment_application",
+        resource_id=str(row.id),
+        metadata={"application_type": app_type, "has_file": bool(document_url)},
+        request=request,
+        country_code=current_user.get("country_code"),
+    )
+    await session.commit()
+    return {"ok": True, "id": str(row.id), "status": row.status, "document_url": row.document_url}
 
 
 def _resolve_payment_status(value: Optional[str]) -> str:

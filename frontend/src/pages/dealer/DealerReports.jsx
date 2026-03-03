@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const sectionTabs = [
+  { key: 'hourly_visit_report', label: 'Saatlik Ziyaret Sayısı' },
   { key: 'listing_report', label: 'Yayındaki İlan Raporu' },
   { key: 'views_report', label: 'Görüntülenme Raporu' },
   { key: 'favorites_report', label: 'Favoriye Alınma Raporu' },
@@ -38,8 +39,30 @@ export default function DealerReports() {
 
   const activeReport = useMemo(() => {
     if (activeSection === 'package_reports' || activeSection === 'doping_usage') return null;
+    if (activeSection === 'hourly_visit_report') return reportSections?.views_report || null;
     return reportSections?.[activeSection] || null;
   }, [activeSection, reportSections]);
+
+  const lineSeries = useMemo(() => {
+    if (!activeReport?.series?.length) return [];
+    return activeReport.series.map((item, index) => ({
+      x: index,
+      label: item.label || item.date,
+      value: Number(item.value || 0),
+    }));
+  }, [activeReport]);
+
+  const lineSvgPath = useMemo(() => {
+    if (!lineSeries.length) return '';
+    const width = 720;
+    const height = 180;
+    const maxVal = Math.max(...lineSeries.map((item) => item.value), 1);
+    return lineSeries.map((item, index) => {
+      const x = (index / Math.max(lineSeries.length - 1, 1)) * width;
+      const y = height - (item.value / maxVal) * (height - 20);
+      return `${index === 0 ? 'M' : 'L'}${x},${y}`;
+    }).join(' ');
+  }, [lineSeries]);
 
   const fetchData = async (days = windowDays) => {
     setLoading(true);
@@ -166,6 +189,13 @@ export default function DealerReports() {
 
           <div className="rounded-xl border border-slate-200 bg-white p-4" data-testid="dealer-reports-series-card">
             <div className="text-sm font-semibold text-slate-900" data-testid="dealer-reports-series-title">Günlük Seri</div>
+            {activeSection === 'hourly_visit_report' ? (
+              <div className="mt-3 overflow-x-auto" data-testid="dealer-reports-hourly-line-chart-wrap">
+                <svg viewBox="0 0 720 180" className="h-44 w-full min-w-[640px]" data-testid="dealer-reports-hourly-line-chart">
+                  <path d={lineSvgPath} fill="none" stroke="#0f172a" strokeWidth="2" />
+                </svg>
+              </div>
+            ) : null}
             <div className="mt-3 overflow-x-auto" data-testid="dealer-reports-series-table-wrap">
               <table className="w-full text-sm" data-testid="dealer-reports-series-table">
                 <thead className="bg-slate-50">

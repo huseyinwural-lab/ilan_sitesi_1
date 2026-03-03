@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -33,6 +34,10 @@ const isPayableInvoice = (invoice) => {
 };
 
 export default function DealerPurchase() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = (searchParams.get('tab') || 'bulk_doping').toLowerCase();
+  const activeTab = ['bulk_doping', 'package_upgrade', 'cart', 'payment_info'].includes(requestedTab) ? requestedTab : 'bulk_doping';
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
@@ -158,9 +163,31 @@ export default function DealerPurchase() {
         </div>
       </div>
 
+      <div className="rounded-lg border border-slate-200 bg-white p-3" data-testid="dealer-purchase-tab-wrap">
+        <div className="flex flex-wrap items-center gap-2" data-testid="dealer-purchase-tabs">
+          {[
+            { key: 'bulk_doping', label: 'Toplu Doping Satın Al' },
+            { key: 'package_upgrade', label: 'Paket Yükseltme' },
+            { key: 'cart', label: 'Sepet' },
+            { key: 'payment_info', label: 'Ödeme Bilgileri' },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setSearchParams({ tab: tab.key })}
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${activeTab === tab.key ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-800'}`}
+              data-testid={`dealer-purchase-tab-${tab.key}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {(activeTab === 'bulk_doping' || activeTab === 'package_upgrade') ? (
       <section className="rounded-lg border border-slate-200 bg-white p-4" data-testid="dealer-purchase-packages-section">
         <div className="flex items-center justify-between" data-testid="dealer-purchase-packages-header">
-          <h2 className="text-base font-semibold text-slate-900" data-testid="dealer-purchase-packages-title">Toplu Doping Satın Al Paketleri</h2>
+          <h2 className="text-base font-semibold text-slate-900" data-testid="dealer-purchase-packages-title">{activeTab === 'package_upgrade' ? 'Paket Yükseltme Seçenekleri' : 'Toplu Doping Satın Al Paketleri'}</h2>
           <span className="text-xs font-semibold text-slate-600" data-testid="dealer-purchase-packages-count">{packages.length} paket</span>
         </div>
         <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3" data-testid="dealer-purchase-packages-grid">
@@ -178,6 +205,22 @@ export default function DealerPurchase() {
           ))}
         </div>
       </section>
+      ) : null}
+
+      {activeTab === 'cart' ? (
+        <section className="rounded-md border border-slate-200 bg-white p-4" data-testid="dealer-purchase-cart-section">
+          <div className="text-sm font-semibold text-slate-900" data-testid="dealer-purchase-cart-title">Sepet</div>
+          <div className="mt-2 text-xs text-slate-600" data-testid="dealer-purchase-cart-subtitle">Ödeme bekleyen faturalarınız sepet olarak gösterilir.</div>
+          <div className="mt-3 text-sm text-slate-900" data-testid="dealer-purchase-cart-count">Sepetteki fatura: {summary.payableCount}</div>
+        </section>
+      ) : null}
+
+      {activeTab === 'payment_info' ? (
+        <section className="rounded-md border border-slate-200 bg-white p-4" data-testid="dealer-purchase-payment-info-section">
+          <div className="text-sm font-semibold text-slate-900" data-testid="dealer-purchase-payment-info-title">Ödeme Bilgileri</div>
+          <div className="mt-2 text-xs text-slate-600" data-testid="dealer-purchase-payment-info-note">Kayıtlı kartlar ve otomatik ödeme başvuruları Hesabım &gt; Kayıtlı Kartlarım ekranından yönetilir.</div>
+        </section>
+      ) : null}
 
       <section className="rounded-md border border-slate-200 overflow-hidden" data-testid="dealer-purchase-invoices-section">
         <div className="border-b border-slate-200 bg-slate-50 px-3 py-2" data-testid="dealer-purchase-invoices-toolbar">
