@@ -1062,3 +1062,28 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - **P1:** Kurumsal dashboard’daki kullanıcı işaretli gereksiz menü kolonu için son sadeleştirme turu (hedef ekran teyidi ile).
 - **P1:** Uygulama genelindeki kalan hardcoded metinlerin kademeli olarak i18n key’lerine taşınması.
 - **P2:** Hızlı menü ayarlarını localStorage’dan kullanıcı-bazlı sunucu senkronuna taşıma.
+
+## 2026-03-03 (P1 Tamamlandı — Kurumsal Menü Sadeleştirme + i18n Genişletme)
+
+### Tamamlananlar
+- **Kurumsal dashboard/settings sadeleştirme:**
+  - `DealerSettings` içindeki ekstra dikey orta menü kolonu kaldırıldı.
+  - Bölüm geçişleri üstte yatay tab/chip navigasyona taşındı.
+  - URL tab switch (`?section=`) davranışı korundu.
+
+- **i18n genişletme (namespace key stili):**
+  - `LanguageContext` içinde namespaced key yapısı güçlendirildi (`auth.login.*`, `auth.register.*`, `auth.verify.*`, `dealer.layout.*`, `dealer.settings.*`).
+  - Login/Register/VerifyEmail ekranlarındaki ana metinler, placeholder’lar ve uyarı mesajları i18n anahtarlarına bağlandı.
+  - DealerLayoutV2 üzerindeki sabit metinler i18n key üzerinden render edilmeye alındı.
+  - DealerSettings içindeki kritik section başlıkları ve önemli aksiyon metinleri i18n’ye taşındı.
+
+### Test Sonucu
+- `testing_agent` PASS: `/app/test_reports/iteration_107.json`
+  - DealerSettings layout değişimi PASS (eski orta kolon kaldırılmış)
+  - TR/DE/FR auth ekranları i18n PASS
+  - DealerLayoutV2 i18n PASS
+  - Genel regresyon PASS
+
+### Güncel Backlog
+- **P2:** i18n kaynak dosyalarını `LanguageContext`’ten dış JSON dosyalarına ayırarak bakım kolaylığı.
+- **P2:** Hızlı menüyü hesap-bazlı cross-device senkrona taşıma.
