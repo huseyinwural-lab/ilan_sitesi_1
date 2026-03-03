@@ -771,3 +771,28 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - Permission UI yönetim ekranını (granular flag CRUD) admin workflow ile tamamlamak.
 - Audit/Permissions ekranlarında filitre/arama/paginasyon standardizasyonunu derinleştirmek.
 - Finance + Dealer + Account uçtan uca regresyon paketini nightly gate'e genişletmek.
+
+## 2026-03-03 (P1.1 — Granular Permission Yönetim UI)
+- Yeni yönetim ekranı açıldı: `/admin/permissions`.
+- Backend tarafında super_admin-only permission admin API seti eklendi:
+  - `GET /api/admin/permissions/flags`
+  - `GET /api/admin/permissions/users`
+  - `GET /api/admin/permissions/overrides`
+  - `POST /api/admin/permissions/grant`
+  - `POST /api/admin/permissions/revoke`
+  - `GET /api/admin/permissions/shadow-diff`
+- Güvenlik kuralları aktif:
+  - Self-edit yasak (403)
+  - super_admin hedefte revoke yasak (403)
+  - super_admin dışı erişimler 403
+  - reason min 10 karakter zorunlu
+- Audit bağlama aktif: permission değişiklikleri `PERMISSION_FLAG_GRANT` / `PERMISSION_FLAG_REVOKE` aksiyonlarıyla audit log’a yazılıyor.
+- UI tarafında explicit override vs inherit-from-role ayrımı görünür hale getirildi; country scope multi-select + reason alanı ile grant/revoke akışı tamamlandı.
+
+### P1.1 Kanıt Dosyaları
+- `/app/test_reports/p1_permission_ui_crud.json` (PASS)
+- `/app/test_reports/iteration_99.json` (PASS)
+
+### Sonraki Önerilen Adımlar (P1)
+- Permission CRUD ekranına toplu atama (bulk grant/revoke) ve dry-run etki analizi eklenmesi.
+- Audit ekranında permission aksiyonları için hazır filtre preset'leri (grant/revoke actor/target/reason) eklenmesi.
