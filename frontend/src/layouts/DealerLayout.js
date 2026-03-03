@@ -257,6 +257,19 @@ const moduleLabelMap = {
 const resolveLabel = (key, t) => labelMap[key] || t(key) || key;
 const resolveModuleLabel = (key, fallback, t) => moduleLabelMap[key] || t(key) || fallback || key;
 
+const resolveAccountActiveMenuKey = (pathname, search) => {
+  if (pathname.startsWith('/dealer/invoices') || pathname.startsWith('/dealer/purchase')) {
+    return 'store';
+  }
+
+  const section = new URLSearchParams(search || '').get('section') || 'profile';
+  if (section === 'security') return 'security';
+  if (section === 'address') return 'store';
+  if (section === 'notifications') return 'notification_preferences';
+  if (section === 'blocked') return 'blocked_accounts';
+  return 'account_information';
+};
+
 export default function DealerLayout() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -356,6 +369,11 @@ export default function DealerLayout() {
     [primaryMenuItems, openMenuKey],
   );
 
+  const activeAccountMenuKey = useMemo(
+    () => resolveAccountActiveMenuKey(activePath, activeSearch),
+    [activePath, activeSearch],
+  );
+
   const activePrimaryMenu = useMemo(
     () => primaryMenuItems.find((item) => isCorporateMenuActive(item, activePath, activeSearch)) || null,
     [primaryMenuItems, activePath, activeSearch],
@@ -424,7 +442,11 @@ export default function DealerLayout() {
 
   const renderSecondaryMenuItem = (item, depth = 0) => {
     const Icon = iconMap[item.icon] || LayoutDashboard;
-    const isActive = isCorporateMenuActive(item, activePath, activeSearch);
+    const isAccountPanel = openPrimaryMenu?.key === 'account';
+    const isSettingsRoute = (item.route || '').startsWith('/dealer/settings') || (item.route || '').startsWith('/dealer/invoices') || (item.route || '').startsWith('/dealer/purchase');
+    const isActive = isAccountPanel && isSettingsRoute
+      ? depth === 0 && item.key === activeAccountMenuKey
+      : isCorporateMenuActive(item, activePath, activeSearch);
     const hasChildren = Array.isArray(item.children) && item.children.length > 0;
     const depthClass = getSecondaryDepthClass(depth);
     const itemClass = isActive ? 'bg-slate-800 text-white' : 'text-slate-900 hover:bg-slate-100';
