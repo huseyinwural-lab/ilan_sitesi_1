@@ -2,21 +2,35 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import { CardElement, Elements, useElements, useStripe } from '@stripe/react-stripe-js';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const sectionList = [
-  { key: 'profile', label: 'Hesap Bilgileri' },
-  { key: 'address', label: 'Mağaza Bilgileri' },
-  { key: 'security', label: 'Güvenlik' },
-  { key: 'store_users', label: 'Kullanıcı Listesi / Ekle' },
-  { key: 'packages_services', label: 'Paket ve Hizmetler' },
-  { key: 'saved_cards', label: 'Kayıtlı Kartlarım' },
-  { key: 'invoices', label: 'Faturalar' },
-  { key: 'account_movements', label: 'Hesap Hareketleri' },
-  { key: 'notifications', label: 'Bildirim Tercihleri' },
-  { key: 'blocked', label: 'Engellenen Hesaplar' },
+  { key: 'profile' },
+  { key: 'address' },
+  { key: 'security' },
+  { key: 'store_users' },
+  { key: 'packages_services' },
+  { key: 'saved_cards' },
+  { key: 'invoices' },
+  { key: 'account_movements' },
+  { key: 'notifications' },
+  { key: 'blocked' },
 ];
+
+const sectionLabelFallbacks = {
+  profile: 'Hesap Bilgileri',
+  address: 'Mağaza Bilgileri',
+  security: 'Güvenlik',
+  store_users: 'Kullanıcı Listesi / Ekle',
+  packages_services: 'Paket ve Hizmetler',
+  saved_cards: 'Kayıtlı Kartlarım',
+  invoices: 'Faturalar',
+  account_movements: 'Hesap Hareketleri',
+  notifications: 'Bildirim Tercihleri',
+  blocked: 'Engellenen Hesaplar',
+};
 
 const defaultProfile = {
   company_name: '',
@@ -80,6 +94,7 @@ function DealerStripeCardCaptureForm({
   submitting,
   onSubmitTokenizedCard,
 }) {
+  const { t } = useLanguage();
   const stripe = useStripe();
   const elements = useElements();
   const [formError, setFormError] = useState('');
@@ -92,17 +107,17 @@ function DealerStripeCardCaptureForm({
         event.preventDefault();
         setFormError('');
         if (!stripe || !elements) {
-          setFormError('Stripe formu henüz hazır değil.');
+          setFormError(t('dealer.settings.cards.form_not_ready', 'Stripe formu henüz hazır değil.'));
           return;
         }
         if (!holderName.trim()) {
-          setFormError('Kart üzerindeki isim zorunludur.');
+          setFormError(t('dealer.settings.cards.holder_required', 'Kart üzerindeki isim zorunludur.'));
           return;
         }
 
         const cardElement = elements.getElement(CardElement);
         if (!cardElement) {
-          setFormError('Kart alanı bulunamadı.');
+          setFormError(t('dealer.settings.cards.field_missing', 'Kart alanı bulunamadı.'));
           return;
         }
 
@@ -116,13 +131,13 @@ function DealerStripeCardCaptureForm({
         });
 
         if (result.error) {
-          setFormError(result.error.message || 'Kart bilgisi doğrulanamadı.');
+          setFormError(result.error.message || t('dealer.settings.cards.validation_failed', 'Kart bilgisi doğrulanamadı.'));
           return;
         }
 
         const pm = result.paymentMethod;
         if (!pm || !pm.id || !pm.card) {
-          setFormError('Ödeme yöntemi oluşturulamadı.');
+          setFormError(t('dealer.settings.cards.payment_method_failed', 'Ödeme yöntemi oluşturulamadı.'));
           return;
         }
 
@@ -143,7 +158,7 @@ function DealerStripeCardCaptureForm({
       <input
         value={holderName}
         onChange={(event) => setHolderName(event.target.value)}
-        placeholder="Kart Üzerindeki İsim"
+        placeholder={t('dealer.settings.cards.holder_placeholder', 'Kart Üzerindeki İsim')}
         className="h-10 rounded-md border border-slate-300 px-3 text-sm"
         data-testid="dealer-settings-card-holder-name"
         required
@@ -151,15 +166,16 @@ function DealerStripeCardCaptureForm({
       <div className="rounded-md border border-slate-300 bg-white px-3 py-2" data-testid="dealer-settings-card-element-wrap">
         <CardElement options={cardElementOptions} data-testid="dealer-settings-card-element" />
       </div>
-      <label className="flex items-center gap-2 text-sm" data-testid="dealer-settings-card-default-wrap"><input type="checkbox" checked={Boolean(isDefault)} onChange={(event) => setIsDefault(event.target.checked)} data-testid="dealer-settings-card-is-default" /> Varsayılan kart</label>
-      <label className="flex items-center gap-2 text-sm" data-testid="dealer-settings-card-auto-pay-wrap"><input type="checkbox" checked={Boolean(autoPaymentEnabled)} onChange={(event) => setAutoPaymentEnabled(event.target.checked)} data-testid="dealer-settings-card-auto-pay" /> Otomatik ödeme onayı</label>
+      <label className="flex items-center gap-2 text-sm" data-testid="dealer-settings-card-default-wrap"><input type="checkbox" checked={Boolean(isDefault)} onChange={(event) => setIsDefault(event.target.checked)} data-testid="dealer-settings-card-is-default" /> {t('dealer.settings.cards.default', 'Varsayılan kart')}</label>
+      <label className="flex items-center gap-2 text-sm" data-testid="dealer-settings-card-auto-pay-wrap"><input type="checkbox" checked={Boolean(autoPaymentEnabled)} onChange={(event) => setAutoPaymentEnabled(event.target.checked)} data-testid="dealer-settings-card-auto-pay" /> {t('dealer.settings.cards.auto_pay', 'Otomatik ödeme onayı')}</label>
       {formError ? <div className="md:col-span-2 rounded-md border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700" data-testid="dealer-settings-card-form-error">{formError}</div> : null}
-      <button type="submit" disabled={submitting || !stripe} className="h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white md:col-span-2 disabled:opacity-60" data-testid="dealer-settings-card-submit">{submitting ? 'Kaydediliyor...' : 'Stripe ile Kart Kaydet'}</button>
+      <button type="submit" disabled={submitting || !stripe} className="h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white md:col-span-2 disabled:opacity-60" data-testid="dealer-settings-card-submit">{submitting ? t('auth.register.submit_loading', 'Kaydediliyor...') : t('dealer.settings.cards.submit', 'Stripe ile Kart Kaydet')}</button>
     </form>
   );
 }
 
 export default function DealerSettings() {
+  const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedSection = (searchParams.get('section') || '').toLowerCase();
   const section = sectionList.some((item) => item.key === requestedSection) ? requestedSection : 'profile';
@@ -199,7 +215,7 @@ export default function DealerSettings() {
       },
     });
     const payload = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(payload?.detail || payload?.message || 'İşlem başarısız');
+    if (!res.ok) throw new Error(payload?.detail || payload?.message || t('dealer.settings.errors.operation_failed', 'İşlem başarısız'));
     return payload;
   };
 
@@ -241,15 +257,15 @@ export default function DealerSettings() {
       const appPayload = await appRes.json().catch(() => ({}));
       const stripeConfigPayload = await stripeConfigRes.json().catch(() => ({}));
 
-      if (!profileRes.ok) throw new Error(profilePayload?.detail || 'Profil alınamadı');
-      if (!prefRes.ok) throw new Error(prefPayload?.detail || 'Tercihler alınamadı');
-      if (!usersRes.ok) throw new Error(usersPayload?.detail || 'Kullanıcı listesi alınamadı');
-      if (!pkgRes.ok) throw new Error(pkgPayload?.detail || 'Paketler alınamadı');
-      if (!invoiceRes.ok) throw new Error(invoicePayload?.detail || 'Faturalar alınamadı');
-      if (!paymentRes.ok) throw new Error(paymentPayload?.detail || 'Hareketler alınamadı');
-      if (!cardsRes.ok) throw new Error(cardsPayload?.detail || 'Kartlar alınamadı');
-      if (!appRes.ok) throw new Error(appPayload?.detail || 'Başvurular alınamadı');
-      if (!stripeConfigRes.ok) throw new Error(stripeConfigPayload?.detail || 'Stripe ayarları alınamadı');
+      if (!profileRes.ok) throw new Error(profilePayload?.detail || t('dealer.settings.errors.profile_fetch_failed', 'Profil alınamadı'));
+      if (!prefRes.ok) throw new Error(prefPayload?.detail || t('dealer.settings.errors.preferences_fetch_failed', 'Tercihler alınamadı'));
+      if (!usersRes.ok) throw new Error(usersPayload?.detail || t('dealer.settings.errors.users_fetch_failed', 'Kullanıcı listesi alınamadı'));
+      if (!pkgRes.ok) throw new Error(pkgPayload?.detail || t('dealer.settings.errors.packages_fetch_failed', 'Paketler alınamadı'));
+      if (!invoiceRes.ok) throw new Error(invoicePayload?.detail || t('dealer.settings.errors.invoices_fetch_failed', 'Faturalar alınamadı'));
+      if (!paymentRes.ok) throw new Error(paymentPayload?.detail || t('dealer.settings.errors.movements_fetch_failed', 'Hareketler alınamadı'));
+      if (!cardsRes.ok) throw new Error(cardsPayload?.detail || t('dealer.settings.errors.cards_fetch_failed', 'Kartlar alınamadı'));
+      if (!appRes.ok) throw new Error(appPayload?.detail || t('dealer.settings.errors.applications_fetch_failed', 'Başvurular alınamadı'));
+      if (!stripeConfigRes.ok) throw new Error(stripeConfigPayload?.detail || t('dealer.settings.errors.stripe_config_failed', 'Stripe ayarları alınamadı'));
 
       setProfile({ ...defaultProfile, ...(profilePayload.profile || {}) });
       setPrefs({ ...defaultPrefs, ...(prefPayload.notification_prefs || {}) });
@@ -263,7 +279,7 @@ export default function DealerSettings() {
       setPaymentApplications(Array.isArray(appPayload.items) ? appPayload.items : []);
       setStripePublishableKey((stripeConfigPayload?.publishable_key || '').trim());
     } catch (requestError) {
-      setError(requestError?.message || 'Hesap verisi alınamadı');
+      setError(requestError?.message || t('dealer.settings.errors.account_data_failed', 'Hesap verisi alınamadı'));
     } finally {
       setLoading(false);
       setStripeLoading(false);
@@ -300,10 +316,10 @@ export default function DealerSettings() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notification_prefs: prefs }),
       });
-      setSuccess('Profil bilgileri kaydedildi.');
+      setSuccess(t('dealer.settings.save_success_profile', 'Profil bilgileri kaydedildi.'));
       await fetchAll();
     } catch (requestError) {
-      setError(requestError?.message || 'Profil kaydedilemedi');
+      setError(requestError?.message || t('dealer.settings.errors.profile_save_failed', 'Profil kaydedilemedi'));
     }
   };
 
@@ -316,10 +332,10 @@ export default function DealerSettings() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notification_prefs: { ...prefs, blocked_accounts: blockedAccounts } }),
       });
-      setSuccess('Bildirim tercihleri kaydedildi.');
+      setSuccess(t('dealer.settings.save_success_preferences', 'Bildirim tercihleri kaydedildi.'));
       await fetchAll();
     } catch (requestError) {
-      setError(requestError?.message || 'Tercihler kaydedilemedi');
+      setError(requestError?.message || t('dealer.settings.errors.preferences_save_failed', 'Tercihler kaydedilemedi'));
     }
   };
 
@@ -328,31 +344,33 @@ export default function DealerSettings() {
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white" data-testid="dealer-settings-sections-card">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3" data-testid="dealer-settings-header">
           <div>
-            <h1 className="text-2xl font-semibold text-black" data-testid="dealer-settings-title">Hesabım</h1>
-            <p className="text-sm font-medium text-slate-700" data-testid="dealer-settings-subtitle">Hesap bilgileri, güvenlik, ödeme ve bildirim yönetimi.</p>
+            <h1 className="text-2xl font-semibold text-black" data-testid="dealer-settings-title">{t('dealer.settings.title', 'Hesabım')}</h1>
+            <p className="text-sm font-medium text-slate-700" data-testid="dealer-settings-subtitle">{t('dealer.settings.subtitle', 'Hesap bilgileri, güvenlik, ödeme ve bildirim yönetimi.')}</p>
           </div>
-          <button type="button" onClick={fetchAll} className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-black" data-testid="dealer-settings-refresh-button">Yenile</button>
+          <button type="button" onClick={fetchAll} className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-black" data-testid="dealer-settings-refresh-button">{t('dealer.settings.refresh', 'Yenile')}</button>
         </div>
 
-        <div className="grid gap-0 lg:grid-cols-[300px_minmax(0,1fr)]" data-testid="dealer-settings-layout-grid">
-          <aside className="border-b border-slate-200 p-3 lg:border-b-0 lg:border-r" data-testid="dealer-settings-section-tabs">
-            <div className="space-y-1">
+        <div className="bg-white p-4" data-testid="dealer-settings-right-panel">
+          <div className="mb-4 space-y-2" data-testid="dealer-settings-section-tabs-wrap">
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500" data-testid="dealer-settings-section-nav-title">
+              {t('dealer.settings.section_nav_title', 'Hesap bölümleri')}
+            </div>
+            <div className="flex flex-wrap items-center gap-2" data-testid="dealer-settings-section-tabs">
               {sectionList.map((item) => (
                 <button
                   key={item.key}
                   type="button"
                   onClick={() => setSearchParams({ section: item.key })}
-                  className={`flex w-full items-center rounded-md border px-3 py-2 text-left text-sm font-semibold ${section === item.key ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-black hover:bg-slate-50'}`}
+                  className={`rounded-md border px-3 py-1.5 text-left text-sm font-semibold transition ${section === item.key ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-black hover:bg-slate-50'}`}
                   data-testid={`dealer-settings-section-tab-${item.key}`}
                 >
-                  {item.label}
+                  {t(`dealer.settings.sections.${item.key}`, sectionLabelFallbacks[item.key] || item.key)}
                 </button>
               ))}
             </div>
-          </aside>
+          </div>
 
-          <div className="bg-white p-4" data-testid="dealer-settings-right-panel">
-            {loading ? <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500" data-testid="dealer-settings-loading">Yükleniyor...</div> : null}
+          {loading ? <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500" data-testid="dealer-settings-loading">{t('dealer.settings.loading', 'Yükleniyor...')}</div> : null}
             {error ? <div className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700" data-testid="dealer-settings-error">{error}</div> : null}
             {success ? <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700" data-testid="dealer-settings-success">{success}</div> : null}
 
@@ -372,15 +390,15 @@ export default function DealerSettings() {
                     <select value={prefs.display_name_mode || 'full_name'} onChange={(event) => setPrefs((prev) => ({ ...prev, display_name_mode: event.target.value }))} className="h-10 rounded-md border border-slate-300 px-3 text-sm" data-testid="dealer-settings-display-name-mode"><option value="full_name">Profil</option><option value="initials">İsim Baş Harfleri</option><option value="anonymous">Anonim</option></select>
                   </div>
                 ) : null}
-                <button type="submit" className="h-9 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white" data-testid="dealer-settings-save-button">Kaydet</button>
+                <button type="submit" className="h-9 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white" data-testid="dealer-settings-save-button">{t('dealer.settings.save', 'Kaydet')}</button>
               </form>
             ) : null}
 
             {!loading && section === 'security' ? (
               <div className="space-y-3" data-testid="dealer-settings-security-section">
                 <div className="rounded-md border border-slate-200 bg-slate-50 p-3" data-testid="dealer-settings-security-summary">
-                  <div className="text-xs font-semibold">2FA: {security.two_factor_enabled ? 'Aktif' : 'Pasif'}</div>
-                  <div className="mt-1 text-xs text-slate-600">Son Giriş: {formatDate(security.last_login)}</div>
+                  <div className="text-xs font-semibold">2FA: {security.two_factor_enabled ? t('dealer.settings.security_2fa_active', 'Aktif') : t('dealer.settings.security_2fa_inactive', 'Pasif')}</div>
+                  <div className="mt-1 text-xs text-slate-600">{t('dealer.settings.security_last_login', 'Son Giriş')}: {formatDate(security.last_login)}</div>
                 </div>
                 <form
                   className="grid gap-3 md:grid-cols-2"
@@ -400,7 +418,7 @@ export default function DealerSettings() {
                         body: JSON.stringify({ current_password: passwordForm.current_password, new_password: passwordForm.new_password }),
                       });
                       setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
-                      setSuccess('Şifre güncellendi.');
+                      setSuccess(t('dealer.settings.security.password_updated', 'Şifre güncellendi.'));
                     } catch (requestError) {
                       setError(requestError?.message || 'Şifre güncellenemedi');
                     }
@@ -410,13 +428,13 @@ export default function DealerSettings() {
                   <input type="password" value={passwordForm.new_password} onChange={(event) => setPasswordForm((prev) => ({ ...prev, new_password: event.target.value }))} placeholder="Yeni Şifre" className="h-10 rounded-md border border-slate-300 px-3 text-sm" data-testid="dealer-settings-new-password-input" />
                   <input type="password" value={passwordForm.confirm_password} onChange={(event) => setPasswordForm((prev) => ({ ...prev, confirm_password: event.target.value }))} placeholder="Yeni Şifre Tekrar" className="h-10 rounded-md border border-slate-300 px-3 text-sm md:col-span-2" data-testid="dealer-settings-confirm-password-input" />
                   <input type="email" value={prefs.recovery_email || ''} onChange={(event) => setPrefs((prev) => ({ ...prev, recovery_email: event.target.value }))} placeholder="Kurtarma E-Postası" className="h-10 rounded-md border border-slate-300 px-3 text-sm md:col-span-2" data-testid="dealer-settings-recovery-email" />
-                  <button type="submit" className="h-9 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white md:col-span-2" data-testid="dealer-settings-password-save-button">Güvenlik Bilgilerini Kaydet</button>
+                  <button type="submit" className="h-9 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white md:col-span-2" data-testid="dealer-settings-password-save-button">{t('dealer.settings.security.save_button', 'Güvenlik Bilgilerini Kaydet')}</button>
                 </form>
 
                 <div className="rounded-md border border-slate-200 p-3" data-testid="dealer-settings-active-sessions">
-                  <div className="text-xs font-semibold text-slate-700">Aktif Oturumlar</div>
+                  <div className="text-xs font-semibold text-slate-700">{t('dealer.settings.security.active_sessions', 'Aktif Oturumlar')}</div>
                   <div className="mt-2 space-y-2">
-                    {(prefs.active_sessions || []).length === 0 ? <div className="text-xs text-slate-500" data-testid="dealer-settings-active-sessions-empty">Aktif cihaz kaydı yok.</div> : (prefs.active_sessions || []).map((row) => (
+                    {(prefs.active_sessions || []).length === 0 ? <div className="text-xs text-slate-500" data-testid="dealer-settings-active-sessions-empty">{t('dealer.settings.security.no_active_sessions', 'Aktif cihaz kaydı yok.')}</div> : (prefs.active_sessions || []).map((row) => (
                       <div key={row.session_id} className="rounded border border-slate-200 p-2 text-xs" data-testid={`dealer-settings-session-${row.session_id}`}>
                         {row.device} / {row.ip} / {formatDate(row.last_seen_at)}
                       </div>
@@ -442,7 +460,7 @@ export default function DealerSettings() {
                         body: JSON.stringify(storeUserForm),
                       });
                       setStoreUserForm({ full_name: '', email: '', password: '', role: 'staff' });
-                      setSuccess('Kullanıcı eklendi.');
+                      setSuccess(t('dealer.settings.users.added', 'Kullanıcı eklendi.'));
                       await fetchAll();
                     } catch (requestError) {
                       setError(requestError?.message || 'Kullanıcı eklenemedi');
@@ -467,12 +485,12 @@ export default function DealerSettings() {
 
             {!loading && section === 'packages_services' ? (
               <div className="grid gap-3 md:grid-cols-2" data-testid="dealer-settings-packages-services-section">
-                {packages.length === 0 ? <div className="rounded-md border border-slate-200 p-3 text-sm text-slate-600" data-testid="dealer-settings-packages-empty">Paket bulunamadı.</div> : packages.map((pkg) => (
+                {packages.length === 0 ? <div className="rounded-md border border-slate-200 p-3 text-sm text-slate-600" data-testid="dealer-settings-packages-empty">{t('dealer.settings.packages.empty', 'Paket bulunamadı.')}</div> : packages.map((pkg) => (
                   <article key={pkg.id} className="rounded-md border border-slate-200 p-3" data-testid={`dealer-settings-package-card-${pkg.id}`}>
                     <div className="text-sm font-semibold text-slate-900">{pkg.name}</div>
                     <div className="mt-1 text-xs text-slate-600">{pkg.listing_quota || 0} ilan / {pkg.publish_days || 0} gün</div>
                     <div className="mt-2 text-lg font-semibold text-slate-900">{pkg.price_amount || 0} {pkg.currency || 'EUR'}</div>
-                    <button type="button" className="mt-2 h-8 rounded-md border border-slate-300 px-3 text-xs font-semibold text-slate-900" data-testid={`dealer-settings-package-buy-${pkg.id}`}>Paket Satın Al</button>
+                    <button type="button" className="mt-2 h-8 rounded-md border border-slate-300 px-3 text-xs font-semibold text-slate-900" data-testid={`dealer-settings-package-buy-${pkg.id}`}>{t('dealer.settings.packages.buy', 'Paket Satın Al')}</button>
                   </article>
                 ))}
               </div>
@@ -505,10 +523,10 @@ export default function DealerSettings() {
                             body: JSON.stringify(payload),
                           });
                           setCardForm({ holder_name: '', is_default: false, auto_payment_enabled: false });
-                          setSuccess('Kart token ile kaydedildi.');
+                          setSuccess(t('dealer.settings.cards.saved', 'Kart token ile kaydedildi.'));
                           await fetchAll();
                         } catch (requestError) {
-                          setError(requestError?.message || 'Kart kaydedilemedi');
+                          setError(requestError?.message || t('dealer.settings.cards.save_error', 'Kart kaydedilemedi'));
                         } finally {
                           setCardSaving(false);
                         }
@@ -520,7 +538,7 @@ export default function DealerSettings() {
                 <div className="rounded-md border border-slate-200 overflow-x-auto" data-testid="dealer-settings-saved-cards-table-wrap">
                   <table className="w-full text-sm" data-testid="dealer-settings-saved-cards-table">
                     <thead className="bg-slate-50"><tr><th className="px-3 py-2 text-left">Kart</th><th className="px-3 py-2 text-left">Sahip</th><th className="px-3 py-2 text-left">AutoPay</th><th className="px-3 py-2 text-right">İşlem</th></tr></thead>
-                    <tbody>{savedCards.length === 0 ? <tr><td className="px-3 py-4 text-slate-600" colSpan={4} data-testid="dealer-settings-saved-cards-empty">Kart yok</td></tr> : savedCards.map((card) => <tr key={card.id} className="border-t" data-testid={`dealer-settings-card-row-${card.id}`}><td className="px-3 py-2">{card.brand} **** {card.last4}</td><td className="px-3 py-2">{card.holder_name}</td><td className="px-3 py-2">{card.auto_payment_enabled ? 'Açık' : 'Kapalı'}</td><td className="px-3 py-2 text-right"><button type="button" onClick={async () => { try { await requestJson(`${API}/dealer/settings/saved-cards/${card.id}`, { method: 'DELETE' }); setSuccess('Kart silindi.'); await fetchAll(); } catch (requestError) { setError(requestError?.message || 'Kart silinemedi'); } }} className="h-8 rounded-md border border-slate-300 px-3 text-xs font-semibold" data-testid={`dealer-settings-card-delete-${card.id}`}>Sil</button></td></tr>)}</tbody>
+                    <tbody>{savedCards.length === 0 ? <tr><td className="px-3 py-4 text-slate-600" colSpan={4} data-testid="dealer-settings-saved-cards-empty">{t('dealer.settings.cards.empty', 'Kart yok')}</td></tr> : savedCards.map((card) => <tr key={card.id} className="border-t" data-testid={`dealer-settings-card-row-${card.id}`}><td className="px-3 py-2">{card.brand} **** {card.last4}</td><td className="px-3 py-2">{card.holder_name}</td><td className="px-3 py-2">{card.auto_payment_enabled ? t('active', 'Açık') : t('inactive', 'Kapalı')}</td><td className="px-3 py-2 text-right"><button type="button" onClick={async () => { try { await requestJson(`${API}/dealer/settings/saved-cards/${card.id}`, { method: 'DELETE' }); setSuccess(t('dealer.settings.cards.deleted', 'Kart silindi.')); await fetchAll(); } catch (requestError) { setError(requestError?.message || t('dealer.settings.cards.delete_error', 'Kart silinemedi')); } }} className="h-8 rounded-md border border-slate-300 px-3 text-xs font-semibold" data-testid={`dealer-settings-card-delete-${card.id}`}>{t('delete', 'Sil')}</button></td></tr>)}</tbody>
                   </table>
                 </div>
 
@@ -541,12 +559,12 @@ export default function DealerSettings() {
                       if (applicationForm.file) form.append('file', applicationForm.file);
                       const res = await fetch(`${API}/dealer/settings/payment-applications`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form });
                       const payload = await res.json().catch(() => ({}));
-                      if (!res.ok) throw new Error(payload?.detail || 'Başvuru kaydedilemedi');
+                      if (!res.ok) throw new Error(payload?.detail || t('dealer.settings.applications.save_error', 'Başvuru kaydedilemedi'));
                       setApplicationForm({ application_type: 'auto_payment', note: '', auto_payment_day: '', iban: '', file: null });
-                      setSuccess('Kurumsal başvuru oluşturuldu.');
+                      setSuccess(t('dealer.settings.applications.saved', 'Kurumsal başvuru oluşturuldu.'));
                       await fetchAll();
                     } catch (requestError) {
-                      setError(requestError?.message || 'Başvuru kaydedilemedi');
+                      setError(requestError?.message || t('dealer.settings.applications.save_error', 'Başvuru kaydedilemedi'));
                     }
                   }}
                 >
@@ -555,13 +573,13 @@ export default function DealerSettings() {
                   <input value={applicationForm.iban} onChange={(event) => setApplicationForm((prev) => ({ ...prev, iban: event.target.value }))} placeholder="IBAN" className="h-10 rounded-md border border-slate-300 px-3 text-sm" data-testid="dealer-settings-payment-application-iban" />
                   <input type="file" onChange={(event) => setApplicationForm((prev) => ({ ...prev, file: event.target.files?.[0] || null }))} className="h-10 rounded-md border border-slate-300 px-3 py-2 text-sm" data-testid="dealer-settings-payment-application-file" />
                   <textarea value={applicationForm.note} onChange={(event) => setApplicationForm((prev) => ({ ...prev, note: event.target.value }))} placeholder="Başvuru Notu" className="min-h-[80px] rounded-md border border-slate-300 px-3 py-2 text-sm md:col-span-2" data-testid="dealer-settings-payment-application-note" />
-                  <button type="submit" className="h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white md:col-span-2" data-testid="dealer-settings-payment-application-submit">Kurumsal Alana Başvuru Gönder</button>
+                  <button type="submit" className="h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white md:col-span-2" data-testid="dealer-settings-payment-application-submit">{t('dealer.settings.applications.submit', 'Kurumsal Alana Başvuru Gönder')}</button>
                 </form>
 
                 <div className="rounded-md border border-slate-200 p-3" data-testid="dealer-settings-payment-application-list-wrap">
-                  <div className="text-xs font-semibold text-slate-700">Başvurular</div>
+                  <div className="text-xs font-semibold text-slate-700">{t('dealer.settings.applications.title', 'Başvurular')}</div>
                   <div className="mt-2 space-y-2">
-                    {paymentApplications.length === 0 ? <div className="text-xs text-slate-500" data-testid="dealer-settings-payment-application-empty">Başvuru yok</div> : paymentApplications.map((row) => <div key={row.id} className="rounded border border-slate-200 p-2 text-xs" data-testid={`dealer-settings-payment-application-row-${row.id}`}>{row.application_type} / {row.status} / {formatDate(row.created_at)}</div>)}
+                    {paymentApplications.length === 0 ? <div className="text-xs text-slate-500" data-testid="dealer-settings-payment-application-empty">{t('dealer.settings.applications.empty', 'Başvuru yok')}</div> : paymentApplications.map((row) => <div key={row.id} className="rounded border border-slate-200 p-2 text-xs" data-testid={`dealer-settings-payment-application-row-${row.id}`}>{row.application_type} / {row.status} / {formatDate(row.created_at)}</div>)}
                   </div>
                 </div>
               </div>
@@ -571,7 +589,7 @@ export default function DealerSettings() {
               <div className="rounded-md border border-slate-200 overflow-x-auto" data-testid="dealer-settings-invoices-table-wrap">
                 <table className="w-full text-sm" data-testid="dealer-settings-invoices-table">
                   <thead className="bg-slate-50"><tr><th className="px-3 py-2 text-left">Fatura</th><th className="px-3 py-2 text-left">Durum</th><th className="px-3 py-2 text-left">Tutar</th><th className="px-3 py-2 text-left">Tarih</th></tr></thead>
-                  <tbody>{invoices.length === 0 ? <tr><td className="px-3 py-4 text-slate-600" colSpan={4} data-testid="dealer-settings-invoices-empty">Fatura yok</td></tr> : invoices.map((row) => <tr key={row.id} className="border-t" data-testid={`dealer-settings-invoice-row-${row.id}`}><td className="px-3 py-2">{row.invoice_no || row.id}</td><td className="px-3 py-2">{row.status}</td><td className="px-3 py-2">{row.amount_total || row.amount || 0} {row.currency || 'EUR'}</td><td className="px-3 py-2">{formatDate(row.created_at || row.issued_at)}</td></tr>)}</tbody>
+                  <tbody>{invoices.length === 0 ? <tr><td className="px-3 py-4 text-slate-600" colSpan={4} data-testid="dealer-settings-invoices-empty">{t('dealer.settings.invoices.empty', 'Fatura yok')}</td></tr> : invoices.map((row) => <tr key={row.id} className="border-t" data-testid={`dealer-settings-invoice-row-${row.id}`}><td className="px-3 py-2">{row.invoice_no || row.id}</td><td className="px-3 py-2">{row.status}</td><td className="px-3 py-2">{row.amount_total || row.amount || 0} {row.currency || 'EUR'}</td><td className="px-3 py-2">{formatDate(row.created_at || row.issued_at)}</td></tr>)}</tbody>
                 </table>
               </div>
             ) : null}
@@ -580,7 +598,7 @@ export default function DealerSettings() {
               <div className="rounded-md border border-slate-200 overflow-x-auto" data-testid="dealer-settings-account-movements-table-wrap">
                 <table className="w-full text-sm" data-testid="dealer-settings-account-movements-table">
                   <thead className="bg-slate-50"><tr><th className="px-3 py-2 text-left">İşlem</th><th className="px-3 py-2 text-left">Durum</th><th className="px-3 py-2 text-left">Tutar</th><th className="px-3 py-2 text-left">Tarih</th></tr></thead>
-                  <tbody>{payments.length === 0 ? <tr><td className="px-3 py-4 text-slate-600" colSpan={4} data-testid="dealer-settings-account-movements-empty">Hareket yok</td></tr> : payments.map((row) => <tr key={row.id} className="border-t" data-testid={`dealer-settings-account-movement-row-${row.id}`}><td className="px-3 py-2">{row.provider || 'payment'} / {row.provider_ref || row.id}</td><td className="px-3 py-2">{row.status}</td><td className="px-3 py-2">{row.amount_total || row.amount || 0} {row.currency || 'EUR'}</td><td className="px-3 py-2">{formatDate(row.created_at)}</td></tr>)}</tbody>
+                  <tbody>{payments.length === 0 ? <tr><td className="px-3 py-4 text-slate-600" colSpan={4} data-testid="dealer-settings-account-movements-empty">{t('dealer.settings.movements.empty', 'Hareket yok')}</td></tr> : payments.map((row) => <tr key={row.id} className="border-t" data-testid={`dealer-settings-account-movement-row-${row.id}`}><td className="px-3 py-2">{row.provider || 'payment'} / {row.provider_ref || row.id}</td><td className="px-3 py-2">{row.status}</td><td className="px-3 py-2">{row.amount_total || row.amount || 0} {row.currency || 'EUR'}</td><td className="px-3 py-2">{formatDate(row.created_at)}</td></tr>)}</tbody>
                 </table>
               </div>
             ) : null}
@@ -613,7 +631,7 @@ export default function DealerSettings() {
                     </label>
                   ))}
                 </div>
-                <button type="button" onClick={savePreferences} className="h-9 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white" data-testid="dealer-settings-notification-save-button">Tercihleri Kaydet</button>
+                <button type="button" onClick={savePreferences} className="h-9 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white" data-testid="dealer-settings-notification-save-button">{t('dealer.settings.notifications.save', 'Tercihleri Kaydet')}</button>
               </div>
             ) : null}
 
@@ -631,7 +649,7 @@ export default function DealerSettings() {
                           body: JSON.stringify({ email: blockedEmailInput.trim().toLowerCase() }),
                         });
                         setBlockedEmailInput('');
-                        setSuccess('Hesap engellendi.');
+                        setSuccess(t('dealer.settings.blocked.added', 'Hesap engellendi.'));
                         await fetchAll();
                       } catch (requestError) {
                         setError(requestError?.message || 'Hesap engellenemedi');
@@ -640,10 +658,10 @@ export default function DealerSettings() {
                     className="h-10 rounded-md bg-slate-900 px-4 text-sm font-semibold text-white"
                     data-testid="dealer-settings-blocked-add-button"
                   >
-                    Engelle
+                    {t('dealer.settings.blocked.add_button', 'Engelle')}
                   </button>
                 </div>
-                {blockedAccounts.length === 0 ? <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600" data-testid="dealer-settings-blocked-empty">Henüz engellenen hesap yok.</div> : (
+                {blockedAccounts.length === 0 ? <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600" data-testid="dealer-settings-blocked-empty">{t('dealer.settings.blocked.empty', 'Henüz engellenen hesap yok.')}</div> : (
                   <div className="space-y-2" data-testid="dealer-settings-blocked-list">
                     {blockedAccounts.map((email, index) => (
                       <div key={email} className="flex items-center justify-between rounded-md border border-slate-200 p-3" data-testid={`dealer-settings-blocked-item-${index}`}>
@@ -657,7 +675,7 @@ export default function DealerSettings() {
                               const res = await fetch(`${API}/dealer/settings/blocked-accounts?${params.toString()}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
                               const payload = await res.json().catch(() => ({}));
                               if (!res.ok) throw new Error(payload?.detail || 'Engel kaldırılamadı');
-                              setSuccess('Engel kaldırıldı.');
+                              setSuccess(t('dealer.settings.blocked.removed', 'Engel kaldırıldı.'));
                               await fetchAll();
                             } catch (requestError) {
                               setError(requestError?.message || 'Engel kaldırılamadı');
@@ -666,7 +684,7 @@ export default function DealerSettings() {
                           className="h-8 rounded-md border border-slate-300 px-3 text-xs font-semibold text-slate-800"
                           data-testid={`dealer-settings-blocked-remove-${index}`}
                         >
-                          Engeli Kaldır
+                          {t('dealer.settings.blocked.remove_button', 'Engeli Kaldır')}
                         </button>
                       </div>
                     ))}
@@ -674,7 +692,6 @@ export default function DealerSettings() {
                 )}
               </div>
             ) : null}
-          </div>
         </div>
       </div>
     </div>

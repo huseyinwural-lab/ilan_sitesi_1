@@ -40,13 +40,13 @@ export default function Login({ portalContext = 'account' }) {
 
       if (isAdminLogin) {
         toast({
-          title: 'Oturum doğrulandı',
+          title: t('auth.login.admin.session_verified', 'Oturum doğrulandı'),
           duration: 1200,
           'data-testid': 'admin-login-toast-verified',
         });
         setTimeout(() => {
           toast({
-            title: 'Admin paneli yükleniyor...',
+            title: t('auth.login.admin.loading_panel', 'Admin paneli yükleniyor...'),
             duration: 1400,
             'data-testid': 'admin-login-toast-loading',
           });
@@ -113,14 +113,14 @@ export default function Login({ portalContext = 'account' }) {
     if (!error || error.code !== 'PORTAL_MISMATCH') return null;
 
     if (error.actual === PORTALS.BACKOFFICE) {
-      return 'Bu hesap yönetici hesabı. Lütfen admin girişini kullanın.';
+      return t('auth.login.errors.portal_mismatch_admin', 'Bu hesap yönetici hesabı. Lütfen admin girişini kullanın.');
     }
 
     if (error.expected === PORTALS.DEALER) {
-      return 'Bu hesap bireysel giriş içindir. Bireysel seçimini kullanın.';
+      return t('auth.login.errors.portal_mismatch_account', 'Bu hesap bireysel giriş içindir. Bireysel seçimini kullanın.');
     }
 
-    return 'Bu hesap ticari giriş içindir. Ticari seçimini kullanın.';
+    return t('auth.login.errors.portal_mismatch_dealer', 'Bu hesap ticari giriş içindir. Ticari seçimini kullanın.');
   };
 
   return (
@@ -162,20 +162,20 @@ export default function Login({ portalContext = 'account' }) {
             className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900"
             data-testid="login-info-banner"
           >
-            Avrupa'nın en yeni ve geniş ilan platformu <strong>Annoncia</strong>'ya Hoşgeldiniz. Hesabınız yoksa ücretsiz hesap açabilirsiniz.
+            {t('auth.login.info_banner', "Avrupa'nın en yeni ve geniş ilan platformu Annoncia'ya hoş geldiniz. Hesabınız yoksa ücretsiz hesap açabilirsiniz.")}
           </div>
         )}
 
         <div className="bg-white rounded-lg shadow-lg border p-8 text-slate-900" data-testid="login-card">
           <div className="text-center mb-8" data-testid="login-header">
-            <h1 className="text-2xl font-bold tracking-tight">Giriş yap</h1>
-            <p className="text-slate-600 text-sm mt-2">Hesabınıza giriş yapın.</p>
+            <h1 className="text-2xl font-bold tracking-tight">{t('auth.login.title', 'Giriş yap')}</h1>
+            <p className="text-slate-600 text-sm mt-2">{t('auth.login.subtitle', 'Hesabınıza giriş yapın.')}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6" data-testid="login-form">
             {showPortalSelector && (
               <div className="space-y-2" data-testid="login-portal-selector">
-                <label className="text-sm font-medium" data-testid="login-portal-label">Giriş türü</label>
+                <label className="text-sm font-medium" data-testid="login-portal-label">{t('auth.login.portal_type', 'Giriş türü')}</label>
                 <div className="flex flex-wrap items-center gap-6" data-testid="login-portal-options">
                   <label className="flex items-center gap-2 text-sm" data-testid="login-portal-option-account">
                     <input
@@ -187,7 +187,7 @@ export default function Login({ portalContext = 'account' }) {
                       className="h-4 w-4"
                       data-testid="login-portal-account"
                     />
-                    Bireysel
+                    {t('auth.login.portal_account', 'Bireysel')}
                   </label>
                   <label className="flex items-center gap-2 text-sm" data-testid="login-portal-option-dealer">
                     <input
@@ -199,7 +199,7 @@ export default function Login({ portalContext = 'account' }) {
                       className="h-4 w-4"
                       data-testid="login-portal-dealer"
                     />
-                    Ticari
+                    {t('auth.login.portal_dealer', 'Ticari')}
                   </label>
                 </div>
               </div>
@@ -210,16 +210,16 @@ export default function Login({ portalContext = 'account' }) {
                 <div className="flex items-center gap-2">
                   <AlertCircle size={16} />
                   <div className="font-medium" data-testid="login-error-message">
-                    {error.code === 'INVALID_CREDENTIALS' && 'E-posta veya şifre hatalı'}
-                    {error.code === 'INVALID_TOTP' && 'Doğrulama kodu hatalı'}
-                    {error.code === 'TOTP_REQUIRED' && '2FA doğrulama kodu gerekli'}
-                    {error.code === 'TOTP_SETUP_INCOMPLETE' && '2FA kurulumu tamamlanmamış'}
-                    {error.code === 'ACCOUNT_DELETED' && 'Hesap silinmiş'}
-                    {error.code === 'ACCOUNT_SUSPENDED' && 'Hesap askıya alınmış'}
-                    {error.code === 'RATE_LIMITED' && 'Çok fazla deneme yaptınız. 15 dakika sonra tekrar deneyin.'}
+                    {error.code === 'INVALID_CREDENTIALS' && t('auth.login.errors.invalid_credentials', 'E-posta veya şifre hatalı')}
+                    {error.code === 'INVALID_TOTP' && t('auth.login.errors.invalid_totp', 'Doğrulama kodu hatalı')}
+                    {error.code === 'TOTP_REQUIRED' && t('auth.login.errors.totp_required', '2FA doğrulama kodu gerekli')}
+                    {error.code === 'TOTP_SETUP_INCOMPLETE' && t('auth.login.errors.totp_setup_incomplete', '2FA kurulumu tamamlanmamış')}
+                    {error.code === 'ACCOUNT_DELETED' && t('auth.login.errors.account_deleted', 'Hesap silinmiş')}
+                    {error.code === 'ACCOUNT_SUSPENDED' && t('auth.login.errors.account_suspended', 'Hesap askıya alınmış')}
+                    {error.code === 'RATE_LIMITED' && t('auth.login.errors.rate_limited', 'Çok fazla deneme yaptınız. 15 dakika sonra tekrar deneyin.')}
                     {error.code === 'PORTAL_MISMATCH' && renderPortalMismatchMessage()}
-                    {error.code === 'EMAIL_NOT_VERIFIED' && 'Hesabınızı doğrulamanız gerekiyor.'}
-                    {error.code === 'UNKNOWN' && (t('login_error') || 'Giriş başarısız. Lütfen tekrar deneyin.')}
+                    {error.code === 'EMAIL_NOT_VERIFIED' && t('auth.login.errors.email_not_verified', 'Hesabınızı doğrulamanız gerekiyor.')}
+                    {error.code === 'UNKNOWN' && t('auth.login.errors.unknown', 'Giriş başarısız. Lütfen tekrar deneyin.')}
                   </div>
                 </div>
 
@@ -229,7 +229,7 @@ export default function Login({ portalContext = 'account' }) {
                     className="underline underline-offset-2 hover:opacity-80"
                     data-testid="login-error-forgot-password"
                   >
-                    Şifremi unuttum
+                    {t('auth.login.forgot_password', 'Şifremi unuttum')}
                   </a>
 
                   {error.code === 'EMAIL_NOT_VERIFIED' && (
@@ -238,19 +238,19 @@ export default function Login({ portalContext = 'account' }) {
                       className="underline underline-offset-2 hover:opacity-80"
                       data-testid="login-error-verify-link"
                     >
-                      Doğrulama kodu gönder
+                      {t('auth.login.errors.send_verification', 'Doğrulama kodu gönder')}
                     </a>
                   )}
 
                   {error.code === 'RATE_LIMITED' && (
                     <>
-                      <span className="text-destructive/80">Güvenlik nedeniyle geçici olarak engellendi.</span>
+                      <span className="text-destructive/80">{t('auth.login.errors.temp_locked', 'Güvenlik nedeniyle geçici olarak engellendi.')}</span>
                       <a
                         href="/help/account-locked"
                         className="underline underline-offset-2 hover:opacity-80"
                         data-testid="login-error-account-locked"
                       >
-                        Hesap kilitlendi mi?
+                        {t('auth.login.errors.account_locked_help', 'Hesap kilitlendi mi?')}
                       </a>
                       {typeof error.retry_after_seconds === 'number' && (
                         <span className="text-destructive/80" data-testid="login-error-retry-after">
@@ -273,7 +273,7 @@ export default function Login({ portalContext = 'account' }) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full h-11 pl-10 pr-4 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                  placeholder="E-posta adresi"
+                  placeholder={t('auth.login.email_placeholder', 'E-posta adresi')}
                   required
                   data-testid="login-email"
                 />
@@ -290,7 +290,7 @@ export default function Login({ portalContext = 'account' }) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full h-11 pl-10 pr-10 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                  placeholder="Şifre"
+                  placeholder={t('auth.login.password_placeholder', 'Şifre')}
                   required
                   data-testid="login-password"
                 />
@@ -307,17 +307,17 @@ export default function Login({ portalContext = 'account' }) {
 
             {showTotpInput && (
               <div className="space-y-2" data-testid="login-totp-field">
-                <label className="text-sm font-medium" htmlFor="totp">2FA Kodu</label>
+                <label className="text-sm font-medium" htmlFor="totp">{t('auth.login.totp_label', '2FA Kodu')}</label>
                 <input
                   id="totp"
                   type="text"
                   value={totpCode}
                   onChange={(e) => setTotpCode(e.target.value)}
                   className="w-full h-11 px-4 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                  placeholder="6 haneli doğrulama kodu"
+                  placeholder={t('auth.login.totp_placeholder', '6 haneli doğrulama kodu')}
                   data-testid="login-totp-code"
                 />
-                <p className="text-xs text-muted-foreground" data-testid="login-totp-help">Authenticator uygulamanızdaki kodu girin.</p>
+                <p className="text-xs text-muted-foreground" data-testid="login-totp-help">{t('auth.login.totp_help', 'Authenticator uygulamanızdaki kodu girin.')}</p>
               </div>
             )}
 
@@ -330,14 +330,14 @@ export default function Login({ portalContext = 'account' }) {
                   className="h-4 w-4"
                   data-testid="login-remember-me-checkbox"
                 />
-                Oturumum açık kalsın
+                {t('auth.login.remember_me', 'Oturumum açık kalsın')}
               </label>
               <a
                 href="/help/forgot-password"
                 className="text-blue-600 underline underline-offset-2 hover:text-blue-700"
                 data-testid="login-forgot-password"
               >
-                Şifremi unuttum
+                {t('auth.login.forgot_password', 'Şifremi unuttum')}
               </a>
             </div>
 
@@ -357,22 +357,22 @@ export default function Login({ portalContext = 'account' }) {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
                   </svg>
-                  Loading...
+                  {t('auth.login.submit_loading', 'Yükleniyor...')}
                 </span>
               ) : (
-                'E-posta ile giriş yap'
+                t('auth.login.submit', 'E-posta ile giriş yap')
               )}
             </button>
 
             {showPortalSelector && (
               <div className="text-center text-sm" data-testid="login-register">
-                Henüz hesabın yok mu?{' '}
+                {t('auth.login.no_account', 'Henüz hesabın yok mu?')}{' '}
                 <a
                   href={registerPath}
                   className="text-blue-600 underline underline-offset-2 hover:text-blue-700"
                   data-testid="login-register-link"
                 >
-                  Hesap aç
+                  {t('auth.login.create_account', 'Hesap aç')}
                 </a>
               </div>
             )}
@@ -380,7 +380,7 @@ export default function Login({ portalContext = 'account' }) {
             {showPortalSelector && (
               <div className="flex items-center gap-4" data-testid="login-divider">
                 <span className="h-px flex-1 bg-muted" />
-                <span className="text-xs text-slate-500">VEYA</span>
+                <span className="text-xs text-slate-500">{t('auth.login.or', 'VEYA')}</span>
                 <span className="h-px flex-1 bg-muted" />
               </div>
             )}
@@ -393,7 +393,7 @@ export default function Login({ portalContext = 'account' }) {
                   data-testid="login-google"
                   disabled
                 >
-                  Google ile giriş yap (Yakında)
+                  {t('auth.login.google_soon', 'Google ile giriş yap (Yakında)')}
                 </button>
                 <button
                   type="button"
@@ -401,7 +401,7 @@ export default function Login({ portalContext = 'account' }) {
                   data-testid="login-apple"
                   disabled
                 >
-                  Apple ile giriş yap (Yakında)
+                  {t('auth.login.apple_soon', 'Apple ile giriş yap (Yakında)')}
                 </button>
               </div>
             )}
@@ -413,7 +413,7 @@ export default function Login({ portalContext = 'account' }) {
                   className="text-blue-600 underline underline-offset-2 hover:text-blue-700"
                   data-testid="login-qr-link"
                 >
-                  QR kod ile mobil uygulamadan giriş yap
+                  {t('auth.login.qr_login', 'QR kod ile mobil uygulamadan giriş yap')}
                 </a>
               </div>
             )}

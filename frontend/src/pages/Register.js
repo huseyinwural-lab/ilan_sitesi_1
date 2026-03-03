@@ -16,7 +16,7 @@ const fallbackCountries = [{ code: 'DE', name: { tr: 'Almanya', en: 'Germany' } 
 export default function Register({ portalContext = 'account' }) {
   const navigate = useNavigate();
   const { applySession } = useAuth();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
 
   const [countries, setCountries] = useState(fallbackCountries);
@@ -54,7 +54,7 @@ export default function Register({ portalContext = 'account' }) {
       try {
         const res = await fetch(`${API}/countries/public`);
         if (!res.ok) {
-          throw new Error('Ülkeler yüklenemedi');
+          throw new Error(t('auth.register.errors.countries_failed', 'Ülkeler yüklenemedi'));
         }
         const data = await res.json();
         if (Array.isArray(data) && data.length) {
@@ -64,7 +64,7 @@ export default function Register({ portalContext = 'account' }) {
         }
       } catch (err) {
         setCountries(fallbackCountries);
-        setCountryError('Ülke listesi yüklenemedi. Varsayılan ülke kullanılıyor.');
+        setCountryError(t('auth.register.errors.country_list_fallback', 'Ülke listesi yüklenemedi. Varsayılan ülke kullanılıyor.'));
       } finally {
         setCountryLoading(false);
       }
@@ -144,26 +144,26 @@ export default function Register({ portalContext = 'account' }) {
 
     if (isDealer) {
       if (!companyName.trim() || !contactName.trim()) {
-        setError('Firma adı ve yetkili kişi zorunludur.');
+        setError(t('auth.register.errors.company_contact_required', 'Firma adı ve yetkili kişi zorunludur.'));
         return;
       }
     } else if (!fullName.trim()) {
-      setError('Ad soyad zorunludur.');
+      setError(t('auth.register.errors.fullname_required', 'Ad soyad zorunludur.'));
       return;
     }
 
     if (!email.trim()) {
-      setError('E-posta zorunludur.');
+      setError(t('auth.register.errors.email_required', 'E-posta zorunludur.'));
       return;
     }
 
     if (!password || password.length < 8) {
-      setError('Şifre en az 8 karakter olmalıdır.');
+      setError(t('auth.register.errors.password_min', 'Şifre en az 8 karakter olmalıdır.'));
       return;
     }
 
     if (!countryCode) {
-      setError('Ülke seçimi zorunludur.');
+      setError(t('auth.register.errors.country_required', 'Ülke seçimi zorunludur.'));
       return;
     }
 
@@ -197,7 +197,7 @@ export default function Register({ portalContext = 'account' }) {
 
       if (!res.ok) {
         const detail = await res.json().catch(() => ({}));
-        throw new Error(detail?.detail || 'Kayıt başarısız');
+        throw new Error(detail?.detail || t('auth.register.errors.register_failed', 'Kayıt başarısız'));
       }
 
       await res.json().catch(() => ({}));
@@ -207,9 +207,9 @@ export default function Register({ portalContext = 'account' }) {
 
       setStep('verify');
       setCooldown(RESEND_COOLDOWN);
-      toast({ title: 'Doğrulama kodu gönderildi', description: 'Lütfen e-postanızı kontrol edin.' });
+      toast({ title: t('auth.register.toast.code_sent_title', 'Doğrulama kodu gönderildi'), description: t('auth.register.toast.code_sent_desc', 'Lütfen e-postanızı kontrol edin.') });
     } catch (err) {
-      setError(err?.message || 'Kayıt başarısız');
+      setError(err?.message || t('auth.register.errors.register_failed', 'Kayıt başarısız'));
     } finally {
       setLoading(false);
     }
@@ -221,12 +221,12 @@ export default function Register({ portalContext = 'account' }) {
     setAttemptsLeft(null);
 
     if (!email.trim()) {
-      setError('E-posta zorunludur.');
+      setError(t('auth.register.errors.email_required', 'E-posta zorunludur.'));
       return;
     }
 
     if (codeValue.length !== OTP_LENGTH) {
-      setError('6 haneli kodu girin.');
+      setError(t('auth.register.errors.code_required', '6 haneli kodu girin.'));
       return;
     }
 
@@ -246,18 +246,18 @@ export default function Register({ portalContext = 'account' }) {
         }
         if (res.status === 429) {
           setCooldown(detail?.retry_after_seconds || RESEND_COOLDOWN);
-          throw new Error('Çok fazla deneme yapıldı. Lütfen bekleyin.');
+          throw new Error(t('auth.register.errors.too_many_attempts', 'Çok fazla deneme yapıldı. Lütfen bekleyin.'));
         }
-        const message = typeof detail?.detail === 'string' ? detail.detail : 'Kod doğrulanamadı.';
+        const message = typeof detail?.detail === 'string' ? detail.detail : t('auth.register.errors.code_invalid', 'Kod doğrulanamadı.');
         throw new Error(message);
       }
 
       const data = await res.json().catch(() => ({}));
       applySession(data);
-      toast({ title: 'Doğrulama tamamlandı', description: 'Hesabınız doğrulandı.' });
+      toast({ title: t('auth.register.toast.verify_success_title', 'Doğrulama tamamlandı'), description: t('auth.register.toast.verify_success_desc', 'Hesabınız doğrulandı.') });
       navigate(isDealer ? '/dealer' : '/account');
     } catch (err) {
-      setError(err?.message || 'Kod doğrulanamadı.');
+      setError(err?.message || t('auth.register.errors.code_invalid', 'Kod doğrulanamadı.'));
     } finally {
       setVerifyLoading(false);
     }
@@ -266,7 +266,7 @@ export default function Register({ portalContext = 'account' }) {
   const handleResend = async () => {
     if (cooldown > 0 || resendLoading) return;
     if (!email.trim()) {
-      setError('E-posta zorunludur.');
+      setError(t('auth.register.errors.email_required', 'E-posta zorunludur.'));
       return;
     }
 
@@ -285,18 +285,18 @@ export default function Register({ portalContext = 'account' }) {
         const detail = await res.json().catch(() => ({}));
         if (res.status === 429) {
           setCooldown(detail?.retry_after_seconds || RESEND_COOLDOWN);
-          throw new Error('Kısa süre önce gönderildi. Lütfen bekleyin.');
+          throw new Error(t('auth.register.errors.resend_wait', 'Kısa süre önce gönderildi. Lütfen bekleyin.'));
         }
-        throw new Error(detail?.detail || 'Kod gönderilemedi.');
+        throw new Error(detail?.detail || t('auth.register.errors.code_send_failed', 'Kod gönderilemedi.'));
       }
 
       const data = await res.json().catch(() => ({}));
       const nextCooldown = data?.cooldown_seconds || RESEND_COOLDOWN;
       setCooldown(nextCooldown);
 
-      toast({ title: 'Kod yeniden gönderildi', description: 'Lütfen e-postanızı kontrol edin.' });
+      toast({ title: t('auth.register.toast.code_resent_title', 'Kod yeniden gönderildi'), description: t('auth.register.toast.code_sent_desc', 'Lütfen e-postanızı kontrol edin.') });
     } catch (err) {
-      setError(err?.message || 'Kod gönderilemedi.');
+      setError(err?.message || t('auth.register.errors.code_send_failed', 'Kod gönderilemedi.'));
     } finally {
       setResendLoading(false);
     }
@@ -328,18 +328,18 @@ export default function Register({ portalContext = 'account' }) {
 
       <div className="w-full max-w-2xl space-y-4" data-testid="register-content">
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900" data-testid="register-info-banner">
-          Avrupa'nın en yeni ve geniş ilan platformu <strong>Annoncia</strong>'ya Hoşgeldiniz. Hesabınız yoksa ücretsiz hesap açabilirsiniz.
+          {t('auth.login.info_banner', "Avrupa'nın en yeni ve geniş ilan platformu Annoncia'ya hoş geldiniz. Hesabınız yoksa ücretsiz hesap açabilirsiniz.")}
         </div>
 
         <div className="bg-white rounded-lg shadow-lg border p-8 text-slate-900" data-testid="register-card">
           <div className="text-center mb-8" data-testid="register-header">
-            <h1 className="text-2xl font-bold tracking-tight">{isDealer ? 'Ticari Kayıt' : 'Bireysel Kayıt'}</h1>
-            <p className="text-slate-600 text-sm mt-2">Bilgilerinizi girerek hesabınızı oluşturun.</p>
+            <h1 className="text-2xl font-bold tracking-tight">{isDealer ? t('auth.register.title_dealer', 'Ticari Kayıt') : t('auth.register.title_individual', 'Bireysel Kayıt')}</h1>
+            <p className="text-slate-600 text-sm mt-2">{t('auth.register.subtitle', 'Bilgilerinizi girerek hesabınızı oluşturun.')}</p>
           </div>
 
           {step === 'verify' && (
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" data-testid="register-verify-banner">
-              Mail doğrulama kodu gönderildi. Lütfen 6 haneli kodu girin.
+              {t('auth.register.verify_banner', 'Mail doğrulama kodu gönderildi. Lütfen 6 haneli kodu girin.')}
             </div>
           )}
 
@@ -369,25 +369,25 @@ export default function Register({ portalContext = 'account' }) {
             {isDealer ? (
               <>
                 <div className="space-y-2" data-testid="register-company-field">
-                  <label className="text-sm font-medium" htmlFor="company-name">Firma adı</label>
+                  <label className="text-sm font-medium" htmlFor="company-name">{t('auth.register.company_name', 'Firma adı')}</label>
                   <input
                     id="company-name"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     className="w-full h-11 rounded-md border px-3 text-sm"
-                    placeholder="Örn: Annoncia Motors"
+                    placeholder={t('auth.register.company_name_placeholder', 'Örn: Annoncia Motors')}
                     data-testid="register-company-name"
                     disabled={formDisabled}
                   />
                 </div>
                 <div className="space-y-2" data-testid="register-contact-field">
-                  <label className="text-sm font-medium" htmlFor="contact-name">Yetkili kişi</label>
+                  <label className="text-sm font-medium" htmlFor="contact-name">{t('auth.register.contact_name', 'Yetkili kişi')}</label>
                   <input
                     id="contact-name"
                     value={contactName}
                     onChange={(e) => setContactName(e.target.value)}
                     className="w-full h-11 rounded-md border px-3 text-sm"
-                    placeholder="Örn: Ayşe Yılmaz"
+                    placeholder={t('auth.register.contact_name_placeholder', 'Örn: Ayşe Yılmaz')}
                     data-testid="register-contact-name"
                     disabled={formDisabled}
                   />
@@ -395,13 +395,13 @@ export default function Register({ portalContext = 'account' }) {
               </>
             ) : (
               <div className="space-y-2" data-testid="register-fullname-field">
-                <label className="text-sm font-medium" htmlFor="full-name">Ad Soyad</label>
+                <label className="text-sm font-medium" htmlFor="full-name">{t('auth.register.full_name', 'Ad Soyad')}</label>
                 <input
                   id="full-name"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="w-full h-11 rounded-md border px-3 text-sm"
-                  placeholder="Örn: Ali Demir"
+                  placeholder={t('auth.register.full_name_placeholder', 'Örn: Ali Demir')}
                   data-testid="register-full-name"
                   disabled={formDisabled}
                 />
@@ -409,35 +409,35 @@ export default function Register({ portalContext = 'account' }) {
             )}
 
             <div className="space-y-2" data-testid="register-email-field">
-              <label className="text-sm font-medium" htmlFor="register-email">E-posta</label>
+              <label className="text-sm font-medium" htmlFor="register-email">{t('email', 'E-posta')}</label>
               <input
                 id="register-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full h-11 rounded-md border px-3 text-sm"
-                placeholder="mail@ornek.com"
+                placeholder={t('auth.register.email_placeholder', 'mail@ornek.com')}
                 data-testid="register-email"
                 disabled={formDisabled}
               />
             </div>
 
             <div className="space-y-2" data-testid="register-password-field">
-              <label className="text-sm font-medium" htmlFor="register-password">Şifre</label>
+              <label className="text-sm font-medium" htmlFor="register-password">{t('password', 'Şifre')}</label>
               <input
                 id="register-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full h-11 rounded-md border px-3 text-sm"
-                placeholder="En az 8 karakter"
+                placeholder={t('auth.register.password_placeholder', 'En az 8 karakter')}
                 data-testid="register-password"
                 disabled={formDisabled}
               />
             </div>
 
             <div className="space-y-2" data-testid="register-country-field">
-              <label className="text-sm font-medium" htmlFor="register-country">Ülke</label>
+              <label className="text-sm font-medium" htmlFor="register-country">{t('auth.register.country', 'Ülke')}</label>
               <div className="relative" data-testid="register-country-dropdown">
                 <button
                   type="button"
@@ -448,7 +448,7 @@ export default function Register({ portalContext = 'account' }) {
                   disabled={formDisabled}
                 >
                   <span data-testid="register-country-selected">
-                    {resolveCountryLabel(selectedCountry) || 'Ülke seçin'}
+                    {resolveCountryLabel(selectedCountry) || t('auth.register.select_country', 'Ülke seçin')}
                   </span>
                   <span className="text-slate-400">▾</span>
                 </button>
@@ -478,7 +478,7 @@ export default function Register({ portalContext = 'account' }) {
               </div>
               {countryLoading && (
                 <p className="text-xs text-slate-500" data-testid="register-country-loading">
-                  Ülkeler yükleniyor...
+                  {t('auth.register.countries_loading', 'Ülkeler yükleniyor...')}
                 </p>
               )}
               {countryError && (
@@ -490,13 +490,13 @@ export default function Register({ portalContext = 'account' }) {
 
             {isDealer && (
               <div className="space-y-2" data-testid="register-tax-field">
-                <label className="text-sm font-medium" htmlFor="tax-id">Vergi / ID (opsiyonel)</label>
+                <label className="text-sm font-medium" htmlFor="tax-id">{t('auth.register.tax_optional', 'Vergi / ID (opsiyonel)')}</label>
                 <input
                   id="tax-id"
                   value={taxId}
                   onChange={(e) => setTaxId(e.target.value)}
                   className="w-full h-11 rounded-md border px-3 text-sm"
-                  placeholder="Vergi numarası"
+                  placeholder={t('auth.register.tax_placeholder', 'Vergi numarası')}
                   data-testid="register-tax-id"
                   disabled={formDisabled}
                 />
@@ -510,14 +510,14 @@ export default function Register({ portalContext = 'account' }) {
                 className="w-full h-11 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 disabled:opacity-50"
                 data-testid="register-submit"
               >
-                {loading ? 'Kaydediliyor...' : 'Hesap Oluştur'}
+                {loading ? t('auth.register.submit_loading', 'Kaydediliyor...') : t('auth.register.submit', 'Hesap Oluştur')}
               </button>
             )}
 
             {step === 'verify' && (
               <div className="space-y-4" data-testid="register-verify-section">
                 <div className="space-y-2" data-testid="register-verify-code-field">
-                  <label className="text-sm font-medium">Doğrulama kodu</label>
+                  <label className="text-sm font-medium">{t('auth.register.code_label', 'Doğrulama kodu')}</label>
                   <div className="flex items-center justify-center gap-2" onPaste={handlePaste} data-testid="register-verify-code-inputs">
                     {codeDigits.map((digit, index) => (
                       <input
@@ -541,7 +541,7 @@ export default function Register({ portalContext = 'account' }) {
 
                 {attemptsLeft !== null && (
                   <div className="text-xs text-slate-500" data-testid="register-verify-attempts">
-                    Kalan deneme: {attemptsLeft}
+                    {t('auth.register.attempts_left', 'Kalan deneme: {{count}}', { count: attemptsLeft })}
                   </div>
                 )}
 
@@ -551,7 +551,7 @@ export default function Register({ portalContext = 'account' }) {
                   className="w-full h-11 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 disabled:opacity-50"
                   data-testid="register-verify-submit"
                 >
-                  {verifyLoading ? 'Doğrulanıyor...' : 'Doğrula'}
+                  {verifyLoading ? t('auth.register.verify_loading', 'Doğrulanıyor...') : t('auth.register.verify_submit', 'Doğrula')}
                 </button>
 
                 <div className="flex flex-wrap items-center justify-between gap-3 text-sm" data-testid="register-verify-actions">
@@ -562,7 +562,7 @@ export default function Register({ portalContext = 'account' }) {
                     className="text-blue-600 underline underline-offset-2 disabled:opacity-60"
                     data-testid="register-verify-resend"
                   >
-                    {cooldown > 0 ? `Kodu tekrar gönder (${cooldown}s)` : 'Kodu tekrar gönder'}
+                    {cooldown > 0 ? t('auth.register.resend_code_with_timer', 'Kodu tekrar gönder ({{seconds}}s)', { seconds: cooldown }) : t('auth.register.resend_code', 'Kodu tekrar gönder')}
                   </button>
                   <button
                     type="button"
@@ -570,7 +570,7 @@ export default function Register({ portalContext = 'account' }) {
                     className="text-slate-600 underline underline-offset-2"
                     data-testid="register-verify-login"
                   >
-                    Girişe dön
+                    {t('auth.register.back_to_login', 'Girişe dön')}
                   </button>
                 </div>
               </div>
@@ -578,14 +578,14 @@ export default function Register({ portalContext = 'account' }) {
 
             {step === 'form' && (
               <div className="text-center text-sm" data-testid="register-login-link">
-                Zaten hesabın var mı?{' '}
+                {t('auth.register.already_have_account', 'Zaten hesabın var mı?')}{' '}
                 <button
                   type="button"
                   onClick={() => navigate(loginPath)}
                   className="text-blue-600 underline underline-offset-2 hover:text-blue-700"
                   data-testid="register-login-button"
                 >
-                  Giriş yap
+                  {t('auth.register.login', 'Giriş yap')}
                 </button>
               </div>
             )}

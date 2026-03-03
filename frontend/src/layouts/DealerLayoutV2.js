@@ -304,11 +304,19 @@ const flattenMenuNodes = (nodes) => {
   return list;
 };
 
+const translateMenuNodes = (nodes, t) => (
+  (nodes || []).map((node) => ({
+    ...node,
+    label: t(`dealer.menu.${node.key}`, node.label),
+    children: translateMenuNodes(node.children || [], t),
+  }))
+);
+
 export default function DealerLayoutV2() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const {
     loading,
     error,
@@ -378,14 +386,14 @@ export default function DealerLayoutV2() {
     );
     const merged = mergeMenuRoutes(corporateTopMenu, overrides);
 
-    if (!navRows.length) return merged;
+    if (!navRows.length) return translateMenuNodes(merged, t);
 
     const byKey = new Map(merged.map((item) => [item.key, item]));
     const orderedKeys = navRows
       .map((item) => (item.key === 'settings' ? 'account' : item.key))
       .filter((key) => byKey.has(key));
 
-    return orderedKeys.map((key) => {
+    const ordered = orderedKeys.map((key) => {
       const rawConfig = navRows.find((item) => (item.key === 'settings' ? 'account' : item.key) === key) || {};
       const baseItem = byKey.get(key);
       return {
@@ -394,7 +402,8 @@ export default function DealerLayoutV2() {
         icon: rawConfig.icon || baseItem.icon,
       };
     });
-  }, [sidebarItems]);
+    return translateMenuNodes(ordered, t);
+  }, [sidebarItems, t]);
 
   const activeTopMenu = useMemo(
     () => topMenuItems.find((item) => isMenuNodeActive(item, location.pathname, location.search)) || null,
@@ -419,10 +428,10 @@ export default function DealerLayoutV2() {
 
   const row3Stores = useMemo(() => {
     const stores = headerRow3Controls?.stores;
-    return Array.isArray(stores) && stores.length ? stores : [{ key: 'all', label: 'Tümü' }];
-  }, [headerRow3Controls]);
+    return Array.isArray(stores) && stores.length ? stores : [{ key: 'all', label: t('dealer.layout.all_stores', 'Tümü') }];
+  }, [headerRow3Controls, t]);
 
-  const userDisplayName = headerRow3Controls?.user_display_name || user?.full_name || user?.email || 'Kurumsal Kullanıcı';
+  const userDisplayName = headerRow3Controls?.user_display_name || user?.full_name || user?.email || t('dealer.layout.user_fallback', 'Kurumsal Kullanıcı');
   const userInitials = userDisplayName
     .split(' ')
     .filter(Boolean)
@@ -688,7 +697,7 @@ export default function DealerLayoutV2() {
                 {corporateLogoUrl ? (
                   <img src={corporateLogoUrl} alt="Kurumsal Logo" className="h-8 w-28 object-contain" data-testid="dealer-layout-v2-brand-image" />
                 ) : (
-                  <span className="text-sm font-bold text-slate-900" data-testid="dealer-layout-v2-brand-fallback">S Ofisim</span>
+                  <span className="text-sm font-bold text-slate-900" data-testid="dealer-layout-v2-brand-fallback">{t('dealer.layout.brand_fallback', 'S Ofisim')}</span>
                 )}
               </button>
             ) : null}
@@ -707,7 +716,7 @@ export default function DealerLayoutV2() {
                 <input
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="İlan, müşteri veya rapor ara"
+                  placeholder={t('dealer.layout.search_placeholder', 'İlan, müşteri veya rapor ara')}
                   className="h-11 w-full rounded-md border border-slate-200 pl-9 pr-3 text-sm text-slate-900"
                   data-testid="dealer-layout-v2-search-input"
                 />
@@ -742,7 +751,7 @@ export default function DealerLayoutV2() {
                     data-testid={`dealer-layout-v2-row1-quick-action-${item.key}`}
                   >
                     <Icon size={15} />
-                    <span>{item.label_i18n_key?.includes('message') ? 'Mesajlar' : 'Kısayol'}</span>
+                    <span>{item.label_i18n_key?.includes('message') ? t('dealer.layout.quick_action_messages', 'Mesajlar') : t('dealer.layout.quick_action_shortcut', 'Kısayol')}</span>
                   </NavLink>
                 );
               }) : null}
@@ -781,7 +790,7 @@ export default function DealerLayoutV2() {
                 className="h-11 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white"
                 data-testid="dealer-layout-v2-row1-create-listing-button"
               >
-                İlan Ver
+                {t('dealer.layout.create_listing', 'İlan Ver')}
               </button>
 
               {showRow1Language ? (
@@ -859,8 +868,8 @@ export default function DealerLayoutV2() {
 
                 {userMenuOpen ? (
                   <div className="absolute left-0 top-11 z-30 min-w-[220px] rounded-xl border border-slate-200 bg-white p-2 shadow-lg" data-testid="dealer-layout-v2-row3-user-dropdown">
-                    <button type="button" onClick={() => navigate('/dealer/settings?section=profile')} className="w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100" data-testid="dealer-layout-v2-row3-user-dropdown-profile">Profil / Ayarlar</button>
-                    <button type="button" onClick={handleLogout} className="mt-1 w-full rounded-md px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50" data-testid="dealer-layout-v2-row3-user-dropdown-logout">Çıkış Yap</button>
+                    <button type="button" onClick={() => navigate('/dealer/settings?section=profile')} className="w-full rounded-md px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100" data-testid="dealer-layout-v2-row3-user-dropdown-profile">{t('dealer.layout.profile_settings', 'Profil / Ayarlar')}</button>
+                    <button type="button" onClick={handleLogout} className="mt-1 w-full rounded-md px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50" data-testid="dealer-layout-v2-row3-user-dropdown-logout">{t('dealer.layout.logout', 'Çıkış Yap')}</button>
                   </div>
                 ) : null}
               </div>
@@ -869,14 +878,14 @@ export default function DealerLayoutV2() {
             <div className="ml-auto flex flex-wrap items-center gap-2" data-testid="dealer-layout-v2-row3-actions">
               {showRow3StoreFilter ? (
                 <div className="relative flex items-center gap-2" data-testid="dealer-layout-v2-row3-store-filter-wrap">
-                  <span className="text-xs font-semibold text-slate-600" data-testid="dealer-layout-v2-row3-store-filter-label">Mağaza Filtresi</span>
+                  <span className="text-xs font-semibold text-slate-600" data-testid="dealer-layout-v2-row3-store-filter-label">{t('dealer.layout.store_filter', 'Mağaza Filtresi')}</span>
                   <button
                     type="button"
                     onClick={() => setStoreMenuOpen((prev) => !prev)}
                     className="inline-flex h-9 min-w-[180px] items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm"
                     data-testid="dealer-layout-v2-row3-store-filter-button"
                   >
-                    <span data-testid="dealer-layout-v2-row3-store-filter-selected">{row3Stores.find((store) => store.key === selectedStore)?.label || 'Tümü'}</span>
+                    <span data-testid="dealer-layout-v2-row3-store-filter-selected">{row3Stores.find((store) => store.key === selectedStore)?.label || t('dealer.layout.all_stores', 'Tümü')}</span>
                     {storeMenuOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                   </button>
 
@@ -911,7 +920,7 @@ export default function DealerLayoutV2() {
                 className={`h-9 rounded-md border px-3 text-sm font-semibold ${isPageEditMode ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-900'}`}
                 data-testid="dealer-layout-v2-row3-page-edit-button"
               >
-                {isPageEditMode ? 'Düzenlemeyi Bitir' : 'Sayfayı Düzenle'}
+                {isPageEditMode ? t('dealer.layout.finish_edit', 'Düzenlemeyi Bitir') : t('dealer.layout.edit_page', 'Sayfayı Düzenle')}
               </button>
 
               <button
@@ -920,7 +929,7 @@ export default function DealerLayoutV2() {
                 className="relative h-9 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900"
                 data-testid="dealer-layout-v2-row3-announcements-button"
               >
-                Duyurular
+                {t('dealer.layout.announcements', 'Duyurular')}
                 {(navSummary?.badges?.announcements_total || 0) > 0 ? (
                   <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white" data-testid="dealer-layout-v2-row3-announcements-badge">
                     {navSummary.badges.announcements_total}
@@ -936,7 +945,7 @@ export default function DealerLayoutV2() {
         <aside className="rounded-2xl border border-slate-200 bg-white p-3" data-testid="dealer-layout-v2-row4-sidebar">
           <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-2" data-testid="dealer-layout-v2-row4-quick-menu-wrap">
             <div className="mb-2 flex items-center justify-between gap-2" data-testid="dealer-layout-v2-row4-quick-menu-header">
-              <div className="text-xs font-semibold text-slate-700" data-testid="dealer-layout-v2-row4-quick-menu-title">Kişisel Hızlı Menü</div>
+              <div className="text-xs font-semibold text-slate-700" data-testid="dealer-layout-v2-row4-quick-menu-title">{t('dealer.layout.quick_menu_title', 'Kişisel Hızlı Menü')}</div>
               <button
                 type="button"
                 onClick={() => setQuickMenuEditOpen((prev) => !prev)}
@@ -944,7 +953,7 @@ export default function DealerLayoutV2() {
                 data-testid="dealer-layout-v2-row4-quick-menu-edit-toggle"
               >
                 <Pencil size={11} />
-                {quickMenuEditOpen ? 'Kapat' : 'Düzenle'}
+                {quickMenuEditOpen ? t('dealer.layout.quick_menu_close', 'Kapat') : t('dealer.layout.quick_menu_edit', 'Düzenle')}
               </button>
             </div>
 
@@ -955,7 +964,7 @@ export default function DealerLayoutV2() {
                 className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${quickMenuTab === 'recent' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
                 data-testid="dealer-layout-v2-row4-quick-menu-tab-recent"
               >
-                Son Kullanılanlar
+                {t('dealer.layout.quick_menu_recent', 'Son Kullanılanlar')}
               </button>
               <button
                 type="button"
@@ -963,14 +972,14 @@ export default function DealerLayoutV2() {
                 className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${quickMenuTab === 'favorites' ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700'}`}
                 data-testid="dealer-layout-v2-row4-quick-menu-tab-favorites"
               >
-                Favorilerim
+                {t('dealer.layout.quick_menu_favorites', 'Favorilerim')}
               </button>
             </div>
 
             <div className="space-y-1" data-testid="dealer-layout-v2-row4-quick-menu-list">
               {quickMenuItems.length === 0 ? (
                 <div className="rounded border border-dashed border-slate-300 bg-white px-2.5 py-2 text-[11px] text-slate-600" data-testid="dealer-layout-v2-row4-quick-menu-empty">
-                  Bu sekmede öğe yok. Düzenle ile favori ekleyebilirsiniz.
+                  {t('dealer.layout.quick_menu_empty', 'Bu sekmede öğe yok. Düzenle ile favori ekleyebilirsiniz.')}
                 </div>
               ) : quickMenuItems.map((item) => {
                 const Icon = iconMap[item.icon] || ChevronRight;
@@ -1009,7 +1018,7 @@ export default function DealerLayoutV2() {
                 <input
                   value={quickMenuSearch}
                   onChange={(event) => setQuickMenuSearch(event.target.value)}
-                  placeholder="Menü ara..."
+                  placeholder={t('dealer.layout.quick_menu_search_placeholder', 'Menü ara...')}
                   className="h-8 w-full rounded border border-slate-300 px-2 text-xs"
                   data-testid="dealer-layout-v2-row4-quick-menu-edit-search"
                 />
@@ -1039,12 +1048,12 @@ export default function DealerLayoutV2() {
 
           <div className="mb-3 border-b border-slate-100 pb-2" data-testid="dealer-layout-v2-row4-sidebar-header">
             <div className="text-sm font-semibold text-slate-900" data-testid="dealer-layout-v2-row4-sidebar-title">
-              {row4MenuRoot?.label || 'Menü'}
+              {row4MenuRoot?.label || t('dealer.layout.menu_fallback_title', 'Menü')}
             </div>
-            <div className="text-xs text-slate-500" data-testid="dealer-layout-v2-row4-sidebar-subtitle">2. satırdan seçilen menünün alt kırılımları</div>
+            <div className="text-xs text-slate-500" data-testid="dealer-layout-v2-row4-sidebar-subtitle">{t('dealer.layout.menu_subtitle', '2. satırdan seçilen menünün alt kırılımları')}</div>
           </div>
 
-          {loading ? <div className="mb-2 text-xs text-slate-500" data-testid="dealer-layout-v2-config-loading">Menü yükleniyor…</div> : null}
+          {loading ? <div className="mb-2 text-xs text-slate-500" data-testid="dealer-layout-v2-config-loading">{t('dealer.layout.menu_loading', 'Menü yükleniyor…')}</div> : null}
           {error ? <div className="mb-2 text-xs text-rose-700" data-testid="dealer-layout-v2-config-error">{error}</div> : null}
 
           <div className="space-y-1" data-testid="dealer-layout-v2-row4-sidebar-links">
@@ -1085,7 +1094,7 @@ export default function DealerLayoutV2() {
               data-testid="dealer-layout-v2-row4-sidebar-logout-button"
             >
               <LogOut size={14} />
-              Çıkış Yap
+              {t('dealer.layout.logout', 'Çıkış Yap')}
             </button>
           </div>
         </aside>

@@ -15,7 +15,7 @@ export default function VerifyEmail({ portalContext = 'account' }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, applySession } = useAuth();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
 
   const initialEmail = location.state?.email || sessionStorage.getItem('pending_email') || user?.email || '';
@@ -101,12 +101,12 @@ export default function VerifyEmail({ portalContext = 'account' }) {
     setAttemptsLeft(null);
 
     if (!email.trim()) {
-      setError('E-posta zorunludur.');
+      setError(t('auth.verify.errors.email_required', 'E-posta zorunludur.'));
       return;
     }
 
     if (codeValue.length !== OTP_LENGTH) {
-      setError('6 haneli kodu girin.');
+      setError(t('auth.verify.errors.code_required', '6 haneli kodu girin.'));
       return;
     }
 
@@ -127,22 +127,22 @@ export default function VerifyEmail({ portalContext = 'account' }) {
         if (res.status === 429) {
           const retry = detail?.retry_after_seconds || 0;
           setCooldown(retry);
-          throw new Error('Çok fazla deneme yapıldı. Lütfen bekleyip tekrar deneyin.');
+          throw new Error(t('auth.verify.errors.too_many_attempts', 'Çok fazla deneme yapıldı. Lütfen bekleyip tekrar deneyin.'));
         }
-        throw new Error(detail?.detail || 'Kod doğrulanamadı.');
+        throw new Error(detail?.detail || t('auth.verify.errors.code_invalid', 'Kod doğrulanamadı.'));
       }
 
       const data = await res.json().catch(() => ({}));
       const userData = applySession(data);
 
-      toast({ title: 'Doğrulama tamamlandı', description: 'Hesabınız onaylandı.' });
+      toast({ title: t('auth.verify.toast.success_title', 'Doğrulama tamamlandı'), description: t('auth.verify.toast.success_desc', 'Hesabınız onaylandı.') });
       if (userData) {
         navigate(portalContext === 'dealer' ? '/dealer' : '/account');
       } else {
         navigate(loginPath);
       }
     } catch (err) {
-      setError(err?.message || 'Kod doğrulanamadı.');
+      setError(err?.message || t('auth.verify.errors.code_invalid', 'Kod doğrulanamadı.'));
     } finally {
       setLoading(false);
     }
@@ -151,7 +151,7 @@ export default function VerifyEmail({ portalContext = 'account' }) {
   const handleResend = async () => {
     if (cooldown > 0 || resendLoading) return;
     if (!email.trim()) {
-      setError('E-posta zorunludur.');
+      setError(t('auth.verify.errors.email_required', 'E-posta zorunludur.'));
       return;
     }
 
@@ -171,18 +171,18 @@ export default function VerifyEmail({ portalContext = 'account' }) {
         if (res.status === 429) {
           const retry = detail?.retry_after_seconds || RESEND_COOLDOWN;
           setCooldown(retry);
-          throw new Error('Kısa süre önce gönderildi. Lütfen bekleyin.');
+          throw new Error(t('auth.verify.errors.resend_wait', 'Kısa süre önce gönderildi. Lütfen bekleyin.'));
         }
-        throw new Error(detail?.detail || 'Kod gönderilemedi.');
+        throw new Error(detail?.detail || t('auth.verify.errors.code_send_failed', 'Kod gönderilemedi.'));
       }
 
       const data = await res.json().catch(() => ({}));
       const nextCooldown = data?.cooldown_seconds || RESEND_COOLDOWN;
       setCooldown(nextCooldown);
 
-      toast({ title: 'Kod yeniden gönderildi', description: 'Lütfen e-postanızı kontrol edin.' });
+      toast({ title: t('auth.verify.toast.resent_title', 'Kod yeniden gönderildi'), description: t('auth.verify.toast.sent_desc', 'Lütfen e-postanızı kontrol edin.') });
     } catch (err) {
-      setError(err?.message || 'Kod gönderilemedi.');
+      setError(err?.message || t('auth.verify.errors.code_send_failed', 'Kod gönderilemedi.'));
     } finally {
       setResendLoading(false);
     }
@@ -232,32 +232,31 @@ export default function VerifyEmail({ portalContext = 'account' }) {
 
       <div className="w-full max-w-lg space-y-4" data-testid="verify-content">
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900" data-testid="verify-info-banner">
-          Avrupa'nın en yeni ve geniş ilan platformu <strong>Annoncia</strong>'ya Hoşgeldiniz.
-          Lütfen e-posta doğrulama kodunu girin.
+          {t('auth.verify.info_banner', "Avrupa'nın en yeni ve geniş ilan platformu Annoncia'ya hoş geldiniz. Lütfen e-posta doğrulama kodunu girin.")}
         </div>
 
         <div className="bg-white rounded-lg shadow-lg border p-8 text-slate-900" data-testid="verify-card">
           <div className="text-center mb-6" data-testid="verify-header">
-            <h1 className="text-2xl font-bold tracking-tight">E-posta doğrulama</h1>
-            <p className="text-slate-600 text-sm mt-2">6 haneli kodu girerek hesabınızı doğrulayın.</p>
+            <h1 className="text-2xl font-bold tracking-tight">{t('auth.verify.title', 'E-posta doğrulama')}</h1>
+            <p className="text-slate-600 text-sm mt-2">{t('auth.verify.subtitle', '6 haneli kodu girerek hesabınızı doğrulayın.')}</p>
           </div>
 
           <form onSubmit={handleVerify} className="space-y-5" data-testid="verify-form">
             <div className="space-y-2" data-testid="verify-email-field">
-              <label className="text-sm font-medium" htmlFor="verify-email">E-posta</label>
+              <label className="text-sm font-medium" htmlFor="verify-email">{t('email', 'E-posta')}</label>
               <input
                 id="verify-email"
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 className="w-full h-11 rounded-md border px-3 text-sm"
-                placeholder="mail@ornek.com"
+                placeholder={t('auth.verify.email_placeholder', 'mail@ornek.com')}
                 data-testid="verify-email"
               />
             </div>
 
             <div className="space-y-2" data-testid="verify-code-field">
-              <label className="text-sm font-medium">Doğrulama kodu</label>
+              <label className="text-sm font-medium">{t('auth.verify.code_label', 'Doğrulama kodu')}</label>
               <div className="flex items-center justify-center gap-2" onPaste={handlePaste} data-testid="verify-code-inputs">
                 {codeDigits.map((digit, index) => (
                   <input
@@ -281,7 +280,7 @@ export default function VerifyEmail({ portalContext = 'account' }) {
 
             {attemptsLeft !== null && (
               <div className="text-xs text-slate-500" data-testid="verify-attempts-left">
-                Kalan deneme: {attemptsLeft}
+                {t('auth.verify.attempts_left', 'Kalan deneme: {{count}}', { count: attemptsLeft })}
               </div>
             )}
 
@@ -297,7 +296,7 @@ export default function VerifyEmail({ portalContext = 'account' }) {
               className="w-full h-11 rounded-md bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 disabled:opacity-50"
               data-testid="verify-submit"
             >
-              {loading ? 'Doğrulanıyor...' : 'Doğrula'}
+              {loading ? t('auth.verify.submit_loading', 'Doğrulanıyor...') : t('auth.verify.submit', 'Doğrula')}
             </button>
 
             <div className="flex flex-wrap items-center justify-between gap-3 text-sm" data-testid="verify-actions">
@@ -308,7 +307,7 @@ export default function VerifyEmail({ portalContext = 'account' }) {
                 className="text-blue-600 underline underline-offset-2 disabled:opacity-60"
                 data-testid="verify-resend"
               >
-                {cooldown > 0 ? `Kodu tekrar gönder (${cooldown}s)` : 'Kodu tekrar gönder'}
+                {cooldown > 0 ? t('auth.verify.resend_code_with_timer', 'Kodu tekrar gönder ({{seconds}}s)', { seconds: cooldown }) : t('auth.verify.resend_code', 'Kodu tekrar gönder')}
               </button>
               <button
                 type="button"
@@ -316,7 +315,7 @@ export default function VerifyEmail({ portalContext = 'account' }) {
                 className="text-slate-600 underline underline-offset-2"
                 data-testid="verify-help-toggle"
               >
-                Kod gelmedi mi?
+                {t('auth.verify.no_code', 'Kod gelmedi mi?')}
               </button>
               <button
                 type="button"
@@ -324,24 +323,24 @@ export default function VerifyEmail({ portalContext = 'account' }) {
                 className="text-slate-600 underline underline-offset-2"
                 data-testid="verify-login-link"
               >
-                Girişe dön
+                {t('auth.verify.back_to_login', 'Girişe dön')}
               </button>
             </div>
 
             {helpOpen && (
               <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700" data-testid="verify-help-panel">
-                <p className="font-medium" data-testid="verify-help-title">Yardım</p>
+                <p className="font-medium" data-testid="verify-help-title">{t('auth.verify.help_title', 'Yardım')}</p>
                 <ul className="mt-2 space-y-1 list-disc list-inside" data-testid="verify-help-list">
-                  <li data-testid="verify-help-item-spam">Spam veya gereksiz klasörünü kontrol edin.</li>
-                  <li data-testid="verify-help-item-resend">90 saniye sonra yeniden gönderme butonunu kullanın.</li>
+                  <li data-testid="verify-help-item-spam">{t('auth.verify.help_spam', 'Spam veya gereksiz klasörünü kontrol edin.')}</li>
+                  <li data-testid="verify-help-item-resend">{t('auth.verify.help_resend', '90 saniye sonra yeniden gönderme butonunu kullanın.')}</li>
                   <li data-testid="verify-help-item-support">
-                    Sorun devam ederse{' '}
+                    {t('auth.verify.help_support_prefix', 'Sorun devam ederse')}{' '}
                     <a
                       href={supportPath}
                       className="text-blue-600 underline underline-offset-2"
                       data-testid="verify-help-support-link"
                     >
-                      destekle iletişime geçin
+                      {t('auth.verify.help_support_link', 'destekle iletişime geçin')}
                     </a>
                     .
                   </li>
