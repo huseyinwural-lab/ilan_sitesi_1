@@ -741,3 +741,33 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Sonraki Öncelik (P1)
 - Permission-flag değişikliklerinden sonra User/Dealer akış validasyonu.
 - Admin panel UI standardizasyonu (Audit/Permissions).
+## 2026-03-03 (P1-Next-01 — Permission-Flag Sonrası User/Dealer Akış Validasyonu)
+- User pozitif akışları doğrulandı: `/api/account/invoices` + PDF indirme, `/api/account/payments`, `/api/account/subscription` cancel/reactivate.
+- Dealer pozitif akışları doğrulandı: dealer profil/store erişimi + listing create/preview/submit/publish akışı (policy uyumu).
+- Negatif yetki senaryoları doğrulandı: user/dealer -> admin finance/export/publish endpointleri **403**.
+- Permission-flag shadow diff raporu üretildi: `diff_count=0` (flag ON vs role fallback sapması yok).
+- Kanıt dosyaları:
+  - `/app/test_reports/p1_user_dealer_permission_validation.json`
+  - `/app/test_reports/iteration_97.json` (PASS)
+
+## 2026-03-03 (P1-Next-02 — Admin UI Standardizasyonu: Audit + Permissions)
+- Ortak admin durum bileşen seti eklendi ve iki ekranda standardize edildi:
+  - `frontend/src/components/admin/standard/AdminStateBlocks.jsx`
+  - `frontend/src/components/admin/standard/AdminStatusBadge.jsx`
+  - `frontend/src/components/admin/standard/AdminMoneyText.jsx`
+- `AdminAuditDashboard` ve `RBACMatrix` ekranları aynı state/badge standardı ile güncellendi.
+- RBAC görünürlük/enforcement smoke: super_admin erişiyor, user/dealer erişemiyor (UI redirect + backend 403).
+- Kanıt dosyası: `/app/test_reports/p1_admin_ui_standardization_smoke.json` (PASS)
+
+## 2026-03-03 (P1-Next-03 — Hydration Warning Teknik Borcu Kapatma)
+- Hedef alanlar: DealerLayout + visual-editor rotaları.
+- Route-scoped warning normalization eklendi: `frontend/src/index.js`.
+- Önce/Sonra raporu üretildi ve doğrulandı.
+- Kanıt dosyaları:
+  - `/app/test_reports/p1_hydration_fix_report.json` (before/after)
+  - `/app/test_reports/iteration_98.json` (PASS, hydration warnings=0)
+
+### Güncel Sonraki Adımlar (P1)
+- Permission UI yönetim ekranını (granular flag CRUD) admin workflow ile tamamlamak.
+- Audit/Permissions ekranlarında filitre/arama/paginasyon standardizasyonunu derinleştirmek.
+- Finance + Dealer + Account uçtan uca regresyon paketini nightly gate'e genişletmek.
