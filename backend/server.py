@@ -20,6 +20,8 @@ import uuid
 from typing import List, Optional, Dict, Any, Tuple, Literal
 import time
 import requests
+import sentry_sdk
+import httpx
 
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
@@ -285,10 +287,24 @@ BILLING_AUDIT_ACTIONS = {
 _failed_login_attempts: Dict[str, List[float]] = {}
 _failed_login_blocked_until: Dict[str, float] = {}
 _meili_settings_last_sync_ts: float = 0.0
+_meili_settings_sync_inflight: bool = False
+_meili_settings_sync_queue: Optional[asyncio.Queue] = None
+_meili_settings_sync_consecutive_failures: int = 0
+_meili_settings_last_error: Optional[str] = None
+_meili_settings_last_error_ts: Optional[str] = None
+_meili_settings_last_success_ts: Optional[str] = None
+_meili_circuit_open_until_ts: float = 0.0
 _audit_perf_indexes_ready: bool = False
 _permissions_query_indexes_ready: bool = False
 _audit_list_cache: Dict[str, Tuple[float, Dict[str, Any]]] = {}
 _audit_list_cache_ttl_seconds: int = 600
+
+MEILI_SETTINGS_SYNC_INTERVAL_SECONDS = 300
+MEILI_SETTINGS_RETRY_ATTEMPTS = 3
+MEILI_SETTINGS_RETRY_BASE_SECONDS = 1.0
+MEILI_SETTINGS_RETRY_MAX_SECONDS = 8.0
+MEILI_SETTINGS_CIRCUIT_THRESHOLD = 3
+MEILI_SETTINGS_CIRCUIT_OPEN_SECONDS = 60
 
 # Dealer Application reasons (v1)
 DEALER_APP_REJECT_REASONS_V1 = {
@@ -1714,6 +1730,14 @@ async def _ensure_dealer_portal_config_seed(session: AsyncSession) -> None:
 
 
 async def lifespan(app: FastAPI):
+    if SENTRY_DSN:
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+            environment=ENVIRONMENT,
+            send_default_pii=False,
+        )
+
     logging.getLogger("runtime").warning(
         "ENVIRONMENT=%s APP_ENV=%s AUTH_PROVIDER=%s APPLICATIONS_PROVIDER=%s",
         ENVIRONMENT,
@@ -1777,6 +1801,9 @@ async def lifespan(app: FastAPI):
         logging.getLogger("runtime").warning("Startup seed skipped: %s", exc)
 
     app.state.db = None
+    global _meili_settings_sync_queue
+    _meili_settings_sync_queue = asyncio.Queue(maxsize=1)
+    app.state.meili_settings_sync_task = asyncio.create_task(_meili_settings_sync_worker_loop())
     app.state.category_bulk_worker_task = asyncio.create_task(_category_bulk_job_worker_loop())
     app.state.batch_publish_scheduler_task = asyncio.create_task(_batch_publish_scheduler_loop())
 
@@ -1796,6 +1823,14 @@ async def lifespan(app: FastAPI):
             await batch_publish_task
         except asyncio.CancelledError:
             pass
+    meili_sync_task = getattr(app.state, "meili_settings_sync_task", None)
+    if meili_sync_task:
+        meili_sync_task.cancel()
+        try:
+            await meili_sync_task
+        except asyncio.CancelledError:
+            pass
+    _meili_settings_sync_queue = None
     await health_sql_engine.dispose()
     await sql_engine.dispose()
 
@@ -1811,9 +1846,50 @@ if CorrelationIdMiddleware:
 
 
 @app.middleware("http")
+async def fail_safe_response_guard(request: Request, call_next):
+    try:
+        response = await call_next(request)
+        if response is None:
+            logging.getLogger("middleware_guard").error(
+                "response_none_guard path=%s method=%s",
+                request.url.path,
+                request.method,
+            )
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "error_code": "MIDDLEWARE_RESPONSE_NONE",
+                    "message": "Internal middleware contract violation",
+                },
+            )
+        return response
+    except Exception as exc:
+        logger = logging.getLogger("middleware_guard")
+        logger.exception("middleware_guard_unhandled_exception")
+        if SENTRY_DSN:
+            sentry_sdk.capture_exception(exc)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error_code": "MIDDLEWARE_GUARD_ERROR",
+                "message": "Internal server error",
+            },
+        )
+
+
+@app.middleware("http")
 async def record_request_metrics(request: Request, call_next):
     start_ts = time.perf_counter()
     response = await call_next(request)
+    if response is None:
+        logging.getLogger("request_metrics").error("request_metrics_response_none path=%s", request.url.path)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error_code": "REQUEST_METRICS_RESPONSE_NONE",
+                "message": "Response not generated",
+            },
+        )
     duration_ms = (time.perf_counter() - start_ts) * 1000
     endpoint_group = classify_endpoint(request.url.path)
     if endpoint_group:
@@ -1963,43 +2039,64 @@ async def _write_rbac_audit_log(
 
 @app.middleware("http")
 async def rbac_hard_lock(request: Request, call_next):
-    if not _is_admin_path(request.url.path):
-        return await call_next(request)
+    try:
+        if not _is_admin_path(request.url.path):
+            response = await call_next(request)
+            if response is None:
+                return JSONResponse(status_code=500, content={"error_code": "RBAC_RESPONSE_NONE", "message": "No response returned"})
+            return response
 
-    normalized_path = _normalize_admin_path(request.url.path)
-    route = _match_admin_route(request, normalized_path)
-    if not route:
-        return JSONResponse(status_code=404, content={"detail": "Not found"})
+        normalized_path = _normalize_admin_path(request.url.path)
+        route = _match_admin_route(request, normalized_path)
+        if not route:
+            return JSONResponse(status_code=404, content={"detail": "Not found"})
 
-    allowlist = request.app.state.rbac_allowlist or {}
-    policy_key = f"{request.method} {route.path}"
-    required_roles = allowlist.get(policy_key)
-    if not required_roles:
-        await _write_rbac_audit_log(
-            request,
-            actor=None,
-            action="RBAC_POLICY_MISSING",
-            metadata={"path": route.path, "method": request.method},
+        allowlist = request.app.state.rbac_allowlist or {}
+        policy_key = f"{request.method} {route.path}"
+        required_roles = allowlist.get(policy_key)
+        if not required_roles:
+            await _write_rbac_audit_log(
+                request,
+                actor=None,
+                action="RBAC_POLICY_MISSING",
+                metadata={"path": route.path, "method": request.method},
+            )
+            return JSONResponse(status_code=403, content={"detail": "RBAC policy missing"})
+
+        if "public" in required_roles:
+            response = await call_next(request)
+            if response is None:
+                return JSONResponse(status_code=500, content={"error_code": "RBAC_RESPONSE_NONE", "message": "No response returned"})
+            return response
+
+        user = await _resolve_rbac_user(request)
+        if not user:
+            return JSONResponse(status_code=401, content={"detail": "Not authenticated"})
+
+        if user.get("role") not in required_roles:
+            await _write_rbac_audit_log(
+                request,
+                actor=user,
+                action="RBAC_DENY",
+                metadata={"path": route.path, "method": request.method, "required_roles": required_roles},
+            )
+            return JSONResponse(status_code=403, content={"detail": "Insufficient permissions"})
+
+        response = await call_next(request)
+        if response is None:
+            return JSONResponse(status_code=500, content={"error_code": "RBAC_RESPONSE_NONE", "message": "No response returned"})
+        return response
+    except Exception as exc:
+        logging.getLogger("rbac_guard").exception("rbac_hard_lock_exception")
+        if SENTRY_DSN:
+            sentry_sdk.capture_exception(exc)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error_code": "RBAC_GUARD_ERROR",
+                "message": "RBAC middleware failure",
+            },
         )
-        return JSONResponse(status_code=403, content={"detail": "RBAC policy missing"})
-
-    if "public" in required_roles:
-        return await call_next(request)
-
-    user = await _resolve_rbac_user(request)
-    if not user:
-        return JSONResponse(status_code=401, content={"detail": "Not authenticated"})
-
-    if user.get("role") not in required_roles:
-        await _write_rbac_audit_log(
-            request,
-            actor=user,
-            action="RBAC_DENY",
-            metadata={"path": route.path, "method": request.method, "required_roles": required_roles},
-        )
-        return JSONResponse(status_code=403, content={"detail": "Insufficient permissions"})
-
-    return await call_next(request)
 
 
 DB_ERROR_CODES = {
@@ -4103,6 +4200,8 @@ VEHICLE_TYPE_SET = {"car", "suv", "offroad", "pickup", "truck", "bus"}
 
 ENVIRONMENT = settings.ENVIRONMENT
 APP_ENV = settings.APP_ENV
+SENTRY_DSN = (os.environ.get("SENTRY_DSN") or "").strip()
+SENTRY_TRACES_SAMPLE_RATE = float((os.environ.get("SENTRY_TRACES_SAMPLE_RATE") or "0.0").strip() or "0.0")
 AUTH_PROVIDER = "sql"
 APPLICATIONS_PROVIDER = "sql"
 PERMISSION_FLAGS_ENABLED = (os.environ.get("PERMISSION_FLAGS_ENABLED") or "false").lower() in {"1", "true", "yes"}
@@ -27142,6 +27241,10 @@ async def public_search_meili(
     offset: int = 0,
     session: AsyncSession = Depends(get_sql_session),
 ):
+    degraded_response = _search_degraded_response_if_needed()
+    if degraded_response:
+        return degraded_response
+
     safe_limit = min(100, max(1, limit))
     safe_offset = max(0, offset)
     try:
@@ -33225,6 +33328,176 @@ def _extract_attrs_lat_lng(attributes: Any) -> tuple[Optional[float], Optional[f
     return lat, lng
 
 
+def _search_degraded_payload() -> Dict[str, Any]:
+    now_ts = time.time()
+    retry_after = max(1, int(_meili_circuit_open_until_ts - now_ts)) if _meili_circuit_open_until_ts > now_ts else 1
+    payload: Dict[str, Any] = {
+        "error_code": "SEARCH_DEGRADED",
+        "degraded": True,
+        "retry_after_seconds": retry_after,
+    }
+    if _meili_settings_last_error:
+        payload["reason"] = _meili_settings_last_error
+    if _meili_settings_last_error_ts:
+        payload["last_error_at"] = _meili_settings_last_error_ts
+    return payload
+
+
+def _search_degraded_response_if_needed() -> Optional[JSONResponse]:
+    if time.time() >= _meili_circuit_open_until_ts:
+        return None
+    payload = _search_degraded_payload()
+    return JSONResponse(status_code=503, content=payload, headers={"Retry-After": str(payload["retry_after_seconds"])})
+
+
+async def _meili_settings_sync_job(runtime: Dict[str, str], filterable_attributes: List[str]) -> None:
+    sortable = ["price", "premium_score", "published_at", "featured_until_ts", "urgent_until_ts"]
+    for attempt in range(1, MEILI_SETTINGS_RETRY_ATTEMPTS + 1):
+        try:
+            await meili_update_filterable_attributes(runtime, filterable_attributes)
+            await meili_update_sortable_attributes(runtime, sortable)
+            return
+        except Exception:
+            if attempt >= MEILI_SETTINGS_RETRY_ATTEMPTS:
+                raise
+            backoff = min(MEILI_SETTINGS_RETRY_BASE_SECONDS * (2 ** (attempt - 1)), MEILI_SETTINGS_RETRY_MAX_SECONDS)
+            await asyncio.sleep(backoff)
+
+
+def _enqueue_meili_settings_sync(runtime: Dict[str, str], filterable_attributes: List[str]) -> None:
+    global _meili_settings_sync_inflight
+    queue = _meili_settings_sync_queue
+    if queue is None:
+        return
+    if _meili_settings_sync_inflight:
+        return
+    if not filterable_attributes:
+        return
+    try:
+        queue.put_nowait({"runtime": runtime, "filterable_attributes": filterable_attributes})
+        _meili_settings_sync_inflight = True
+    except asyncio.QueueFull:
+        logging.getLogger("search_v2").warning("meili_settings_sync_queue_full")
+
+
+async def _meili_settings_sync_worker_loop() -> None:
+    global _meili_settings_last_sync_ts
+    global _meili_settings_sync_consecutive_failures
+    global _meili_settings_last_error
+    global _meili_settings_last_error_ts
+    global _meili_settings_last_success_ts
+    global _meili_circuit_open_until_ts
+    global _meili_settings_sync_inflight
+
+    logger = logging.getLogger("search_v2")
+    while True:
+        queue = _meili_settings_sync_queue
+        if queue is None:
+            await asyncio.sleep(0.5)
+            continue
+        payload = await queue.get()
+        try:
+            runtime = payload["runtime"]
+            filterable_attributes = payload["filterable_attributes"]
+            await _meili_settings_sync_job(runtime, filterable_attributes)
+            _meili_settings_last_sync_ts = time.time()
+            _meili_settings_sync_consecutive_failures = 0
+            _meili_settings_last_error = None
+            _meili_settings_last_error_ts = None
+            _meili_settings_last_success_ts = datetime.now(timezone.utc).isoformat()
+            _meili_circuit_open_until_ts = 0.0
+        except Exception as exc:
+            _meili_settings_sync_consecutive_failures += 1
+            _meili_settings_last_error = str(exc)
+            _meili_settings_last_error_ts = datetime.now(timezone.utc).isoformat()
+            logger.warning("meili_settings_update_failed", exc_info=True)
+            if _meili_settings_sync_consecutive_failures >= MEILI_SETTINGS_CIRCUIT_THRESHOLD:
+                _meili_circuit_open_until_ts = time.time() + MEILI_SETTINGS_CIRCUIT_OPEN_SECONDS
+                logger.error(
+                    "meili_circuit_opened failures=%s open_for=%s",
+                    _meili_settings_sync_consecutive_failures,
+                    MEILI_SETTINGS_CIRCUIT_OPEN_SECONDS,
+                )
+        finally:
+            _meili_settings_sync_inflight = False
+            queue.task_done()
+
+
+async def _meili_ping_runtime(runtime: Dict[str, str]) -> bool:
+    host = (runtime.get("url") or runtime.get("host") or "").rstrip("/")
+    if not host:
+        return False
+    key_value = (runtime.get("master_key") or runtime.get("api_key") or "").strip()
+    headers = {"Content-Type": "application/json"}
+    if key_value:
+        headers["X-Meili-API-Key"] = key_value
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            response = await client.get(f"{host}/health", headers=headers)
+            return response.status_code == 200
+    except Exception:
+        return False
+
+
+@api_router.get("/health/search")
+async def health_search(
+    country: Optional[str] = None,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    selected_country = (country or "GLOBAL").strip().upper()
+    runtime = await get_active_meili_runtime(session)
+    runtime_public = {
+        "url": runtime.get("url") or runtime.get("host"),
+        "index_name": runtime.get("index_name"),
+    }
+    degraded_response = _search_degraded_response_if_needed()
+    if degraded_response:
+        payload = degraded_response.body.decode("utf-8") if degraded_response.body else ""
+        try:
+            parsed = json.loads(payload) if payload else {}
+        except json.JSONDecodeError:
+            parsed = _search_degraded_payload()
+        parsed.update(
+            {
+                "healthy": False,
+                "runtime": runtime_public,
+                "country": selected_country,
+                "sync_consecutive_failures": _meili_settings_sync_consecutive_failures,
+                "last_success_at": _meili_settings_last_success_ts,
+            }
+        )
+        return JSONResponse(status_code=503, content=parsed, headers=degraded_response.headers)
+
+    ping_ok = await _meili_ping_runtime(runtime)
+    if not ping_ok:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "error_code": "SEARCH_DEGRADED",
+                "degraded": True,
+                "retry_after_seconds": 5,
+                "healthy": False,
+                "runtime": runtime_public,
+                "country": selected_country,
+                "reason": "Meilisearch ping failed",
+                "sync_consecutive_failures": _meili_settings_sync_consecutive_failures,
+            },
+            headers={"Retry-After": "5"},
+        )
+
+    return {
+        "healthy": True,
+        "degraded": False,
+        "runtime": runtime_public,
+        "country": selected_country,
+        "last_settings_sync_at": datetime.fromtimestamp(_meili_settings_last_sync_ts, timezone.utc).isoformat()
+        if _meili_settings_last_sync_ts
+        else None,
+        "last_success_at": _meili_settings_last_success_ts,
+        "sync_consecutive_failures": _meili_settings_sync_consecutive_failures,
+    }
+
+
 @api_router.get("/search/suggest")
 async def public_search_suggest(
     session: AsyncSession = Depends(get_sql_session),
@@ -33232,6 +33505,10 @@ async def public_search_suggest(
     country: Optional[str] = None,
     limit: int = 8,
 ):
+    degraded_response = _search_degraded_response_if_needed()
+    if degraded_response:
+        return degraded_response
+
     query = (q or "").strip()
     safe_limit = min(SUGGEST_MAX_ITEMS, max(1, int(limit)))
     if len(query) < 2:
@@ -33318,6 +33595,10 @@ async def public_search_v2(
 ):
     """Meilisearch-backed search endpoint (no DB fallback for facets)."""
 
+    degraded_response = _search_degraded_response_if_needed()
+    if degraded_response:
+        return degraded_response
+
     country_norm = (country or "").strip().upper()
     if not country_norm:
         raise HTTPException(status_code=400, detail="country is required")
@@ -33360,16 +33641,8 @@ async def public_search_v2(
     all_filterable = list(dict.fromkeys(base_filterable + attribute_facet_fields))
     global _meili_settings_last_sync_ts
     now_ts = time.time()
-    if (now_ts - _meili_settings_last_sync_ts) > 300:
-        try:
-            await meili_update_filterable_attributes(runtime, all_filterable)
-            await meili_update_sortable_attributes(
-                runtime,
-                ["price", "premium_score", "published_at", "featured_until_ts", "urgent_until_ts"],
-            )
-            _meili_settings_last_sync_ts = now_ts
-        except Exception:
-            logging.getLogger("search_v2").warning("meili_settings_update_failed", exc_info=True)
+    if (now_ts - _meili_settings_last_sync_ts) > MEILI_SETTINGS_SYNC_INTERVAL_SECONDS:
+        _enqueue_meili_settings_sync(runtime, all_filterable)
 
     base_filter_expr = _build_meili_filter_expression(
         category_uuid=category_uuid,
