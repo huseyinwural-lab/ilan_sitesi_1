@@ -930,3 +930,15 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - Backend: 100% PASS
 - Frontend: 100% PASS
 - Row2/row4 davranışı, CRUD akışları, footer row5 ve data-testid kapsamı doğrulandı.
+
+## 2026-03-03 (Ek Talep: Kişisel Hızlı Menü)
+- Kullanıcı onayı ile yerleşim: **A (row4 sol panel üstü)** ve adet: **6** uygulanmıştır.
+- Row4 sol panelin en üstüne `Kişisel Hızlı Menü` eklendi.
+  - 6 öğe gösterilir.
+  - Kullanıma göre sıralama localStorage üzerinde tutulur (`dealer-v2-quick-menu-usage`).
+  - Tıklanan hızlı menü route’a gider ve row4 bağlamsal menü kökü ilgili ana modülle senkron kalır.
+
+### Doğrulama (Ek Talep)
+- Smoke screenshot PASS (`dealer-quick-menu-row4-top.png`): hızlı menü görünür ve 6 öğe doğrulandı.
+- `auto_frontend_testing_agent` PASS: 5/5 (hızlı menü + row2/row4 davranışı + row5 footer).
+- `deep_testing_backend_v2` PASS: login + kritik dealer endpointlerinde regresyon yok.

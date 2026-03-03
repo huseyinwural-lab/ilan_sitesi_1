@@ -1,6 +1,7 @@
 # CHANGELOG
 
 ## Uygulanan Özellikler
+- **Kişisel Hızlı Menü (2026-03-03):** Kullanıcı onayıyla row4 sol panelin en üstüne `Kişisel Hızlı Menü` eklendi (6 öğe). Menü kullanımına göre localStorage tabanlı sıralama yapılıyor; tıklamada ilgili route açılıp row4 bağlamsal menü kökü senkron kalıyor.
 - **Kurumsal Portal Menü Mimarisi Revizyonu (2026-03-03 / Iteration 103):** Kullanıcı talebine göre row2 menü tamamen yeniden yapılandırıldı (11 modül), `Sanal Turlar` kaldırıldı. Row2 seçimine bağlı row4 bağlamsal alt menü ağacı aktif edildi. Footer row5 olarak admin site footer kaynağıyla korundu.
 - **Kurumsal Portal Gerçek Backend CRUD Genişletmesi (2026-03-03 / Iteration 103):** Yeni gerçek endpointler eklendi: mesaj klasör yönetimi, potansiyel müşteri CRUD, sözleşme CRUD, mağaza kullanıcı ekleme, kayıtlı kart ekle/liste/sil, ödeme başvuruları oluştur/liste. Hesabım bölümleri bu endpointlere bağlandı.
 - **Kalite Doğrulama (2026-03-03 / Iteration 103):** `/app/test_reports/iteration_103.json` ile backend+frontend 100% PASS. Row2/row4 davranışı, bölüm yapıları, CRUD akışları ve data-testid kapsamı doğrulandı.
