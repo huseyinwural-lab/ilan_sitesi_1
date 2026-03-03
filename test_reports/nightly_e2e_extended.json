@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-03-03T16:00:00.577531+00:00",
-  "mode": "check",
-  "runs": 1,
-  "base_url": "https://monolith-modular-5.preview.emergentagent.com",
+  "generated_at": "2026-03-03T16:14:38.653498+00:00",
+  "mode": "nightly",
+  "runs": 5,
+  "base_url": "http://127.0.0.1:8001",
   "latest": {
-    "generated_at": "2026-03-03T16:00:00.577511+00:00",
-    "base_url": "https://monolith-modular-5.preview.emergentagent.com",
+    "generated_at": "2026-03-03T16:14:38.653476+00:00",
+    "base_url": "http://127.0.0.1:8001",
     "status": "PASS",
     "flows": {
       "user": {
@@ -24,14 +24,14 @@
             "patch": true,
             "preview_ready": true,
             "submit_review": true,
-            "listing_id": "261b822e-502f-4f36-bcf2-d6cfb3223e79"
+            "listing_id": "e645aa4e-37d2-4617-a536-0d28f7f0cd01"
           },
           "publish_track": {
             "create": true,
             "patch": true,
             "preview_ready": true,
             "publish": true,
-            "listing_id": "1db94982-b342-4bd8-81cc-a995a7b01114"
+            "listing_id": "10af1e71-2cdc-4997-8f4c-db2dd70a5a65"
           },
           "ok": true
         },
@@ -43,14 +43,14 @@
             "patch": true,
             "preview_ready": true,
             "submit_review": true,
-            "listing_id": "956d5c78-3029-4d92-9e1f-2ee7968704fe"
+            "listing_id": "26e48504-5f8b-4394-825b-ed17723a1930"
           },
           "publish_track": {
             "create": true,
             "patch": true,
             "preview_ready": true,
             "publish": true,
-            "listing_id": "0d2d1cee-9526-4717-81bd-245b8374bed3"
+            "listing_id": "95b7e296-811d-467c-9120-3a48194a3fc8"
           },
           "ok": true
         },
@@ -69,14 +69,14 @@
         "flow": "admin_ops",
         "step": "webhook_replay_smoke",
         "method": "POST",
-        "path": "/api/admin/webhooks/events/fdcb9ac8-2040-4ff7-a29f-a1d23d2f3de1/replay",
+        "path": "/api/admin/webhooks/events/e911c15f-e3fb-4b8e-9a63-fe4acbdcb8b1/replay",
         "status": 404,
         "expected_statuses": [
           400,
           404
         ],
         "ok": true,
-        "elapsed_ms": 1817.02
+        "elapsed_ms": 1792.99
       }
     ],
     "endpoint_events": [
@@ -90,7 +90,7 @@
           200
         ],
         "ok": true,
-        "elapsed_ms": 1764.03
+        "elapsed_ms": 1591.87
       },
       {
         "flow": "auth",
@@ -102,7 +102,7 @@
           200
         ],
         "ok": true,
-        "elapsed_ms": 1783.76
+        "elapsed_ms": 1745.01
       },
       {
         "flow": "auth",
@@ -114,7 +114,7 @@
           200
         ],
         "ok": true,
-        "elapsed_ms": 1616.69
+        "elapsed_ms": 1605.96
       },
       {
         "flow": "user_finance",
@@ -126,7 +126,7 @@
           200
         ],
         "ok": true,
-        "elapsed_ms": 2133.04
+        "elapsed_ms": 2080.95
       },
       {
         "flow": "user_finance",
@@ -140,7 +140,7 @@
           404
         ],
         "ok": true,
-        "elapsed_ms": 1960.72
+        "elapsed_ms": 1936.78
       },
       {
         "flow": "user_finance",
@@ -152,7 +152,7 @@
           200
         ],
         "ok": true,
-        "elapsed_ms": 2315.64
+        "elapsed_ms": 2332.9
       },
       {
         "flow": "user_finance",
@@ -164,7 +164,7 @@
           200
         ],
         "ok": true,
-        "elapsed_ms": 2138.12
+        "elapsed_ms": 2099.97
       },
       {
         "flow": "user_finance",
@@ -176,7 +176,7 @@
           200
         ],
         "ok": true,
-        "elapsed_ms": 2847.04
+        "elapsed_ms": 2134.98
       },
       {
         "flow": "dealer_listing",
@@ -188,7 +188,7 @@
           200
         ],
         "ok": true,
-        "elapsed_ms": 1084.39
+        "elapsed_ms": 1075.93
       },
       {
         "flow": "dealer_listing",
@@ -200,43 +200,43 @@
           200
         ],
         "ok": true,
-        "elapsed_ms": 9955.8
+        "elapsed_ms": 6773.95
       },
       {
         "flow": "dealer_listing",
         "step": "DE_submit_track_patch_draft",
         "method": "PATCH",
-        "path": "/api/v1/listings/vehicle/261b822e-502f-4f36-bcf2-d6cfb3223e79/draft",
+        "path": "/api/v1/listings/vehicle/e645aa4e-37d2-4617-a536-0d28f7f0cd01/draft",
         "status": 200,
         "expected_statuses": [
           200
         ],
         "ok": true,
-        "elapsed_ms": 6766.47
+        "elapsed_ms": 5506.94
       },
       {
         "flow": "dealer_listing",
         "step": "DE_submit_track_preview_ready",
         "method": "POST",
-        "path": "/api/v1/listings/vehicle/261b822e-502f-4f36-bcf2-d6cfb3223e79/preview-ready",
+        "path": "/api/v1/listings/vehicle/e645aa4e-37d2-4617-a536-0d28f7f0cd01/preview-ready",
         "status": 200,
         "expected_statuses": [
           200
         ],
         "ok": true,
-        "elapsed_ms": 4819.5
+        "elapsed_ms": 4754.99
       },
       {
         "flow": "dealer_listing",
         "step": "DE_submit_track_submit_review",
         "method": "POST",
-        "path": "/api/v1/listings/vehicle/261b822e-502f-4f36-bcf2-d6cfb3223e79/submit-review",
+        "path": "/api/v1/listings/vehicle/e645aa4e-37d2-4617-a536-0d28f7f0cd01/submit-review",
         "status": 200,
         "expected_statuses": [
           200
         ],
         "ok": true,
-        "elapsed_ms": 5534.87
+        "elapsed_ms": 5600.94
       },
       {
         "flow": "dealer_listing",
@@ -248,43 +248,43 @@
           200
         ],
         "ok": true,
-        "elapsed_ms": 6863.07
+        "elapsed_ms": 6776.98
       },
       {
         "flow": "dealer_listing",
         "step": "DE_publish_track_patch_draft",
         "method": "PATCH",
-        "path": "/api/v1/listings/vehicle/1db94982-b342-4bd8-81cc-a995a7b01114/draft",
+        "path": "/api/v1/listings/vehicle/10af1e71-2cdc-4997-8f4c-db2dd70a5a65/draft",
         "status": 200,
         "expected_statuses": [
           200
         ],
         "ok": true,
-        "elapsed_ms": 5523.21
+        "elapsed_ms": 5495.96
       },
       {
         "flow": "dealer_listing",
         "step": "DE_publish_track_preview_ready",
         "method": "POST",
-        "path": "/api/v1/listings/vehicle/1db94982-b342-4bd8-81cc-a995a7b01114/preview-ready",
+        "path": "/api/v1/listings/vehicle/10af1e71-2cdc-4997-8f4c-db2dd70a5a65/preview-ready",
         "status": 200,
         "expected_statuses": [
           200
         ],
         "ok": true,
-        "elapsed_ms": 4798.23
+        "elapsed_ms": 4782.99
       },
       {
         "flow": "dealer_listing",
         "step": "DE_publish_track_publish",
         "method": "POST",
-        "path": "/api/v1/listings/vehicle/1db94982-b342-4bd8-81cc-a995a7b01114/publish",
+        "path": "/api/v1/listings/vehicle/10af1e71-2cdc-4997-8f4c-db2dd70a5a65/publish",
         "status": 200,
         "expected_statuses": [
           200
         ],
         "ok": true,
-        "elapsed_ms": 5088.8
+        "elapsed_ms": 4637.95
       },
       {
         "flow": "dealer_listing",
@@ -296,7 +296,7 @@
           200
         ],
         "ok": true,
-        "elapsed_ms": 1343.82
+        "elapsed_ms": 1062.91
       },
       {
         "flow": "dealer_listing",
@@ -308,43 +308,43 @@
           200
         ],
         "ok": true,
-        "elapsed_ms": 7436.87
+        "elapsed_ms": 6798.93
       },
       {
         "flow": "dealer_listing",
         "step": "FR_submit_track_patch_draft",
         "method": "PATCH",
-        "path": "/api/v1/listings/vehicle/956d5c78-3029-4d92-9e1f-2ee7968704fe/draft",
+        "path": "/api/v1/listings/vehicle/26e48504-5f8b-4394-825b-ed17723a1930/draft",
         "status": 200,
         "expected_statuses": [
           200
         ],
         "ok": true,
-        "elapsed_ms": 5584.29
+        "elapsed_ms": 5489.96
       },
       {
         "flow": "dealer_listing",
         "step": "FR_submit_track_preview_ready",
         "method": "POST",
-        "path": "/api/v1/listings/vehicle/956d5c78-3029-4d92-9e1f-2ee7968704fe/preview-ready",
+        "path": "/api/v1/listings/vehicle/26e48504-5f8b-4394-825b-ed17723a1930/preview-ready",
         "status": 200,
         "expected_statuses": [
           200
         ],
         "ok": true,
-        "elapsed_ms": 4766.81
+        "elapsed_ms": 4734.98
       },
       {
         "flow": "dealer_listing",
         "step": "FR_submit_track_submit_review",
         "method": "POST",
-        "path": "/api/v1/listings/vehicle/956d5c78-3029-4d92-9e1f-2ee7968704fe/submit-review",
+        "path": "/api/v1/listings/vehicle/26e48504-5f8b-4394-825b-ed17723a1930/submit-review",
         "status": 200,
         "expected_statuses": [
           200
         ],
         "ok": true,
-        "elapsed_ms": 5557.76
+        "elapsed_ms": 5469.93
       },
       {
         "flow": "dealer_listing",
@@ -356,43 +356,43 @@
           200
         ],
         "ok": true,
-        "elapsed_ms": 6816.43
+        "elapsed_ms": 6811.97
       },
       {
         "flow": "dealer_listing",
         "step": "FR_publish_track_patch_draft",
         "method": "PATCH",
-        "path": "/api/v1/listings/vehicle/0d2d1cee-9526-4717-81bd-245b8374bed3/draft",
+        "path": "/api/v1/listings/vehicle/95b7e296-811d-467c-9120-3a48194a3fc8/draft",
         "status": 200,
         "expected_statuses": [
           200
         ],
         "ok": true,
-        "elapsed_ms": 5522.79
+        "elapsed_ms": 5845.93
       },
       {
         "flow": "dealer_listing",
         "step": "FR_publish_track_preview_ready",
         "method": "POST",
-        "path": "/api/v1/listings/vehicle/0d2d1cee-9526-4717-81bd-245b8374bed3/preview-ready",
+        "path": "/api/v1/listings/vehicle/95b7e296-811d-467c-9120-3a48194a3fc8/preview-ready",
         "status": 200,
         "expected_statuses": [
           200
         ],
         "ok": true,
-        "elapsed_ms": 4796.2
+        "elapsed_ms": 4757.99
       },
       {
         "flow": "dealer_listing",
         "step": "FR_publish_track_publish",
         "method": "POST",
-        "path": "/api/v1/listings/vehicle/0d2d1cee-9526-4717-81bd-245b8374bed3/publish",
+        "path": "/api/v1/listings/vehicle/95b7e296-811d-467c-9120-3a48194a3fc8/publish",
         "status": 200,
         "expected_statuses": [
           200
         ],
         "ok": true,
-        "elapsed_ms": 4637.08
+        "elapsed_ms": 4668.98
       },
       {
         "flow": "admin_ops",
@@ -404,20 +404,20 @@
           200
         ],
         "ok": true,
-        "elapsed_ms": 3118.55
+        "elapsed_ms": 2236.92
       },
       {
         "flow": "admin_ops",
         "step": "webhook_replay_smoke",
         "method": "POST",
-        "path": "/api/admin/webhooks/events/fdcb9ac8-2040-4ff7-a29f-a1d23d2f3de1/replay",
+        "path": "/api/admin/webhooks/events/e911c15f-e3fb-4b8e-9a63-fe4acbdcb8b1/replay",
         "status": 404,
         "expected_statuses": [
           400,
           404
         ],
         "ok": true,
-        "elapsed_ms": 1817.02
+        "elapsed_ms": 1792.99
       }
     ],
     "finance_e2e_pass": true,
@@ -426,14 +426,42 @@
   },
   "recent_runs": [
     {
-      "generated_at": "2026-03-03T16:00:00.577511+00:00",
+      "generated_at": "2026-03-03T16:07:14.627422+00:00",
+      "status": "PASS",
+      "finance_e2e_pass": true,
+      "listing_e2e_pass": true,
+      "merge_blocked": false
+    },
+    {
+      "generated_at": "2026-03-03T16:09:06.207434+00:00",
+      "status": "PASS",
+      "finance_e2e_pass": true,
+      "listing_e2e_pass": true,
+      "merge_blocked": false
+    },
+    {
+      "generated_at": "2026-03-03T16:10:56.433471+00:00",
+      "status": "PASS",
+      "finance_e2e_pass": true,
+      "listing_e2e_pass": true,
+      "merge_blocked": false
+    },
+    {
+      "generated_at": "2026-03-03T16:12:48.045453+00:00",
+      "status": "PASS",
+      "finance_e2e_pass": true,
+      "listing_e2e_pass": true,
+      "merge_blocked": false
+    },
+    {
+      "generated_at": "2026-03-03T16:14:38.653476+00:00",
       "status": "PASS",
       "finance_e2e_pass": true,
       "listing_e2e_pass": true,
       "merge_blocked": false
     }
   ],
-  "last_five_nightly_pass": false,
+  "last_five_nightly_pass": true,
   "ci_gate": {
     "merge_blocked": false,
     "finance_gate": false,
@@ -446,14 +474,14 @@
         "flow": "admin_ops",
         "step": "webhook_replay_smoke",
         "method": "POST",
-        "path": "/api/admin/webhooks/events/fdcb9ac8-2040-4ff7-a29f-a1d23d2f3de1/replay",
+        "path": "/api/admin/webhooks/events/e911c15f-e3fb-4b8e-9a63-fe4acbdcb8b1/replay",
         "status": 404,
         "expected_statuses": [
           400,
           404
         ],
         "ok": true,
-        "elapsed_ms": 1817.02
+        "elapsed_ms": 1792.99
       }
     ]
   }

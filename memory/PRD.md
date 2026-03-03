@@ -814,3 +814,26 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Güncel Sonraki Adımlar (P1)
 - Audit ve Permissions ekranları için preset filtre setleri (Ops/Fraud/Compliance) ve kaydedilmiş görünüm desteği.
 - Pagination akışına cursor-mode opsiyonu (yüksek write trafik senaryolarında overlap toleransını azaltmak için).
+
+## 2026-03-03 (GÖREV 3 — Nightly E2E Genişletme)
+- Nightly E2E seti genişletildi ve otomatik runner eklendi:
+  - `scripts/nightly_e2e_extended_runner.py`
+  - User: finance PDF download + subscription cancel/reactivate
+  - Dealer: ilan-ver akışı (DE + FR) submit/publish track
+  - Admin: finance export + webhook replay smoke
+- CI entegrasyonu:
+  - Nightly workflow: `.github/workflows/nightly-e2e-extended.yml`
+  - Merge gate workflow: `.github/workflows/nightly-e2e-merge-gate.yml`
+  - Makefile target’ları: `nightly:e2e`, `nightly:e2e:check`
+- Merge block kuralı enforce edildi:
+  - Finance E2E FAIL -> block
+  - Listing E2E FAIL -> block
+  - Artifact zorunluluğu raporda tutuluyor (`broken_flows`, `endpoint_http_4xx_5xx`).
+
+### GÖREV 3 Kanıt Dosyaları
+- `/app/test_reports/nightly_e2e_extended.json` (oluşturuldu, `last_five_nightly_pass=true`)
+- `/app/test_reports/iteration_101.json` (PASS)
+
+### Sonraki Önerilen Adımlar
+- Nightly raporlarını dashboardlaştırmak (trend/p95/gate history) ve fail reason clustering.
+- Dealer listing state-machine için submit->moderation->publish adımlarını tek akış olarak ayrı smoke setine almak.
