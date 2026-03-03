@@ -1,0 +1,460 @@
+{
+  "generated_at": "2026-03-03T16:00:00.577531+00:00",
+  "mode": "check",
+  "runs": 1,
+  "base_url": "https://monolith-modular-5.preview.emergentagent.com",
+  "latest": {
+    "generated_at": "2026-03-03T16:00:00.577511+00:00",
+    "base_url": "https://monolith-modular-5.preview.emergentagent.com",
+    "status": "PASS",
+    "flows": {
+      "user": {
+        "flow": "user_finance",
+        "pdf_download_pass": true,
+        "subscription_cancel_reactivate_pass": true,
+        "ok": true
+      },
+      "dealer": {
+        "flow": "dealer_listing",
+        "de": {
+          "country": "DE",
+          "category_id": "1debb8f9-cb41-47bf-8e6a-4fcc0423b9ec",
+          "submit_track": {
+            "create": true,
+            "patch": true,
+            "preview_ready": true,
+            "submit_review": true,
+            "listing_id": "261b822e-502f-4f36-bcf2-d6cfb3223e79"
+          },
+          "publish_track": {
+            "create": true,
+            "patch": true,
+            "preview_ready": true,
+            "publish": true,
+            "listing_id": "1db94982-b342-4bd8-81cc-a995a7b01114"
+          },
+          "ok": true
+        },
+        "fr": {
+          "country": "FR",
+          "category_id": "1debb8f9-cb41-47bf-8e6a-4fcc0423b9ec",
+          "submit_track": {
+            "create": true,
+            "patch": true,
+            "preview_ready": true,
+            "submit_review": true,
+            "listing_id": "956d5c78-3029-4d92-9e1f-2ee7968704fe"
+          },
+          "publish_track": {
+            "create": true,
+            "patch": true,
+            "preview_ready": true,
+            "publish": true,
+            "listing_id": "0d2d1cee-9526-4717-81bd-245b8374bed3"
+          },
+          "ok": true
+        },
+        "ok": true
+      },
+      "admin": {
+        "flow": "admin_ops",
+        "finance_export_pass": true,
+        "webhook_replay_smoke_pass": true,
+        "ok": true
+      }
+    },
+    "broken_flows": [],
+    "endpoint_http_4xx_5xx": [
+      {
+        "flow": "admin_ops",
+        "step": "webhook_replay_smoke",
+        "method": "POST",
+        "path": "/api/admin/webhooks/events/fdcb9ac8-2040-4ff7-a29f-a1d23d2f3de1/replay",
+        "status": 404,
+        "expected_statuses": [
+          400,
+          404
+        ],
+        "ok": true,
+        "elapsed_ms": 1817.02
+      }
+    ],
+    "endpoint_events": [
+      {
+        "flow": "auth",
+        "step": "login_admin",
+        "method": "POST",
+        "path": "/api/auth/login",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 1764.03
+      },
+      {
+        "flow": "auth",
+        "step": "login_user",
+        "method": "POST",
+        "path": "/api/auth/login",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 1783.76
+      },
+      {
+        "flow": "auth",
+        "step": "login_dealer",
+        "method": "POST",
+        "path": "/api/auth/login",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 1616.69
+      },
+      {
+        "flow": "user_finance",
+        "step": "account_invoices_list",
+        "method": "GET",
+        "path": "/api/account/invoices",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 2133.04
+      },
+      {
+        "flow": "user_finance",
+        "step": "admin_generate_pdf",
+        "method": "POST",
+        "path": "/api/admin/invoices/bee8c5ac-d9c0-4fc0-9b74-6df9d6a0cf0b/generate-pdf",
+        "status": 200,
+        "expected_statuses": [
+          200,
+          400,
+          404
+        ],
+        "ok": true,
+        "elapsed_ms": 1960.72
+      },
+      {
+        "flow": "user_finance",
+        "step": "account_invoice_pdf_download",
+        "method": "GET",
+        "path": "/api/account/invoices/bee8c5ac-d9c0-4fc0-9b74-6df9d6a0cf0b/download-pdf",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 2315.64
+      },
+      {
+        "flow": "user_finance",
+        "step": "subscription_cancel",
+        "method": "POST",
+        "path": "/api/account/subscription/cancel",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 2138.12
+      },
+      {
+        "flow": "user_finance",
+        "step": "subscription_reactivate",
+        "method": "POST",
+        "path": "/api/account/subscription/reactivate",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 2847.04
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "get_category_DE",
+        "method": "GET",
+        "path": "/api/categories/children?module=vehicle&country=DE",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 1084.39
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "DE_create_submit",
+        "method": "POST",
+        "path": "/api/v1/listings/vehicle",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 9955.8
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "DE_submit_track_patch_draft",
+        "method": "PATCH",
+        "path": "/api/v1/listings/vehicle/261b822e-502f-4f36-bcf2-d6cfb3223e79/draft",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 6766.47
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "DE_submit_track_preview_ready",
+        "method": "POST",
+        "path": "/api/v1/listings/vehicle/261b822e-502f-4f36-bcf2-d6cfb3223e79/preview-ready",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 4819.5
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "DE_submit_track_submit_review",
+        "method": "POST",
+        "path": "/api/v1/listings/vehicle/261b822e-502f-4f36-bcf2-d6cfb3223e79/submit-review",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 5534.87
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "DE_create_publish",
+        "method": "POST",
+        "path": "/api/v1/listings/vehicle",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 6863.07
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "DE_publish_track_patch_draft",
+        "method": "PATCH",
+        "path": "/api/v1/listings/vehicle/1db94982-b342-4bd8-81cc-a995a7b01114/draft",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 5523.21
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "DE_publish_track_preview_ready",
+        "method": "POST",
+        "path": "/api/v1/listings/vehicle/1db94982-b342-4bd8-81cc-a995a7b01114/preview-ready",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 4798.23
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "DE_publish_track_publish",
+        "method": "POST",
+        "path": "/api/v1/listings/vehicle/1db94982-b342-4bd8-81cc-a995a7b01114/publish",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 5088.8
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "get_category_FR",
+        "method": "GET",
+        "path": "/api/categories/children?module=vehicle&country=FR",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 1343.82
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "FR_create_submit",
+        "method": "POST",
+        "path": "/api/v1/listings/vehicle",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 7436.87
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "FR_submit_track_patch_draft",
+        "method": "PATCH",
+        "path": "/api/v1/listings/vehicle/956d5c78-3029-4d92-9e1f-2ee7968704fe/draft",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 5584.29
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "FR_submit_track_preview_ready",
+        "method": "POST",
+        "path": "/api/v1/listings/vehicle/956d5c78-3029-4d92-9e1f-2ee7968704fe/preview-ready",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 4766.81
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "FR_submit_track_submit_review",
+        "method": "POST",
+        "path": "/api/v1/listings/vehicle/956d5c78-3029-4d92-9e1f-2ee7968704fe/submit-review",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 5557.76
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "FR_create_publish",
+        "method": "POST",
+        "path": "/api/v1/listings/vehicle",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 6816.43
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "FR_publish_track_patch_draft",
+        "method": "PATCH",
+        "path": "/api/v1/listings/vehicle/0d2d1cee-9526-4717-81bd-245b8374bed3/draft",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 5522.79
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "FR_publish_track_preview_ready",
+        "method": "POST",
+        "path": "/api/v1/listings/vehicle/0d2d1cee-9526-4717-81bd-245b8374bed3/preview-ready",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 4796.2
+      },
+      {
+        "flow": "dealer_listing",
+        "step": "FR_publish_track_publish",
+        "method": "POST",
+        "path": "/api/v1/listings/vehicle/0d2d1cee-9526-4717-81bd-245b8374bed3/publish",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 4637.08
+      },
+      {
+        "flow": "admin_ops",
+        "step": "finance_export_csv",
+        "method": "GET",
+        "path": "/api/admin/payments/export/csv",
+        "status": 200,
+        "expected_statuses": [
+          200
+        ],
+        "ok": true,
+        "elapsed_ms": 3118.55
+      },
+      {
+        "flow": "admin_ops",
+        "step": "webhook_replay_smoke",
+        "method": "POST",
+        "path": "/api/admin/webhooks/events/fdcb9ac8-2040-4ff7-a29f-a1d23d2f3de1/replay",
+        "status": 404,
+        "expected_statuses": [
+          400,
+          404
+        ],
+        "ok": true,
+        "elapsed_ms": 1817.02
+      }
+    ],
+    "finance_e2e_pass": true,
+    "listing_e2e_pass": true,
+    "merge_blocked": false
+  },
+  "recent_runs": [
+    {
+      "generated_at": "2026-03-03T16:00:00.577511+00:00",
+      "status": "PASS",
+      "finance_e2e_pass": true,
+      "listing_e2e_pass": true,
+      "merge_blocked": false
+    }
+  ],
+  "last_five_nightly_pass": false,
+  "ci_gate": {
+    "merge_blocked": false,
+    "finance_gate": false,
+    "listing_gate": false
+  },
+  "artifact_requirements": {
+    "broken_flows": [],
+    "endpoint_http_4xx_5xx": [
+      {
+        "flow": "admin_ops",
+        "step": "webhook_replay_smoke",
+        "method": "POST",
+        "path": "/api/admin/webhooks/events/fdcb9ac8-2040-4ff7-a29f-a1d23d2f3de1/replay",
+        "status": 404,
+        "expected_statuses": [
+          400,
+          404
+        ],
+        "ok": true,
+        "elapsed_ms": 1817.02
+      }
+    ]
+  }
+}
