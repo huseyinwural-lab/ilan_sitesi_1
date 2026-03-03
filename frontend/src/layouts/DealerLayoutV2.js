@@ -32,6 +32,16 @@ import { trackDealerEvent } from '@/lib/dealerAnalytics';
 import SiteFooter from '@/components/public/SiteFooter';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const QUICK_MENU_STORAGE_KEY = 'dealer-v2-quick-menu-usage';
+const QUICK_MENU_LIMIT = 6;
+const QUICK_MENU_DEFAULT_KEYS = [
+  'listings_active',
+  'messages_inbox',
+  'customer_list',
+  'favorite_listings',
+  'package_summary',
+  'saved_cards',
+];
 
 const languageOptions = [
   { key: 'tr', label: 'TR' },
@@ -267,6 +277,29 @@ const isMenuNodeActive = (node, pathname, search) => {
   return (node.children || []).some((child) => isMenuNodeActive(child, pathname, search));
 };
 
+const flattenMenuNodes = (nodes) => {
+  const list = [];
+  const walk = (items, rootKey = null) => {
+    (items || []).forEach((item) => {
+      const parentKey = rootKey || item.key;
+      if (item.route) {
+        list.push({
+          key: item.key,
+          label: item.label,
+          route: item.route,
+          icon: item.icon,
+          parentKey,
+        });
+      }
+      if (Array.isArray(item.children) && item.children.length) {
+        walk(item.children, parentKey);
+      }
+    });
+  };
+  walk(nodes, null);
+  return list;
+};
+
 export default function DealerLayoutV2() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -292,6 +325,7 @@ export default function DealerLayoutV2() {
   const [selectedStore, setSelectedStore] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isPageEditMode, setIsPageEditMode] = useState(false);
+  const [quickMenuUsage, setQuickMenuUsage] = useState({});
   const [navSummary, setNavSummary] = useState({
     badges: {
       active_listings: 0,
@@ -394,6 +428,57 @@ export default function DealerLayoutV2() {
     account: navSummary?.badges?.announcements_total,
   };
 
+  const quickMenuCandidates = useMemo(() => flattenMenuNodes(topMenuItems), [topMenuItems]);
+
+  const quickMenuItems = useMemo(() => {
+    const byKey = new Map(quickMenuCandidates.map((item) => [item.key, item]));
+    const selected = [];
+    const selectedSet = new Set();
+
+    Object.entries(quickMenuUsage || {})
+      .sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0))
+      .forEach(([key]) => {
+        if (selected.length >= QUICK_MENU_LIMIT) return;
+        const row = byKey.get(key);
+        if (row && !selectedSet.has(row.key)) {
+          selected.push(row);
+          selectedSet.add(row.key);
+        }
+      });
+
+    QUICK_MENU_DEFAULT_KEYS.forEach((key) => {
+      if (selected.length >= QUICK_MENU_LIMIT) return;
+      const row = byKey.get(key);
+      if (row && !selectedSet.has(row.key)) {
+        selected.push(row);
+        selectedSet.add(row.key);
+      }
+    });
+
+    quickMenuCandidates.forEach((row) => {
+      if (selected.length >= QUICK_MENU_LIMIT) return;
+      if (!selectedSet.has(row.key)) {
+        selected.push(row);
+        selectedSet.add(row.key);
+      }
+    });
+
+    return selected.slice(0, QUICK_MENU_LIMIT);
+  }, [quickMenuCandidates, quickMenuUsage]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(QUICK_MENU_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        setQuickMenuUsage(parsed);
+      }
+    } catch (_) {
+      setQuickMenuUsage({});
+    }
+  }, []);
+
   useEffect(() => {
     setSelectedStore(headerRow3Controls?.default_store_key || 'all');
   }, [headerRow3Controls?.default_store_key]);
@@ -428,6 +513,20 @@ export default function DealerLayoutV2() {
   }, [location.pathname]);
 
   const handleNavClick = (item, zone) => {
+    if (item?.key) {
+      setQuickMenuUsage((prev) => {
+        const next = {
+          ...(prev || {}),
+          [item.key]: Number((prev || {})[item.key] || 0) + 1,
+        };
+        try {
+          localStorage.setItem(QUICK_MENU_STORAGE_KEY, JSON.stringify(next));
+        } catch (_) {
+          // ignore storage write errors
+        }
+        return next;
+      });
+    }
     trackDealerEvent('dealer_nav_click', {
       key: item.key,
       route: item.route,
@@ -715,6 +814,32 @@ export default function DealerLayoutV2() {
 
       <main className="mx-auto grid w-full max-w-[1440px] grid-cols-1 gap-4 px-4 py-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:px-6" data-testid="dealer-layout-v2-row4-main">
         <aside className="rounded-2xl border border-slate-200 bg-white p-3" data-testid="dealer-layout-v2-row4-sidebar">
+          <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-2" data-testid="dealer-layout-v2-row4-quick-menu-wrap">
+            <div className="mb-2 text-xs font-semibold text-slate-700" data-testid="dealer-layout-v2-row4-quick-menu-title">Kişisel Hızlı Menü</div>
+            <div className="space-y-1" data-testid="dealer-layout-v2-row4-quick-menu-list">
+              {quickMenuItems.map((item) => {
+                const Icon = iconMap[item.icon] || ChevronRight;
+                const isActive = isRouteActive(item.route, location.pathname, location.search);
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => {
+                      if (item.parentKey) setOpenMenuKey(item.parentKey);
+                      navigate(item.route);
+                      handleNavClick(item, 'row4-quick-menu');
+                    }}
+                    className={`flex w-full items-center gap-2 rounded-md border px-2.5 py-1.5 text-left text-xs font-semibold transition ${isActive ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-800 hover:bg-slate-100'}`}
+                    data-testid={`dealer-layout-v2-row4-quick-menu-item-${item.key}`}
+                  >
+                    <Icon size={13} />
+                    <span data-testid={`dealer-layout-v2-row4-quick-menu-label-${item.key}`}>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="mb-3 border-b border-slate-100 pb-2" data-testid="dealer-layout-v2-row4-sidebar-header">
             <div className="text-sm font-semibold text-slate-900" data-testid="dealer-layout-v2-row4-sidebar-title">
               {row4MenuRoot?.label || 'Menü'}
