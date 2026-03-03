@@ -150,19 +150,6 @@ const corporateTopMenu = [
   },
 ];
 
-const sideRailItems = [
-  { key: 'ofisim_ozet', label: 'Ofisim Özet', icon: 'LayoutDashboard', route: '/dealer/overview' },
-  { key: 'ilanlarim', label: 'İlanlarım', icon: 'ListChecks', route: '/dealer/listings' },
-  { key: 'favorilerim', label: 'Favorilerim', icon: 'Heart', route: '/dealer/favorites' },
-  { key: 'sepetim', label: 'Sepetim', icon: 'ShoppingCart', route: '/dealer/purchase' },
-  { key: 'doping_satin_al', label: 'Doping Satın Al', icon: 'Sparkles', route: '/dealer/purchase' },
-  { key: 'sahibinden_akademi', label: 'Sahibinden Akademi', icon: 'BookOpen', route: '/dealer/academy' },
-  { key: 'magaza_sayfam', label: 'Mağaza Sayfam', icon: 'Store', route: '/dealer/company' },
-  { key: 'magaza_sayfam_panel', label: 'Mağaza Sayfam Yönetim Paneli', icon: 'Building2', route: '/dealer/settings?section=address' },
-  { key: 'musteri_yonetimi', label: 'Müşteri Yönetimi', icon: 'Users', route: '/dealer/customers' },
-  { key: 'hesabim', label: 'Hesabım', icon: 'CircleUserRound', route: '/dealer/settings?section=profile' },
-];
-
 const mergeMenuRoutes = (nodes, overrides) => (
   nodes.map((node) => ({
     ...node,
@@ -265,10 +252,10 @@ export default function DealerLayoutV2() {
     [topMenuItems, location.pathname, location.search],
   );
 
-  const openTopMenu = useMemo(
-    () => topMenuItems.find((item) => item.key === openMenuKey) || null,
-    [topMenuItems, openMenuKey],
-  );
+  const row4MenuRoot = useMemo(() => {
+    const selected = topMenuItems.find((item) => item.key === openMenuKey);
+    return selected || activeTopMenu || topMenuItems[0] || null;
+  }, [topMenuItems, openMenuKey, activeTopMenu]);
 
   const row1Actions = useMemo(
     () => (Array.isArray(headerRow1Items) && headerRow1Items.length ? headerRow1Items : headerItems || []),
@@ -343,30 +330,30 @@ export default function DealerLayoutV2() {
     navigate('/dealer/login');
   };
 
-  const renderSubmenuNode = (item, depth = 0) => {
+  const renderContextSidebarNode = (item, depth = 0) => {
     const Icon = iconMap[item.icon] || ChevronRight;
     const isActive = isMenuNodeActive(item, location.pathname, location.search);
     const hasChildren = Array.isArray(item.children) && item.children.length > 0;
     const depthPadding = depth === 0 ? 'pl-0' : depth === 1 ? 'pl-3' : 'pl-6';
     return (
-      <div key={item.key} className={depthPadding} data-testid={`dealer-layout-row2-submenu-node-${item.key}`}>
+      <div key={item.key} className={depthPadding} data-testid={`dealer-layout-v2-row4-context-node-${item.key}`}>
         <button
           type="button"
           onClick={() => {
             if (item.route) {
               navigate(item.route);
-              handleNavClick(item, 'row2-submenu');
+              handleNavClick(item, 'row4-context-submenu');
             }
           }}
           className={`flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition ${isActive ? 'bg-slate-900 text-white' : 'text-slate-800 hover:bg-slate-100'}`}
-          data-testid={`dealer-layout-row2-submenu-link-${item.key}`}
+          data-testid={`dealer-layout-v2-row4-context-link-${item.key}`}
         >
           <Icon size={14} />
-          <span data-testid={`dealer-layout-row2-submenu-label-${item.key}`}>{item.label}</span>
+          <span data-testid={`dealer-layout-v2-row4-context-label-${item.key}`}>{item.label}</span>
         </button>
         {hasChildren ? (
-          <div className="mt-1 space-y-1" data-testid={`dealer-layout-row2-submenu-children-${item.key}`}>
-            {item.children.map((child) => renderSubmenuNode(child, depth + 1))}
+          <div className="mt-1 space-y-1" data-testid={`dealer-layout-v2-row4-context-children-${item.key}`}>
+            {item.children.map((child) => renderContextSidebarNode(child, depth + 1))}
           </div>
         ) : null}
       </div>
@@ -500,12 +487,10 @@ export default function DealerLayoutV2() {
                     key={item.key}
                     type="button"
                     onClick={() => {
+                      setOpenMenuKey(item.key);
                       if (item.route) {
                         navigate(item.route);
                         handleNavClick(item, 'row2-top-menu');
-                      }
-                      if (hasChildren) {
-                        setOpenMenuKey((prev) => (prev === item.key ? '' : item.key));
                       }
                     }}
                     className={`inline-flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold transition ${isActive || isOpen ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 text-slate-900 hover:bg-slate-100'}`}
@@ -523,14 +508,6 @@ export default function DealerLayoutV2() {
                 );
               })}
             </nav>
-
-            {openTopMenu?.children?.length ? (
-              <div className="absolute right-0 top-[calc(100%+6px)] z-40 w-full rounded-xl border border-slate-200 bg-white p-2 shadow-lg lg:w-[380px]" data-testid={`dealer-layout-v2-row2-submenu-panel-${openTopMenu.key}`}>
-                <div className="space-y-1" data-testid="dealer-layout-v2-row2-submenu-list">
-                  {openTopMenu.children.map((item) => renderSubmenuNode(item))}
-                </div>
-              </div>
-            ) : null}
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 py-2" data-testid="dealer-layout-v2-row3">
@@ -628,38 +605,45 @@ export default function DealerLayoutV2() {
       <main className="mx-auto grid w-full max-w-[1440px] grid-cols-1 gap-4 px-4 py-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:px-6" data-testid="dealer-layout-v2-row4-main">
         <aside className="rounded-2xl border border-slate-200 bg-white p-3" data-testid="dealer-layout-v2-row4-sidebar">
           <div className="mb-3 border-b border-slate-100 pb-2" data-testid="dealer-layout-v2-row4-sidebar-header">
-            <div className="text-sm font-semibold text-slate-900" data-testid="dealer-layout-v2-row4-sidebar-title">Kurumsal Menü</div>
-            <div className="text-xs text-slate-500" data-testid="dealer-layout-v2-row4-sidebar-subtitle">PDF yapısına göre tam menü görünümü</div>
+            <div className="text-sm font-semibold text-slate-900" data-testid="dealer-layout-v2-row4-sidebar-title">
+              {row4MenuRoot?.label || 'Menü'}
+            </div>
+            <div className="text-xs text-slate-500" data-testid="dealer-layout-v2-row4-sidebar-subtitle">2. satırdan seçilen menünün alt kırılımları</div>
           </div>
 
           {loading ? <div className="mb-2 text-xs text-slate-500" data-testid="dealer-layout-v2-config-loading">Menü yükleniyor…</div> : null}
           {error ? <div className="mb-2 text-xs text-rose-700" data-testid="dealer-layout-v2-config-error">{error}</div> : null}
 
           <div className="space-y-1" data-testid="dealer-layout-v2-row4-sidebar-links">
-            {sideRailItems.map((item) => {
-              const Icon = iconMap[item.icon] || ChevronRight;
-              const isActive = isRouteActive(item.route, location.pathname, location.search);
-              const badge = navSummary?.left_menu?.[item.key] || 0;
-              return (
-                <NavLink
-                  key={item.key}
-                  to={item.route}
-                  onClick={() => handleNavClick(item, 'row4-sidebar')}
-                  className={`flex items-center justify-between rounded-md border px-2.5 py-2 text-sm font-medium transition ${isActive ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 text-slate-800 hover:bg-slate-50'}`}
-                  data-testid={`dealer-layout-v2-row4-sidebar-link-${item.key}`}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <Icon size={14} />
-                    <span data-testid={`dealer-layout-v2-row4-sidebar-label-${item.key}`}>{item.label}</span>
+            {row4MenuRoot ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (row4MenuRoot.route) {
+                    navigate(row4MenuRoot.route);
+                    handleNavClick(row4MenuRoot, 'row4-context-root');
+                  }
+                }}
+                className={`flex w-full items-center justify-between rounded-md border px-2.5 py-2 text-sm font-semibold transition ${isRouteActive(row4MenuRoot.route, location.pathname, location.search) ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 text-slate-900 hover:bg-slate-100'}`}
+                data-testid={`dealer-layout-v2-row4-sidebar-root-link-${row4MenuRoot.key}`}
+              >
+                <span className="inline-flex items-center gap-2">
+                  {(iconMap[row4MenuRoot.icon] ? React.createElement(iconMap[row4MenuRoot.icon], { size: 14 }) : <ChevronRight size={14} />)}
+                  <span data-testid={`dealer-layout-v2-row4-sidebar-root-label-${row4MenuRoot.key}`}>{row4MenuRoot.label}</span>
+                </span>
+                {typeof topMenuBadges[row4MenuRoot.key] === 'number' && topMenuBadges[row4MenuRoot.key] > 0 ? (
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700" data-testid={`dealer-layout-v2-row4-sidebar-root-badge-${row4MenuRoot.key}`}>
+                    {topMenuBadges[row4MenuRoot.key]}
                   </span>
-                  {badge > 0 ? (
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`} data-testid={`dealer-layout-v2-row4-sidebar-badge-${item.key}`}>
-                      {badge}
-                    </span>
-                  ) : null}
-                </NavLink>
-              );
-            })}
+                ) : null}
+              </button>
+            ) : null}
+
+            {row4MenuRoot?.children?.length ? (
+              <div className="space-y-1 pt-1" data-testid={`dealer-layout-v2-row4-sidebar-context-list-${row4MenuRoot.key}`}>
+                {row4MenuRoot.children.map((child) => renderContextSidebarNode(child, 1))}
+              </div>
+            ) : null}
 
             <button
               type="button"

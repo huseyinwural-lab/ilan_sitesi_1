@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -361,14 +361,6 @@ export default function DealerSettings() {
               ))}
             </div>
 
-            <div className="mt-3 border-t border-slate-200 pt-3 text-xs text-black" data-testid="dealer-settings-quick-links">
-              <div className="mb-2 font-semibold" data-testid="dealer-settings-quick-links-title">Kısayollar</div>
-              <div className="flex flex-col gap-2">
-                <Link to="/dealer/company" className="text-black hover:underline" data-testid="dealer-settings-quick-link-company">Şirket Profili</Link>
-                <Link to="/dealer/privacy" className="text-black hover:underline" data-testid="dealer-settings-quick-link-privacy">Gizlilik Merkezi</Link>
-                <Link to="/dealer/invoices" className="text-black hover:underline" data-testid="dealer-settings-quick-link-invoices">Faturalar ve Hareketler</Link>
-              </div>
-            </div>
           </aside>
 
           <div className="bg-white p-4" data-testid="dealer-settings-right-panel">
