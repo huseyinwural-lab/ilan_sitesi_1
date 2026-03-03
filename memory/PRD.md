@@ -681,14 +681,7 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - `RateLimiter` scope: `stripe_legacy_webhook` -> `stripe_webhook`.
 
 ### Kanıt ve regresyon
-- İlk kontrol noktası: `/api/payments/create-checkout-session/stub` => **404 PASS**.
-- Grep kanıt dosyası:
-  - `/app/test_reports/p0_04_legacy_billing_removed_grep.txt`
-  - Sonuç: `create-checkout-session/stub`, `/admin/billing`, Billing.js/Plans.js legacy referansları **0 match**.
-- Testing agent raporu:
-  - `/app/test_reports/iteration_88.json`
-  - Sonuç: **Backend 23/23 PASS**, frontend finans regresyon PASS.
-  - Doğrulananlar: checkout/webhook canonical akış erişilebilirliği, admin finance (overview/invoices/payments/subscriptions/ledger), PDF generate/download/export, account finance endpointleri, sitemap/health spot-check.
+- P0-04 kanıtları: `/app/test_reports/p0_04_legacy_billing_removed_grep.txt` + `/app/test_reports/iteration_88.json` (PASS).
 
 ### Güncel durum
 - P0-04 tam kaldırma ve konsolidasyon kriterleri sağlandı.
@@ -698,3 +691,8 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - Kanıt dosyaları üretildi: `/app/test_reports/p0_05_leaf_template_inventory.json`, `/app/test_reports/p0_05_leaf_template_e2e_matrix.json`, `/app/test_reports/iteration_89.json`.
 - Sonuç: `unmapped_publishable_count=0` (PASS), 12 leaf E2E matrisi `12/12 PASS` (6 emlak + 6 vasıta), negatif API 4xx + UI kontrollü hata doğrulandı (blank screen yok).
 - Kapsam: DE+FR ülke kapsamı ve leaf bazlı adım matrisi (select→schema→draft→validation→preview→submit_publish_request→publish_admin_approve→public detail) tamamlandı.
+
+## 2026-03-02 (P1-01 — Yetki Matrisi Hardening)
+- Envanter: `/app/test_reports/p1_01_permission_inventory.json` (role-action-endpoint matrisi).
+- Uygulanan karar: finans `admin=view only`, `country_admin=view/export`, `super_admin=global view/edit/export`; publish sadece `super_admin + country_admin`.
+- Negatif yetki paketi PASS: `/app/test_reports/iteration_90.json` (backend 39/39 PASS, frontend UI gizleme doğrulandı, 0 role bypass).
