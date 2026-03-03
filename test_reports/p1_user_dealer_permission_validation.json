@@ -1,0 +1,408 @@
+{
+  "task": "P1-Next-01 Permission-Flag Sonrası User/Dealer Akış Validasyonu",
+  "base_url": "https://monolith-modular-5.preview.emergentagent.com",
+  "user_positive": {
+    "account_invoices_list": {
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true,
+      "keys": [
+        "items"
+      ]
+    },
+    "account_invoice_pdf_download": {
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true
+    },
+    "account_payments_list": {
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true,
+      "keys": [
+        "items"
+      ]
+    },
+    "account_subscription_get": {
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true,
+      "keys": [
+        "has_subscription",
+        "id",
+        "status",
+        "current_period_start",
+        "current_period_end",
+        "cancel_at_period_end",
+        "plan"
+      ]
+    },
+    "account_subscription_cancel": {
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true,
+      "keys": [
+        "ok",
+        "status",
+        "cancel_at_period_end"
+      ]
+    },
+    "account_subscription_reactivate": {
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true,
+      "keys": [
+        "ok",
+        "status",
+        "cancel_at_period_end"
+      ]
+    }
+  },
+  "dealer_positive": {
+    "dealer_profile_like_endpoint": {
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true,
+      "keys": [
+        "id",
+        "email",
+        "full_name",
+        "role",
+        "portal_scope",
+        "country_scope",
+        "preferred_language",
+        "is_active"
+      ]
+    },
+    "dealer_store_invoices_list": {
+      "status": 200,
+      "expected": [
+        200
+      ],
+      "ok": true,
+      "keys": [
+        "items"
+      ]
+    },
+    "listing_flow": {
+      "create": 200,
+      "patch": 200,
+      "preview_ready": 200,
+      "submit_review": 200,
+      "create_for_publish": 200,
+      "request_publish": 200,
+      "publish": 200
+    },
+    "listing_flow_ok": true
+  },
+  "negative_authorization": {
+    "user_to_admin_finance_overview_forbidden": {
+      "status": 403,
+      "expected": [
+        403
+      ],
+      "ok": true,
+      "keys": [
+        "detail"
+      ]
+    },
+    "user_to_admin_finance_export_forbidden": {
+      "status": 403,
+      "expected": [
+        403
+      ],
+      "ok": true,
+      "keys": [
+        "detail"
+      ]
+    },
+    "dealer_to_admin_export_forbidden": {
+      "status": 403,
+      "expected": [
+        403
+      ],
+      "ok": true,
+      "keys": [
+        "detail"
+      ]
+    },
+    "dealer_to_admin_publish_forbidden": {
+      "status": 403,
+      "expected": [
+        403
+      ],
+      "ok": true,
+      "keys": [
+        "detail"
+      ]
+    }
+  },
+  "permission_flag_shadow_diff": {
+    "permission_flags_env_enabled": false,
+    "simulated_flag_on": true,
+    "diff_count": 0,
+    "diffs": [],
+    "allowlist": [],
+    "users_evaluated": [
+      {
+        "email": "admin@platform.com",
+        "role": "super_admin",
+        "decisions": [
+          {
+            "domain": "finance",
+            "action": "view",
+            "fallback": true,
+            "flag_on": true,
+            "diff": false
+          },
+          {
+            "domain": "finance",
+            "action": "edit",
+            "fallback": true,
+            "flag_on": true,
+            "diff": false
+          },
+          {
+            "domain": "finance",
+            "action": "publish",
+            "fallback": true,
+            "flag_on": true,
+            "diff": false
+          },
+          {
+            "domain": "finance",
+            "action": "export",
+            "fallback": true,
+            "flag_on": true,
+            "diff": false
+          },
+          {
+            "domain": "finance",
+            "action": "delete",
+            "fallback": true,
+            "flag_on": true,
+            "diff": false
+          },
+          {
+            "domain": "content",
+            "action": "view",
+            "fallback": true,
+            "flag_on": true,
+            "diff": false
+          },
+          {
+            "domain": "content",
+            "action": "edit",
+            "fallback": true,
+            "flag_on": true,
+            "diff": false
+          },
+          {
+            "domain": "content",
+            "action": "publish",
+            "fallback": true,
+            "flag_on": true,
+            "diff": false
+          },
+          {
+            "domain": "content",
+            "action": "export",
+            "fallback": true,
+            "flag_on": true,
+            "diff": false
+          },
+          {
+            "domain": "content",
+            "action": "delete",
+            "fallback": true,
+            "flag_on": true,
+            "diff": false
+          }
+        ]
+      },
+      {
+        "email": "user@platform.com",
+        "role": "individual",
+        "decisions": [
+          {
+            "domain": "finance",
+            "action": "view",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "finance",
+            "action": "edit",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "finance",
+            "action": "publish",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "finance",
+            "action": "export",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "finance",
+            "action": "delete",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "content",
+            "action": "view",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "content",
+            "action": "edit",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "content",
+            "action": "publish",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "content",
+            "action": "export",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "content",
+            "action": "delete",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          }
+        ]
+      },
+      {
+        "email": "dealer@platform.com",
+        "role": "dealer",
+        "decisions": [
+          {
+            "domain": "finance",
+            "action": "view",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "finance",
+            "action": "edit",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "finance",
+            "action": "publish",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "finance",
+            "action": "export",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "finance",
+            "action": "delete",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "content",
+            "action": "view",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "content",
+            "action": "edit",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "content",
+            "action": "publish",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "content",
+            "action": "export",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          },
+          {
+            "domain": "content",
+            "action": "delete",
+            "fallback": false,
+            "flag_on": false,
+            "diff": false
+          }
+        ]
+      }
+    ]
+  },
+  "ui_validation": {},
+  "auth": {
+    "admin": 200,
+    "user": 200,
+    "dealer": 200
+  },
+  "actors": {
+    "user": {
+      "id": "50b7708a-4358-4051-afe7-257366fd8934",
+      "role": "individual"
+    },
+    "dealer": {
+      "id": "cf049c3f-12c7-43fc-96f5-5f71902c6dc9",
+      "role": "dealer"
+    }
+  },
+  "overall_pass": true
+}
