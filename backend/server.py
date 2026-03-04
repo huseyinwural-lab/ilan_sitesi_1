@@ -334,6 +334,7 @@ _failed_login_block_audited: Dict[str, bool] = {}
 
 GOOGLE_MAPS_API_KEY_SETTING_KEY = "integrations.google_maps.api_key"
 GOOGLE_MAPS_COUNTRY_OPTIONS_SETTING_KEY = "listing.address.country_options"
+APPLE_SIGNIN_CREDENTIALS_SETTING_KEY = "integrations.apple_signin.credentials"
 LISTING_CREATE_CONFIG_SETTING_KEY = "listing.create.config"
 LISTING_SITE_DESIGN_SETTING_KEY = "listing.site.design"
 SITE_HEADER_VARIANTS_SETTING_KEY = "site.header.variants.v1"
@@ -13729,6 +13730,22 @@ def _mask_api_key(value: str) -> str:
     return f"{raw[:6]}{'*' * (len(raw) - 10)}{raw[-4:]}"
 
 
+def _parse_apple_signin_credentials(value: Any) -> Dict[str, str]:
+    if not isinstance(value, dict):
+        return {
+            "team_id": "",
+            "client_id": "",
+            "key_id": "",
+            "private_key": "",
+        }
+    return {
+        "team_id": str(value.get("team_id") or "").strip(),
+        "client_id": str(value.get("client_id") or "").strip(),
+        "key_id": str(value.get("key_id") or "").strip(),
+        "private_key": str(value.get("private_key") or "").strip(),
+    }
+
+
 async def _resolve_google_maps_api_key(
     session: AsyncSession,
     *,
@@ -14903,6 +14920,14 @@ class GoogleMapsSettingsPayload(BaseModel):
     api_key: Optional[str] = None
     country_codes: List[str] = Field(default_factory=list)
     clear_api_key: bool = False
+
+
+class AppleSigninSettingsPayload(BaseModel):
+    team_id: Optional[str] = None
+    client_id: Optional[str] = None
+    key_id: Optional[str] = None
+    private_key: Optional[str] = None
+    clear_private_key: bool = False
 
 
 class ListingCreateConfigPayload(BaseModel):
@@ -27599,6 +27624,107 @@ async def admin_save_google_maps_settings(
         "api_key_masked": _mask_api_key(resolved_key or ""),
         "country_codes": normalized_codes,
         "country_options": country_options,
+    }
+
+
+@api_router.get("/admin/system-settings/apple-signin")
+async def admin_get_apple_signin_settings(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+    setting = await _get_system_setting_by_key(session, APPLE_SIGNIN_CREDENTIALS_SETTING_KEY, None)
+    credentials = _parse_apple_signin_credentials(setting.value if setting else None)
+
+    configured = bool(
+        credentials.get("team_id")
+        and credentials.get("client_id")
+        and credentials.get("key_id")
+        and credentials.get("private_key")
+    )
+
+    return {
+        "configured": configured,
+        "team_id_masked": _mask_api_key(credentials.get("team_id") or ""),
+        "client_id_masked": _mask_api_key(credentials.get("client_id") or ""),
+        "key_id_masked": _mask_api_key(credentials.get("key_id") or ""),
+        "private_key_masked": _mask_api_key(credentials.get("private_key") or ""),
+        "setting_id": str(setting.id) if setting else None,
+        "key": APPLE_SIGNIN_CREDENTIALS_SETTING_KEY,
+    }
+
+
+@api_router.post("/admin/system-settings/apple-signin")
+async def admin_save_apple_signin_settings(
+    payload: AppleSigninSettingsPayload,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    await resolve_admin_country_context(request, current_user=current_user, session=session)
+
+    now_ts = datetime.now(timezone.utc)
+    setting = await _get_system_setting_by_key(session, APPLE_SIGNIN_CREDENTIALS_SETTING_KEY, None)
+    existing = _parse_apple_signin_credentials(setting.value if setting else None)
+
+    team_id = str(payload.team_id or "").strip() or existing.get("team_id")
+    client_id = str(payload.client_id or "").strip() or existing.get("client_id")
+    key_id = str(payload.key_id or "").strip() or existing.get("key_id")
+    private_key = "" if payload.clear_private_key else (str(payload.private_key or "").strip() or existing.get("private_key"))
+
+    next_value = {
+        "team_id": team_id,
+        "client_id": client_id,
+        "key_id": key_id,
+        "private_key": private_key,
+    }
+
+    if setting:
+        setting.value = next_value
+        setting.description = setting.description or "Apple Sign-In credentials"
+        setting.updated_at = now_ts
+    else:
+        setting = SystemSetting(
+            key=APPLE_SIGNIN_CREDENTIALS_SETTING_KEY,
+            value=next_value,
+            country_code=None,
+            is_readonly=False,
+            description="Apple Sign-In credentials",
+            created_at=now_ts,
+            updated_at=now_ts,
+        )
+        session.add(setting)
+        await session.flush()
+
+    configured = bool(team_id and client_id and key_id and private_key)
+
+    await _write_audit_log_sql(
+        session=session,
+        action="APPLE_SIGNIN_SETTINGS_UPDATED",
+        actor=current_user,
+        resource_type="system_setting",
+        resource_id=str(setting.id),
+        metadata={
+            "team_id_configured": bool(team_id),
+            "client_id_configured": bool(client_id),
+            "key_id_configured": bool(key_id),
+            "private_key_configured": bool(private_key),
+            "clear_private_key": bool(payload.clear_private_key),
+        },
+        request=request,
+        country_code=None,
+    )
+    await session.commit()
+
+    return {
+        "ok": True,
+        "configured": configured,
+        "team_id_masked": _mask_api_key(team_id or ""),
+        "client_id_masked": _mask_api_key(client_id or ""),
+        "key_id_masked": _mask_api_key(key_id or ""),
+        "private_key_masked": _mask_api_key(private_key or ""),
+        "setting_id": str(setting.id),
     }
 
 

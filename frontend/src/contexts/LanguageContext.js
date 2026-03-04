@@ -64,7 +64,13 @@ const readCurrentPathname = () => {
 
 const resolveRouteNamespaces = (pathname) => {
   const path = String(pathname || '').trim().toLowerCase();
-  if (path === '/login' || path === '/register' || path === '/verify-email') {
+  if (
+    path === '/login'
+    || path === '/register'
+    || path === '/verify-email'
+    || path === '/admin/login'
+    || path === '/backoffice/login'
+  ) {
     return ['common', 'auth'];
   }
   if (path === '/dealer' || path === '/dealer/login' || path.startsWith('/dealer/')) {

@@ -9,6 +9,7 @@ const MODERATION_FREEZE_KEY = 'moderation.freeze.active';
 const WATERMARK_PIPELINE_KEY = 'media.watermark.pipeline';
 const GOOGLE_MAPS_SETTINGS_KEY = 'integrations.google_maps.api_key';
 const GOOGLE_MAPS_COUNTRY_OPTIONS_KEY = 'listing.address.country_options';
+const APPLE_SIGNIN_SETTINGS_KEY = 'integrations.apple_signin.credentials';
 const DEFAULT_MEILI_INDEX_NAME = 'listings_index';
 
 const resolveFreezeValue = (setting) => {
@@ -125,6 +126,23 @@ export default function AdminSystemSettingsPage() {
     country_codes: [],
     custom_country_code: '',
   });
+  const [appleSigninLoading, setAppleSigninLoading] = useState(true);
+  const [appleSigninSaving, setAppleSigninSaving] = useState(false);
+  const [appleSigninError, setAppleSigninError] = useState('');
+  const [appleSigninNotice, setAppleSigninNotice] = useState('');
+  const [appleSigninConfig, setAppleSigninConfig] = useState({
+    configured: false,
+    team_id_masked: '',
+    client_id_masked: '',
+    key_id_masked: '',
+    private_key_masked: '',
+  });
+  const [appleSigninForm, setAppleSigninForm] = useState({
+    team_id: '',
+    client_id: '',
+    key_id: '',
+    private_key: '',
+  });
   const [listingCreateLoading, setListingCreateLoading] = useState(true);
   const [listingCreateSaving, setListingCreateSaving] = useState(false);
   const [listingCreateError, setListingCreateError] = useState('');
@@ -143,6 +161,7 @@ export default function AdminSystemSettingsPage() {
     require_address_line: true,
   });
   const googleMapsCardRef = useRef(null);
+  const appleSigninCardRef = useRef(null);
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
@@ -486,6 +505,95 @@ export default function AdminSystemSettingsPage() {
     }
   };
 
+  const fetchAppleSigninSettings = async () => {
+    setAppleSigninLoading(true);
+    setAppleSigninError('');
+    try {
+      const res = await axios.get(`${API}/admin/system-settings/apple-signin`, { headers: authHeader });
+      const payload = res.data || {};
+      setAppleSigninConfig({
+        configured: Boolean(payload.configured),
+        team_id_masked: payload.team_id_masked || '',
+        client_id_masked: payload.client_id_masked || '',
+        key_id_masked: payload.key_id_masked || '',
+        private_key_masked: payload.private_key_masked || '',
+      });
+    } catch (e) {
+      setAppleSigninError(e.response?.data?.detail || 'Apple Sign-In ayarları alınamadı');
+    } finally {
+      setAppleSigninLoading(false);
+    }
+  };
+
+  const handleSaveAppleSigninSettings = async () => {
+    setAppleSigninSaving(true);
+    setAppleSigninError('');
+    setAppleSigninNotice('');
+    try {
+      const payload = {
+        team_id: String(appleSigninForm.team_id || '').trim() || null,
+        client_id: String(appleSigninForm.client_id || '').trim() || null,
+        key_id: String(appleSigninForm.key_id || '').trim() || null,
+        private_key: String(appleSigninForm.private_key || '').trim() || null,
+      };
+      const res = await axios.post(`${API}/admin/system-settings/apple-signin`, payload, { headers: authHeader });
+      setAppleSigninConfig((prev) => ({
+        ...prev,
+        configured: Boolean(res.data?.configured),
+        team_id_masked: res.data?.team_id_masked || prev.team_id_masked,
+        client_id_masked: res.data?.client_id_masked || prev.client_id_masked,
+        key_id_masked: res.data?.key_id_masked || prev.key_id_masked,
+        private_key_masked: res.data?.private_key_masked || prev.private_key_masked,
+      }));
+      setAppleSigninForm({
+        team_id: '',
+        client_id: '',
+        key_id: '',
+        private_key: '',
+      });
+      setAppleSigninNotice('Apple Sign-In ayarları kaydedildi.');
+    } catch (e) {
+      setAppleSigninError(e.response?.data?.detail || 'Apple Sign-In ayarları kaydedilemedi');
+    } finally {
+      setAppleSigninSaving(false);
+    }
+  };
+
+  const handleClearApplePrivateKey = async () => {
+    setAppleSigninSaving(true);
+    setAppleSigninError('');
+    setAppleSigninNotice('');
+    try {
+      const payload = {
+        team_id: null,
+        client_id: null,
+        key_id: null,
+        private_key: null,
+        clear_private_key: true,
+      };
+      const res = await axios.post(`${API}/admin/system-settings/apple-signin`, payload, { headers: authHeader });
+      setAppleSigninConfig((prev) => ({
+        ...prev,
+        configured: Boolean(res.data?.configured),
+        team_id_masked: res.data?.team_id_masked || '',
+        client_id_masked: res.data?.client_id_masked || '',
+        key_id_masked: res.data?.key_id_masked || '',
+        private_key_masked: res.data?.private_key_masked || '',
+      }));
+      setAppleSigninForm({
+        team_id: '',
+        client_id: '',
+        key_id: '',
+        private_key: '',
+      });
+      setAppleSigninNotice('Apple private key temizlendi.');
+    } catch (e) {
+      setAppleSigninError(e.response?.data?.detail || 'Apple private key temizlenemedi');
+    } finally {
+      setAppleSigninSaving(false);
+    }
+  };
+
   const fetchListingCreateConfig = async () => {
     setListingCreateLoading(true);
     setListingCreateError('');
@@ -715,6 +823,7 @@ export default function AdminSystemSettingsPage() {
     fetchWatermarkPreview();
     fetchWatermarkPerf();
     fetchGoogleMapsSettings();
+    fetchAppleSigninSettings();
     fetchListingCreateConfig();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCountry]);
@@ -724,6 +833,14 @@ export default function AdminSystemSettingsPage() {
     if (params.get('focus') !== 'google-maps') return;
     setTimeout(() => {
       googleMapsCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 250);
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search || '');
+    if (params.get('focus') !== 'apple-signin') return;
+    setTimeout(() => {
+      appleSigninCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 250);
   }, []);
 
@@ -1051,6 +1168,113 @@ export default function AdminSystemSettingsPage() {
             ) : null}
             {googleMapsNotice ? (
               <div className="text-xs text-emerald-700" data-testid="system-settings-google-maps-notice">{googleMapsNotice}</div>
+            ) : null}
+          </>
+        )}
+      </div>
+
+      <div ref={appleSigninCardRef} className="rounded-lg border bg-white p-4 space-y-4" data-testid="system-settings-apple-signin-card">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-lg font-semibold" data-testid="system-settings-apple-signin-title">Apple Sign-In Ayarları</h2>
+            <div className="text-xs text-muted-foreground" data-testid="system-settings-apple-signin-subtitle">
+              Key: {APPLE_SIGNIN_SETTINGS_KEY}
+            </div>
+          </div>
+          <div className={`text-xs font-semibold px-2 py-1 rounded-full ${appleSigninConfig.configured ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`} data-testid="system-settings-apple-signin-status">
+            {appleSigninConfig.configured ? 'Yapılandırıldı' : 'Eksik'}
+          </div>
+        </div>
+
+        {appleSigninLoading ? (
+          <div className="text-xs text-muted-foreground" data-testid="system-settings-apple-signin-loading">Yükleniyor…</div>
+        ) : (
+          <>
+            <div className="grid gap-3 md:grid-cols-3" data-testid="system-settings-apple-signin-input-grid">
+              <label className="space-y-1 text-xs" data-testid="system-settings-apple-signin-team-id-wrap">
+                <span>APPLE_TEAM_ID</span>
+                <input
+                  type="text"
+                  value={appleSigninForm.team_id}
+                  onChange={(e) => setAppleSigninForm((prev) => ({ ...prev, team_id: e.target.value }))}
+                  placeholder={appleSigninConfig.team_id_masked || 'TEAMID123'}
+                  className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                  data-testid="system-settings-apple-signin-team-id-input"
+                />
+              </label>
+              <label className="space-y-1 text-xs" data-testid="system-settings-apple-signin-client-id-wrap">
+                <span>APPLE_CLIENT_ID</span>
+                <input
+                  type="text"
+                  value={appleSigninForm.client_id}
+                  onChange={(e) => setAppleSigninForm((prev) => ({ ...prev, client_id: e.target.value }))}
+                  placeholder={appleSigninConfig.client_id_masked || 'com.example.web'}
+                  className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                  data-testid="system-settings-apple-signin-client-id-input"
+                />
+              </label>
+              <label className="space-y-1 text-xs" data-testid="system-settings-apple-signin-key-id-wrap">
+                <span>APPLE_KEY_ID</span>
+                <input
+                  type="text"
+                  value={appleSigninForm.key_id}
+                  onChange={(e) => setAppleSigninForm((prev) => ({ ...prev, key_id: e.target.value }))}
+                  placeholder={appleSigninConfig.key_id_masked || 'KEYID123'}
+                  className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                  data-testid="system-settings-apple-signin-key-id-input"
+                />
+              </label>
+            </div>
+
+            <label className="space-y-1 text-xs" data-testid="system-settings-apple-signin-private-key-wrap">
+              <span>APPLE_PRIVATE_KEY (.p8)</span>
+              <textarea
+                value={appleSigninForm.private_key}
+                onChange={(e) => setAppleSigninForm((prev) => ({ ...prev, private_key: e.target.value }))}
+                placeholder={appleSigninConfig.private_key_masked || '-----BEGIN PRIVATE KEY-----'}
+                rows={5}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                data-testid="system-settings-apple-signin-private-key-input"
+              />
+              <div className="text-[11px] text-slate-500" data-testid="system-settings-apple-signin-hint">
+                Boş bırakırsanız mevcut değer korunur.
+              </div>
+            </label>
+
+            <div className="flex flex-wrap items-center gap-2" data-testid="system-settings-apple-signin-actions">
+              <button
+                type="button"
+                onClick={handleSaveAppleSigninSettings}
+                disabled={appleSigninSaving}
+                className="h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm"
+                data-testid="system-settings-apple-signin-save"
+              >
+                {appleSigninSaving ? 'Kaydediliyor…' : 'Apple Sign-In Ayarlarını Kaydet'}
+              </button>
+              <button
+                type="button"
+                onClick={handleClearApplePrivateKey}
+                disabled={appleSigninSaving}
+                className="h-9 px-3 rounded-md border border-rose-300 text-rose-700 text-sm"
+                data-testid="system-settings-apple-signin-clear-private-key"
+              >
+                Private Key Temizle
+              </button>
+              <button
+                type="button"
+                onClick={fetchAppleSigninSettings}
+                className="h-9 px-3 rounded-md border text-sm"
+                data-testid="system-settings-apple-signin-refresh"
+              >
+                Yenile
+              </button>
+            </div>
+
+            {appleSigninError ? (
+              <div className="text-xs text-rose-600" data-testid="system-settings-apple-signin-error">{appleSigninError}</div>
+            ) : null}
+            {appleSigninNotice ? (
+              <div className="text-xs text-emerald-700" data-testid="system-settings-apple-signin-notice">{appleSigninNotice}</div>
             ) : null}
           </>
         )}

@@ -1,0 +1,104 @@
+{
+  "summary": "Iteration 116 - Apple Sign-In System Settings feature testing complete. All backend APIs and frontend UI working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_tested": {
+    "apple_signin_get_endpoint": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/system-settings/apple-signin",
+      "description": "Returns Apple Sign-In config with masked team_id, client_id, key_id, private_key values",
+      "response_fields": ["configured", "team_id_masked", "client_id_masked", "key_id_masked", "private_key_masked", "setting_id", "key"]
+    },
+    "apple_signin_post_endpoint": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/system-settings/apple-signin",
+      "description": "Saves Apple Sign-In credentials (team_id, client_id, key_id, private_key)",
+      "verified_scenarios": [
+        "Save all credentials - configured becomes true",
+        "Partial update - preserves existing values",
+        "Clear private key - configured becomes false, private_key_masked becomes empty"
+      ]
+    },
+    "clear_private_key_scenario": {
+      "status": "PASS",
+      "description": "POST with {clear_private_key: true} clears only private_key while preserving team_id, client_id, key_id",
+      "result": {
+        "configured": false,
+        "team_id_masked": "TEST_T***_123",
+        "client_id_masked": "com.te****pple",
+        "key_id_masked": "**********",
+        "private_key_masked": ""
+      }
+    },
+    "apple_signin_ui_card": {
+      "status": "PASS",
+      "description": "Apple Sign-In card renders correctly in Admin System Settings page",
+      "elements_verified": [
+        "data-testid='system-settings-apple-signin-card'",
+        "data-testid='system-settings-apple-signin-title' (Apple Sign-In Ayarları)",
+        "data-testid='system-settings-apple-signin-status' (Yapılandırıldı/Eksik)",
+        "data-testid='system-settings-apple-signin-team-id-input'",
+        "data-testid='system-settings-apple-signin-client-id-input'",
+        "data-testid='system-settings-apple-signin-key-id-input'",
+        "data-testid='system-settings-apple-signin-private-key-input'",
+        "data-testid='system-settings-apple-signin-save'",
+        "data-testid='system-settings-apple-signin-clear-private-key'",
+        "data-testid='system-settings-apple-signin-refresh'"
+      ],
+      "ui_tested": "10/10 elements found"
+    },
+    "apple_signin_save_flow": {
+      "status": "PASS",
+      "description": "UI save flow works correctly",
+      "verified": [
+        "Fill all 4 credential fields",
+        "Click Save button",
+        "Success notice displayed: 'Apple Sign-In ayarları kaydedildi.'",
+        "Status badge changes to 'Yapılandırıldı'"
+      ]
+    },
+    "admin_login_i18n_preload": {
+      "status": "PASS",
+      "description": "Route /admin/login i18n preload works without dash regression",
+      "verified": [
+        "Page loads successfully",
+        "No i18n errors in console",
+        "0 dash characters ('—') indicating missing translations",
+        "Turkish translations displayed correctly (Giriş yap, E-posta, Şifre)",
+        "All login form elements have correct data-testid attributes"
+      ]
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_apple_signin_settings.py",
+    "/app/test_reports/pytest/iteration_116_apple_signin_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_apple_signin_settings.py"
+  ],
+  "success_rate": {
+    "backend": "100% (4/4 endpoints verified via curl)",
+    "frontend": "100% (10/10 UI elements verified, save flow working)"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "mocked_api": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+  "context_for_next_testing_agent": "Apple Sign-In manual credential entry feature is complete. GET/POST endpoints working. UI card rendering correctly with all input fields and buttons. Google integration continues to work as before. Real Apple OAuth will be implemented after credentials are entered.",
+  "rca_of_the_issue": {}
+}
