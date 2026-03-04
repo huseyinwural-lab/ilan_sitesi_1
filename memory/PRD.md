@@ -1192,3 +1192,12 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Dealer TR/DE/FR i18n (overview/reports) PASS
   - language_switcher default-visible fallback PASS
   - CI script/workflow doğrulaması PASS
+
+## 2026-03-04 (Hotfix — İlk girişte misafir header zorunlu)
+
+### Düzeltme
+- `MainLayout` içinde public route header modu **daima `guest`** olacak şekilde sabitlendi.
+- Böylece siteye ilk girişte (ve public sayfalarda) auth header yerine misafir header gösteriliyor.
+
+### Doğrulama
+- Smoke test: ana sayfada `Giriş Yap` + `Üye Ol` görünüyor, auth öğeleri (`İlan Ver`, mesaj/bildirim ikonları) görünmüyor.
