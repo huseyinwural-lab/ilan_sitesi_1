@@ -168,9 +168,11 @@ export default function SiteHeader({ mode, refreshToken }) {
     </div>
   );
 
-  const renderLanguageSelector = () => (
-    <div className="ml-1 flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1" data-testid="site-header-language-selector">
-      {supportedLanguages.map((lang) => {
+  const renderLanguageSelector = () => {
+    const languageOptions = Array.isArray(supportedLanguages) && supportedLanguages.length ? supportedLanguages : ['tr', 'de', 'fr'];
+    return (
+      <div className="ml-1 flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1" data-testid="site-header-language-selector">
+        {languageOptions.map((lang) => {
         const isActive = language === lang;
         return (
           <button
@@ -183,9 +185,10 @@ export default function SiteHeader({ mode, refreshToken }) {
             {lang}
           </button>
         );
-      })}
-    </div>
-  );
+        })}
+      </div>
+    );
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b bg-[var(--header-bg)] text-[var(--header-text)]" data-testid="site-header">
@@ -280,26 +283,28 @@ export default function SiteHeader({ mode, refreshToken }) {
         >
           {!isAuthenticated && (
             <div className="flex items-center gap-2" data-testid="site-header-guest">
-              {dynamicItems.length > 0 ? (
-                renderDynamicItems(guestDynamicItems, 'guest')
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="text-sm font-semibold text-[var(--header-text)]/70"
-                    data-testid="site-header-login"
-                  >
-                    {t('header_login')}
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="rounded-full bg-[var(--button-primary-bg)] px-4 py-2 text-sm font-semibold text-[var(--button-primary-text)] hover:bg-[var(--color-primary-hover)]"
-                    data-testid="site-header-register"
-                  >
-                    {t('header_register')}
-                  </Link>
-                </>
-              )}
+              <div className="flex items-center gap-2" data-testid="site-header-guest-links-wrap">
+                {dynamicItems.length > 0 ? (
+                  renderDynamicItems(guestDynamicItems, 'guest')
+                ) : (
+                  <div className="flex items-center gap-2" data-testid="site-header-guest-default-links">
+                    <Link
+                      to="/login"
+                      className="text-sm font-semibold text-[var(--header-text)]/70"
+                      data-testid="site-header-login"
+                    >
+                      {t('header_login')}
+                    </Link>
+                    <Link
+                      to="/register"
+                      className="rounded-full bg-[var(--button-primary-bg)] px-4 py-2 text-sm font-semibold text-[var(--button-primary-text)] hover:bg-[var(--color-primary-hover)]"
+                      data-testid="site-header-register"
+                    >
+                      {t('header_register')}
+                    </Link>
+                  </div>
+                )}
+              </div>
               {renderLanguageSelector()}
             </div>
           )}
