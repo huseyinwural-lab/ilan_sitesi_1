@@ -7,9 +7,14 @@ import './HomePageRefreshed.css';
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const MODULES = [
-  { key: 'real_estate', label: 'Emlak', accent: '#ffb119' },
-  { key: 'vehicle', label: 'Vasıta', accent: '#ff385c' },
-  { key: 'other', label: 'Diğer', accent: '#2da6ff' },
+  { key: 'real_estate', label: 'Emlak', accent: '#f5a300' },
+  { key: 'vehicle', label: 'Vasıta', accent: '#ff3355' },
+  { key: 'other', label: 'Diğer', accent: '#a55df8' },
+];
+
+const QUICK_LINKS = [
+  { key: 'jobs', label: 'İş İlanları', href: '/search?q=is', accent: '#b02bdd' },
+  { key: 'services', label: 'Ustalar ve Hizmetler', href: '/search?q=hizmet', accent: '#32a6ff' },
 ];
 
 const LANGUAGE_LOCALE_MAP = {
@@ -119,25 +124,6 @@ const fetchJsonWithTimeout = async (url, fallback = {}, timeoutMs = 7000) => {
   }
 };
 
-const CategoryIcon = ({ item, moduleKey }) => {
-  const moduleAccent = MODULES.find((moduleItem) => moduleItem.key === moduleKey)?.accent || '#e2e8f0';
-  if (item.icon_svg) {
-    return (
-      <span
-        className="home-kktc-icon"
-        style={{ background: `${moduleAccent}22` }}
-        dangerouslySetInnerHTML={{ __html: item.icon_svg }}
-        data-testid={`home-kktc-category-icon-svg-${item.id}`}
-      />
-    );
-  }
-  return (
-    <span className="home-kktc-icon" style={{ background: `${moduleAccent}22` }} data-testid={`home-kktc-category-icon-fallback-${item.id}`}>
-      {String(item.name || '?').slice(0, 1).toUpperCase()}
-    </span>
-  );
-};
-
 const ListingCard = ({ item, prefix }) => (
   <Link to={`/ilan/${item.id}`} className="home-kktc-card" data-testid={`${prefix}-card-${item.id}`}>
     <div className="home-kktc-card-image" data-testid={`${prefix}-image-wrap-${item.id}`}>
@@ -160,14 +146,11 @@ const ListingCard = ({ item, prefix }) => (
 export default function HomePageRefreshed() {
   const { language } = useLanguage();
   const [loading, setLoading] = useState(true);
-  const [searchInput, setSearchInput] = useState('');
   const [layout, setLayout] = useState(DEFAULT_LAYOUT);
   const [categoriesByModule, setCategoriesByModule] = useState({});
   const [showcaseItems, setShowcaseItems] = useState([]);
   const [recentItems, setRecentItems] = useState([]);
-  const [urgentTotal, setUrgentTotal] = useState(0);
   const [expandedModules, setExpandedModules] = useState({});
-  const [expandedRoots, setExpandedRoots] = useState({});
   const [activeSlide, setActiveSlide] = useState(0);
 
   const countryCode = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
@@ -190,10 +173,9 @@ export default function HomePageRefreshed() {
       const nextLayout = normalizeLayout(layoutPayload?.config);
       const cardCount = Math.max(4, nextLayout.listing_lx_limit || 8);
 
-      const [showcasePayload, recentPayload, urgentPayload] = await Promise.all([
+      const [showcasePayload, recentPayload] = await Promise.all([
         fetchJsonWithTimeout(`${API}/v2/search?country=${countryCode}&size=${cardCount}&limit=${cardCount}&page=1&doping_type=showcase&sort=date_desc&${cacheBuster}`, {}),
         fetchJsonWithTimeout(`${API}/v2/search?country=${countryCode}&size=${cardCount}&limit=${cardCount}&page=1&sort=date_desc&${cacheBuster}`, {}),
-        fetchJsonWithTimeout(`${API}/v2/search?country=${countryCode}&size=1&limit=1&page=1&doping_type=urgent&${cacheBuster}`, {}),
       ]);
 
       if (!active) return;
@@ -208,7 +190,6 @@ export default function HomePageRefreshed() {
       setCategoriesByModule(categoryMap);
       setShowcaseItems(Array.isArray(showcasePayload?.items) ? showcasePayload.items : []);
       setRecentItems(Array.isArray(recentPayload?.items) ? recentPayload.items : []);
-      setUrgentTotal(Number(urgentPayload?.pagination?.total ?? urgentPayload?.total ?? 0));
       setLoading(false);
     };
 
@@ -238,10 +219,8 @@ export default function HomePageRefreshed() {
   }, [layout.module_order, layout.module_order_mode, language]);
 
   const moduleGroups = useMemo(() => {
-    const query = searchInput.trim().toLowerCase();
-
     return moduleOrder.map((moduleKey) => {
-      const moduleLabel = MODULES.find((item) => item.key === moduleKey)?.label || moduleKey;
+      const moduleMeta = MODULES.find((item) => item.key === moduleKey) || { key: moduleKey, label: moduleKey, accent: '#64748b' };
       const categories = categoriesByModule[moduleKey] || [];
       const byParent = new Map();
       categories.forEach((item) => {
@@ -253,7 +232,7 @@ export default function HomePageRefreshed() {
       const orderList = Array.isArray(layout.module_l1_order?.[moduleKey]) ? layout.module_l1_order[moduleKey] : [];
       const orderIndex = new Map(orderList.map((item, index) => [item, index]));
       const rootMode = layout.module_l1_order_mode?.[moduleKey] || 'alphabetical';
-      const roots = (byParent.get('root') || [])
+      const roots = [...(byParent.get('root') || [])]
         .sort((a, b) => {
           if (rootMode === 'manual') {
             const ai = orderIndex.get(a.id) ?? orderIndex.get(a.slug) ?? Number(a.sort_order || 9999);
@@ -262,41 +241,38 @@ export default function HomePageRefreshed() {
           }
           return normalizeLabel(a, language).localeCompare(normalizeLabel(b, language), LANGUAGE_LOCALE_MAP[language] || 'tr-TR');
         })
-        .map((root) => {
-          const rootName = normalizeLabel(root, language);
-          const children = (byParent.get(root.id) || [])
-            .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
-            .map((child) => ({
-              id: child.id,
-              name: normalizeLabel(child, language),
-              listing_count: Number(child.listing_count || 0),
-              slug: child.slug || child.id,
-            }))
-            .filter((child) => !query || child.name.toLowerCase().includes(query) || rootName.toLowerCase().includes(query));
+      const items = [];
+      roots.forEach((root) => {
+        const children = [...(byParent.get(root.id) || [])]
+          .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+          .map((child) => ({
+            id: child.id,
+            name: normalizeLabel(child, language),
+            slug: child.slug || child.id,
+          }));
 
-          if (query && !rootName.toLowerCase().includes(query) && children.length === 0) return null;
+        if (children.length > 0) {
+          children.forEach((child) => items.push(child));
+          return;
+        }
 
-          return {
-            id: root.id,
-            name: rootName,
-            slug: root.slug || root.id,
-            icon_svg: root.icon_svg || null,
-            listing_count: Number(root.listing_count || 0),
-            children,
-          };
-        })
-        .filter(Boolean);
+        items.push({
+          id: root.id,
+          name: normalizeLabel(root, language),
+          slug: root.slug || root.id,
+        });
+      });
 
       return {
         module_key: moduleKey,
-        module_label: moduleLabel,
-        roots,
+        module_label: moduleMeta.label,
+        module_accent: moduleMeta.accent,
+        items,
       };
     });
-  }, [categoriesByModule, language, layout.module_l1_order, layout.module_l1_order_mode, moduleOrder, searchInput]);
+  }, [categoriesByModule, language, layout.module_l1_order, layout.module_l1_order_mode, moduleOrder]);
 
-  const moduleRootLimit = clamp(layout.l1_initial_limit, 1, 20, 6);
-  const childLimit = 7;
+  const moduleItemLimit = clamp((layout.l1_initial_limit || 6) * 2, 6, 20, 10);
   const cardColumnCount = clamp(layout.listing_module_grid_columns, 2, 6, 4);
 
   return (
@@ -307,24 +283,22 @@ export default function HomePageRefreshed() {
 
       <div className="home-kktc-main" style={{ '--home-left-width': `${layout.column_width}px` }} data-testid="home-kktc-main">
         <aside className="home-kktc-categories" data-testid="home-kktc-category-column">
-          <div className="home-kktc-categories-header" data-testid="home-kktc-categories-title">Tüm Kategoriler</div>
-
-          <Link to="/search?doping=urgent" className="home-kktc-urgent-link" data-testid="home-kktc-urgent-link">
-            <div className="flex items-center gap-2">
-              <span className="home-kktc-urgent-dot" aria-hidden="true" />
-              <span className="text-xs font-extrabold text-red-700" data-testid="home-kktc-urgent-label">Acil İlanlar</span>
-            </div>
-            <span className="text-xs font-bold text-red-700" data-testid="home-kktc-urgent-count">{formatCount(urgentTotal)}</span>
-          </Link>
-
-          <div className="home-kktc-search-wrap" data-testid="home-kktc-category-search-wrap">
-            <input
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              className="home-kktc-search"
-              placeholder="Kategori ara..."
-              data-testid="home-kktc-category-search-input"
-            />
+          <div className="home-kktc-shortcuts" data-testid="home-kktc-shortcuts">
+            {QUICK_LINKS.map((linkItem) => (
+              <Link
+                key={linkItem.key}
+                to={linkItem.href}
+                className="home-kktc-shortcut-link"
+                data-testid={`home-kktc-shortcut-link-${linkItem.key}`}
+              >
+                <span
+                  className="home-kktc-shortcut-icon"
+                  style={{ '--shortcut-color': linkItem.accent }}
+                  data-testid={`home-kktc-shortcut-icon-${linkItem.key}`}
+                />
+                <span className="home-kktc-shortcut-label" data-testid={`home-kktc-shortcut-label-${linkItem.key}`}>{linkItem.label}</span>
+              </Link>
+            ))}
           </div>
 
           <div className="home-kktc-modules" data-testid="home-kktc-module-list">
@@ -332,69 +306,39 @@ export default function HomePageRefreshed() {
               <div className="home-kktc-empty" data-testid="home-kktc-categories-loading">Kategoriler yükleniyor...</div>
             ) : moduleGroups.map((moduleGroup) => {
               const expandedModule = Boolean(expandedModules[moduleGroup.module_key]);
-              const visibleRoots = expandedModule ? moduleGroup.roots : moduleGroup.roots.slice(0, moduleRootLimit);
-              const moduleAccent = MODULES.find((item) => item.key === moduleGroup.module_key)?.accent || '#cbd5e1';
+              const visibleItems = expandedModule ? moduleGroup.items : moduleGroup.items.slice(0, moduleItemLimit);
 
               return (
                 <section key={moduleGroup.module_key} className="home-kktc-module" data-testid={`home-kktc-module-${moduleGroup.module_key}`}>
-                  <div className="home-kktc-module-title" style={{ '--module-accent': moduleAccent }} data-testid={`home-kktc-module-title-${moduleGroup.module_key}`}>
+                  <div className="home-kktc-module-title" style={{ '--module-accent': moduleGroup.module_accent }} data-testid={`home-kktc-module-title-${moduleGroup.module_key}`}>
                     <div className="home-kktc-module-title-main" data-testid={`home-kktc-module-title-main-${moduleGroup.module_key}`}>
                       <span className="home-kktc-module-marker" data-testid={`home-kktc-module-marker-${moduleGroup.module_key}`} aria-hidden="true" />
                       <span>{moduleGroup.module_label}</span>
                     </div>
-                    <span className="home-kktc-module-total" data-testid={`home-kktc-module-total-${moduleGroup.module_key}`}>{formatCount(moduleGroup.roots.length)}</span>
                   </div>
 
-                  {visibleRoots.map((root) => {
-                    const expandedRoot = Boolean(expandedRoots[root.id]);
-                    const visibleChildren = expandedRoot ? root.children : root.children.slice(0, childLimit);
-                    return (
-                      <div className="home-kktc-root-row" key={root.id} data-testid={`home-kktc-root-row-${root.id}`}>
-                        <Link to={`/search?category=${encodeURIComponent(root.slug)}`} className="home-kktc-root-link" data-testid={`home-kktc-root-link-${root.id}`}>
-                          <CategoryIcon item={root} moduleKey={moduleGroup.module_key} />
-                          <span className="home-kktc-root-name" data-testid={`home-kktc-root-name-${root.id}`}>{root.name}</span>
-                          <span className="home-kktc-count" data-testid={`home-kktc-root-count-${root.id}`}>({formatCount(root.listing_count)})</span>
-                        </Link>
+                  <div className="home-kktc-plain-list" data-testid={`home-kktc-plain-list-${moduleGroup.module_key}`}>
+                    {visibleItems.map((item) => (
+                      <Link
+                        key={item.id}
+                        to={`/search?category=${encodeURIComponent(item.slug)}`}
+                        className="home-kktc-plain-item"
+                        data-testid={`home-kktc-plain-item-${item.id}`}
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
 
-                        {visibleChildren.length > 0 ? (
-                          <div className="home-kktc-child-list" data-testid={`home-kktc-child-list-${root.id}`}>
-                            {visibleChildren.map((child) => (
-                              <Link
-                                key={child.id}
-                                to={`/search?category=${encodeURIComponent(child.slug)}`}
-                                className="home-kktc-child-link"
-                                data-testid={`home-kktc-child-link-${child.id}`}
-                              >
-                                <span className="home-kktc-child-name" data-testid={`home-kktc-child-name-${child.id}`}>{child.name}</span>
-                                <span className="home-kktc-child-count" data-testid={`home-kktc-child-count-${child.id}`}>{formatCount(child.listing_count)}</span>
-                              </Link>
-                            ))}
-                          </div>
-                        ) : null}
-
-                        {root.children.length > childLimit ? (
-                          <button
-                            type="button"
-                            className="home-kktc-toggle-btn"
-                            onClick={() => setExpandedRoots((prev) => ({ ...prev, [root.id]: !expandedRoot }))}
-                            data-testid={`home-kktc-root-toggle-${root.id}`}
-                          >
-                            {expandedRoot ? 'Daha az göster' : 'Tümünü göster'}
-                          </button>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-
-                  {moduleGroup.roots.length > moduleRootLimit ? (
-                    <div className="px-2 pb-2">
+                  {moduleGroup.items.length > moduleItemLimit ? (
+                    <div className="home-kktc-module-toggle-wrap" data-testid={`home-kktc-module-toggle-wrap-${moduleGroup.module_key}`}>
                       <button
                         type="button"
-                        className="home-kktc-toggle-btn"
+                        className="home-kktc-module-toggle"
                         onClick={() => setExpandedModules((prev) => ({ ...prev, [moduleGroup.module_key]: !expandedModule }))}
                         data-testid={`home-kktc-module-toggle-${moduleGroup.module_key}`}
                       >
-                        {expandedModule ? 'Daha az göster' : 'Devamını Gör'}
+                        {expandedModule ? 'Daha Az Göster' : 'Tümünü Göster'}
                       </button>
                     </div>
                   ) : null}
