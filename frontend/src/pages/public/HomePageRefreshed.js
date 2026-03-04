@@ -337,9 +337,12 @@ export default function HomePageRefreshed() {
 
               return (
                 <section key={moduleGroup.module_key} className="home-kktc-module" data-testid={`home-kktc-module-${moduleGroup.module_key}`}>
-                  <div className="home-kktc-module-title" style={{ background: `${moduleAccent}1f` }} data-testid={`home-kktc-module-title-${moduleGroup.module_key}`}>
-                    <span>{moduleGroup.module_label}</span>
-                    <span>{formatCount(moduleGroup.roots.length)}</span>
+                  <div className="home-kktc-module-title" style={{ '--module-accent': moduleAccent }} data-testid={`home-kktc-module-title-${moduleGroup.module_key}`}>
+                    <div className="home-kktc-module-title-main" data-testid={`home-kktc-module-title-main-${moduleGroup.module_key}`}>
+                      <span className="home-kktc-module-marker" data-testid={`home-kktc-module-marker-${moduleGroup.module_key}`} aria-hidden="true" />
+                      <span>{moduleGroup.module_label}</span>
+                    </div>
+                    <span className="home-kktc-module-total" data-testid={`home-kktc-module-total-${moduleGroup.module_key}`}>{formatCount(moduleGroup.roots.length)}</span>
                   </div>
 
                   {visibleRoots.map((root) => {
