@@ -1132,3 +1132,39 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - login TR/DE/FR PASS
   - dealer language switcher default-visible PASS
   - dealer.menu TR/DE/FR PASS
+
+## 2026-03-04 (Common Namespace + Kademeli Legacy Locale Deprecation + Dealer TR kalıntıları temizliği)
+
+### Tamamlananlar
+- Namespace genişletme (v3):
+  - `locales/{tr,de,fr}/common.json` eklendi.
+  - `LanguageContext` route preload haritası güncellendi:
+    - `/login`, `/register`, `/verify-email` → `common + auth`
+    - `/dealer/login`, `/dealer/*` → `common + dealer`
+    - `/admin/*`, `/backoffice/*` → `common + admin`
+    - diğer route’lar → `common`
+- `t()` namespace çözümü güncellendi:
+  - `auth.* → auth`, `dealer.* → dealer`, `admin.* → admin`, diğerleri `common`
+  - missing key davranışı:
+    - production: güvenli fallback (`—`) + structured log (`i18n_missing_key`)
+    - development/staging: `console.warn`; `REACT_APP_I18N_STRICT_MODE=true` ise throw.
+
+- Legacy monolit locale dosyaları (kademeli kaldırma):
+  - `tr.json`, `de.json`, `fr.json` dosyaları **silinmedi**, deprecate/read-only olarak bırakıldı.
+  - `/app/frontend/scripts/check-legacy-locales-deprecated.mjs` eklendi:
+    - dosya hash read-only kontrolü
+    - kodda legacy locale import referansı kontrolü
+  - `/app/frontend/src/locales/DEPRECATION.md` eklendi.
+
+- Kullanıcının belirttiği DE/FR’de TR kalan alanlar temizlendi:
+  - `DealerOverview.jsx` ve `DealerReports.jsx` metinleri `dealer.overview.*` / `dealer.reports.*` key’lerine taşındı.
+  - `dealer.json` (DE/FR/TR) için ilgili çeviri matrisi genişletildi.
+  - `DealerLayoutV2` row1 hızlı aksiyon label’ları menü key’leri üzerinden lokalize edildi.
+  - `DealerLayout` + `DealerLayoutV2` için `language_switcher` config block yoksa default visible kuralı ve info log davranışı korundu.
+
+### Test Sonucu
+- `testing_agent` PASS: `/app/test_reports/iteration_110.json`
+  - Namespace split + route preload kuralları PASS
+  - Dealer language switcher default-visible PASS
+  - Dealer Overview/Reports DE/FR’de TR kalıntı yok PASS
+  - Legacy locale deprecate check PASS
