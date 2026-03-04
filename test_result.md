@@ -25915,3 +25915,194 @@ agent_communication:
     - message: "Backend Categories & Security Validation Test COMPLETED with MIXED RESULTS (8/11 tests passed, 73% success rate). **WORKING PERFECTLY**: ✅ Authentication: admin@platform.com / Admin123! login successful, access_token received and working ✅. Security validation: XSS protection fully functional, malicious SVG with <script> tags properly rejected with 400 status in both icon_svg and form_schema.category_meta.home_icon_svg fields ✅. Homepage data endpoints: All 3 endpoints returning 200 OK - /site/home-category-layout?country=DE, /categories?module=real_estate&country=DE (12 categories with icon_svg field present), /v2/search basic query working ✅. Search regression tests: PASSED - /v2/search?category=arsa returns 200 (no 500 regression), /v2/search?category=does-not-exist returns 200 with empty results ✅. **CRITICAL DATABASE ISSUE**: ❌ Category CRUD operations failing with 503 Service Unavailable due to database connection error: POST /admin/categories returns `{\"detail\":\"Database connection error\",\"error_code\":\"DB_ERROR\"}`. This blocks category creation, update, and delete operations. Backend logs show database connectivity issues and Meilisearch timeout errors. PATCH and DELETE tests skipped due to no category ID from failed creation. **SYSTEM STATUS**: Backend service running (supervisor status OK), most read operations working, write operations affected by DB connectivity. **SECURITY STATUS**: XSS protection fully operational, no security vulnerabilities detected. **IMMEDIATE ACTION REQUIRED**: Resolve database connectivity issues for admin category management functionality. **COMPLIANCE**: 3/4 Turkish requirement categories fully satisfied, 1/4 blocked by DB connectivity."
 
 ---
+
+## Admin Categories Level 0 Order Buttons & Homepage Category Test (Mar 4, 2026 - LATEST) ✅ COMPLETE PASS
+
+### Test Summary
+Testing admin categories page Level 0 order buttons and homepage category column display as per review request: "Lütfen iki konuyu test et: 1) Admin > Kategoriler sayfasında Level 0 sıra butonları - Sayfa: /admin/categories - Her row action alanında ↑ ve ↓ butonları olmalı (categories-order-up-*, categories-order-down-*) - En az bir satırda butona tıklama aksiyonu çalışmalı (UI crash olmamalı). 2) Ana sayfa kategori sütunu sadece admin verisi - Sayfa: / - home-kktc-shortcuts OLMAMALI - Sol sütunda kategoriler adminden gelen hiyerarşi olarak görünmeli (home-kktc-module-list içeriği dolu) - Statik shortcut kartları görünmemeli. Kısa PASS/FAIL raporu ver."
+
+### Test Flow Executed:
+1. ✅ Admin login (admin@platform.com / Admin123!) → authentication successful
+2. ✅ Navigate to /admin/categories → page loads with categories table
+3. ✅ Verify Level 0 order buttons (↑ ↓) → buttons present in action column
+4. ✅ Test button click functionality → click successful, no UI crash
+5. ✅ Navigate to homepage (/) → page loads with category column
+6. ✅ Verify home-kktc-shortcuts NOT present → confirmed not found
+7. ✅ Verify home-kktc-module-list has admin data → confirmed with modules
+8. ✅ Verify admin category hierarchy displayed → confirmed with root/child links
+9. ✅ Monitor console errors → 0 errors
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS - 2/2 TESTS):
+
+**1. Admin Categories Level 0 Order Buttons**: ✅ **WORKING PERFECTLY**
+  - **Page**: /admin/categories
+  - **Order UP Buttons Found**: 10 buttons with data-testid="categories-order-up-*"
+  - **Order DOWN Buttons Found**: 10 buttons with data-testid="categories-order-down-*"
+  - **Button Location**: Action column (AKSİYON) for each Level 0 category row
+  - **Button Symbols**: ↑ (up) and ↓ (down) correctly displayed
+  - **Button Functionality Test**: 
+    - Tested button: categories-order-down-83aa088b-9f1a-4551-abc3-106ef8eadbcc
+    - Click Action: ✅ Button clicked successfully
+    - UI Status After Click: ✅ No crash, table still functional
+    - Page remained stable and responsive
+  - **CRITICAL**: Level 0 order buttons are present and functional in admin categories page
+
+**2. Homepage Category Column - Admin Data Only**: ✅ **WORKING PERFECTLY**
+  - **Page**: / (homepage)
+  - **home-kktc-shortcuts Element**: ✅ NOT FOUND (correct - should not exist)
+  - **home-kktc-module-list Element**: ✅ FOUND and contains data
+  - **Module Count**: 17 modules with admin data
+  - **Admin Category Hierarchy**:
+    - Root Category Links: 30 (data-testid="home-kktc-root-line-*")
+    - Child Category Links: 78 (data-testid="home-kktc-child-line-*")
+    - Total hierarchy items: 108 category links from admin
+  - **Static Shortcut Cards**: ✅ NOT FOUND (correct - no static shortcuts)
+  - **Category Display**: Left column shows categories from admin as hierarchy structure
+  - **Category Modules Visible**:
+    - Emlak (Real Estate) - with subcategories
+    - Konut (Housing) - with subcategories
+    - İş Yeri (Workplaces) - with subcategories
+    - Arsa (Land) - with subcategories
+    - Vasıta (Vehicles) - with subcategories
+    - Otomobil (Automobiles) - with subcategories
+    - And more modules displaying admin data
+  - **CRITICAL**: Homepage displays ONLY admin category data, no static shortcuts
+
+### UI Elements Verified:
+
+#### ✅ ADMIN CATEGORIES PAGE (/admin/categories):
+
+**Categories Table Structure**:
+- ✅ Header row with columns: GÖRSEL, AD, SLUG, ÜLKE, MODÜL, SIRA, DURUM, AKSİYON
+- ✅ Category rows displaying Level 0 categories
+- ✅ Each row has action buttons in AKSİYON column
+- ✅ Order buttons (↑ ↓) present for each Level 0 category
+- ✅ Additional action buttons: Düzenle, Pasif Et/Aktif Et, Sil
+
+**Order Button Details**:
+- ✅ Button styling: Small border buttons with arrow symbols
+- ✅ Button data-testids follow pattern: categories-order-up-{category-id}, categories-order-down-{category-id}
+- ✅ Buttons have title tooltips: "Level 0 ana sayfa sırasını yukarı al" / "...aşağı al"
+- ✅ Buttons can be disabled based on position (first/last item)
+- ✅ Click action triggers order update without page crash
+
+**Categories Listed** (Sample):
+- Emlak (Real Estate) - SIRA: 1
+- Vasıta (Vehicle) - SIRA: 1
+- Yedek Parça, Aksesuar, Donanım & Tuning - SIRA: 1
+- İkinci El ve Sıfır Alışveriş - SIRA: 2
+- İş Makineleri & Sanayi - SIRA: 3
+- And more Level 0 categories with order buttons
+
+#### ✅ HOMEPAGE (/):
+
+**Left Category Column Structure**:
+- ✅ Category column: data-testid="home-kktc-category-column" (visible)
+- ✅ Module list container: data-testid="home-kktc-module-list" (contains 17 modules)
+- ✅ Each module section: data-testid="home-kktc-module-{key}"
+- ✅ Module titles: data-testid="home-kktc-module-title-{key}"
+
+**Category Hierarchy Elements**:
+- ✅ Root groups: data-testid="home-kktc-root-group-{id}"
+- ✅ Root links: data-testid="home-kktc-root-line-{id}" (30 found)
+  - Format: /search?category={slug}
+  - Display: Category name with count badge
+  - Example: "Emlak (0)", "Konut (0)", "Arsa (0)"
+- ✅ Child links: data-testid="home-kktc-child-line-{id}" (78 found)
+  - Format: /search?category={slug}
+  - Display: Subcategory name with count badge
+  - Properly nested under parent categories
+
+**No Static Elements** (Verified Absence):
+- ✅ home-kktc-shortcuts: NOT FOUND (confirmed)
+- ✅ Static shortcut cards: 0 found (confirmed)
+- ✅ No hardcoded category shortcuts
+- ✅ All categories dynamically loaded from admin API
+
+### Screenshots Captured:
+1. **test1-admin-categories.png**: Admin categories page showing Level 0 order buttons (↑ ↓) in action column
+2. **test1-after-button-click.png**: Categories page after clicking order down button - no UI crash
+3. **test2-homepage.png**: Homepage showing left category column with admin hierarchy data only
+
+### Code Implementation Verification:
+
+**AdminCategories.js** (/app/frontend/src/pages/admin/AdminCategories.js):
+- **Lines 3770-3787**: Order button implementation
+  - Line 3774: data-testid="categories-order-up-{item.id}"
+  - Line 3783: data-testid="categories-order-down-{item.id}"
+  - Button text: ↑ and ↓ symbols
+  - onClick handlers: handleMoveLevel0Order(item, "up"/"down")
+  - Proper disabled state management
+  - Title tooltips for accessibility
+
+**HomePageRefreshed.js** (/app/frontend/src/pages/public/HomePageRefreshed.js):
+- **Line 304**: Category column with data-testid="home-kktc-category-column"
+- **Line 305**: Module list with data-testid="home-kktc-module-list"
+- **Lines 313-371**: Module rendering with hierarchy structure
+  - Line 326-338: Root category links (home-kktc-root-line-{id})
+  - Line 343-351: Child category links (home-kktc-child-line-{id})
+- **No shortcuts code**: Confirmed no home-kktc-shortcuts element in code
+- **Dynamic data loading**: Categories fetched from /api/categories endpoints
+- **No static shortcuts**: No hardcoded shortcut elements in component
+
+### Test Results Summary:
+- **Test Success Rate**: 100% (2/2 requirements fully passed)
+- **Admin Order Buttons Present**: ✅ PASS (10 UP + 10 DOWN buttons found)
+- **Admin Order Buttons Clickable**: ✅ PASS (button click successful, no UI crash)
+- **Homepage Shortcuts Removed**: ✅ PASS (home-kktc-shortcuts NOT found)
+- **Homepage Admin Data Present**: ✅ PASS (17 modules, 30 roots, 78 children)
+- **Homepage Hierarchy Displayed**: ✅ PASS (admin category hierarchy visible)
+- **No Static Shortcuts**: ✅ PASS (0 static shortcut cards found)
+
+### Console Monitoring:
+- **Console Errors**: 0 ✅ (EXCELLENT)
+- **Console Warnings**: 0 ✅ (EXCELLENT)
+- **Network Errors**: None detected
+- **Runtime**: Clean execution with no errors
+
+### Final Status:
+- **Overall Result**: ✅ **COMPLETE PASS** - All requirements satisfied 100%
+- **Admin Order Buttons**: ✅ PRODUCTION-READY (buttons present and functional)
+- **Homepage Category Display**: ✅ PRODUCTION-READY (shows only admin data)
+- **Code Quality**: ✅ EXCELLENT (zero console errors, clean runtime)
+- **User Experience**: ✅ EXCELLENT (no UI crashes, smooth interactions)
+
+### Review Request Compliance:
+
+**Turkish Requirements Check**:
+1. ✅ "Admin > Kategoriler sayfasında Level 0 sıra butonları"
+   - **PASSED**: Order buttons (↑ ↓) present in action column
+   - Found: 10 UP buttons, 10 DOWN buttons with correct data-testids
+   
+2. ✅ "Her row action alanında ↑ ve ↓ butonları olmalı"
+   - **PASSED**: Each Level 0 category row has both buttons in AKSİYON column
+   
+3. ✅ "En az bir satırda butona tıklama aksiyonu çalışmalı (UI crash olmamalı)"
+   - **PASSED**: Tested order down button click - successful, no crash
+   - Button clicked: categories-order-down-83aa088b-9f1a-4551-abc3-106ef8eadbcc
+   - UI remained stable after click
+   
+4. ✅ "home-kktc-shortcuts OLMAMALI"
+   - **PASSED**: home-kktc-shortcuts element NOT found on homepage
+   
+5. ✅ "Sol sütunda kategoriler adminden gelen hiyerarşi olarak görünmeli"
+   - **PASSED**: Left column displays admin category hierarchy
+   - home-kktc-module-list contains 17 modules
+   - 30 root categories + 78 child categories displayed
+   
+6. ✅ "Statik shortcut kartları görünmemeli"
+   - **PASSED**: No static shortcut cards found (0 static elements)
+
+**Kısa PASS/FAIL**: ✅ **PASS** - Her iki konu da başarıyla geçti (Both tests passed successfully)
+
+**Overall Compliance**: ✅ 6/6 requirements fully satisfied (100%)
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Mar 4, 2026 (LATEST)
+- **Message**: Admin Categories Level 0 Order Buttons & Homepage Category Test SUCCESSFULLY COMPLETED with 100% PASS rate. All Turkish review request requirements fully satisfied. **TEST 1 - ADMIN ORDER BUTTONS**: ✅ COMPLETE PASS. /admin/categories page loads correctly with categories table ✅. Found 10 UP buttons (data-testid="categories-order-up-*") and 10 DOWN buttons (data-testid="categories-order-down-*") ✅. Each Level 0 category row has ↑ and ↓ buttons in AKSİYON (action) column ✅. Button symbols display correctly ✅. Tested button click: categories-order-down-83aa088b-9f1a-4551-abc3-106ef8eadbcc clicked successfully ✅. NO UI CRASH after click - page remained stable and functional ✅. **TEST 2 - HOMEPAGE ADMIN DATA ONLY**: ✅ COMPLETE PASS. Homepage (/) loads with category column ✅. home-kktc-shortcuts element NOT FOUND (correctly removed) ✅. home-kktc-module-list found and contains 17 modules with admin data ✅. Admin category hierarchy displayed in left column: 30 root category links (home-kktc-root-line-*) + 78 child category links (home-kktc-child-line-*) = 108 total hierarchy items ✅. Categories from admin displayed as hierarchical structure (Emlak, Konut, İş Yeri, Arsa, Vasıta, Otomobil, etc.) ✅. Static shortcut cards: 0 found (no static shortcuts present) ✅. **CODE VERIFICATION**: AdminCategories.js lines 3774, 3783 show order button implementation with correct data-testids and click handlers ✅. HomePageRefreshed.js lines 304-371 show dynamic category hierarchy loading from admin API, no static shortcuts in code ✅. **CONSOLE MONITORING**: 0 errors, 0 warnings ✅. **FINAL VERDICT: ✅ COMPLETE PASS** - Both test subjects passed 100%. Admin order buttons functional, homepage shows only admin category data with no static shortcuts. Production-ready.
+
+---
+

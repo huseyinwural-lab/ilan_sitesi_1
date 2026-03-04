@@ -12,16 +12,13 @@ const MODULES = [
   { key: 'other', label: 'Diğer', accent: '#a55df8' },
 ];
 
-const QUICK_LINKS = [
-  { key: 'jobs', label: 'İş İlanları', href: '/search?q=is' },
-  { key: 'services', label: 'Ustalar ve Hizmetler', href: '/search?q=hizmet' },
-];
-
 const LANGUAGE_LOCALE_MAP = {
   tr: 'tr-TR',
   de: 'de-DE',
   fr: 'fr-FR',
 };
+
+const normalizeCompare = (value) => String(value || '').trim().toLocaleLowerCase('tr-TR');
 
 const SLIDES = [
   {
@@ -257,7 +254,14 @@ export default function HomePageRefreshed() {
           return normalizeLabel(a, language).localeCompare(normalizeLabel(b, language), LANGUAGE_LOCALE_MAP[language] || 'tr-TR');
         });
 
-      const rootRows = roots.map((root) => {
+      const moduleLabelKey = normalizeCompare(moduleMeta.label);
+      const duplicateModuleRoot = roots.find((root) => normalizeCompare(normalizeLabel(root, language)) === moduleLabelKey);
+      const nonDuplicateRoots = roots.filter((root) => normalizeCompare(normalizeLabel(root, language)) !== moduleLabelKey);
+      const promotedRoots = duplicateModuleRoot ? [...(byParent.get(duplicateModuleRoot.id) || [])] : [];
+      const effectiveRoots = [...promotedRoots, ...nonDuplicateRoots]
+        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
+
+      const rootRows = effectiveRoots.map((root) => {
         const children = [...(byParent.get(root.id) || [])]
           .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
           .map((child) => ({
@@ -298,19 +302,6 @@ export default function HomePageRefreshed() {
 
       <div className="home-kktc-main" style={{ '--home-left-width': `${layout.column_width}px` }} data-testid="home-kktc-main">
         <aside className="home-kktc-categories" data-testid="home-kktc-category-column">
-          <div className="home-kktc-shortcuts" data-testid="home-kktc-shortcuts">
-            {QUICK_LINKS.map((linkItem) => (
-              <Link
-                key={linkItem.key}
-                to={linkItem.href}
-                className="home-kktc-shortcut-link"
-                data-testid={`home-kktc-shortcut-link-${linkItem.key}`}
-              >
-                <span className="home-kktc-shortcut-label" data-testid={`home-kktc-shortcut-label-${linkItem.key}`}>{linkItem.label}</span>
-              </Link>
-            ))}
-          </div>
-
           <div className="home-kktc-modules" data-testid="home-kktc-module-list">
             {loading ? (
               <div className="home-kktc-empty" data-testid="home-kktc-categories-loading">Kategoriler yükleniyor...</div>

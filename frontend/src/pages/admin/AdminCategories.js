@@ -438,6 +438,7 @@ const AdminCategories = () => {
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [versionsError, setVersionsError] = useState("");
   const [seedLoading, setSeedLoading] = useState(false);
+  const [level0OrderMovingId, setLevel0OrderMovingId] = useState("");
   const [selectedVersions, setSelectedVersions] = useState([]);
   const [versionDetails, setVersionDetails] = useState({});
   const [lastSavedAt, setLastSavedAt] = useState("");
@@ -2478,6 +2479,74 @@ const AdminCategories = () => {
     fetchItems();
   };
 
+  const handleMoveLevel0Order = async (item, direction) => {
+    if (!item || item.parent_id || level0OrderMovingId) return;
+
+    const siblingRows = items
+      .filter(
+        (row) => !row.parent_id
+          && row.module === item.module
+          && String(row.country_code || "") === String(item.country_code || "")
+      )
+      .sort((a, b) => {
+        const sortCmp = Number(a.sort_order || 0) - Number(b.sort_order || 0);
+        if (sortCmp !== 0) return sortCmp;
+        return String(a.name || "").localeCompare(String(b.name || ""), "tr");
+      });
+
+    const currentIndex = siblingRows.findIndex((row) => row.id === item.id);
+    if (currentIndex === -1) return;
+
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= siblingRows.length) return;
+
+    const target = siblingRows[targetIndex];
+    const currentSort = Number(item.sort_order || 0);
+    const targetSort = Number(target.sort_order || 0);
+    const tempSort = Math.max(
+      ...siblingRows.map((row) => Number(row.sort_order || 0)),
+      currentSort,
+      targetSort,
+      0,
+    ) + 1000;
+
+    const patchSortOrder = async (categoryId, sortOrder) => {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${categoryId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader,
+        },
+        body: JSON.stringify({ sort_order: sortOrder }),
+      });
+      const payload = await safeParseJson(response);
+      if (!response.ok) {
+        const parsed = parseApiError(payload, "Sıra güncellemesi başarısız.");
+        throw new Error(parsed.message);
+      }
+    };
+
+    setLevel0OrderMovingId(item.id);
+    try {
+      await patchSortOrder(item.id, tempSort);
+      await patchSortOrder(target.id, currentSort);
+      await patchSortOrder(item.id, targetSort);
+      toast({
+        title: "Ana sayfa sırası güncellendi",
+        description: `${item.name} yeni sıra: ${targetSort}`,
+      });
+      await fetchItems();
+    } catch (error) {
+      toast({
+        title: "Sıralama güncellenemedi",
+        description: error?.message || "Bilinmeyen hata",
+        variant: "destructive",
+      });
+    } finally {
+      setLevel0OrderMovingId("");
+    }
+  };
+
   const getItemSelectionState = (itemId) => {
     const descendantIds = descendantsByItem.get(itemId) || [itemId];
     const selectedCount = descendantIds.filter((id) => selectedIdSet.has(id)).length;
@@ -3644,6 +3713,21 @@ const AdminCategories = () => {
         ) : (
           visibleItems.map((item) => {
             const rowSelection = getItemSelectionState(item.id);
+            const level0Siblings = visibleItems
+              .filter(
+                (row) => !row.parent_id
+                  && row.module === item.module
+                  && String(row.country_code || "") === String(item.country_code || "")
+              )
+              .sort((a, b) => {
+                const sortCmp = Number(a.sort_order || 0) - Number(b.sort_order || 0);
+                if (sortCmp !== 0) return sortCmp;
+                return String(a.name || "").localeCompare(String(b.name || ""), "tr");
+              });
+            const currentSiblingIndex = level0Siblings.findIndex((row) => row.id === item.id);
+            const canMoveUp = currentSiblingIndex > 0;
+            const canMoveDown = currentSiblingIndex >= 0 && currentSiblingIndex < level0Siblings.length - 1;
+            const isMovePending = level0OrderMovingId === item.id;
             return (
               <div key={item.id} className="grid grid-cols-[40px_72px_1.2fr_1fr_0.7fr_0.8fr_0.6fr_0.7fr_1.5fr] px-4 py-3 border-b text-sm items-center text-slate-900" data-testid={`categories-row-${item.id}`}>
                 <div>
@@ -3683,6 +3767,24 @@ const AdminCategories = () => {
                   </span>
                 </div>
                 <div className="flex justify-end gap-2 text-slate-900" data-testid={`categories-row-actions-${item.id}`}>
+                  <button
+                    className="text-sm px-2 py-1 border rounded disabled:opacity-50"
+                    onClick={() => handleMoveLevel0Order(item, "up")}
+                    disabled={!canMoveUp || Boolean(level0OrderMovingId)}
+                    data-testid={`categories-order-up-${item.id}`}
+                    title="Level 0 ana sayfa sırasını yukarı al"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    className="text-sm px-2 py-1 border rounded disabled:opacity-50"
+                    onClick={() => handleMoveLevel0Order(item, "down")}
+                    disabled={!canMoveDown || Boolean(level0OrderMovingId)}
+                    data-testid={`categories-order-down-${item.id}`}
+                    title="Level 0 ana sayfa sırasını aşağı al"
+                  >
+                    ↓
+                  </button>
                   <button className="text-sm px-3 py-1 border rounded" onClick={() => handleEdit(item)} data-testid={`categories-edit-${item.id}`}>
                     Düzenle
                   </button>
@@ -3692,6 +3794,9 @@ const AdminCategories = () => {
                   <button className="text-sm px-3 py-1 border rounded" onClick={() => handleDelete(item)} data-testid={`categories-delete-${item.id}`}>
                     Sil
                   </button>
+                  {isMovePending ? (
+                    <span className="text-xs text-slate-500" data-testid={`categories-order-pending-${item.id}`}>Sıra güncelleniyor...</span>
+                  ) : null}
                 </div>
               </div>
             );
