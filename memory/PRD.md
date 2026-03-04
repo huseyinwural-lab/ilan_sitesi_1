@@ -1219,6 +1219,26 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Açık Konu
 - **Apple Sign-In** için gerekli Apple credential seti (TEAM_ID, CLIENT_ID, KEY_ID, PRIVATE_KEY) bekleniyor; paylaşılınca entegrasyon tamamlanacak.
 
+## 2026-03-04 (Apple Credential Yönetimi — Admin System Settings)
+
+### Tamamlananlar
+- Admin panelde manuel Apple credential girişi için yeni kart eklendi:
+  - `APPLE_TEAM_ID`
+  - `APPLE_CLIENT_ID`
+  - `APPLE_KEY_ID`
+  - `APPLE_PRIVATE_KEY (.p8)`
+- Yeni backend endpointleri:
+  - `GET /api/admin/system-settings/apple-signin`
+  - `POST /api/admin/system-settings/apple-signin`
+- Private key temizleme senaryosu eklendi (`clear_private_key=true`).
+- Route preload iyileştirmesi: `/admin/login` için auth namespace preload eklendi (dash/boş metin regresyonunu önlemek için).
+
+### Test Sonucu
+- `testing_agent` PASS: `/app/test_reports/iteration_116.json`
+  - Backend endpointler PASS
+  - UI kart + save/refresh/clear akışları PASS
+  - `/admin/login` i18n preload regressions PASS
+
 ## 2026-03-04 (Hotfix — İlk girişte misafir header zorunlu)
 
 ### Düzeltme
