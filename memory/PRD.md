@@ -1168,3 +1168,27 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Dealer language switcher default-visible PASS
   - Dealer Overview/Reports DE/FR’de TR kalıntı yok PASS
   - Legacy locale deprecate check PASS
+
+## 2026-03-04 (Header+Admin Menü düzeltmesi + CI + Common daraltma v4)
+
+### Tamamlananlar
+- **Misafir header varsayılanı:** Guest header’da `Giriş Yap` + `Üye Ol` fallback görünümü garanti edildi (`SiteHeader` guestDynamicItems).
+- **Admin panel menü yazıları:** boş/`—` görünme sorunu düzeltildi (`Layout.js` içinde `t(item.label, item.label)` fallback).
+- **CI enforce:**
+  - `frontend/package.json` → `check:legacy-locales` scripti eklendi.
+  - `.github/workflows/frontend-i18n-readonly-check.yml` workflow eklendi.
+  - Legacy locale read-only kontrolü otomatik koşulabilir hale geldi.
+- **Common namespace daraltma (kademeli):**
+  - `common.json` seti minimum kullanılan global key’lere indirildi (core/header/generic ağırlıklı).
+  - `auth/dealer/admin` domain namespace’leri korunarak route preload ve lazy-load akışı devam etti.
+- **Kırmızı kutudaki TR kalıntılar (DE/FR):**
+  - `DealerOverview` + `DealerReports` metinleri DE/FR karşılıklarıyla tamamlandı.
+  - Dealer menü/hızlı aksiyon çeviri kullanımı iyileştirildi.
+
+### Test Sonucu
+- `testing_agent` PASS: `/app/test_reports/iteration_111.json`
+  - Guest header login/register PASS
+  - Admin sidebar label visibility PASS (no dash)
+  - Dealer TR/DE/FR i18n (overview/reports) PASS
+  - language_switcher default-visible fallback PASS
+  - CI script/workflow doğrulaması PASS
