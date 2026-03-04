@@ -316,6 +316,8 @@ export default function SearchPage() {
     let alive = true;
     const fetchCategoryShowcase = async () => {
       setCategoryShowcaseLoading(true);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
       try {
         const params = new URLSearchParams();
         params.set('country', countryCode);
@@ -324,7 +326,7 @@ export default function SearchPage() {
         params.set('sort', 'date_desc');
         params.set('page', '1');
         params.set('limit', '8');
-        const res = await fetch(`${API}/v2/search?${params.toString()}`, { cache: 'no-store' });
+        const res = await fetch(`${API}/v2/search?${params.toString()}`, { cache: 'no-store', signal: controller.signal });
         if (!alive) return;
         if (!res.ok) {
           setCategoryShowcase([]);
@@ -335,6 +337,7 @@ export default function SearchPage() {
       } catch (_error) {
         if (alive) setCategoryShowcase([]);
       } finally {
+        clearTimeout(timeoutId);
         if (alive) setCategoryShowcaseLoading(false);
       }
     };
