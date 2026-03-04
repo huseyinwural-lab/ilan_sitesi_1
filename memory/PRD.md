@@ -1291,3 +1291,23 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - **P2:** Route-based header rules + test senaryoları
 - **P2:** `common.json` namespace daraltma/refactor
 - **P2:** FAZ 3 `academy.modules` mock verisinin kaldırılması
+
+## 2026-03-04 (UI İnce Ayar — Sol Kategori Menü Tipografi/Görünüm)
+
+### Kullanıcı İsteği
+- Ana sayfadaki sol kategori menüsünün yazı tipi ve görünümünün referans görsele (2. görsel) daha yakın hale getirilmesi.
+
+### Uygulananlar
+- Sadece sol kategori menüsü (sidebar) üzerinde stil güncellemesi yapıldı:
+  - Menü tipografisi Verdana/Tahoma çizgisine çekildi
+  - Kart hissi azaltılıp daha düz/liste görünüme yaklaştırıldı
+  - Modül başlıklarında sade marker + başlık hiyerarşisi iyileştirildi
+  - Kategori/alt kategori satırları daha sade ve okunabilir hale getirildi
+- Data-testid yapısı korunarak güncelleme yapıldı.
+
+### Doğrulama
+- `auto_frontend_testing_agent` PASS:
+  - Sol kategori kolonu render
+  - Modül başlıkları görünür
+  - Root/child kategori link navigasyonu çalışıyor (`/search?category=...`)
+  - Yatay taşma/overlay yok
