@@ -1193,6 +1193,32 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - language_switcher default-visible fallback PASS
   - CI script/workflow doğrulaması PASS
 
+## 2026-03-04 (Google Social Login + Menü Derinlik Çeviri Tamamlama)
+
+### Tamamlananlar
+- **Google (Emergent-managed) login** aktif edildi:
+  - Frontend login butonu aktif (`Google ile devam et`).
+  - Callback page eklendi: `/auth/google/callback`.
+  - Backend exchange endpoint eklendi: `POST /api/auth/google/emergent/exchange`.
+  - Session doğrulama: `X-Session-ID` ile `demobackend` endpointine backend call.
+  - Var olan JWT akışına entegre edildi (TokenResponse döner).
+  - Uygulama notları: `/app/auth_testing.md`.
+
+- **Misafir header dil seçici** eklendi/görünür doğrulandı (TR/DE/FR).
+
+- **Menü derinlik çevirileri (dealer)**:
+  - Top menu + alt + alt-alt seviyelerde `dealer.menu.*` key/fallback stratejisi güçlendirildi.
+  - DE/FR’de Türkçe kalan menü etiketleri giderildi.
+
+### Test Sonucu
+- `testing_agent` PASS: `/app/test_reports/iteration_115.json`
+  - Google button + callback + backend exchange endpoint PASS
+  - Guest header language selector PASS
+  - Dealer çok seviyeli menü çevirileri (TR/DE/FR) PASS
+
+### Açık Konu
+- **Apple Sign-In** için gerekli Apple credential seti (TEAM_ID, CLIENT_ID, KEY_ID, PRIVATE_KEY) bekleniyor; paylaşılınca entegrasyon tamamlanacak.
+
 ## 2026-03-04 (Hotfix — İlk girişte misafir header zorunlu)
 
 ### Düzeltme
