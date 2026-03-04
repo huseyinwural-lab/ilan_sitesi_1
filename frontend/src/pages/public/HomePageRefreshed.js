@@ -13,8 +13,8 @@ const MODULES = [
 ];
 
 const QUICK_LINKS = [
-  { key: 'jobs', label: 'İş İlanları', href: '/search?q=is', accent: '#b02bdd' },
-  { key: 'services', label: 'Ustalar ve Hizmetler', href: '/search?q=hizmet', accent: '#32a6ff' },
+  { key: 'jobs', label: 'İş İlanları', href: '/search?q=is' },
+  { key: 'services', label: 'Ustalar ve Hizmetler', href: '/search?q=hizmet' },
 ];
 
 const LANGUAGE_LOCALE_MAP = {
@@ -306,11 +306,6 @@ export default function HomePageRefreshed() {
                 className="home-kktc-shortcut-link"
                 data-testid={`home-kktc-shortcut-link-${linkItem.key}`}
               >
-                <span
-                  className="home-kktc-shortcut-icon"
-                  style={{ '--shortcut-color': linkItem.accent }}
-                  data-testid={`home-kktc-shortcut-icon-${linkItem.key}`}
-                />
                 <span className="home-kktc-shortcut-label" data-testid={`home-kktc-shortcut-label-${linkItem.key}`}>{linkItem.label}</span>
               </Link>
             ))}
@@ -325,9 +320,8 @@ export default function HomePageRefreshed() {
 
               return (
                 <section key={moduleGroup.module_key} className="home-kktc-module" data-testid={`home-kktc-module-${moduleGroup.module_key}`}>
-                  <div className="home-kktc-module-title" style={{ '--module-accent': moduleGroup.module_accent }} data-testid={`home-kktc-module-title-${moduleGroup.module_key}`}>
+                  <div className="home-kktc-module-title" data-testid={`home-kktc-module-title-${moduleGroup.module_key}`}>
                     <div className="home-kktc-module-title-main" data-testid={`home-kktc-module-title-main-${moduleGroup.module_key}`}>
-                      <span className="home-kktc-module-marker" data-testid={`home-kktc-module-marker-${moduleGroup.module_key}`} aria-hidden="true" />
                       <span>
                         {moduleGroup.module_label}
                         <span className="home-kktc-module-count" data-testid={`home-kktc-module-count-${moduleGroup.module_key}`}> ({formatCount(moduleGroup.module_total_count)})</span>
@@ -343,13 +337,9 @@ export default function HomePageRefreshed() {
                           className="home-kktc-root-line"
                           data-testid={`home-kktc-root-line-${root.id}`}
                         >
-                          <span
-                            className="home-kktc-root-icon"
-                            style={{ '--root-accent': moduleGroup.module_accent }}
-                            data-testid={`home-kktc-root-icon-${root.id}`}
-                          >
-                            {root.icon_svg ? <span dangerouslySetInnerHTML={{ __html: root.icon_svg }} data-testid={`home-kktc-root-icon-svg-${root.id}`} /> : null}
-                          </span>
+                          {root.icon_svg ? (
+                            <span className="home-kktc-root-icon-svg" data-testid={`home-kktc-root-icon-svg-${root.id}`} dangerouslySetInnerHTML={{ __html: root.icon_svg }} />
+                          ) : null}
                           <span className="home-kktc-root-line-text" data-testid={`home-kktc-root-line-text-${root.id}`}>
                             {root.name}
                             <span className="home-kktc-root-count" data-testid={`home-kktc-root-count-${root.id}`}> ({formatCount(root.total_count)})</span>

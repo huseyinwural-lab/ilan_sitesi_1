@@ -146,6 +146,11 @@ export default function AdminHomeCategoryDesignV2() {
   const [categoryForm, setCategoryForm] = useState(EMPTY_CATEGORY_FORM);
   const [iconUploadStatus, setIconUploadStatus] = useState('');
   const [iconUploadError, setIconUploadError] = useState('');
+  const [rootIconCategoryId, setRootIconCategoryId] = useState('');
+  const [rootIconSvg, setRootIconSvg] = useState('');
+  const [rootIconSaving, setRootIconSaving] = useState(false);
+  const [rootIconStatus, setRootIconStatus] = useState('');
+  const [rootIconError, setRootIconError] = useState('');
 
   const authHeader = useMemo(() => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` }), []);
   const countryCode = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
@@ -218,6 +223,13 @@ export default function AdminHomeCategoryDesignV2() {
     return roots;
   }, [adminCategories, crudModule]);
 
+  const rootCategoryOptions = useMemo(
+    () => adminCategories
+      .filter((item) => !item.parent_id)
+      .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''))),
+    [adminCategories],
+  );
+
   const findCategoryById = (categoryId) => adminCategories.find((item) => item.id === categoryId) || null;
 
   const getSiblingNextSortOrder = (moduleKey, parentId) => {
@@ -272,6 +284,20 @@ export default function AdminHomeCategoryDesignV2() {
   useEffect(() => {
     refreshAll();
   }, []);
+
+  useEffect(() => {
+    if (!rootCategoryOptions.length) {
+      setRootIconCategoryId('');
+      setRootIconSvg('');
+      return;
+    }
+
+    const exists = rootCategoryOptions.some((item) => item.id === rootIconCategoryId);
+    const selectedId = exists ? rootIconCategoryId : rootCategoryOptions[0].id;
+    const selected = rootCategoryOptions.find((item) => item.id === selectedId);
+    setRootIconCategoryId(selectedId);
+    setRootIconSvg(selected?.icon_svg || '');
+  }, [rootCategoryOptions]);
 
   const handleModuleMove = (index, direction) => {
     if (config.module_order_mode === 'alphabetical') return;
@@ -406,6 +432,78 @@ export default function AdminHomeCategoryDesignV2() {
       setIconUploadError(uploadError?.message || 'İkon dosyası yüklenemedi.');
     } finally {
       event.target.value = '';
+    }
+  };
+
+  const handleRootIconCategoryChange = (categoryId) => {
+    const selected = rootCategoryOptions.find((item) => item.id === categoryId);
+    setRootIconCategoryId(categoryId);
+    setRootIconSvg(selected?.icon_svg || '');
+    setRootIconStatus('');
+    setRootIconError('');
+  };
+
+  const handleRootIconFileUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setRootIconStatus('');
+    setRootIconError('');
+
+    try {
+      const isSvg = file.type === 'image/svg+xml' || String(file.name || '').toLowerCase().endsWith('.svg');
+      const isRaster = file.type.startsWith('image/');
+      if (!isSvg && !isRaster) {
+        throw new Error('Sadece SVG/PNG/JPG/WEBP yükleyebilirsiniz.');
+      }
+
+      if (isSvg) {
+        const svgText = (await readFileAsText(file)).trim();
+        if (!svgText.toLowerCase().includes('<svg')) {
+          throw new Error('Geçerli bir SVG dosyası seçin.');
+        }
+        setRootIconSvg(svgText);
+      } else {
+        const dataUrl = await readFileAsDataUrl(file);
+        setRootIconSvg(wrapDataUrlAsSvg(dataUrl));
+      }
+
+      setRootIconStatus('İkon dosyası yüklendi. Kaydet ile ana kategoriye uygulayabilirsiniz.');
+    } catch (uploadError) {
+      setRootIconError(uploadError?.message || 'İkon yüklenemedi.');
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const handleRootIconSave = async () => {
+    if (!rootIconCategoryId) {
+      setRootIconError('Lütfen ana kategori seçin.');
+      return;
+    }
+
+    setRootIconSaving(true);
+    setRootIconStatus('');
+    setRootIconError('');
+    try {
+      const response = await fetch(`${API}/admin/categories/${rootIconCategoryId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeader,
+        },
+        body: JSON.stringify({ icon_svg: rootIconSvg }),
+      });
+      if (!response.ok) {
+        throw new Error(await parseApiError(response));
+      }
+
+      await Promise.all([fetchAdminCategories(), fetchPublicCategories()]);
+      setRootIconStatus('Ana kategori ikonu kaydedildi.');
+    } catch (saveError) {
+      setRootIconError(saveError?.message || 'Ana kategori ikonu kaydedilemedi.');
+    } finally {
+      setRootIconSaving(false);
     }
   };
 
@@ -674,6 +772,71 @@ export default function AdminHomeCategoryDesignV2() {
 
         {crudStatus ? <div className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700" data-testid="home-category-crud-status">{crudStatus}</div> : null}
         {crudError ? <div className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700" data-testid="home-category-crud-error">{crudError}</div> : null}
+
+        <div className="mt-4 rounded-lg border bg-slate-50 p-3" data-testid="home-category-root-icon-manager">
+          <div className="mb-2 text-sm font-semibold" data-testid="home-category-root-icon-manager-title">Ana Kategori İkon Yönetimi</div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="space-y-1" data-testid="home-category-root-icon-category-wrap">
+              <span className="text-xs font-semibold text-slate-600">Ana Kategori Seç</span>
+              <select
+                value={rootIconCategoryId}
+                onChange={(event) => handleRootIconCategoryChange(event.target.value)}
+                className="h-10 w-full rounded-md border px-3 text-sm"
+                data-testid="home-category-root-icon-category-select"
+              >
+                {rootCategoryOptions.map((item) => (
+                  <option key={item.id} value={item.id}>{item.name}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="space-y-1" data-testid="home-category-root-icon-upload-wrap">
+              <span className="text-xs font-semibold text-slate-600">Dosya Yükle (SVG/PNG/JPG/WEBP)</span>
+              <input
+                type="file"
+                accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp"
+                onChange={handleRootIconFileUpload}
+                className="block h-10 w-full rounded-md border px-3 py-2 text-xs"
+                data-testid="home-category-root-icon-upload-input"
+              />
+            </label>
+          </div>
+
+          <label className="mt-3 block space-y-1" data-testid="home-category-root-icon-svg-wrap">
+            <span className="text-xs font-semibold text-slate-600">SVG Kodu</span>
+            <textarea
+              value={rootIconSvg}
+              onChange={(event) => setRootIconSvg(event.target.value)}
+              rows={4}
+              className="w-full rounded-md border px-3 py-2 text-xs"
+              placeholder="<svg ...>...</svg>"
+              data-testid="home-category-root-icon-svg"
+            />
+          </label>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2" data-testid="home-category-root-icon-actions">
+            <button
+              type="button"
+              className="h-9 rounded-md bg-slate-900 px-4 text-xs text-white disabled:opacity-60"
+              onClick={handleRootIconSave}
+              disabled={rootIconSaving}
+              data-testid="home-category-root-icon-save"
+            >
+              {rootIconSaving ? 'Kaydediliyor...' : 'Ana Kategori İkonunu Kaydet'}
+            </button>
+            <button
+              type="button"
+              className="h-9 rounded-md border px-3 text-xs"
+              onClick={() => setRootIconSvg('')}
+              data-testid="home-category-root-icon-clear"
+            >
+              Temizle
+            </button>
+          </div>
+
+          {rootIconStatus ? <div className="mt-2 text-xs text-emerald-600" data-testid="home-category-root-icon-status">{rootIconStatus}</div> : null}
+          {rootIconError ? <div className="mt-2 text-xs text-rose-600" data-testid="home-category-root-icon-error">{rootIconError}</div> : null}
+        </div>
 
         <div className="mt-4 grid gap-3" data-testid="home-category-crud-list">
           {moduleCrudRows.length === 0 ? (
