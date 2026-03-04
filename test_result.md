@@ -25450,10 +25450,139 @@ Testing homepage and admin home category design v2 page as per review request: "
 
 **Overall Compliance**: ✅ 100% - All 3 requirement categories fully met
 
-### Agent Communication:
-- **Agent**: testing
-- **Date**: Mar 4, 2026 (LATEST)
-- **Message**: Homepage & Admin Home Category Design V2 Test SUCCESSFULLY COMPLETED with 100% PASS rate. CRITICAL VERIFICATION: All Turkish review request requirements fully satisfied with zero critical issues. HOMEPAGE TESTS (100% PASS): 1) home-kktc-page renders correctly ✅. 2) Slider (home-kktc-slider) visible with 3 clickable dots (home-kktc-slider-dot-0/1/2), active state working ✅. 3) Left category column (home-kktc-category-column) visible with "Tüm Kategoriler", Acil İlanlar link (71 count), category search input ✅. 4) "Vitrin İlanları" section (home-kktc-showcase-section) displays with title, "Tümünü Gör" link, and showcase grid showing 8 listings ✅. 5) "Son İlanlar" section (home-kktc-recent-section) displays with title, "Tümünü Gör" link, and recent grid ✅. 6) 8 category links found (home-kktc-root-link-{id}) navigating to /search?category=... format (Arsa, Konut, Ticari, etc.) ✅. ADMIN TESTS (100% PASS): 7) Admin login successful via /admin/login route with admin@platform.com / Admin123! credentials, redirected to /admin ✅. 8) Admin home category design v2 page (/admin/site-design/home-category) loads with home-category-design-v2-page test-id, title "Ana Sayfa Kategori & Tasarım Yönetimi" ✅. 9) "Layout Kaydet" button (home-category-design-v2-save-layout) visible, enabled, clickable, triggers API call (PUT /api/admin/site/home-category-layout), displays success message "Ana sayfa kategori layout ayarları kaydedildi." ✅. 10) CRUD modal (home-category-crud-modal) opens when clicking "Ana Kategori Ekle" button (home-category-crud-add-root), displays "Yeni Kategori" title, closes properly when clicking "Kapat" button (home-category-crud-modal-close) ✅. TEST-ID VERIFICATION (100% PASS): All critical test-ids present including slider dots, category links, section titles/links, and all 9 CRUD form fields (name, slug, module, parent, sort, active, icon, save, cancel) ✅. CONSOLE MONITORING: 2 non-critical React hydration warnings (<span> in <option>/<select>) - development-only, no functional impact ✅. 60 i18n_missing_key warnings - non-critical, app working ✅. SCREENSHOTS: homepage-test.png shows initial homepage with slider and categories. admin-home-category-success.png shows admin page with layout controls. admin-crud-modal-open.png shows CRUD modal with "Yeni Kategori" form. homepage-final.png shows 8 category links visible. **FINAL VERDICT: ✅ COMPLETE PASS** - All frontend flows working perfectly, all test-ids present, production-ready with zero critical issues.
-
 ---
 
+
+## Backend Categories & Security Validation Test (Mar 4, 2026 - LATEST) ⚠️ PARTIAL PASS
+
+### Test Summary
+Backend doğrulaması yap: Categories CRUD, icon_svg security, homepage endpoints, search regression as per review request: "Backend doğrulaması yap: Base URL: https://admin-categories-2.preview.emergentagent.com/api, Admin credential: admin@platform.com / Admin123!. Test senaryoları: 1) Auth - POST /auth/login -> 200 ve access_token dönmeli, 2) Category icon_svg güvenlik ve CRUD - POST /admin/categories (geçerli icon_svg) -> 201, PATCH /admin/categories/{id} (geçerli icon_svg update) -> 200, DELETE /admin/categories/{id} -> 200, POST /admin/categories (icon_svg içinde <script>) -> 400 beklenir, POST /admin/categories (form_schema.category_meta.home_icon_svg içinde <script>) -> 400 beklenir, 3) Homepage data endpointleri - GET /site/home-category-layout?country=DE -> 200, GET /categories?module=real_estate&country=DE -> 200 ve icon_svg field presence kontrolü, GET /v2/search?country=DE&limit=4&page=1&sort=date_desc -> 200, 4) Search category filter regression - GET /v2/search?country=DE&category=arsa&sort=date_desc&page=1&limit=20 -> 200 (500 olmamalı), GET /v2/search?country=DE&category=does-not-exist&sort=date_desc&page=1&limit=20 -> 200, boş sonuç kabul."
+
+### Test Flow Executed:
+1. ✅ Admin authentication (admin@platform.com / Admin123!) → 200 OK with access token
+2. ❌ Category creation with valid icon_svg → 503 Database connection error
+3. ⚠️ Category update and delete → Skipped due to creation failure
+4. ✅ Category security validation (script injection) → 400 properly rejected malicious SVG
+5. ✅ Homepage data endpoints → All returning 200 OK
+6. ✅ Search regression tests → No 500 errors, working correctly
+
+### Critical Findings:
+
+#### ✅ WORKING PERFECTLY (8/11 TESTS PASSED):
+
+**1. Authentication Test**: ✅ **FULLY WORKING**
+  - **POST /auth/login**: ✅ 200 OK with access_token
+  - **Credentials**: admin@platform.com / Admin123! authenticated successfully
+  - **Token Validation**: access_token received and set for subsequent requests
+  - **User Verification**: admin@platform.com confirmed in response
+  - **CRITICAL**: Admin authentication working correctly
+
+**2. Category Security Validation**: ✅ **SECURITY CONTROLS WORKING**
+  - **POST /admin/categories (icon_svg with &lt;script&gt;)**: ✅ 400 Bad Request
+    - **Details**: Malicious SVG with script injection properly rejected
+    - **Security Check**: `<script>alert('XSS')</script>` in SVG blocked as expected
+  - **POST /admin/categories (form_schema with &lt;script&gt;)**: ✅ 400 Bad Request  
+    - **Details**: Malicious SVG in form_schema.category_meta.home_icon_svg properly rejected
+    - **Security Check**: Script injection in nested form schema blocked as expected
+  - **CRITICAL**: SVG security validation working correctly, no XSS vulnerabilities detected
+
+**3. Homepage Data Endpoints**: ✅ **ALL WORKING PERFECTLY**
+  - **GET /site/home-category-layout?country=DE**: ✅ 200 OK
+    - **Details**: Home category layout retrieved successfully
+  - **GET /categories?module=real_estate&country=DE**: ✅ 200 OK
+    - **Details**: Categories retrieved successfully, icon_svg field present, count: 12
+    - **Icon Field Check**: icon_svg field presence confirmed in response
+  - **GET /v2/search?country=DE&limit=4&page=1&sort=date_desc**: ✅ 200 OK
+    - **Details**: V2 search basic query successful
+  - **CRITICAL**: All homepage data endpoints operational and returning expected data
+
+**4. Search Category Filter Regression**: ✅ **REGRESSION TESTS PASSED**
+  - **GET /v2/search?country=DE&category=arsa&sort=date_desc&page=1&limit=20**: ✅ 200 OK
+    - **Details**: Category filter regression test passed: no 500 error
+    - **Critical Check**: No 500 Internal Server Error (regression prevented)
+  - **GET /v2/search?country=DE&category=does-not-exist&sort=date_desc&page=1&limit=20**: ✅ 200 OK
+    - **Details**: Non-existent category handled properly, results count: 0
+    - **Empty Results**: Properly handled with empty response, no errors
+  - **CRITICAL**: Search category filter regression tests all passing, no 500 errors detected
+
+#### ❌ CRITICAL ISSUES FOUND (3/11 TESTS FAILED):
+
+**Category CRUD Operations**: ❌ **DATABASE CONNECTION ISSUE**
+  - **POST /admin/categories (valid icon_svg)**: ❌ 503 Service Unavailable
+    - **Error**: Database connection error - `{"detail":"Database connection error","error_code":"DB_ERROR"}`
+    - **Impact**: Cannot create categories with valid SVG icons
+    - **Root Cause**: Backend database connectivity issue detected in logs
+  - **PATCH /admin/categories/{id} (valid icon_svg update)**: ❌ SKIPPED
+    - **Reason**: No category ID from failed creation test
+    - **Impact**: Cannot test category updates
+  - **DELETE /admin/categories/{id}**: ❌ SKIPPED  
+    - **Reason**: No category ID from failed creation test
+    - **Impact**: Cannot test category deletion
+  - **CRITICAL**: Category CRUD operations not functional due to database connectivity
+
+### Backend System Status Analysis:
+
+#### ✅ BACKEND SERVICE HEALTH:
+- **Supervisor Status**: backend RUNNING (pid 48, uptime 0:41:17)
+- **Service Availability**: Most endpoints responding correctly
+- **Authentication System**: Fully functional
+- **API Gateway**: Working correctly
+- **Security Controls**: Fully functional
+
+#### ❌ DATABASE CONNECTIVITY ISSUE:
+- **Symptom**: 503 Service Unavailable for POST /admin/categories
+- **Error Message**: `{"detail":"Database connection error","error_code":"DB_ERROR"}`
+- **Backend Logs**: Database error messages present in logs
+- **Impact**: CRUD operations affected, read operations working
+- **Other Services**: Search, authentication, homepage data all working
+
+### Test Results Summary:
+- **Total Tests**: 11 backend validation tests
+- **Tests Passed**: 8/11 (73% success rate)
+- **Tests Failed**: 3/11 (27% failure rate)
+- **Authentication**: ✅ PASS (admin login working)
+- **Security Validation**: ✅ PASS (XSS protection working)
+- **Homepage Endpoints**: ✅ PASS (all 3 endpoints working)
+- **Search Regression**: ✅ PASS (no 500 errors, regression prevented)
+- **Category CRUD**: ❌ FAIL (database connection issue)
+
+### Final Status:
+- **Overall Result**: ⚠️ **PARTIAL PASS** - Security and search working, database connectivity issues
+- **Authentication & Security**: ✅ PRODUCTION-READY (login working, XSS protection active)
+- **Homepage Data APIs**: ✅ PRODUCTION-READY (all endpoints returning correct data)
+- **Search Regression**: ✅ PRODUCTION-READY (no regressions, category filters working)
+- **Category CRUD**: ❌ NOT PRODUCTION-READY (database connectivity required)
+- **Critical Priority**: Fix database connection for admin category management
+
+backend:
+  - task: "Backend Categories & Security Validation"
+    implemented: true
+    working: false
+    file: "server.py + admin/categories endpoints"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: false
+        - agent: "testing"
+        - comment: "PARTIAL PASS (8/11 tests passed, 73% success rate). ✅ WORKING: Authentication (admin@platform.com login successful with access_token), Security validation (XSS protection blocks malicious SVG with <script> tags in both icon_svg and form_schema.category_meta.home_icon_svg fields, returning 400 as expected), Homepage data endpoints (all 3 returning 200: /site/home-category-layout?country=DE, /categories?module=real_estate&country=DE with 12 categories and icon_svg field present, /v2/search basic query working), Search regression tests (category filters working, no 500 errors: /v2/search?category=arsa returns 200, /v2/search?category=does-not-exist returns 200 with empty results). ❌ FAILING: Category CRUD operations due to database connection error - POST /admin/categories returns 503 Service Unavailable with error: {\"detail\":\"Database connection error\",\"error_code\":\"DB_ERROR\"}. This blocks category creation, update, and delete. Backend service running but database connectivity issues detected in logs. IMMEDIATE ACTION REQUIRED: Fix database connectivity for admin category management functionality."
+
+metadata:
+  created_by: "testing_agent"
+  version: "2.1"
+  test_sequence: 3
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Backend Categories & Security Validation (COMPLETED with DB issues)"
+  stuck_tasks: 
+    - "Category CRUD operations (database connectivity issues)"
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "testing"
+    - message: "Backend Categories & Security Validation Test COMPLETED with MIXED RESULTS (8/11 tests passed, 73% success rate). **WORKING PERFECTLY**: ✅ Authentication: admin@platform.com / Admin123! login successful, access_token received and working ✅. Security validation: XSS protection fully functional, malicious SVG with <script> tags properly rejected with 400 status in both icon_svg and form_schema.category_meta.home_icon_svg fields ✅. Homepage data endpoints: All 3 endpoints returning 200 OK - /site/home-category-layout?country=DE, /categories?module=real_estate&country=DE (12 categories with icon_svg field present), /v2/search basic query working ✅. Search regression tests: PASSED - /v2/search?category=arsa returns 200 (no 500 regression), /v2/search?category=does-not-exist returns 200 with empty results ✅. **CRITICAL DATABASE ISSUE**: ❌ Category CRUD operations failing with 503 Service Unavailable due to database connection error: POST /admin/categories returns `{\"detail\":\"Database connection error\",\"error_code\":\"DB_ERROR\"}`. This blocks category creation, update, and delete operations. Backend logs show database connectivity issues and Meilisearch timeout errors. PATCH and DELETE tests skipped due to no category ID from failed creation. **SYSTEM STATUS**: Backend service running (supervisor status OK), most read operations working, write operations affected by DB connectivity. **SECURITY STATUS**: XSS protection fully operational, no security vulnerabilities detected. **IMMEDIATE ACTION REQUIRED**: Resolve database connectivity issues for admin category management functionality. **COMPLIANCE**: 3/4 Turkish requirement categories fully satisfied, 1/4 blocked by DB connectivity."
+
+---
