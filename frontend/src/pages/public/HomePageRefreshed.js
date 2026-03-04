@@ -18,8 +18,6 @@ const LANGUAGE_LOCALE_MAP = {
   fr: 'fr-FR',
 };
 
-const normalizeCompare = (value) => String(value || '').trim().toLocaleLowerCase('tr-TR');
-
 const SLIDES = [
   {
     image: '/homepage/slide-1.jpg',
@@ -254,14 +252,7 @@ export default function HomePageRefreshed() {
           return normalizeLabel(a, language).localeCompare(normalizeLabel(b, language), LANGUAGE_LOCALE_MAP[language] || 'tr-TR');
         });
 
-      const moduleLabelKey = normalizeCompare(moduleMeta.label);
-      const duplicateModuleRoot = roots.find((root) => normalizeCompare(normalizeLabel(root, language)) === moduleLabelKey);
-      const nonDuplicateRoots = roots.filter((root) => normalizeCompare(normalizeLabel(root, language)) !== moduleLabelKey);
-      const promotedRoots = duplicateModuleRoot ? [...(byParent.get(duplicateModuleRoot.id) || [])] : [];
-      const effectiveRoots = [...promotedRoots, ...nonDuplicateRoots]
-        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
-
-      const rootRows = effectiveRoots.map((root) => {
+      const rootRows = roots.map((root) => {
         const children = [...(byParent.get(root.id) || [])]
           .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
           .map((child) => ({
@@ -302,6 +293,10 @@ export default function HomePageRefreshed() {
 
       <div className="home-kktc-main" style={{ '--home-left-width': `${layout.column_width}px` }} data-testid="home-kktc-main">
         <aside className="home-kktc-categories" data-testid="home-kktc-category-column">
+          <Link to="/search?doping=urgent" className="home-kktc-urgent-link" data-testid="home-kktc-urgent-link">
+            ACİL İLANLAR
+          </Link>
+
           <div className="home-kktc-modules" data-testid="home-kktc-module-list">
             {loading ? (
               <div className="home-kktc-empty" data-testid="home-kktc-categories-loading">Kategoriler yükleniyor...</div>
@@ -311,15 +306,6 @@ export default function HomePageRefreshed() {
 
               return (
                 <section key={moduleGroup.module_key} className="home-kktc-module" data-testid={`home-kktc-module-${moduleGroup.module_key}`}>
-                  <div className="home-kktc-module-title" data-testid={`home-kktc-module-title-${moduleGroup.module_key}`}>
-                    <div className="home-kktc-module-title-main" data-testid={`home-kktc-module-title-main-${moduleGroup.module_key}`}>
-                      <span>
-                        {moduleGroup.module_label}
-                        <span className="home-kktc-module-count" data-testid={`home-kktc-module-count-${moduleGroup.module_key}`}> ({formatCount(moduleGroup.module_total_count)})</span>
-                      </span>
-                    </div>
-                  </div>
-
                   <div className="home-kktc-plain-list" data-testid={`home-kktc-plain-list-${moduleGroup.module_key}`}>
                     {visibleRoots.map((root) => (
                       <div key={root.id} className="home-kktc-root-group" data-testid={`home-kktc-root-group-${root.id}`}>

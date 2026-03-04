@@ -60,12 +60,35 @@
   gap: 2px;
 }
 
+.home-kktc-urgent-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 56px;
+  margin: 10px 10px 6px;
+  padding: 0 12px;
+  border: 2px solid #111827;
+  color: #0f172a;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+}
+
+.home-kktc-urgent-link:hover {
+  background: #f8fafc;
+}
+
 .home-kktc-module {
   border: 0;
   border-top: 1px solid #e8edf4;
   border-radius: 0;
   background: transparent;
   overflow: visible;
+}
+
+.home-kktc-module:first-child {
+  border-top: 0;
 }
 
 .home-kktc-module-title {
