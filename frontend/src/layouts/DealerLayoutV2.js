@@ -325,7 +325,7 @@ const dealerMenuLabelKeyMap = buildMenuLabelKeyMap(corporateTopMenu);
 const resolveDealerMenuLabel = (node, t) => {
   const label = node?.label || '';
   const explicitI18nKey = typeof node?.label_i18n_key === 'string' ? node.label_i18n_key.trim() : '';
-  if (explicitI18nKey) {
+  if (explicitI18nKey && explicitI18nKey.includes('.')) {
     return t(explicitI18nKey, label || explicitI18nKey);
   }
 
@@ -723,7 +723,9 @@ export default function DealerLayoutV2() {
           data-testid={`dealer-layout-v2-row4-context-link-${item.key}`}
         >
           <Icon size={14} />
-          <span data-testid={`dealer-layout-v2-row4-context-label-${item.key}`}>{item.label}</span>
+          <span data-testid={`dealer-layout-v2-row4-context-label-${item.key}`}>
+            {t(`dealer.menu.${item.key}`, item.label)}
+          </span>
         </button>
         {hasChildren ? (
           <div className="mt-1 space-y-1" data-testid={`dealer-layout-v2-row4-context-children-${item.key}`}>
@@ -892,7 +894,9 @@ export default function DealerLayoutV2() {
                     data-testid={`dealer-layout-v2-row2-top-menu-item-${item.key}`}
                   >
                     <Icon size={15} />
-                    <span data-testid={`dealer-layout-v2-row2-top-menu-label-${item.key}`}>{item.label}</span>
+                    <span data-testid={`dealer-layout-v2-row2-top-menu-label-${item.key}`}>
+                      {t(`dealer.menu.${item.key}`, item.label)}
+                    </span>
                     {typeof badge === 'number' && badge > 0 ? (
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isActive || isOpen ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'}`} data-testid={`dealer-layout-v2-row2-top-menu-badge-${item.key}`}>
                         {badge}
@@ -1054,7 +1058,9 @@ export default function DealerLayoutV2() {
                       data-testid={`dealer-layout-v2-row4-quick-menu-item-${item.key}`}
                     >
                       <Icon size={13} />
-                      <span className="truncate" data-testid={`dealer-layout-v2-row4-quick-menu-label-${item.key}`}>{item.label}</span>
+                      <span className="truncate" data-testid={`dealer-layout-v2-row4-quick-menu-label-${item.key}`}>
+                        {t(`dealer.menu.${item.key}`, item.label)}
+                      </span>
                     </button>
                     <button
                       type="button"
@@ -1090,7 +1096,7 @@ export default function DealerLayoutV2() {
                         data-testid={`dealer-layout-v2-row4-quick-menu-edit-item-${item.key}`}
                       >
                         <span className="truncate">
-                          {item.label}
+                          {t(`dealer.menu.${item.key}`, item.label)}
                           <span className="ml-1 text-[10px] text-slate-500">({item.parentKey})</span>
                         </span>
                         {isFavorite ? <Star size={11} /> : <StarOff size={11} />}
