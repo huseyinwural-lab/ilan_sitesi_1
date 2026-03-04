@@ -1503,6 +1503,19 @@ const AdminCategories = () => {
     });
   };
 
+  const clearHierarchyFieldErrorsByPrefix = (prefixes = []) => {
+    if (!Array.isArray(prefixes) || prefixes.length === 0) return;
+    setHierarchyFieldErrors((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((key) => {
+        if (prefixes.some((prefix) => key.startsWith(prefix))) {
+          delete next[key];
+        }
+      });
+      return next;
+    });
+  };
+
   const handleLevelSelect = (levelIndex, itemIndex) => {
     if (levelIndex >= INHERITANCE_START_LEVEL) {
       const parentPath = getParentPathForLevel(levelIndex);
@@ -1557,6 +1570,7 @@ const AdminCategories = () => {
     resetLevelCompletionFrom(levelIndex);
     const path = [...getParentPathForLevel(levelIndex), itemIndex];
     const normalizedPatch = { ...patch };
+    const errorPrefix = `level-${levelIndex}-${itemIndex}-`;
     if (Object.prototype.hasOwnProperty.call(patch, "is_leaf")) {
       normalizedPatch.is_leaf = Boolean(patch.is_leaf);
       if (normalizedPatch.is_leaf) {
@@ -1564,6 +1578,8 @@ const AdminCategories = () => {
       }
     }
     updateSubcategory(path, normalizedPatch);
+    clearHierarchyFieldErrorsByPrefix([errorPrefix]);
+    setHierarchyError("");
   };
 
   const handleBreakInheritance = (levelIndex, itemIndex) => {
@@ -1618,11 +1634,24 @@ const AdminCategories = () => {
       }
     });
 
+    const levelPrefix = `level-${levelIndex}-`;
+
     if (Object.keys(nextFieldErrors).length > 0) {
-      setHierarchyFieldErrors((prev) => ({ ...prev, ...nextFieldErrors }));
+      setHierarchyFieldErrors((prev) => {
+        const next = { ...prev };
+        Object.keys(next).forEach((key) => {
+          if (key.startsWith(levelPrefix)) {
+            delete next[key];
+          }
+        });
+        return { ...next, ...nextFieldErrors };
+      });
       setHierarchyError(`Seviye ${levelIndex + 1} için alanları tamamlayın.`);
       return;
     }
+
+    clearHierarchyFieldErrorsByPrefix([levelPrefix]);
+    setHierarchyError("");
 
     const normalizedItems = items.map((item, index) => {
       const parsedSort = Number(item.sort_order);
