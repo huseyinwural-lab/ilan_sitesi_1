@@ -1087,3 +1087,24 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Güncel Backlog
 - **P2:** i18n kaynak dosyalarını `LanguageContext`’ten dış JSON dosyalarına ayırarak bakım kolaylığı.
 - **P2:** Hızlı menüyü hesap-bazlı cross-device senkrona taşıma.
+
+## 2026-03-04 (i18n Altyapı İyileştirme — JSON Lazy Load + dealer.menu DE/FR Matrisi)
+
+### Tamamlananlar
+- `LanguageContext` içindeki büyük sözlük JSON dosyalarına bölündü:
+  - `frontend/src/locales/tr.json`
+  - `frontend/src/locales/de.json`
+  - `frontend/src/locales/fr.json`
+- `LanguageContext` dinamik import (lazy-load) ile güncellendi; başlangıçta tüm diller yerine seçili dil + fallback (`tr`) yükleniyor.
+- `dealer.menu.*` namespace’i TR/DE/FR için tam kapsam eklendi (83 menü anahtarı).
+- `DealerLayoutV2` menü etiketleri artık `t('dealer.menu.<key>')` üzerinden çevriliyor.
+
+### Test Sonucu
+- `testing_agent` PASS: `/app/test_reports/iteration_108.json`
+  - JSON lazy-load doğrulandı
+  - Login TR->DE->FR dil geçişi PASS
+  - Dealer menü çevirileri TR/DE/FR PASS
+  - Dealer login regresyonu yok
+
+### Not
+- Dealer üst bar dil butonlarının görünürlüğü mevcut corporate UI config’e bağlı (`language_switcher` bloğu). Çeviri altyapısı çalışır durumda; buton görünürlüğü config ile açılıp kapatılıyor.
