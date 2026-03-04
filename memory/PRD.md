@@ -20,6 +20,30 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ## 2026-03-01 Tamamlananlar
 
+## 2026-03-04 (P0 — Search Kategori Landing L1/L2 Tasarım Uygulaması)
+
+### Uygulananlar
+- `frontend/src/pages/public/SearchPage.js` tamamen güncellendi ve kategori seviyesine göre dinamik şablon kuralı eklendi:
+  - **L1 kategori** (`level === 1`): üstte kategori başlık alanı, **Alt Kategoriler** blokları, seçili kategoriye scoped **Bu Kategoride Vitrin İlanları** bölümü ve aşağıda liste görünümü.
+  - **L2+ kategori** (`level >= 2`): yoğun filtre + sibling kategori paneli + varsayılan liste görünümü.
+- Kategori verisi yalnızca `vehicle` yerine tüm modüllerden (`real_estate`, `vehicle`, `other`) çekilecek şekilde genişletildi.
+- Kategori context (breadcrumb, level, children, siblings) istemci tarafında parent zinciriyle dinamik çözümlendi.
+- Kategori template sayfalarında varsayılan görünüm **Liste** olarak sabitlendi; generic aramada mevcut Liste/Harita toggle korunarak regresyon engellendi.
+- L1 vitrin alanında beklemede takılı kalmayı önlemek için **5 saniye timeout + abort** eklendi; timeout sonrası empty-state’e düşüyor.
+
+### Test Durumu
+- Testing agent raporu: `/app/test_reports/iteration_118.json` → backend/frontend akışları PASS.
+- Ek UI smoke + doğrulama: L1 (`/search?category=konut`) ve L2 (alt kategori tıklama) şablonları Playwright ile doğrulandı.
+- Ek subagent doğrulamaları:
+  - `auto_frontend_testing_agent`: tüm hedef maddeler PASS.
+  - `deep_testing_backend_v2`: kategori/search API doğrulamaları PASS, 5xx yok.
+
+### Kalan Öncelikler (güncel)
+- **P1:** Admin’den ana kategori ilanlarını yönetim ekranı.
+- **P1 (bloklu):** Apple social login credentials geldikten sonra final entegrasyon.
+- **P2:** Vasıta kategorilerinin `vehicle-makes` kaynağına refactor.
+- **P2:** FAZ 3 mock veri temizliği (`academy.modules`).
+
 ### P0 — Google Autocomplete Real Mode (manuel key destekli)
 - Backend eklendi:
   - `GET /api/places/config`
