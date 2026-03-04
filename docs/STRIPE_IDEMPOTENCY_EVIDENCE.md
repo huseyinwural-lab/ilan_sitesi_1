@@ -1,7 +1,7 @@
 # STRIPE_IDEMPOTENCY_EVIDENCE
 
 **Tarih:** 2026-02-24 13:03:30 UTC
-**Ortam URL:** https://header-config-1.preview.emergentagent.com
+**Ortam URL:** https://admin-categories-2.preview.emergentagent.com
 **Commit Ref:** d05848ad
 **Seçilen Akış (Aktif):** Checkout Session (`POST /api/payments/create-checkout-session`)
 **Idempotency Header:** `Idempotency-Key`

@@ -1,7 +1,7 @@
 # PUBLIC_SEARCH_MONITORING_REPORT — Log-based 24h window (operational)
 
 **Tarih:** 2026-02-24 13:47:41 UTC
-**Ortam URL:** https://header-config-1.preview.emergentagent.com
+**Ortam URL:** https://admin-categories-2.preview.emergentagent.com
 **Durum:** CLOSED
 
 ## 24h Log Window (Operational)

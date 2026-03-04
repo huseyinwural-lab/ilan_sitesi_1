@@ -15,30 +15,30 @@
     {
       "ok": true,
       "initial_url": "http://marketplace-finance-3.preview.emergentagent.com/",
-      "final_url": "https://header-config-1.preview.emergentagent.com:443/",
+      "final_url": "https://admin-categories-2.preview.emergentagent.com:443/",
       "hop_count": 1,
       "chain": [
         {
           "status": 301,
           "url": "http://marketplace-finance-3.preview.emergentagent.com/",
-          "location": "https://header-config-1.preview.emergentagent.com:443/"
+          "location": "https://admin-categories-2.preview.emergentagent.com:443/"
         },
         {
           "status": 200,
-          "url": "https://header-config-1.preview.emergentagent.com:443/",
+          "url": "https://admin-categories-2.preview.emergentagent.com:443/",
           "location": null
         }
       ]
     },
     {
       "ok": true,
-      "initial_url": "https://header-config-1.preview.emergentagent.com/",
-      "final_url": "https://header-config-1.preview.emergentagent.com/",
+      "initial_url": "https://admin-categories-2.preview.emergentagent.com/",
+      "final_url": "https://admin-categories-2.preview.emergentagent.com/",
       "hop_count": 0,
       "chain": [
         {
           "status": 200,
-          "url": "https://header-config-1.preview.emergentagent.com/",
+          "url": "https://admin-categories-2.preview.emergentagent.com/",
           "location": null
         }
       ]
@@ -48,28 +48,28 @@
   "canonical_checks": {
     "rows": [
       {
-        "url": "https://header-config-1.preview.emergentagent.com/",
-        "canonical": "https://header-config-1.preview.emergentagent.com/"
+        "url": "https://admin-categories-2.preview.emergentagent.com/",
+        "canonical": "https://admin-categories-2.preview.emergentagent.com/"
       },
       {
-        "url": "https://header-config-1.preview.emergentagent.com/trust",
-        "canonical": "https://header-config-1.preview.emergentagent.com/trust"
+        "url": "https://admin-categories-2.preview.emergentagent.com/trust",
+        "canonical": "https://admin-categories-2.preview.emergentagent.com/trust"
       },
       {
-        "url": "https://header-config-1.preview.emergentagent.com/kurumsal",
-        "canonical": "https://header-config-1.preview.emergentagent.com/kurumsal"
+        "url": "https://admin-categories-2.preview.emergentagent.com/kurumsal",
+        "canonical": "https://admin-categories-2.preview.emergentagent.com/kurumsal"
       },
       {
-        "url": "https://header-config-1.preview.emergentagent.com/seo",
-        "canonical": "https://header-config-1.preview.emergentagent.com/seo"
+        "url": "https://admin-categories-2.preview.emergentagent.com/seo",
+        "canonical": "https://admin-categories-2.preview.emergentagent.com/seo"
       },
       {
-        "url": "https://header-config-1.preview.emergentagent.com/bilgi/gizlilik-politikasi",
-        "canonical": "https://header-config-1.preview.emergentagent.com/bilgi/gizlilik-politikasi"
+        "url": "https://admin-categories-2.preview.emergentagent.com/bilgi/gizlilik-politikasi",
+        "canonical": "https://admin-categories-2.preview.emergentagent.com/bilgi/gizlilik-politikasi"
       },
       {
-        "url": "https://header-config-1.preview.emergentagent.com/kategori/tarla",
-        "canonical": "https://header-config-1.preview.emergentagent.com/kategori/tarla"
+        "url": "https://admin-categories-2.preview.emergentagent.com/kategori/tarla",
+        "canonical": "https://admin-categories-2.preview.emergentagent.com/kategori/tarla"
       }
     ],
     "mismatch_count": 0,
@@ -80,26 +80,26 @@
       "url_count": 1219,
       "wrong_host_count": 0,
       "sample_20": [
-        "https://header-config-1.preview.emergentagent.com/",
-        "https://header-config-1.preview.emergentagent.com/search",
-        "https://header-config-1.preview.emergentagent.com/trust",
-        "https://header-config-1.preview.emergentagent.com/kurumsal",
-        "https://header-config-1.preview.emergentagent.com/seo",
-        "https://header-config-1.preview.emergentagent.com/maintenance",
-        "https://header-config-1.preview.emergentagent.com/500",
-        "https://header-config-1.preview.emergentagent.com/DE/vasita",
-        "https://header-config-1.preview.emergentagent.com/DE/vasita/otomobil",
-        "https://header-config-1.preview.emergentagent.com/kategori/maps-acceptance-fr",
-        "https://header-config-1.preview.emergentagent.com/kategori/maps-acceptance-tr",
-        "https://header-config-1.preview.emergentagent.com/kategori/maps-acceptance-de",
-        "https://header-config-1.preview.emergentagent.com/kategori/tarla",
-        "https://header-config-1.preview.emergentagent.com/kategori/imara-acik",
-        "https://header-config-1.preview.emergentagent.com/kategori/arsa",
-        "https://header-config-1.preview.emergentagent.com/kategori/kiralik-ofis",
-        "https://header-config-1.preview.emergentagent.com/kategori/satilik-dukkan",
-        "https://header-config-1.preview.emergentagent.com/kategori/ticari",
-        "https://header-config-1.preview.emergentagent.com/kategori/kiralik-daire",
-        "https://header-config-1.preview.emergentagent.com/kategori/satilik-daire"
+        "https://admin-categories-2.preview.emergentagent.com/",
+        "https://admin-categories-2.preview.emergentagent.com/search",
+        "https://admin-categories-2.preview.emergentagent.com/trust",
+        "https://admin-categories-2.preview.emergentagent.com/kurumsal",
+        "https://admin-categories-2.preview.emergentagent.com/seo",
+        "https://admin-categories-2.preview.emergentagent.com/maintenance",
+        "https://admin-categories-2.preview.emergentagent.com/500",
+        "https://admin-categories-2.preview.emergentagent.com/DE/vasita",
+        "https://admin-categories-2.preview.emergentagent.com/DE/vasita/otomobil",
+        "https://admin-categories-2.preview.emergentagent.com/kategori/maps-acceptance-fr",
+        "https://admin-categories-2.preview.emergentagent.com/kategori/maps-acceptance-tr",
+        "https://admin-categories-2.preview.emergentagent.com/kategori/maps-acceptance-de",
+        "https://admin-categories-2.preview.emergentagent.com/kategori/tarla",
+        "https://admin-categories-2.preview.emergentagent.com/kategori/imara-acik",
+        "https://admin-categories-2.preview.emergentagent.com/kategori/arsa",
+        "https://admin-categories-2.preview.emergentagent.com/kategori/kiralik-ofis",
+        "https://admin-categories-2.preview.emergentagent.com/kategori/satilik-dukkan",
+        "https://admin-categories-2.preview.emergentagent.com/kategori/ticari",
+        "https://admin-categories-2.preview.emergentagent.com/kategori/kiralik-daire",
+        "https://admin-categories-2.preview.emergentagent.com/kategori/satilik-daire"
       ]
     },
     "simulated_hosts": [

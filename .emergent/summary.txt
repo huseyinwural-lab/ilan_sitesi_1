@@ -1,81 +1,70 @@
 <analysis>**original_problem_statement:**
-The user's primary goal is to build a full-stack application similar to sahibinden.com. The project's focus has recently shifted to hardening the application for a production release and implementing major new features based on explicit, phased GÖREV EMRİ (Task Orders).
+The user's primary goal is to build a full-stack application similar to sahibinden.com. The project's focus has evolved from an initial hardening phase (FAZ 1, 2, 3) to implementing significant new features based on explicit user GÖREV EMRİ (Task Orders).
 
-After a user-requested audit identified critical security and stability issues, the development was divided into phases:
--   **FAZ 1 & 2 (Completed):** Focused on resolving P0 security and stability blockers (e.g., removing hardcoded credentials, making environment secrets mandatory, fixing middleware errors, and stabilizing search indexing).
--   **FAZ 3 (Current):** A final hardening task to remove mock data.
+The current main objective, provided by the user in message #1042, is to completely redesign the homepage to match a provided design () and to implement a corresponding dynamic category management system in the admin panel.
 
-In parallel, the user has requested several significant new features:
-1.  **Dynamic, Admin-Managed Headers:** Create a system within the admin panel to allow manual editing (add, remove, reorder items, manage logos) for three distinct headers: Guest, Authenticated, and a new Kurumsal (Corporate) header.
-2.  **Full-App Internationalization (i18n):** Implement language support for German, French, and Turkish across the entire application for both individual and corporate users.
-3.  **UI Simplification:** Remove a specific, redundant menu column from the corporate dashboard UI.
+Previous feature requests included:
+1.  **Dynamic, Admin-Managed Headers:** (Completed) A system for admins to manage Guest, Authenticated, and Corporate headers.
+2.  **Full-App Internationalization (i18n):** (Completed) Language support for Turkish, German, and French.
+3.  **Social Logins:** Implement Google and Apple social logins. (Google is complete; Apple is pending credentials).
+4.  **UI/UX Fixes:** Various fixes, including footer stability and header behavior.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-The application is functionally rich, with a dealer portal, admin panels, and user-facing features. The previous session successfully completed a major hardening initiative (FAZ 1 & FAZ 2), resolving critical P0 security and stability issues identified in a pre-launch audit.
-
--   **Security Hardening (FAZ 1):**
-    -   Automatic user seeding with hardcoded credentials has been removed from production builds and is now conditional on .
-    -   The  for JWT is now a mandatory environment variable, and the application will not start without it.
-    -   PCI compliance has been improved by moving to a Stripe Elements/tokenization flow, preventing raw credit card details from being sent to the backend.
--   **Stability Hardening (FAZ 2):**
-    -   A  in the  middleware has been fixed by adding a fail-safe middleware and ensuring all code paths return a response.
-    -   Meilisearch stability has been improved by making index setting updates asynchronous, adding a dedicated health check endpoint (), and implementing a degrade mode.
-    -   Sentry integration has been added to capture runtime errors when a  is provided.
-
-The Kurumsal Portal UI was significantly refactored, and a localStorage-based customizable quick-access menu was added.
+The application has undergone significant security and stability hardening. The agent has successfully implemented a comprehensive internationalization (i18n) system using  with lazy-loaded, namespaced translation files (for TR, DE, FR). A backend-driven system for managing three distinct site headers (Guest, Authenticated, Corporate) via the admin panel is complete. Emergent-managed Google Social Login has been fully integrated. An admin UI to manage credentials for Apple Social Login has also been built, but the final integration is pending user input. Numerous UI bugs related to i18n, header logic, and footer rendering have been resolved.
 
 **Last working item**:
--   **Last item agent was working:** The agent was in the planning stage for implementing FAZ 3 and the major new features requested by the user. This involved analyzing the existing header components and site design architecture to prepare for the dynamic header management system and researching the integration of  for internationalization.
+-   **Last item agent was working:** The agent analyzed the user's request for a new homepage design and a dynamic category management system. It formulated a detailed implementation plan, which the user approved. The agent is now ready to begin the implementation phase.
 -   **Status:** NOT STARTED
 -   **Agent Testing Done:** N
 -   **Which testing method agent to use?** both
-    -   The dynamic header and i18n features require significant frontend and backend changes. The agent should use  to test the new backend endpoints for header configuration and use the  to perform a thorough visual and functional verification of the multi-language support and the new header rendering across all user roles (guest, authenticated, corporate).
+    -   Backend: Use  to test the new CRUD endpoints for creating and managing categories and sub-categories.
+    -   Frontend: Use  to perform a full E2E test of the new homepage, verifying its visual accuracy against the provided design, its responsiveness, and its ability to correctly fetch and display the dynamic categories.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: P0 - Dynamic Admin-Managed Headers (Highest Priority)**
-    -   **Description:** The user wants a new section in the admin panel () to manage the content of three headers: Guest, Authenticated, and a new Corporate header. This includes adding/removing/reordering links and managing the logo for each.
+-   **Issue 1: P0 - New Homepage Design & Dynamic Category Management (Highest Priority)**
+    -   **Description:** The primary task is to overhaul the homepage to match the design in  and build the backend and admin UI for managing the categories displayed on it.
     -   **Status:** NOT STARTED
--   **Issue 2: P0 - Full-App Internationalization (i18n) (High Priority)**
-    -   **Description:** Implement language switching (German, French, Turkish) across the entire application using .
-    -   **Status:** NOT STARTED
--   **Issue 3: P0 - FAZ 3: Remove Mock Data (High Priority)**
-    -   **Description:** The last remaining task from the audit. The mocked  data needs to be removed from production builds, controlled by a feature flag ().
-    -   **Status:** NOT STARTED
--   **Issue 4: P1 - UI Simplification (Medium Priority)**
-    -   **Description:** As per the user's screenshot and request, a specific menu column in the corporate dashboard needs to be removed to de-clutter the UI.
+-   **Issue 2: P1 - Complete Apple Social Login Integration**
+    -   **Description:** The frontend and backend are partially configured for Apple Login, and an admin page exists for credentials. The task is blocked until the user provides the necessary keys.
+    -   **Status:** BLOCKED
+-   **Issue 3: P2 - FAZ 3: Remove Mock Data**
+    -   **Description:** An outstanding task from the initial hardening phase. The mocked  data needs to be removed from production builds, controlled by the  feature flag.
     -   **Status:** NOT STARTED
 
 **In progress Task List**:
-There are no partially completed tasks. The agent was in the planning phase for the issues listed above.
+There are no partially completed tasks.
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
--   **P1.1 Permission What-if Simulator**: UI to preview the impact of permission changes.
--   **P1.1 Two-Factor Approval for Permissions**: 4-eyes principle for critical permission changes.
--   **P1 User/Dealer Flow Validation**: Formal validation pass on user/dealer flows.
--   **P1 HTML/CSS Standardization**: Final polish on admin and dealer UIs.
+-   **P1: Add CI Script for Deprecated Locales:** Create and add the  script to the CI pipeline to prevent new keys from being added to old locale files, as requested by the user (#509).
+-   **P2: Implement Route-Based Header Rules:**
+    -   Add automatic test scenarios for header behavior (guest/auth/corporate) based on routes (#588).
+    -   Add an admin toggle for a public pages always guest lock to prevent misconfiguration (#588).
+-   **P2: Refine i18n Namespaces:** Gradually narrow down the  namespace to a minimal set and move other keys to their respective domain namespaces (, , etc.) as requested by the user (#509).
 
 **Future Tasks:**
--   **P2 (Business Growth):** Advanced financial analytics, conversion funnel tracking, A/B testing.
--   **P3 (Enterprise Scale):** SRE pack (SLO/SLA dashboards), DR/Backup drills, security/cost audits.
+-   Permission What-if Simulator UI.
+-   Two-Factor Approval for critical permission changes.
+-   Full User/Dealer Flow Validation pass.
+-   Final HTML/CSS standardization polish.
+-   Advanced business analytics and A/B testing framework.
 
 **Completed work in this session**
--   **FAZ 1 - Security Hardening (P0-1, P0-2, P0-6):**
-    -   Removed automatic user seeding from production startup ().
-    -   Made  a mandatory environment variable (, ).
-    -   Refactored payment flow to use Stripe Elements, preventing card data from reaching the server ().
--   **FAZ 2 - Stability Hardening (P0-3, P0-4):**
-    -   Fixed  by implementing a  and auditing the .
-    -   Improved Meilisearch stability with async updates, a circuit breaker, and a new health endpoint at .
-    -   Added optional Sentry integration in .
--   **Customizable Quick Access Menu:** Added a -based menu for users to add/remove frequently used items.
--   **Pre-Launch Audit:** Performed a detailed audit of the application, identifying the P0 issues that were subsequently fixed in FAZ 1 and FAZ 2.
+-   **Dynamic Header Management:** Implemented a full CRUD system in the admin panel () to manage items and logos for Guest, Authenticated, and Corporate headers.
+-   **Full-App Internationalization (i18n):** Integrated  and refactored the entire frontend to use lazy-loaded, namespaced translation files for Turkish, German, and French. This included translating all menus and sub-menus.
+-   **Emergent-managed Google Login:** Fully implemented the OAuth2 flow for Google sign-in, integrating it with the existing JWT system.
+-   **Apple Login Admin UI:** Created the backend models and admin UI to securely store Apple OAuth credentials, preparing for the final integration.
+-   **UI Fixes & Enhancements:**
+    -   Fixed an issue where Admin Panel menu text disappeared.
+    -   Corrected the main header to consistently show the Guest version on public pages.
+    -   Resolved a bug causing the site footer to disappear on navigation.
+    -   Added a language switcher to the Guest header.
 
 **Earlier issues found/mentioned but not fixed**
--   The user-requested quick-access menu () is currently based on . It lacks cross-device synchronization, which could be a future enhancement.
+-   The customizable quick-access menu is based on  and does not sync across devices. This remains a potential future enhancement.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork**: Platform failure to inject  secret.
@@ -86,67 +75,74 @@ There are no partially completed tasks. The agent was in the planning phase for 
 
 
 **Key Technical Concepts**
--   **Environment-Specific Configuration:** Using a Pydantic  class () to manage different behaviors for , , and  environments.
--   **Security Hardening:** Proactively identifying and fixing security vulnerabilities like hardcoded secrets and insecure data handling (PCI).
--   **System Stability:** Building resilient systems with fail-safe middleware, asynchronous background tasks for non-critical operations (Meilisearch), and external monitoring (Sentry).
--   **Dynamic UI Configuration:** The upcoming task to build a backend-driven system for managing header content.
--   **Internationalization (i18n):** The upcoming task to use a library like  to provide multi-language support.
+-   **Dynamic UI from Backend:** Header content is now fetched from the database and managed by an admin, not hardcoded.
+-   **Namespaced i18n:** Using  with  to lazy-load translations based on namespaces (, , , ), improving initial load performance.
+-   **Social Authentication (OAuth2):** Implemented the standard OAuth2 flow for Google Login, exchanging an authorization code for user info and a local JWT.
+-   **Secure Credential Management:** Created a dedicated, secure system for administrators to input and store sensitive third-party credentials (like Apple's private key).
 
 **key DB schema**
--   A new table will likely be required to store the configurations for the dynamic headers.
-    -   **header_configurations**: 
+-   **header_configurations**: 
+-   **system_settings**:  (Used to store Apple OAuth credentials securely)
+-   **(New) categories**: 
 
 **All files of reference**
--   : The main header component that will need significant refactoring.
--   : The layout containing the admin sidebar, where the new header management UI will be linked.
--   : The central place for managing environment variables.
--   : Contains the logic for conditional database seeding.
--   : Directory containing the recently added/modified middleware for stability.
+-   : User-provided artifact containing the target design for the new homepage.
+-   : The main file to be redesigned.
+-   : The core configuration file for the internationalization setup.
+-   : The directory containing all new namespaced translation JSON files.
+-   : The implemented admin page for managing headers.
+-   : The implemented admin page for managing Apple credentials.
+-   : Contains the backend endpoints for social login.
 
 **Critical Info for New Agent**
--   **USER'S TEMPERAMENT & COMMUNICATION:** The user is extremely direct, has high expectations for precision, and can get very frustrated by misunderstandings or slow progress. Communication must be in **Turkish**. Adhere strictly to the user's GÖREV EMRİ (Task Orders). Over-communicate your plan before implementing to ensure alignment.
--   **PRIORITY SHIFT:** The project has just completed a critical hardening phase (FAZ 1 & 2). You are now starting a new phase of major feature development (dynamic headers, i18n). These are complex tasks and the user expects them to be done correctly.
--   **TASK ORDER:** The user has provided a clear set of new tasks. Address them in the order of priority outlined: Dynamic Headers, i18n, and then the FAZ-3 mock data cleanup. Confirm the plan before starting.
--   **AVOID REPEATING MISTAKES:** The previous agent's failure to identify critical issues until a user-prompted audit caused significant user frustration. Be proactive in identifying potential issues with your implementation plan.
+-   **TOP PRIORITY:** Immediately begin work on the new homepage and category system as planned and approved by the user. This is a large task involving both frontend and backend development.
+-   **USER COMMUNICATION:** The user communicates exclusively in **Turkish** and expects precise, direct responses. Always confirm your plan before implementing major changes.
+-   **APPLE LOGIN IS BLOCKED:** Do not attempt to work on Apple Login. Simply remind the user that it is pending the credentials they need to enter in the admin panel you already built.
+-   **I18N PATTERN:** All new UI text must be added to the namespaced translation files under . Do not add text to the old  files.
+-   **ARTIFACTS:** The new homepage design is located in the user-provided artifact . Unzip and use the  and asset files as a reference.
 
 **documents and test reports created in this job**
--   : The last full test report confirming the state before the hardening phase. Many subsequent self-tests were performed via logs and .
+-   /app/test_reports/iteration_115.json
+-   /app/test_reports/iteration_113.json
+-   /app/test_reports/iteration_112.json
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **#770:** User provides final decisions for the new tasks: use a feature flag for mock data, add the new header management to the existing admin UI, use  for i18n, and self-test to save costs. (RESOLVED)
-2.  **#767:** User gives the GÖREV EMRİ for FAZ 3 (mock data cleanup) and adds three major new requests: remove a UI column, implement fully editable dynamic headers, and add full-app i18n support (German, French, Turkish). (PENDING IMPLEMENTATION)
-3.  **#572:** User provides final decisions for FAZ 2: use  for the health endpoint, have search return 503 on failure, and add Sentry integration. (RESOLVED, IMPLEMENTED)
-4.  **#569:** User gives the GÖREV EMRİ for FAZ 2 to fix the middleware  and stabilize Meilisearch. (RESOLVED, IMPLEMENTED)
-5.  **#400:** User approves the plan for FAZ 1: use  for , disable all automatic user seeding, and use Stripe Elements for payments. (RESOLVED, IMPLEMENTED)
-6.  **#397:** User gives the detailed GÖREV EMRİ for FAZ 1, focusing on critical security blockers: removing seed users, making  mandatory, and fixing PCI compliance issues. (RESOLVED, IMPLEMENTED)
-7.  **#393:** User expresses extreme frustration that the agent didn't find the P0 issues earlier and commands the agent to fix them. (CONTEXT)
-8.  **#392:** Agent delivers a detailed pre-launch audit report, identifying 6 critical P0 issues. (CONTEXT)
-9.  **#375:** User asks for a detailed report of all missing items before a production launch. (CONTEXT)
-10. **#328:** User requests a customizable quick access menu with recently used and favorites tabs. (RESOLVED, IMPLEMENTED)
+-   **#1045 (User):** Approves the agent's plan for the new homepage and dynamic category system. (RESOLVED)
+-   **#1042 (User):** Requests a complete homepage redesign based on the provided  file and a new admin feature to manage categories. (PENDING IMPLEMENTATION)
+-   **#969 (User):** Asks the agent to create an admin page for manually entering Apple Login credentials instead of providing them directly. (RESOLVED, IMPLEMENTED)
+-   **#968 (Agent):** Confirms Google Login is active and requests the necessary credentials to proceed with Apple Login. (CONTEXT)
+-   **#801 (User):** Instructs the agent to proceed with implementing Emergent-managed Google Login. (RESOLVED, IMPLEMENTED)
+-   **#800 (Agent):** Confirms that footer stability and guest header language switcher issues are fixed and asks which social login to proceed with. (CONTEXT)
+-   **#755 (User):** Reports that the footer style does not match the requested design. (RESOLVED, FIXED)
+-   **#754 (Agent):** Confirms a fix for the footer and re-asks for Apple credentials. (CONTEXT)
+-   **#695 (User):** Reports that the footer menu disappears on page navigation. (RESOLVED, FIXED)
+-   **#603 (User):** Makes two requests: 1) translate all remaining sub-menu text and add a language switcher to the guest header; 2) complete Google and other social login options. (RESOLVED, IMPLEMENTED)
 
 **Project Health Check:**
--   **Broken:** None. The app is in a more stable and secure state than ever before.
--   **Mocked:**  data is still mocked. This is the target of the FAZ 3 task (P0-5).
+-   **Broken:** None. The application is stable.
+-   **Mocked:**  data remains mocked. This is pending the **FAZ 3: Remove Mock Data** task.
 
 **3rd Party Integrations**
 -   Stripe (Payments)
--   MongoDB (Primary DB)
--   PostgreSQL
+-   MongoDB (Database)
+-   PostgreSQL (Database)
 -   Meilisearch (Search)
--   Sentry (Error Tracking - newly added)
--    (To be added for i18n)
+-   Sentry (Error Tracking)
+-    (Internationalization)
+-   Emergent-managed Google Auth (Social Login) — uses Emergent LLM Key
+-   Apple Auth (Social Login, pending credentials) — requires User API Key
 
 **Testing status**
--   **Testing agent used after significant changes:** YES (before the hardening phase). The hardening phase was tested via  and log analysis as per user's cost-saving instructions.
+-   **Testing agent used after significant changes:** YES. The agent ran the testing agent multiple times to validate i18n, header, and social login features.
 -   **Troubleshoot agent used after agent stuck in loop:** NO
--   **Test files created:** None in this session, but core logic was heavily modified.
+-   **Test files created:** None. Testing was performed via the .
 -   **Known regressions:** None.
 
 **Credentials to test flow:**
--   User seeding is disabled in production/staging. For development, the agent would need to use the manual fixture script (if created) or register users manually.
 -   **Super Admin:**  / 
 -   **Dealer/Corporate User:**  / 
 -   **User:**  / 
 
 **What agent forgot to execute**
-The agent has not forgotten any tasks; it was in the process of planning the next major set of features (dynamic headers, i18n) and the final hardening task (FAZ 3) when the session ended. The immediate priority is to create a robust plan for these complex features and get user approval before implementation.</analysis>
+-   The task to create and add the  script to the CI pipeline, requested in message #509, has not been implemented.
+-   The tasks to refine the  namespace and add route-based header rules/tests, requested in messages #509 and #588, are also pending.</analysis>

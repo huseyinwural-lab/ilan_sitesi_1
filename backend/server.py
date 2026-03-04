@@ -14972,6 +14972,7 @@ class CategoryCreatePayload(BaseModel):
     active_flag: Optional[bool] = True
     sort_order: int = Field(..., ge=1)
     image_url: Optional[str] = None
+    icon_svg: Optional[str] = None
     hierarchy_complete: Optional[bool] = None
     form_schema: Optional[Dict[str, Any]] = None
     wizard_progress: Optional[Dict[str, Any]] = None
@@ -14987,6 +14988,7 @@ class CategoryUpdatePayload(BaseModel):
     active_flag: Optional[bool] = None
     sort_order: Optional[int] = Field(default=None, ge=1)
     image_url: Optional[str] = None
+    icon_svg: Optional[str] = None
     hierarchy_complete: Optional[bool] = None
     form_schema: Optional[Dict[str, Any]] = None
     wizard_progress: Optional[Dict[str, Any]] = None
@@ -15623,6 +15625,7 @@ def _serialize_category_sql(category: Category, include_schema: bool = False, in
     form_schema = category.form_schema if isinstance(category.form_schema, dict) else {}
     category_meta = form_schema.get("category_meta") if isinstance(form_schema.get("category_meta"), dict) else {}
     segment_key = _normalize_segment_key(category_meta.get("vehicle_segment"))
+    icon_svg = _extract_category_icon_svg_from_schema(category.form_schema)
     payload = {
         "id": str(category.id),
         "parent_id": str(category.parent_id) if category.parent_id else None,
@@ -15636,6 +15639,7 @@ def _serialize_category_sql(category: Category, include_schema: bool = False, in
         "module": category.module,
         "allowed_countries": category.allowed_countries or [],
         "icon": category.icon,
+        "icon_svg": icon_svg,
         "image_url": category.image_url,
         "listing_count": category.listing_count,
         "vehicle_segment": VEHICLE_SEGMENT_ALIASES.get(segment_key, segment_key),
@@ -15660,6 +15664,71 @@ def _category_translation_map(translations: list[CategoryTranslation]) -> dict:
             "meta_description": translation.meta_description,
         }
     return mapping
+
+
+CATEGORY_ICON_SVG_MAX_LENGTH = 5000
+
+
+def _normalize_category_icon_svg(value: Any) -> Optional[str]:
+    if value is None:
+        return None
+
+    raw = str(value).strip()
+    if not raw:
+        return ""
+
+    if len(raw) > CATEGORY_ICON_SVG_MAX_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail=f"icon_svg maksimum {CATEGORY_ICON_SVG_MAX_LENGTH} karakter olabilir",
+        )
+
+    lowered = raw.lower()
+    if "<svg" not in lowered or "</svg>" not in lowered:
+        raise HTTPException(status_code=400, detail="icon_svg geçerli bir <svg>...</svg> içermelidir")
+
+    blocked_tokens = ("<script", "javascript:", "onload=", "onerror=", "onclick=")
+    if any(token in lowered for token in blocked_tokens):
+        raise HTTPException(status_code=400, detail="icon_svg güvenli olmayan içerik içeriyor")
+
+    return raw
+
+
+def _extract_category_icon_svg_from_schema(form_schema: Any) -> Optional[str]:
+    if not isinstance(form_schema, dict):
+        return None
+    category_meta = form_schema.get("category_meta")
+    if not isinstance(category_meta, dict):
+        return None
+    value = category_meta.get("home_icon_svg")
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
+
+
+def _merge_category_icon_svg_schema(existing_schema: Optional[Dict[str, Any]], icon_svg: Optional[str]) -> Optional[Dict[str, Any]]:
+    schema_obj = deepcopy(existing_schema) if isinstance(existing_schema, dict) else {}
+
+    current_meta = schema_obj.get("category_meta")
+    category_meta = deepcopy(current_meta) if isinstance(current_meta, dict) else {}
+
+    if icon_svg == "":
+        category_meta.pop("home_icon_svg", None)
+    elif isinstance(icon_svg, str):
+        category_meta["home_icon_svg"] = icon_svg
+
+    if category_meta:
+        schema_obj["category_meta"] = category_meta
+    else:
+        schema_obj.pop("category_meta", None)
+
+    if not schema_obj:
+        return None
+
+    if "status" not in schema_obj:
+        schema_obj["status"] = "draft"
+
+    return schema_obj
 
 
 def _coerce_bool(value: Any, default: bool = False) -> bool:
@@ -29878,6 +29947,12 @@ async def admin_create_category(
         )
         schema_status = schema.get("status", schema_status or "draft")
 
+    normalized_icon_svg = _normalize_category_icon_svg(payload.icon_svg)
+    if normalized_icon_svg is not None:
+        schema = _merge_category_icon_svg_schema(schema, normalized_icon_svg)
+        if isinstance(schema, dict):
+            schema_status = schema.get("status", schema_status or "draft")
+
     slug_json = {"tr": slug, "en": slug, "de": slug}
     depth = (parent.depth + 1) if parent else 0
     path = f"{parent.path}.{slug}" if parent and parent.path else slug
@@ -30156,6 +30231,17 @@ async def admin_update_category(
         updates["form_schema"] = merged_schema
         schema = merged_schema
         schema_status = merged_schema.get("status", schema_status or "draft")
+
+    if "icon_svg" in payload_fields_set:
+        normalized_icon_svg = _normalize_category_icon_svg(payload.icon_svg)
+        merged_schema = _merge_category_icon_svg_schema(
+            updates.get("form_schema", category.form_schema),
+            normalized_icon_svg,
+        )
+        updates["form_schema"] = merged_schema
+        schema = merged_schema
+        if isinstance(merged_schema, dict):
+            schema_status = merged_schema.get("status", schema_status or "draft")
 
     if payload.wizard_progress is not None:
         updates["wizard_progress"] = payload.wizard_progress

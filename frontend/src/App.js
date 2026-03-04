@@ -22,7 +22,7 @@ import { HelmetProvider } from 'react-helmet-async';
 // Public Pages
 import ErrorBoundary from '@/components/ErrorBoundary';
 import MainLayout from '@/layouts/MainLayout';
-import HomePage from '@/pages/public/HomePage';
+import HomePageRefreshed from '@/pages/public/HomePageRefreshed';
 import SearchPage from '@/pages/public/SearchPage';
 import DetailPage from '@/pages/public/DetailPage';
 import CategoryLandingPage from '@/pages/public/CategoryLandingPage';
@@ -162,7 +162,7 @@ function App() {
                 <Routes>
                   {/* Public Routes */}
                   <Route element={<MainLayout />}>
-                    <Route path="/" element={<HomePage />} />
+                    <Route path="/" element={<HomePageRefreshed />} />
                     <Route path="/search" element={<SearchPage />} />
                     <Route path="/kategori/:slug" element={<CategoryLandingPage />} />
                     <Route path="/ilan/:id" element={<ErrorBoundary><DetailPage /></ErrorBoundary>} />

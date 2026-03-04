@@ -49,7 +49,7 @@ import AdminHeaderManagement from '@/pages/admin/AdminHeaderManagement';
 import AdminFooterManagement from '@/pages/admin/AdminFooterManagement';
 import AdminThemeManagement from '@/pages/admin/AdminThemeManagement';
 import AdminShowcaseManagement from '@/pages/admin/AdminShowcaseManagement';
-import AdminHomeCategoryDesign from '@/pages/admin/AdminHomeCategoryDesign';
+import AdminHomeCategoryDesignV2 from '@/pages/admin/AdminHomeCategoryDesignV2';
 import AdminListingDesign from '@/pages/admin/AdminListingDesign';
 import AdminInfoPages from '@/pages/admin/AdminInfoPages';
 import AdminUserInterfaceDesignV2 from '@/pages/admin/AdminUserInterfaceDesignV2';
@@ -182,7 +182,7 @@ export default function BackofficePortalApp() {
         element={
           <AdminLayout>
             <AdminRouteGuard roles={["super_admin", "country_admin"]}>
-              <AdminHomeCategoryDesign />
+              <AdminHomeCategoryDesignV2 />
             </AdminRouteGuard>
           </AdminLayout>
         }

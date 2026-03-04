@@ -1051,7 +1051,7 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Header ve admin header yönetimi metinleri çeviri key’lerine bağlandı.
 
 ### Test & Doğrulama
-- Smoke UI: `https://header-config-1.preview.emergentagent.com` yükleniyor.
+- Smoke UI: `https://admin-categories-2.preview.emergentagent.com` yükleniyor.
 - Self-test (curl): header yönetim endpointleri + mode endpointleri + FAZ3 academy response doğrulandı.
 - **Testing agent PASS:** `/app/test_reports/iteration_106.json`
   - Backend 14/14 PASS
