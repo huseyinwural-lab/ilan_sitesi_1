@@ -323,12 +323,12 @@ export function LanguageProvider({ children }) {
         pathname,
       });
 
-      if (IS_PRODUCTION_ENV) {
-        return '—';
-      }
-
       if (typeof fallbackOrOptions === 'string' && fallbackOrOptions.trim()) {
         return fallbackOrOptions;
+      }
+
+      if (IS_PRODUCTION_ENV) {
+        return '—';
       }
       return '—';
     }

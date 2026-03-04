@@ -71,7 +71,8 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build",
-    "test": "craco test"
+    "test": "craco test",
+    "check:legacy-locales": "node scripts/check-legacy-locales-deprecated.mjs"
   },
   "browserslist": {
     "production": [

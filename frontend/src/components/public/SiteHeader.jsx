@@ -36,6 +36,36 @@ export default function SiteHeader({ mode, refreshToken }) {
     return headerData.items.filter((item) => item?.label && item?.url);
   }, [headerData.items]);
 
+  const guestDynamicItems = useMemo(() => {
+    if (headerMode !== 'guest') return dynamicItems;
+
+    const items = [...dynamicItems];
+    const hasLogin = items.some((item) => String(item?.url || '').trim() === '/login');
+    const hasRegister = items.some((item) => String(item?.url || '').trim() === '/register');
+
+    if (!hasLogin) {
+      items.push({
+        id: 'guest-login-fallback',
+        label: t('header_login', 'Giriş Yap'),
+        url: '/login',
+        style: 'text',
+        open_in_new_tab: false,
+      });
+    }
+
+    if (!hasRegister) {
+      items.push({
+        id: 'guest-register-fallback',
+        label: t('header_register', 'Üye Ol'),
+        url: '/register',
+        style: 'solid',
+        open_in_new_tab: false,
+      });
+    }
+
+    return items;
+  }, [dynamicItems, headerMode, t]);
+
   useEffect(() => {
     let active = true;
     const loadHeader = () => {
@@ -232,7 +262,7 @@ export default function SiteHeader({ mode, refreshToken }) {
           {!isAuthenticated && (
             <div className="flex items-center gap-2" data-testid="site-header-guest">
               {dynamicItems.length > 0 ? (
-                renderDynamicItems(dynamicItems, 'guest')
+                renderDynamicItems(guestDynamicItems, 'guest')
               ) : (
                 <>
                   <Link

@@ -1,0 +1,37 @@
+name: Frontend i18n Legacy Locale Readonly Check
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-i18n-readonly-check.yml'
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'frontend/**'
+
+jobs:
+  check-legacy-locales:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+          cache-dependency-path: frontend/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run legacy locale readonly check
+        run: yarn check:legacy-locales

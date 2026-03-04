@@ -1,0 +1,112 @@
+{
+  "summary": "Iteration 111 - Testing guest header login/register buttons, admin panel sidebar menu labels, i18n translations for dealer routes in TR/DE/FR, language switcher visibility, and legacy locale deprecation CI check. ALL TESTS PASS.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_tested": {
+    "guest_header_login_register": {
+      "status": "PASS",
+      "description": "Guest header shows 'Giriş Yap' (Login) and 'Üye Ol' (Register) buttons clearly visible",
+      "selectors_found": ["[data-testid='site-header-login']", "[data-testid='site-header-register']"]
+    },
+    "admin_panel_sidebar_menu_labels": {
+      "status": "PASS",
+      "description": "Admin panel sidebar shows all menu items with proper Turkish labels - no empty or dash (—) labels found",
+      "sample_labels": ["Kontrol Paneli", "Genel Bakış", "Ülke Karşılaştırma", "Admin Kullanıcıları", "Rol Tanımları", "Bireysel Kullanıcılar", "Kurumsal Kullanıcılar", "Moderation Queue", "Rapor Paneli", "Tüm İlanlar"],
+      "fix_verified": "t(item.label, item.label) fallback in Layout.js works correctly"
+    },
+    "dealer_login_route_i18n": {
+      "status": "PASS",
+      "translations": {
+        "TR": {"title": "Özet", "button": "Yenile", "cta": "İlan Ver", "logout": "Çıkış Yap"},
+        "DE": {"title": "Übersicht", "button": "Aktualisieren", "cta": "Anzeige erstellen", "logout": "Abmelden"},
+        "FR": {"title": "Résumé", "button": "Actualiser", "cta": "Publier une annonce", "logout": "Déconnexion"}
+      }
+    },
+    "dealer_overview_translations": {
+      "status": "PASS",
+      "description": "DealerOverview page fully translated for DE and FR",
+      "de_menu_items": ["Übersichts-Dashboard", "Aktive Anzeigen", "Eingehende Nachrichten", "Kundenliste", "Favorisierte Anzeigen", "Paketübersicht", "Gespeicherte Karten"],
+      "fr_menu_items": ["Menu rapide personnel", "Récents", "Mes favoris"]
+    },
+    "dealer_reports_translations": {
+      "status": "PASS",
+      "translations": {
+        "TR": {"title": "Raporlar", "subtitle": "Performans, paket ve doping raporlarını tek ekrandan takip edin."},
+        "DE": {"title": "Berichte", "subtitle": "Verfolgen Sie Leistungs-, Paket- und Dopingberichte auf einem einzigen Bildschirm."},
+        "FR": {"title": "Rapports", "subtitle": "Suivez les rapports de performance, de forfait et de dopings sur un seul écran."}
+      },
+      "kpi_labels": {
+        "DE": ["AUFRUFE DER LETZTEN 7 TAGE", "LEAD-/KONTAKTKLICKS"],
+        "FR": ["VUES DES 7 DERNIERS JOURS", "CLICS LEAD/CONTACT"]
+      },
+      "period_tabs": {
+        "DE": ["7 Tage", "14 Tage", "30 Tage", "90 Tage"],
+        "FR": ["7 jours", "14 jours", "30 jours", "90 jours"]
+      },
+      "report_tabs": {
+        "DE": ["Stündliche Besuchszahl", "Bericht zu aktiven Anzeigen", "Aufrufbericht", "Favoritenbericht", "Eingangs-Nachrichtenbericht", "Eingehende Anrufe (Mobil)", "Paketberichte", "Doping-Nutzungsbericht"],
+        "FR": ["Nombre de visites horaire", "Rapport des annonces actives", "Rapport de vues", "Rapport d'ajout en favori", "Rapport des messages reçus", "Rapport des appels entrants (mobile)", "Rapports de forfait", "Rapport d'utilisation des dopings"]
+      }
+    },
+    "language_switcher_visibility": {
+      "status": "PASS",
+      "description": "Language switcher (TR, DE, FR buttons) visible by default even when corporate header config missing",
+      "console_logs_verified": [
+        "[dealer-header] config_missing: language_switcher fallback=visible",
+        "[dealer-header] config_missing_block: language_switcher fallback=visible"
+      ]
+    },
+    "legacy_locale_ci_check": {
+      "status": "PASS",
+      "script": "yarn check:legacy-locales",
+      "result": "✅ Legacy locale deprecate/read-only kontrolleri geçti",
+      "ci_workflow": "/app/.github/workflows/frontend-i18n-readonly-check.yml exists"
+    },
+    "namespace_structure": {
+      "status": "PASS",
+      "files": {
+        "tr": ["common.json", "auth.json", "dealer.json", "admin.json"],
+        "de": ["common.json", "auth.json", "dealer.json", "admin.json"],
+        "fr": ["common.json", "auth.json", "dealer.json", "admin.json"]
+      },
+      "legacy_files_exist": ["tr.json", "de.json", "fr.json"],
+      "deprecation_notice": "DEPRECATION.md present"
+    }
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_111.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Guest header fallback items working correctly via guestDynamicItems in SiteHeader.jsx",
+    "Admin sidebar t(item.label, item.label) fallback working - no empty labels",
+    "LanguageContext route preload rules working for /dealer/* routes",
+    "Dealer namespace translations complete for overview and reports pages in DE/FR",
+    "Language switcher visibility fallback in DealerLayoutV2 working correctly",
+    "Legacy locale CI check script passing"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only test)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!",
+    "dealer": "dealer@platform.com / Dealer123!"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "mocked_api": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+  "context_for_next_testing_agent": "All requested features verified: 1) Guest header shows login/register buttons via fallback, 2) Admin sidebar menu labels all visible (no empty/dash), 3) Dealer routes fully i18n compliant with TR/DE/FR translations, 4) Language switcher visible by default with fallback logic, 5) Legacy locale CI check passes. Namespace structure: locales/{tr,de,fr}/{common,auth,dealer,admin}.json"
+}

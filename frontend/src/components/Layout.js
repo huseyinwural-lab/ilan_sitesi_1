@@ -762,7 +762,7 @@ export default function Layout({ children }) {
                           >
                             <item.icon size={18} />
                             {!sidebarCollapsed && (
-                              <span className="flex-1">{typeof item.label === 'string' ? t(item.label) : item.label}</span>
+                              <span className="flex-1">{typeof item.label === 'string' ? t(item.label, item.label) : item.label}</span>
                             )}
                             {!sidebarCollapsed && (
                               <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
@@ -777,7 +777,7 @@ export default function Layout({ children }) {
                             data-testid={`nav-${item.testId}`}
                           >
                             <item.icon size={18} />
-                            {!sidebarCollapsed && (typeof item.label === 'string' ? t(item.label) : item.label)}
+                            {!sidebarCollapsed && (typeof item.label === 'string' ? t(item.label, item.label) : item.label)}
                           </a>
                         ) : (
                           <NavLink
@@ -788,7 +788,7 @@ export default function Layout({ children }) {
                             data-testid={`nav-${item.testId}`}
                           >
                             <item.icon size={18} />
-                            {!sidebarCollapsed && (typeof item.label === 'string' ? t(item.label) : item.label)}
+                            {!sidebarCollapsed && (typeof item.label === 'string' ? t(item.label, item.label) : item.label)}
                           </NavLink>
                         )}
                       </li>
@@ -808,7 +808,7 @@ export default function Layout({ children }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium truncate">{user?.full_name}</p>
-              <p className="text-xs text-muted-foreground capitalize">{t(user?.role)}</p>
+              <p className="text-xs text-muted-foreground capitalize">{t(user?.role, user?.role || 'user')}</p>
             </div>
           </div>
           <button
@@ -862,7 +862,7 @@ export default function Layout({ children }) {
                                 data-testid={`nav-mobile-${item.testId}`}
                               >
                                 <item.icon size={18} />
-                                <span className="flex-1">{typeof item.label === 'string' ? t(item.label) : item.label}</span>
+                                <span className="flex-1">{typeof item.label === 'string' ? t(item.label, item.label) : item.label}</span>
                                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted">Yakında</span>
                               </div>
                             ) : item.openInNewWindow ? (
@@ -875,7 +875,7 @@ export default function Layout({ children }) {
                                 data-testid={`nav-mobile-${item.testId}`}
                               >
                                 <item.icon size={18} />
-                                {typeof item.label === 'string' ? t(item.label) : item.label}
+                                {typeof item.label === 'string' ? t(item.label, item.label) : item.label}
                               </a>
                             ) : (
                               <NavLink
@@ -887,7 +887,7 @@ export default function Layout({ children }) {
                                 data-testid={`nav-mobile-${item.testId}`}
                               >
                                 <item.icon size={18} />
-                                {typeof item.label === 'string' ? t(item.label) : item.label}
+                                {typeof item.label === 'string' ? t(item.label, item.label) : item.label}
                               </NavLink>
                             )}
                           </li>
