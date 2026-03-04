@@ -1,0 +1,85 @@
+{
+  "summary": "Iteration 112 - Frontend testing for footer stability and guest header language selector. Footer is stable but language selector is NOT rendering for guest users.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "SiteHeader.jsx",
+        "issue": "Guest header language selector (TR/DE/FR buttons) is NOT rendering despite renderLanguageSelector() being called in code at line 303",
+        "selector": "[data-testid='site-header-language-selector']",
+        "priority": "HIGH",
+        "evidence": "DOM inspection shows guest section has only 1 child (dynamic list), no language selector div with ml-1 class found anywhere"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_tested": {
+    "footer_stability": {
+      "status": "PASS",
+      "description": "Footer remains visible after initial load (tested 0s, 5s, 8s intervals). Footer is stable and does not disappear.",
+      "note": "Footer is using dynamic API content (1 row: Hakkımızda, Kurumsal açıklama) - NOT the fallback links",
+      "selectors_checked": ["[data-testid='site-footer']", "[data-testid='site-footer-row-0']"],
+      "fallback_used": false
+    },
+    "footer_fallback_render": {
+      "status": "N/A",
+      "description": "Fallback footer (site-footer-fallback-links) is NOT being used because API returns valid data. Cannot test fallback visibility in current state.",
+      "selectors_checked": ["[data-testid='site-footer-fallback-links']", "[data-testid='site-footer-fallback-trust']"]
+    },
+    "guest_header_language_selector": {
+      "status": "FAIL",
+      "description": "Language selector with TR/DE/FR buttons is NOT visible in guest header",
+      "expected_selector": "[data-testid='site-header-language-selector']",
+      "found": false,
+      "buttons_checked": ["[data-testid='site-header-language-tr']", "[data-testid='site-header-language-de']", "[data-testid='site-header-language-fr']"],
+      "all_missing": true
+    }
+  },
+  "test_report_links": ["/app/test_reports/iteration_112.json"],
+  "action_items": [
+    "HIGH: Fix guest header language selector - renderLanguageSelector() is called but NOT rendering to DOM",
+    "Investigate why supportedLanguages from useLanguage() might be empty or why the render result is being swallowed",
+    "Check if React Fragment or conditional rendering issue is preventing the language selector from appearing",
+    "Verify SiteHeader.jsx line 303: {renderLanguageSelector()} is being executed"
+  ],
+  "critical_code_review_comments": [
+    "SiteHeader.jsx line 171-188: renderLanguageSelector() maps supportedLanguages but output not appearing in DOM",
+    "SiteHeader.jsx line 282-304: Guest header section calls renderLanguageSelector() but only dynamic list child is rendered",
+    "Possible issue: supportedLanguages may be empty or undefined from useLanguage() context",
+    "SiteFooter.jsx lines 76-91: Code accesses layout.rows BEFORE null check at line 109 - potential bug that could cause errors if layout is null during fetch"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only test)",
+    "frontend": "50% - Footer stable, Language selector missing"
+  },
+  "test_credentials": {},
+  "seed_data_creation": "",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "mocked_api": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+  "context_for_next_testing_agent": "Guest header language selector NOT rendering - needs fix in SiteHeader.jsx. Footer is stable using API data (not fallback). Footer fallback logic appears correct but cannot be tested when API returns data.",
+  "rca_of_the_issue": {
+    "issue": "Guest header language selector not visible",
+    "root_cause": "renderLanguageSelector() is being called at SiteHeader.jsx line 303 but the DOM shows only 1 child element in site-header-guest div (the dynamic list wrapper). The language selector div with data-testid='site-header-language-selector' and ml-1 class is completely absent from the DOM.",
+    "possible_causes": [
+      "supportedLanguages from useLanguage() is empty/undefined, causing map() to render nothing",
+      "A React fragment or wrapper issue is preventing the element from being appended",
+      "Hot reload issue where the code change wasn't deployed correctly"
+    ],
+    "reproduction_steps": [
+      "Navigate to https://header-config-1.preview.emergentagent.com as guest (not logged in)",
+      "Inspect header area for language selector buttons (TR/DE/FR)",
+      "Check DOM for [data-testid='site-header-language-selector']",
+      "Observe: Selector not found, only dynamic list items present"
+    ],
+    "mitigation": "Verify supportedLanguages is being passed from LanguageContext. Add fallback: supportedLanguages = supportedLanguages || ['tr', 'de', 'fr'] before map in renderLanguageSelector"
+  }
+}
