@@ -15333,6 +15333,28 @@ def _pick_category_slug(slug_value) -> Optional[str]:
     return slug_value
 
 
+CATEGORY_SLUG_ALLOWED_SPECIAL_CHARS = {" ", "-", "&", "(", ")", ".", ",", "'", "+"}
+CATEGORY_SLUG_FORBIDDEN_CHARS = {"/", "\\", "?", "#", "%"}
+
+
+def _normalize_category_slug_input(value: Any) -> str:
+    slug = str(value or "").strip().lower()
+    slug = re.sub(r"\s+", " ", slug)
+    if not slug:
+        raise HTTPException(status_code=400, detail="slug format invalid")
+
+    if any(char in CATEGORY_SLUG_FORBIDDEN_CHARS for char in slug):
+        raise HTTPException(status_code=400, detail="slug format invalid")
+
+    if not any(char.isalnum() for char in slug):
+        raise HTTPException(status_code=400, detail="slug format invalid")
+
+    if not all(char.isalnum() or char in CATEGORY_SLUG_ALLOWED_SPECIAL_CHARS for char in slug):
+        raise HTTPException(status_code=400, detail="slug format invalid")
+
+    return slug
+
+
 def _normalize_category_module(value: Optional[str]) -> str:
     if not value:
         return "other"
@@ -29908,9 +29930,7 @@ async def admin_create_category(
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    slug = payload.slug.strip().lower()
-    if not SLUG_PATTERN.match(slug):
-        raise HTTPException(status_code=400, detail="slug format invalid")
+    slug = _normalize_category_slug_input(payload.slug)
 
     parent = None
     if payload.parent_id:
@@ -30155,9 +30175,7 @@ async def admin_update_category(
         updates["name"] = payload.name.strip()
 
     if payload.slug is not None:
-        slug = payload.slug.strip().lower()
-        if not SLUG_PATTERN.match(slug):
-            raise HTTPException(status_code=400, detail="slug format invalid")
+        slug = _normalize_category_slug_input(payload.slug)
         existing_query = await session.execute(
             select(Category).where(Category.is_deleted.is_(False), Category.id != category.id)
         )

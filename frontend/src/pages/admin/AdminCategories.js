@@ -214,19 +214,8 @@ const cloneHierarchyTemplate = (nodes = []) => nodes.map((node, index) => ({
 const normalizeSlugValue = (value) => {
   if (!value) return "";
   return String(value)
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ı/g, "i")
-    .replace(/ş/g, "s")
-    .replace(/ğ/g, "g")
-    .replace(/ç/g, "c")
-    .replace(/ö/g, "o")
-    .replace(/ü/g, "u")
-    .replace(/[^a-z0-9-\s]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+    .replace(/\s+/g, " ")
+    .trim();
 };
 
 const reorderArray = (items, fromIndex, toIndex) => {
@@ -1641,7 +1630,7 @@ const AdminCategories = () => {
       return {
         ...item,
         name: item.name.trim(),
-        slug: item.slug.trim().toLowerCase(),
+        slug: item.slug.trim(),
         sort_order: resolvedSort,
         is_complete: true,
         is_leaf: Boolean(item.is_leaf),
@@ -2719,7 +2708,7 @@ const AdminCategories = () => {
     setSubcategories((prev) => updateNodeByPath(prev, path, (node) => ({
       ...node,
       name: node.name.trim(),
-      slug: node.slug.trim().toLowerCase(),
+      slug: node.slug.trim(),
       is_complete: true,
     })));
   };
@@ -2740,7 +2729,7 @@ const AdminCategories = () => {
     setHierarchyFieldErrors({});
 
     const name = form.name.trim();
-    const slug = form.slug.trim().toLowerCase();
+    const slug = form.slug.trim();
     const country = (form.country_code || "").trim().toUpperCase();
     const moduleValue = (form.module || "").trim().toLowerCase();
     const isVehicleModule = moduleValue === "vehicle";
@@ -2804,7 +2793,7 @@ const AdminCategories = () => {
         return {
           ...node,
           name: node.name ? node.name.trim() : "",
-          slug: node.slug ? node.slug.trim().toLowerCase() : "",
+          slug: node.slug ? node.slug.trim() : "",
           sort_order: resolvedSort,
           is_complete: true,
           is_leaf: Boolean(node.is_leaf),
