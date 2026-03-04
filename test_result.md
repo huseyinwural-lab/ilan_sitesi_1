@@ -1,4 +1,123 @@
-## Dealer Settings Layout & Language Toggle Test (Mar 3, 2026 - LATEST) ⚠️ PARTIAL PASS
+## Language Switching Test - TR/DE/FR (Mar 4, 2026 - LATEST) ⚠️ PARTIAL PASS
+
+### Test Summary
+Testing language switching functionality on login pages and dealer portal as per review request: "Lütfen son değişiklikleri hızlı doğrula: 1) /login ve /dealer/login üzerinde TR/DE/FR dil geçişi çalışıyor mu. 2) dealer login sonrası /dealer/overview ekranında language switcher (TR/DE/FR) config'te blok eksik olsa bile görünüyor mu. 3) /dealer/overview üst menüde dealer.menu çevirileri dil değişince değişiyor mu (ör: overview/listings/messages)."
+
+### Test Flow Executed:
+1. ✅ Test /login language switching (TR/DE/FR) → translations changing correctly
+2. ✅ Test /dealer/login language switching (TR/DE/FR) → translations changing correctly  
+3. ❌ Dealer login and check /dealer/overview language switcher → switcher NOT VISIBLE
+4. ❌ Test dealer menu translations → CANNOT TEST (switcher missing)
+
+### Critical Findings:
+
+#### ✅ WORKING: /login and /dealer/login Language Switching
+
+**1. /login Page Language Switching**: ✅ **FULLY WORKING**
+  - **Language Toggle**: ✅ Found at data-testid="language-toggle" in top-right corner
+  - **TR → DE → FR Cycle**: ✅ All three languages accessible via toggle
+  - **Title Translation**: ✅ CHANGES correctly
+    - TR: "Giriş yap"
+    - DE: "Anmelden" 
+    - FR: "Connexion"
+  - **Subtitle Translation**: ✅ CHANGES correctly
+    - TR: "Hesabınıza giriş yapın."
+    - DE: "Melden Sie sich bei Ihrem Konto an."
+    - FR: "Connectez-vous à votre compte."
+  - **Email Placeholder**: ✅ CHANGES correctly
+    - TR: "E-posta adresi"
+    - DE: "E-Mail-Adresse"
+    - FR: "Adresse e-mail"
+  - **VERIFIED**: Language context properly triggers re-renders, all UI text updates when language changes
+
+**2. /dealer/login Page Language Switching**: ✅ **FULLY WORKING**
+  - **Language Toggle**: ✅ Found at data-testid="language-toggle"
+  - **Translations Change**: ✅ Title and subtitle update when language switches
+  - **Example**: "Connexion" (FR) → "Giriş yap" (TR) when toggling
+  - **VERIFIED**: Same login component used for both portals, translations working identically
+
+#### ❌ CRITICAL ISSUE: /dealer/overview Language Switcher Missing
+
+**3. /dealer/overview Language Switcher Visibility**: ❌ **NOT VISIBLE**
+  - **Issue**: Language switcher (TR/DE/FR) is NOT VISIBLE on /dealer/overview page
+  - **Expected**: Switcher should be visible **even if config block is missing** (per review request)
+  - **Actual**: Switcher is hidden because config block is missing
+  - **Location**: Should be at data-testid="dealer-layout-language-toggle" in header row1
+  - **Impact**: Users cannot change language once logged into dealer portal
+  
+**Root Cause Analysis**:
+  - **File**: /app/frontend/src/layouts/DealerLayout.js
+  - **Lines 316-320**: `hasCorporateBlock` function logic issue
+  ```javascript
+  const hasCorporateBlock = (rowId, type, fallback = true) => {
+    const row = corporateRowMap[rowId];
+    if (!row) return fallback;  // Only returns fallback if row doesn't exist
+    return row.has(type);        // Returns false if row exists but block missing
+  };
+  ```
+  - **Line 324**: `const showRow1Language = hasCorporateBlock('row1', 'language_switcher', true);`
+  - **Problem**: If row1 exists in config BUT language_switcher block is missing, function returns `false` instead of fallback `true`
+  - **Expected Behavior**: Fallback should apply when block is missing, not just when entire row is missing
+  - **Review Request**: "config'te blok eksik olsa bile görünüyor mu" - switcher should show even if config block missing
+
+**4. Dealer Menu Translations**: ❌ **CANNOT TEST**
+  - **Reason**: Language switcher not visible, cannot switch languages
+  - **Expected Menu Items**: Özet (overview), İlanlar (listings), Mesajlar (messages)
+  - **Expected Behavior**: Menu labels should change when language switches
+  - **Translation Files**: Available in /app/frontend/src/locales/tr/dealer.json and de/dealer.json
+  - **Cannot Verify**: Unable to test if translations apply without language switcher
+
+### Screenshots Captured:
+1. **login-lang-tr.png**: Login page in Turkish - "Giriş yap"
+2. **login-lang-de.png**: Login page in German - "Anmelden"  
+3. **login-lang-fr.png**: Login page in French - "Connexion"
+4. **dealer-login-lang-switched.png**: Dealer login with language switched
+5. **dealer-overview-lang-switcher.png**: Dealer overview showing NO language switcher
+
+### Test Results Summary:
+- **Total Tests**: 4 critical checks
+- **Fully Passed**: 2/4 (50%)
+- **Failed**: 2/4 (50%)
+- **/login language switching (TR/DE/FR)**: ✅ PASS (translations changing perfectly)
+- **/dealer/login language switching**: ✅ PASS (translations changing)
+- **/dealer/overview language switcher visible**: ❌ FAIL (not visible, config block missing)
+- **Dealer menu translations changing**: ❌ FAIL (cannot test without switcher)
+
+### Console Monitoring:
+- **Console Errors**: 0 ✅ (EXCELLENT)
+- **Console Warnings**: 0 ✅ (EXCELLENT)
+- **Runtime**: Clean with no JavaScript errors
+
+### Final Status:
+- **Overall Result**: ⚠️ **PARTIAL PASS** - Login pages working perfectly, dealer portal language switcher missing
+- **Login Pages**: ✅ PRODUCTION-READY (TR/DE/FR switching works flawlessly)
+- **Dealer Portal**: ❌ NOT PRODUCTION-READY (language switcher not visible)
+- **Blocker Issue**: hasCorporateBlock fallback logic needs fix
+
+### Review Request Compliance:
+
+**Turkish Requirements Check**:
+1. ✅ "/login ve /dealer/login üzerinde TR/DE/FR dil geçişi çalışıyor mu"
+   - **PASSED**: Both pages have working language switching with proper translations
+   
+2. ❌ "dealer login sonrası /dealer/overview ekranında language switcher (TR/DE/FR) config'te blok eksik olsa bile görünüyor mu"
+   - **FAILED**: Language switcher NOT visible on /dealer/overview (hidden when config block missing)
+   
+3. ❌ "/dealer/overview üst menüde dealer.menu çevirileri dil değişince değişiyor mu (ör: overview/listings/messages)"
+   - **CANNOT TEST**: Unable to verify menu translations without visible language switcher
+
+**Overall Compliance**: ⚠️ 1/3 requirements fully met, 2/3 have critical issues
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Mar 4, 2026 (LATEST)
+- **Message**: Language Switching Test COMPLETED with MIXED RESULTS. **WORKING PERFECTLY**: ✅ /login and /dealer/login pages have fully functional TR/DE/FR language switching. Verified all translations change correctly: Title "Giriş yap" (TR) → "Anmelden" (DE) → "Connexion" (FR), Subtitle and placeholders all update properly. Language context triggers re-renders correctly. Zero console errors. **CRITICAL BLOCKER FOUND**: ❌ /dealer/overview language switcher is NOT VISIBLE. Expected behavior per review request: "config'te blok eksik olsa bile görünüyor mu" (should be visible even if config block missing). ROOT CAUSE: DealerLayout.js lines 316-320 `hasCorporateBlock()` function has faulty fallback logic. When row1 exists in config but language_switcher block is missing, function returns `false` instead of fallback `true`. This hides the switcher. Fallback should apply when block is missing from an existing row, not just when entire row is missing. Without visible switcher, cannot test requirement #3 (dealer menu translations changing). FIX NEEDED: Update hasCorporateBlock logic to return fallback when row exists but specific block type is missing. Current logic at line 319: `return row.has(type)` should be `return row.has(type) || fallback` or similar. This is a critical UX issue preventing users from changing language in dealer portal. **RECOMMENDATION**: Fix hasCorporateBlock fallback logic in DealerLayout.js to ensure language switcher always shows in dealer portal, regardless of config block presence.
+
+---
+
+
+
+## Dealer Settings Layout & Language Toggle Test (Mar 3, 2026) ⚠️ PARTIAL PASS
 
 ### Test Summary
 Testing dealer settings page layout and language toggle functionality as per review request: "Lütfen şu frontend akışlarını doğrula: 1) /dealer/settings?section=profile ekranında eski orta dikey menü kolonu kaldırılmış olmalı; section seçimleri üstte yatay tab/chip olmalı. 2) /login, /register, /verify-email sayfalarında language toggle ile TR/DE/FR metinler değişmeli (başlık/alt başlık/placeholder). 3) dealer login sonrası /dealer/overview ve /dealer/settings akışları kırılmadan açılmalı."
