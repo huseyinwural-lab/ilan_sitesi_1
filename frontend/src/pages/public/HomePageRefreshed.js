@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdSlot from '@/components/public/AdSlot';
+import LayoutRenderer from '@/components/layout-builder/LayoutRenderer';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useContentLayoutResolve } from '@/hooks/useContentLayoutResolve';
 import './HomePageRefreshed.css';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -285,8 +287,18 @@ export default function HomePageRefreshed() {
   const moduleRootLimit = clamp(layout.l1_initial_limit, 1, 20, 6);
   const cardColumnCount = clamp(layout.listing_module_grid_columns, 2, 6, 4);
 
-  return (
-    <div className="home-kktc-page" data-testid="home-kktc-page">
+  const {
+    layout: resolvedHomeLayout,
+    hasLayoutRows: hasRuntimeHomeLayout,
+  } = useContentLayoutResolve({
+    country: countryCode,
+    module: 'global',
+    pageType: 'home',
+    enabled: Boolean(countryCode),
+  });
+
+  const renderHomeStaticSections = () => (
+    <>
       <section data-testid="home-kktc-top-ad">
         <AdSlot placement="AD_HOME_TOP" className="mb-3" />
       </section>
@@ -427,6 +439,33 @@ export default function HomePageRefreshed() {
           </section>
         </section>
       </div>
+    </>
+  );
+
+  const runtimeRegistry = {
+    'home.default-content': () => <>{renderHomeStaticSections()}</>,
+    'shared.text-block': ({ props }) => (
+      <section className="rounded-xl border bg-white p-4" data-testid="home-runtime-text-block">
+        <h2 className="text-base font-semibold" data-testid="home-runtime-text-title">{props?.title || 'Başlık'}</h2>
+        <p className="text-sm text-slate-600 mt-1" data-testid="home-runtime-text-body">{props?.body || ''}</p>
+      </section>
+    ),
+    'shared.ad-slot': ({ props }) => (
+      <section data-testid="home-runtime-ad-slot">
+        <AdSlot placement={props?.placement || 'AD_HOME_TOP'} className="rounded-xl border" />
+      </section>
+    ),
+  };
+
+  return (
+    <div className="home-kktc-page" data-testid="home-kktc-page">
+      {hasRuntimeHomeLayout ? (
+        <LayoutRenderer
+          payload={resolvedHomeLayout?.revision?.payload_json}
+          registry={runtimeRegistry}
+          dataTestIdPrefix="home-runtime-layout"
+        />
+      ) : renderHomeStaticSections()}
     </div>
   );
 }

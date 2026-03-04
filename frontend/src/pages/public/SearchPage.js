@@ -5,8 +5,10 @@ import { tr } from 'date-fns/locale';
 import { GoogleMap, MarkerClustererF, MarkerF, useJsApiLoader } from '@react-google-maps/api';
 import { Loader2, AlertCircle, Car, Search, ChevronRight, MapPin, List } from 'lucide-react';
 import { useSearchState } from '@/hooks/useSearchState';
+import { useContentLayoutResolve } from '@/hooks/useContentLayoutResolve';
 import { FacetRenderer } from '@/components/search/FacetRenderer';
 import { CategorySidebar } from '@/components/search/CategorySidebar';
+import LayoutRenderer from '@/components/layout-builder/LayoutRenderer';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -201,16 +203,18 @@ export default function SearchPage() {
     let alive = true;
     const fetchCategories = async () => {
       try {
-        const responses = await Promise.all(
+        const responses = await Promise.allSettled(
           SEARCH_MODULES.map((module) => fetch(`${API}/categories?module=${module}&country=${countryCode}`, { cache: 'no-store' })),
         );
 
         if (!alive) return;
 
         const payloads = await Promise.all(
-          responses.map(async (res) => {
+          responses.map(async (result) => {
+            if (result.status !== 'fulfilled') return [];
+            const res = result.value;
             if (!res.ok) return [];
-            const json = await res.json();
+            const json = await res.json().catch(() => []);
             return Array.isArray(json) ? json : [];
           }),
         );
@@ -305,6 +309,19 @@ export default function SearchPage() {
   const isCategoryTemplate = isL1CategoryTemplate || isL2CategoryTemplate;
   const isVehicleCategory = (categoryContext?.selected?.module || '') === 'vehicle';
   const effectiveMapView = isMapView && !isCategoryTemplate;
+
+  const runtimePageType = isL1CategoryTemplate ? 'search_l1' : (isL2CategoryTemplate ? 'search_l2' : null);
+  const runtimeModule = categoryContext?.selected?.module || 'global';
+  const {
+    layout: resolvedCategoryLayout,
+    hasLayoutRows: hasResolvedCategoryLayoutRows,
+  } = useContentLayoutResolve({
+    country: countryCode,
+    module: runtimeModule,
+    pageType: runtimePageType,
+    categoryId: categoryContext?.selected?.id,
+    enabled: Boolean(runtimePageType && categoryContext?.selected?.id),
+  });
 
   useEffect(() => {
     if (!isL1CategoryTemplate || !categoryContext?.selected?.id) {
@@ -845,6 +862,198 @@ export default function SearchPage() {
     </div>
   );
 
+  const renderL1DefaultTemplate = () => (
+    <section className="space-y-6" data-testid="search-l1-template-root">
+      <header className="rounded-2xl border border-slate-200 bg-gradient-to-r from-amber-50 via-white to-sky-50 p-5 md:p-6" data-testid="search-l1-header">
+        <nav className="flex items-center flex-wrap gap-1 text-sm text-muted-foreground mb-3" data-testid="search-l1-breadcrumb">
+          <button type="button" className="hover:text-foreground" onClick={() => handleCategoryChange(null)} data-testid="search-l1-breadcrumb-home">Ana Sayfa</button>
+          {categoryContext?.breadcrumb?.map((node, index) => (
+            <React.Fragment key={node.id}>
+              <ChevronRight className="h-4 w-4" />
+              {index === categoryContext.breadcrumb.length - 1 ? (
+                <span className="font-semibold text-foreground" data-testid={`search-l1-breadcrumb-current-${node.id}`}>{node.name}</span>
+              ) : (
+                <button
+                  type="button"
+                  className="hover:text-foreground"
+                  onClick={() => handleCategoryChange(getCategoryQueryValue(node))}
+                  data-testid={`search-l1-breadcrumb-link-${node.id}`}
+                >
+                  {node.name}
+                </button>
+              )}
+            </React.Fragment>
+          ))}
+        </nav>
+
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4" data-testid="search-l1-header-row">
+          <div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05]" data-testid="search-l1-title">{categoryContext?.selected?.name}</h1>
+            <p className="text-sm md:text-base text-muted-foreground mt-2" data-testid="search-l1-result-count">{data.pagination.total || 0} ilan bulundu</p>
+          </div>
+          {renderSortAndSave('search-l1-header')}
+        </div>
+      </header>
+
+      <section className="rounded-2xl border bg-card p-4 md:p-5" data-testid="search-l1-subcategory-section">
+        <div className="flex items-center justify-between gap-2 mb-3" data-testid="search-l1-subcategory-heading-wrap">
+          <h2 className="text-base md:text-lg font-bold" data-testid="search-l1-subcategory-heading">Alt Kategoriler</h2>
+          <span className="text-xs text-muted-foreground" data-testid="search-l1-subcategory-count">{categoryContext?.children?.length || 0} kategori</span>
+        </div>
+        {categoryContext?.children?.length ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-testid="search-l1-subcategory-grid">
+            {categoryContext.children.map((child) => (
+              <button
+                type="button"
+                key={child.id}
+                onClick={() => handleCategoryChange(getCategoryQueryValue(child))}
+                className="rounded-xl border bg-white px-4 py-3 text-left transition hover:border-primary hover:shadow-sm"
+                data-testid={`search-l1-subcategory-card-${child.id}`}
+              >
+                <div className="font-semibold text-sm" data-testid={`search-l1-subcategory-name-${child.id}`}>{child.name}</div>
+                <div className="text-xs text-muted-foreground mt-1" data-testid={`search-l1-subcategory-listing-count-${child.id}`}>{Number(child.listing_count || 0)} ilan</div>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground" data-testid="search-l1-subcategory-empty">Bu kategoride alt kategori bulunmuyor.</p>
+        )}
+      </section>
+
+      <section className="rounded-2xl border bg-card p-4 md:p-5" data-testid="search-l1-showcase-section">
+        <div className="flex items-center justify-between gap-2 mb-3" data-testid="search-l1-showcase-heading-wrap">
+          <h2 className="text-base md:text-lg font-bold" data-testid="search-l1-showcase-heading">Bu Kategoride Vitrin İlanları</h2>
+          <Link
+            to={`/search?category=${encodeURIComponent(categoryContext?.selected?.id || '')}&doping=showcase`}
+            className="text-xs font-semibold hover:underline"
+            data-testid="search-l1-showcase-see-all-link"
+          >
+            Tümünü Gör
+          </Link>
+        </div>
+
+        {categoryShowcaseLoading ? (
+          <div className="h-24 flex items-center justify-center" data-testid="search-l1-showcase-loading">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          </div>
+        ) : categoryShowcase.length ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-testid="search-l1-showcase-grid">
+            {categoryShowcase.map((item) => (
+              <Link
+                key={item.id}
+                to={`/ilan/${slugify(item.title)}-${item.id}`}
+                className="rounded-xl border overflow-hidden bg-white hover:shadow-sm"
+                data-testid={`search-l1-showcase-card-${item.id}`}
+              >
+                <div className="aspect-[4/3] bg-muted" data-testid={`search-l1-showcase-image-wrap-${item.id}`}>
+                  {item.image ? <img src={item.image} alt={item.title} className="h-full w-full object-cover" data-testid={`search-l1-showcase-image-${item.id}`} /> : null}
+                </div>
+                <div className="p-3">
+                  <div className="text-xs text-amber-700 font-semibold" data-testid={`search-l1-showcase-badge-${item.id}`}>VİTRİN</div>
+                  <div className="line-clamp-2 text-sm font-semibold" data-testid={`search-l1-showcase-title-${item.id}`}>{item.title}</div>
+                  <div className="mt-1 text-sm font-bold text-primary" data-testid={`search-l1-showcase-price-${item.id}`}>{formatPrice(item.price_amount ?? item.price, item.currency, item.price_type, item.hourly_rate)}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground" data-testid="search-l1-showcase-empty">Bu kategori için aktif vitrin ilanı bulunamadı.</p>
+        )}
+      </section>
+
+      <section className="grid grid-cols-1 xl:grid-cols-[320px_minmax(0,1fr)] gap-5" data-testid="search-l1-results-shell">
+        <aside className="space-y-4" data-testid="search-l1-filter-sidebar">
+          {renderFilterPanel('search-l1-filter', isVehicleCategory)}
+        </aside>
+        <div className="space-y-3" data-testid="search-l1-results-panel">
+          {renderRowCards('search-l1-row')}
+        </div>
+      </section>
+    </section>
+  );
+
+  const renderL2DefaultTemplate = () => (
+    <section className="space-y-4" data-testid="search-l2-template-root">
+      <header className="rounded-2xl border bg-card p-4 md:p-5" data-testid="search-l2-header">
+        <nav className="flex items-center flex-wrap gap-1 text-sm text-muted-foreground mb-3" data-testid="search-l2-breadcrumb">
+          <button type="button" className="hover:text-foreground" onClick={() => handleCategoryChange(null)} data-testid="search-l2-breadcrumb-home">Ana Sayfa</button>
+          {categoryContext?.breadcrumb?.map((node, index) => (
+            <React.Fragment key={node.id}>
+              <ChevronRight className="h-4 w-4" />
+              {index === categoryContext.breadcrumb.length - 1 ? (
+                <span className="font-semibold text-foreground" data-testid={`search-l2-breadcrumb-current-${node.id}`}>{node.name}</span>
+              ) : (
+                <button
+                  type="button"
+                  className="hover:text-foreground"
+                  onClick={() => handleCategoryChange(getCategoryQueryValue(node))}
+                  data-testid={`search-l2-breadcrumb-link-${node.id}`}
+                >
+                  {node.name}
+                </button>
+              )}
+            </React.Fragment>
+          ))}
+        </nav>
+
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3" data-testid="search-l2-header-row">
+          <div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05]" data-testid="search-l2-title">{categoryContext?.selected?.name}</h1>
+            <p className="text-sm md:text-base text-muted-foreground mt-2" data-testid="search-l2-result-count">{data.pagination.total || 0} ilan bulundu</p>
+          </div>
+          {renderSortAndSave('search-l2-header')}
+        </div>
+      </header>
+
+      <div className="grid grid-cols-1 xl:grid-cols-[300px_minmax(0,1fr)] gap-5" data-testid="search-l2-main-layout">
+        <aside className="space-y-4" data-testid="search-l2-filter-sidebar">
+          {renderFilterPanel('search-l2-filter', isVehicleCategory)}
+
+          {categoryContext?.siblings?.length ? (
+            <Card data-testid="search-l2-sibling-card">
+              <CardContent className="p-4 space-y-2" data-testid="search-l2-sibling-content">
+                <h2 className="text-base font-semibold" data-testid="search-l2-sibling-title">Aynı Seviyedeki Kategoriler</h2>
+                <div className="space-y-1" data-testid="search-l2-sibling-list">
+                  {categoryContext.siblings.map((sibling) => (
+                    <button
+                      key={sibling.id}
+                      type="button"
+                      onClick={() => handleCategoryChange(getCategoryQueryValue(sibling))}
+                      className="w-full rounded-md border px-3 py-2 text-left text-sm hover:border-primary"
+                      data-testid={`search-l2-sibling-button-${sibling.id}`}
+                    >
+                      <span data-testid={`search-l2-sibling-name-${sibling.id}`}>{sibling.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+        </aside>
+
+        <div className="space-y-3" data-testid="search-l2-results-panel">
+          {renderRowCards('search-l2-row')}
+        </div>
+      </div>
+    </section>
+  );
+
+  const runtimeRegistry = {
+    'search.l1.default-content': () => renderL1DefaultTemplate(),
+    'search.l2.default-content': () => renderL2DefaultTemplate(),
+    'shared.text-block': ({ props }) => (
+      <section className="rounded-xl border bg-white p-4" data-testid="search-runtime-text-block">
+        <h2 className="text-base font-semibold" data-testid="search-runtime-text-title">{props?.title || 'Metin bloğu'}</h2>
+        <p className="text-sm text-slate-600 mt-1" data-testid="search-runtime-text-body">{props?.body || ''}</p>
+      </section>
+    ),
+    'shared.ad-slot': ({ props }) => (
+      <section data-testid="search-runtime-ad-slot">
+        <AdSlot placement={props?.placement || 'AD_SEARCH_TOP'} />
+      </section>
+    ),
+  };
+
   return (
     <div data-testid="search-page">
       <div className="container mx-auto px-4 py-6">
@@ -852,7 +1061,17 @@ export default function SearchPage() {
           <AdSlot placement="AD_SEARCH_TOP" />
         </div>
 
-        {isL1CategoryTemplate ? (
+        {isCategoryTemplate && hasResolvedCategoryLayoutRows ? (
+          <section className="space-y-4" data-testid="search-runtime-layout-wrapper">
+            <LayoutRenderer
+              payload={resolvedCategoryLayout?.revision?.payload_json}
+              registry={runtimeRegistry}
+              dataTestIdPrefix="search-runtime-layout"
+            />
+          </section>
+        ) : null}
+
+        {isL1CategoryTemplate && !hasResolvedCategoryLayoutRows ? (
           <section className="space-y-6" data-testid="search-l1-template-root">
             <header className="rounded-2xl border border-slate-200 bg-gradient-to-r from-amber-50 via-white to-sky-50 p-5 md:p-6" data-testid="search-l1-header">
               <nav className="flex items-center flex-wrap gap-1 text-sm text-muted-foreground mb-3" data-testid="search-l1-breadcrumb">
@@ -962,7 +1181,7 @@ export default function SearchPage() {
           </section>
         ) : null}
 
-        {isL2CategoryTemplate ? (
+        {isL2CategoryTemplate && !hasResolvedCategoryLayoutRows ? (
           <section className="space-y-4" data-testid="search-l2-template-root">
             <header className="rounded-2xl border bg-card p-4 md:p-5" data-testid="search-l2-header">
               <nav className="flex items-center flex-wrap gap-1 text-sm text-muted-foreground mb-3" data-testid="search-l2-breadcrumb">

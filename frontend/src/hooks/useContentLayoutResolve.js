@@ -1,0 +1,76 @@
+import { useEffect, useMemo, useState } from 'react';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+export const useContentLayoutResolve = ({
+  country,
+  module,
+  pageType,
+  categoryId,
+  enabled = true,
+}) => {
+  const [loading, setLoading] = useState(false);
+  const [layout, setLayout] = useState(null);
+  const [error, setError] = useState('');
+
+  const queryString = useMemo(() => {
+    if (!enabled || !country || !module || !pageType) return '';
+    const params = new URLSearchParams();
+    params.set('country', String(country).toUpperCase());
+    params.set('module', String(module));
+    params.set('page_type', String(pageType));
+    if (categoryId) params.set('category_id', String(categoryId));
+    return params.toString();
+  }, [enabled, country, module, pageType, categoryId]);
+
+  useEffect(() => {
+    if (!queryString) {
+      setLayout(null);
+      setError('');
+      return;
+    }
+
+    let active = true;
+    const controller = new AbortController();
+
+    const fetchLayout = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const res = await fetch(`${API}/site/content-layout/resolve?${queryString}`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        if (!active) return;
+        if (!res.ok) {
+          setLayout(null);
+          const payload = await res.json().catch(() => ({}));
+          setError(payload?.detail || 'layout_not_available');
+          return;
+        }
+        const payload = await res.json();
+        setLayout(payload || null);
+      } catch (err) {
+        if (!active) return;
+        if (err?.name === 'AbortError') return;
+        setLayout(null);
+        setError('layout_fetch_failed');
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    fetchLayout();
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [queryString]);
+
+  return {
+    loading,
+    layout,
+    error,
+    hasLayoutRows: Boolean(layout?.revision?.payload_json?.rows?.length),
+  };
+};

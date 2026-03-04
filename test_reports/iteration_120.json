@@ -1,0 +1,82 @@
+{
+  "summary": "P1 Admin Content Builder UI + Frontend Runtime Layout Testing - All major features verified. Fixed RBAC rule for /admin/site-design/content-builder route (was missing from adminRbac.js causing 403). Content Builder UI has Component Library (15 items), Sortable Canvas with row/column controls, Width Selectors (D/T/M), Draft Save and Publish buttons. Home runtime layout working correctly - shows custom text block + default content from resolve API. Search L1/L2 fallback templates and generic search working.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Home Page with Runtime Layout",
+        "issues": ["Custom text block from Content Builder shows 'Content Builder Aktif' at top - this is test data, should be replaced with real content before production"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_120.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fixed: /admin/site-design/content-builder was missing from ADMIN_ROUTE_RULES in /app/frontend/src/shared/adminRbac.js causing 403 Forbidden for admin users",
+    "AdminContentBuilder has excellent data-testid coverage with 66 unique test identifiers",
+    "Home runtime layout integration working - useContentLayoutResolve hook fetches layout and LayoutRenderer renders components"
+  ],
+  "updated_files": [
+    "/app/frontend/src/shared/adminRbac.js"
+  ],
+  "success_rate": {
+    "backend": "N/A (APIs already tested in iteration 119)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Admin Content Builder at /admin/site-design/content-builder fully functional after RBAC fix. Page types: home, search_l1, search_l2, listing_create_stepX. Component Library has 15 items including Home/Search default content, text blocks, ad slots. Home runtime layout integration verified - custom layouts from resolve API render correctly above default content.",
+  "features_verified": {
+    "admin_content_builder_route": {
+      "status": "PASS (after fix)",
+      "details": "Route was blocked by missing RBAC rule in adminRbac.js. Added pattern for /admin/site-design/content-builder with roles ['super_admin', 'country_admin']. Now accessible to admin users."
+    },
+    "content_builder_ui_elements": {
+      "status": "PASS",
+      "details": "All UI elements present: Page Type dropdown (home/search_l1/search_l2/listing_create_stepX), Country/Module/Category inputs, Load/Save/Publish buttons, Component Library (15 items), Sortable Canvas with row/column controls, Width selectors (D/T/M), Payload Preview"
+    },
+    "data_testid_coverage": {
+      "status": "PASS",
+      "details": "66 data-testid attributes in AdminContentBuilder.js covering all interactive elements"
+    },
+    "home_runtime_layout": {
+      "status": "PASS",
+      "details": "Home page loads with runtime layout from resolve API. Shows custom content (text block) followed by default home content sections"
+    },
+    "search_generic_flow": {
+      "status": "PASS",
+      "details": "Generic search page (/search) loads correctly with list/map toggle, category filters, and results grid"
+    },
+    "search_l1_l2_templates": {
+      "status": "PASS",
+      "details": "Category search (/search?category=konut) loads with L1 template structure - header, subcategories, showcase sections"
+    }
+  },
+  "test_scenarios_executed": [
+    "1. Admin login with admin@platform.com / Admin123! - SUCCESS",
+    "2. Navigate to /admin/site-design/content-builder - FIXED (was 403, now SUCCESS)",
+    "3. Verify Component Library section - SUCCESS (15 items)",
+    "4. Verify Sortable Canvas controls - SUCCESS (Row/Column management)",
+    "5. Verify Width Selectors (D/T/M) - SUCCESS",
+    "6. Verify Save Draft button - SUCCESS",
+    "7. Verify Publish button - SUCCESS",
+    "8. Verify Page Type dropdown options - SUCCESS (home, search_l1, search_l2, listing_create_stepX)",
+    "9. Verify Home page runtime layout - SUCCESS (shows Content Builder content)",
+    "10. Verify Generic Search page - SUCCESS (list view, 1000 results)",
+    "11. Verify Category Search (L1) - SUCCESS (category template rendered)"
+  ],
+  "fix_applied": {
+    "file": "/app/frontend/src/shared/adminRbac.js",
+    "change": "Added RBAC rule: { pattern: /^\\/admin\\/site-design\\/content-builder$/, roles: ['super_admin', 'country_admin'] }",
+    "reason": "Route was missing from ADMIN_ROUTE_RULES causing AdminLayout to return ['__deny__'] which blocked access even for super_admin users"
+  }
+}

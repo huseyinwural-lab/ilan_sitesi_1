@@ -506,6 +506,7 @@ export default function Layout({ children }) {
     { path: '/admin/site-design/showcase', icon: Layers, label: 'Vitrin Yönetimi', roles: roles.adminOnly, testId: 'site-design-showcase-management' },
     { path: '/admin/site-design/home-category', icon: Layers, label: 'Ana Site Kategorisi', roles: roles.adminOnly, testId: 'site-design-home-category' },
     { path: '/admin/site-design/listing', icon: Layers, label: 'İlan Tasarım', roles: roles.adminOnly, testId: 'site-design-listing-design' },
+    { path: '/admin/site-design/content-builder', icon: Layers, label: 'Content Builder', roles: roles.adminOnly, testId: 'site-design-content-builder' },
     { path: '/admin/user-interface-design', icon: Layers, label: 'Kullanıcı Tasarım', roles: roles.uiDesigner, testId: 'site-design-user-interface-design' },
 
     { divider: true, label: 'Operasyon', roles: roles.opsReliability },
@@ -641,6 +642,7 @@ export default function Layout({ children }) {
       '/admin/site-design/showcase',
       '/admin/site-design/home-category',
       '/admin/site-design/listing',
+      '/admin/site-design/content-builder',
       '/admin/user-interface-design',
       '/admin/ops/publish-health',
       '/admin/info-pages',
