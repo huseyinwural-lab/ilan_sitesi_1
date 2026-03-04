@@ -1,0 +1,233 @@
+from __future__ import annotations
+
+from datetime import datetime, timezone
+import enum
+import uuid
+
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    text,
+)
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.models.base import Base
+
+
+class LayoutPageType(str, enum.Enum):
+    HOME = "home"
+    SEARCH_L1 = "search_l1"
+    SEARCH_L2 = "search_l2"
+    LISTING_CREATE_STEPX = "listing_create_stepX"
+
+
+class LayoutRevisionStatus(str, enum.Enum):
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    ARCHIVED = "archived"
+
+
+class LayoutAuditAction(str, enum.Enum):
+    CREATE_PAGE = "CREATE_PAGE"
+    CREATE_REVISION = "CREATE_REVISION"
+    PUBLISH = "PUBLISH"
+    ARCHIVE = "ARCHIVE"
+    BIND = "BIND"
+    UNBIND = "UNBIND"
+    UPDATE_SCHEMA = "UPDATE_SCHEMA"
+
+
+class LayoutComponentDefinition(Base):
+    __tablename__ = "layout_component_definitions"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    key: Mapped[str] = mapped_column(String(128), nullable=False, unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    schema_json: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    __table_args__ = (
+        CheckConstraint("jsonb_typeof(schema_json) = 'object'", name="ck_layout_component_schema_json_object"),
+    )
+
+
+class LayoutPage(Base):
+    __tablename__ = "layout_pages"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    page_type: Mapped[LayoutPageType] = mapped_column(
+        Enum(
+            LayoutPageType,
+            name="layout_page_type",
+            native_enum=True,
+            values_callable=lambda enum_cls: [item.value for item in enum_cls],
+        ),
+        nullable=False,
+    )
+    country: Mapped[str] = mapped_column(String(5), nullable=False)
+    module: Mapped[str] = mapped_column(String(64), nullable=False)
+    category_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("categories.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    revisions: Mapped[list["LayoutRevision"]] = relationship(
+        "LayoutRevision",
+        back_populates="layout_page",
+        cascade="all, delete-orphan",
+    )
+
+    __table_args__ = (
+        Index(
+            "uq_layout_pages_scope",
+            "page_type",
+            "country",
+            "module",
+            text("COALESCE(category_id, '00000000-0000-0000-0000-000000000000'::uuid)"),
+            unique=True,
+        ),
+        Index("ix_layout_pages_lookup", "page_type", "country", "module", "category_id"),
+    )
+
+
+class LayoutRevision(Base):
+    __tablename__ = "layout_revisions"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    layout_page_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("layout_pages.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    status: Mapped[LayoutRevisionStatus] = mapped_column(
+        Enum(
+            LayoutRevisionStatus,
+            name="layout_revision_status",
+            native_enum=True,
+            values_callable=lambda enum_cls: [item.value for item in enum_cls],
+        ),
+        nullable=False,
+        default=LayoutRevisionStatus.DRAFT,
+    )
+    payload_json: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    layout_page: Mapped["LayoutPage"] = relationship("LayoutPage", back_populates="revisions")
+
+    __table_args__ = (
+        CheckConstraint("jsonb_typeof(payload_json) = 'object'", name="ck_layout_revisions_payload_json_object"),
+        CheckConstraint(
+            "(status = 'published' AND published_at IS NOT NULL) OR (status <> 'published' AND published_at IS NULL)",
+            name="ck_layout_revisions_published_at_consistency",
+        ),
+        Index("ix_layout_revisions_page_status_version", "layout_page_id", "status", "version"),
+        Index("uq_layout_revisions_page_version", "layout_page_id", "version", unique=True),
+        Index(
+            "uq_layout_revisions_single_published",
+            "layout_page_id",
+            unique=True,
+            postgresql_where=text("status = 'published'"),
+        ),
+    )
+
+
+class LayoutBinding(Base):
+    __tablename__ = "layout_bindings"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    country: Mapped[str] = mapped_column(String(5), nullable=False)
+    module: Mapped[str] = mapped_column(String(64), nullable=False)
+    category_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("categories.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    layout_page_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("layout_pages.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    __table_args__ = (
+        Index("ix_layout_bindings_layout_page_id", "layout_page_id"),
+        Index("ix_layout_bindings_scope", "country", "module", "category_id"),
+        Index(
+            "uq_layout_bindings_active_scope",
+            "country",
+            "module",
+            "category_id",
+            unique=True,
+            postgresql_where=text("is_active = true"),
+        ),
+    )
+
+
+class LayoutAuditLog(Base):
+    __tablename__ = "layout_audit_logs"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    actor_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    action: Mapped[LayoutAuditAction] = mapped_column(
+        Enum(
+            LayoutAuditAction,
+            name="layout_audit_action",
+            native_enum=True,
+            values_callable=lambda enum_cls: [item.value for item in enum_cls],
+        ),
+        nullable=False,
+        index=True,
+    )
+    entity_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    entity_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    before_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    after_json: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    __table_args__ = (
+        CheckConstraint("before_json IS NULL OR jsonb_typeof(before_json) = 'object'", name="ck_layout_audit_before_json_object"),
+        CheckConstraint("jsonb_typeof(after_json) = 'object'", name="ck_layout_audit_after_json_object"),
+        Index("ix_layout_audit_entity_created", "entity_type", "entity_id", "created_at"),
+    )

@@ -226,6 +226,7 @@ from app.routers.finance import ledger_routes as finance_ledger_routes
 from app.routers.finance import payments_routes as finance_payments_routes
 from app.routers.finance import subscription_routes as finance_subscription_routes
 from app.routers.finance import webhook_routes as finance_webhook_routes
+from app.routers import layout_builder_routes
 
 
 from fastapi import UploadFile, File, BackgroundTasks, Form
@@ -42474,6 +42475,7 @@ app.include_router(admin_finance_routes.router)
 
 app.include_router(category_routes.router)
 app.include_router(content_routes.router)
+app.include_router(layout_builder_routes.router)
 
 app.state.c3_router_migration = {
     "webhook_routes": c3_finance_webhook_routes,

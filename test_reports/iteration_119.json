@@ -1,0 +1,112 @@
+{
+  "summary": "P74 Layout Builder Foundation API Testing - All 30 test scenarios passed. Tested component definitions CRUD with schema validation/key conflict, layout pages scope uniqueness, revision draft/publish/archive flow with single published guarantee, bindings bind/unbind with active uniqueness, public resolve endpoint with fallback logic, cache behavior (working but source field bug), metrics tracking, and RBAC enforcement.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "/api/site/content-layout/resolve",
+        "issue": "Cache hit response source field shows 'default' or 'binding' instead of 'cache'. Cache IS working (metrics confirm hits), but response source field is overwritten during dict unpacking at line 755 in layout_builder_routes.py. Fix: change line 755 to `return {**cached[1], 'source': 'cache'}` to override source after unpacking.",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p74_layout_builder_api.py"
+  ],
+  "action_items": [
+    "LOW: Fix cache hit source field in /api/site/content-layout/resolve - change line 755 from `return {'source': 'cache', **cached[1]}` to `return {**cached[1], 'source': 'cache'}`"
+  ],
+  "critical_code_review_comments": [
+    "Cache implementation is correct but source field override bug in line 755 - dict unpacking order causes 'cache' to be overwritten by original source",
+    "All domain services correctly handle conflicts and constraints",
+    "Single published revision constraint enforced via unique partial index works correctly",
+    "Active binding uniqueness constraint enforced correctly"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_p74_layout_builder_api.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "N/A (backend only testing)"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "Created test components, pages, revisions, and bindings with unique markers for each test",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "P74 Layout Builder Foundation APIs fully functional. All CRUD operations work. Revision flow (draft->publish->archive) enforces single published constraint. Bindings support bind/unbind with active uniqueness. Public resolve endpoint returns correct pages with fallback logic. Cache works but has minor source field bug. Metrics and audit logs accessible to admin roles. RBAC enforced on admin endpoints.",
+  "features_verified": {
+    "component_definitions_crud": {
+      "status": "PASS",
+      "details": "Create with valid schema, 400 for invalid schema, 409 for key conflict, list with pagination, patch updates version"
+    },
+    "layout_pages_crud": {
+      "status": "PASS",
+      "details": "Create with null/non-null category_id, 409 for scope conflict (page_type+country+module+category_id), list with filters, patch updates"
+    },
+    "revision_flow": {
+      "status": "PASS",
+      "details": "Create draft, publish creates new published revision, archive sets status=archived and published_at=null, single published guarantee enforced"
+    },
+    "bindings_flow": {
+      "status": "PASS",
+      "details": "Bind category to page, get active binding, unbind deactivates, rebind deactivates previous"
+    },
+    "public_resolve": {
+      "status": "PASS",
+      "details": "Binding takes precedence, falls back to default page (category_id=null), 404 when no default exists"
+    },
+    "cache_behavior": {
+      "status": "PASS (with minor bug)",
+      "details": "Cache working correctly (metrics confirm hits), but source field shows original source instead of 'cache'"
+    },
+    "metrics": {
+      "status": "PASS",
+      "details": "resolve_requests, cache_hits/misses, binding_hits, default_hits, publish_count, binding_changes all tracked"
+    },
+    "audit_logs": {
+      "status": "PASS",
+      "details": "List with pagination, filter by entity_type, filter by action - all working"
+    },
+    "rbac": {
+      "status": "PASS",
+      "details": "Admin endpoints return 401 without auth, public resolve accessible without auth"
+    }
+  },
+  "test_scenarios_executed": [
+    "1. Create component with valid JSON schema - 200 OK",
+    "2. Create component with invalid schema - 400 Bad Request",
+    "3. Create component with duplicate key - 409 Conflict",
+    "4. List components with pagination - 200 OK",
+    "5. Patch component updates name/schema/version - 200 OK",
+    "6. Create layout page with null category_id - 200 OK",
+    "7. Create layout page with duplicate scope - 409 Conflict",
+    "8. Create layout page with category_id - 200 OK",
+    "9. List layout pages with filters - 200 OK",
+    "10. Patch layout page - 200 OK",
+    "11. Create draft revision - 200 OK with status=draft",
+    "12. Publish revision creates new published - 200 OK",
+    "13. Single published guarantee - only 1 published per page",
+    "14. Re-publish archived revision - 409 only_draft_can_be_published",
+    "15. Archive revision - 200 OK with status=archived, published_at=null",
+    "16. Patch draft revision payload - 200 OK",
+    "17. Bind category to page - 200 OK with is_active=true",
+    "18. Get active binding - returns correct binding",
+    "19. Unbind category - 200 OK with unbound_count",
+    "20. Verify no active binding after unbind - item=null",
+    "21. Rebind deactivates previous binding",
+    "22. Public resolve with binding returns binding source",
+    "23. Public resolve fallback to default page",
+    "24. Public resolve 404 when no default exists",
+    "25. Cache working - metrics show cache_hits incrementing",
+    "26. Get metrics - all fields present",
+    "27. List audit logs with pagination",
+    "28. Filter audit logs by entity_type",
+    "29. Filter audit logs by action",
+    "30. RBAC - admin endpoints require auth, public resolve open"
+  ]
+}

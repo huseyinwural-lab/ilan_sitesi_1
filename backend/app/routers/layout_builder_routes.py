@@ -1,0 +1,798 @@
+from __future__ import annotations
+
+from datetime import datetime, timezone
+import logging
+import time
+import uuid
+from typing import Any, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from jsonschema import Draft7Validator
+from jsonschema.exceptions import SchemaError
+from pydantic import BaseModel, Field
+from sqlalchemy import and_, desc, func, select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.database import get_db
+from app.dependencies import check_permissions
+from app.domains.layout_builder.service import (
+    archive_revision,
+    bind_category_to_page,
+    create_draft_revision,
+    create_layout_page,
+    create_or_update_component_definition,
+    get_latest_published_revision_for_page,
+    publish_revision,
+    unbind_category,
+    write_layout_audit_log,
+)
+from app.models.layout_builder import (
+    LayoutAuditAction,
+    LayoutAuditLog,
+    LayoutBinding,
+    LayoutComponentDefinition,
+    LayoutPage,
+    LayoutPageType,
+    LayoutRevision,
+    LayoutRevisionStatus,
+)
+
+
+router = APIRouter(prefix="/api", tags=["layout_builder"])
+logger = logging.getLogger("layout_builder")
+
+ADMIN_LAYOUT_ROLES = ["super_admin", "country_admin"]
+RESOLVE_CACHE_TTL_SECONDS = 180
+
+_RESOLVE_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
+_METRICS = {
+    "resolve_requests": 0,
+    "resolve_cache_hits": 0,
+    "resolve_cache_misses": 0,
+    "resolve_binding_hits": 0,
+    "resolve_default_hits": 0,
+    "publish_count": 0,
+    "binding_changes": 0,
+    "resolve_total_latency_ms": 0.0,
+}
+
+
+class ComponentDefinitionPayload(BaseModel):
+    key: str = Field(min_length=2, max_length=128)
+    name: str = Field(min_length=2, max_length=200)
+    schema_json: dict
+    is_active: bool = True
+
+
+class ComponentDefinitionPatchPayload(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=2, max_length=200)
+    schema_json: Optional[dict] = None
+    is_active: Optional[bool] = None
+
+
+class LayoutPageCreatePayload(BaseModel):
+    page_type: LayoutPageType
+    country: str = Field(min_length=2, max_length=5)
+    module: str = Field(min_length=2, max_length=64)
+    category_id: Optional[str] = None
+
+
+class LayoutPagePatchPayload(BaseModel):
+    country: Optional[str] = Field(default=None, min_length=2, max_length=5)
+    module: Optional[str] = Field(default=None, min_length=2, max_length=64)
+    category_id: Optional[str] = None
+
+
+class LayoutDraftPayload(BaseModel):
+    payload_json: dict = Field(default_factory=dict)
+
+
+class LayoutBindingPayload(BaseModel):
+    country: str = Field(min_length=2, max_length=5)
+    module: str = Field(min_length=2, max_length=64)
+    category_id: str
+    layout_page_id: str
+
+
+class LayoutUnbindPayload(BaseModel):
+    country: str = Field(min_length=2, max_length=5)
+    module: str = Field(min_length=2, max_length=64)
+    category_id: str
+
+
+def _cache_key(country: str, module: str, page_type: LayoutPageType, category_id: Optional[str]) -> str:
+    normalized_category = str(category_id or "").strip().lower()
+    return f"{country.upper()}|{module.strip().lower()}|{page_type.value}|{normalized_category}"
+
+
+def _invalidate_resolve_cache() -> None:
+    _RESOLVE_CACHE.clear()
+
+
+def _validate_json_schema_or_400(schema_json: dict) -> None:
+    try:
+        Draft7Validator.check_schema(schema_json)
+    except SchemaError as exc:
+        raise HTTPException(status_code=400, detail={"code": "invalid_json_schema", "message": str(exc)}) from exc
+
+
+def _as_uuid_or_400(raw_value: Optional[str], *, field_name: str) -> Optional[uuid.UUID]:
+    if raw_value in (None, ""):
+        return None
+    try:
+        return uuid.UUID(str(raw_value))
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid {field_name}") from exc
+
+
+def _serialize_component(row: LayoutComponentDefinition) -> dict[str, Any]:
+    return {
+        "id": str(row.id),
+        "key": row.key,
+        "name": row.name,
+        "schema_json": row.schema_json,
+        "is_active": bool(row.is_active),
+        "version": int(row.version),
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+    }
+
+
+def _serialize_layout_page(row: LayoutPage) -> dict[str, Any]:
+    return {
+        "id": str(row.id),
+        "page_type": row.page_type.value,
+        "country": row.country,
+        "module": row.module,
+        "category_id": str(row.category_id) if row.category_id else None,
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+    }
+
+
+def _serialize_layout_revision(row: LayoutRevision) -> dict[str, Any]:
+    return {
+        "id": str(row.id),
+        "layout_page_id": str(row.layout_page_id),
+        "status": row.status.value,
+        "payload_json": row.payload_json,
+        "version": int(row.version),
+        "published_at": row.published_at.isoformat() if row.published_at else None,
+        "created_by": str(row.created_by) if row.created_by else None,
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+    }
+
+
+def _serialize_binding(row: LayoutBinding) -> dict[str, Any]:
+    return {
+        "id": str(row.id),
+        "country": row.country,
+        "module": row.module,
+        "category_id": str(row.category_id),
+        "layout_page_id": str(row.layout_page_id),
+        "is_active": bool(row.is_active),
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+    }
+
+
+@router.get("/admin/site/content-layout/components")
+async def list_layout_components(
+    key: Optional[str] = Query(default=None),
+    is_active: Optional[bool] = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=25, ge=1, le=100),
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    query = select(LayoutComponentDefinition)
+    if key:
+        query = query.where(LayoutComponentDefinition.key.ilike(f"%{key.strip()}%"))
+    if is_active is not None:
+        query = query.where(LayoutComponentDefinition.is_active.is_(bool(is_active)))
+
+    count_result = await session.execute(select(func.count()).select_from(query.subquery()))
+    total = int(count_result.scalar() or 0)
+
+    rows_result = await session.execute(
+        query.order_by(desc(LayoutComponentDefinition.updated_at), LayoutComponentDefinition.key.asc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+    )
+    rows = rows_result.scalars().all()
+    return {
+        "items": [_serialize_component(row) for row in rows],
+        "pagination": {"page": page, "limit": limit, "total": total},
+    }
+
+
+@router.post("/admin/site/content-layout/components")
+async def create_layout_component(
+    payload: ComponentDefinitionPayload,
+    request: Request,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    _validate_json_schema_or_400(payload.schema_json)
+    existing_result = await session.execute(
+        select(LayoutComponentDefinition).where(LayoutComponentDefinition.key == payload.key.strip())
+    )
+    if existing_result.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Component key already exists")
+
+    try:
+        row = await create_or_update_component_definition(
+            session,
+            key=payload.key.strip(),
+            name=payload.name.strip(),
+            schema_json=payload.schema_json,
+            is_active=bool(payload.is_active),
+            actor_user_id=current_user.get("id"),
+        )
+        await session.commit()
+    except ValueError as exc:
+        await session.rollback()
+        if str(exc) == "component_key_conflict":
+            raise HTTPException(status_code=409, detail="Component key already exists") from exc
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except IntegrityError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=409, detail="Component key already exists") from exc
+
+    return {"ok": True, "item": _serialize_component(row)}
+
+
+@router.patch("/admin/site/content-layout/components/{component_id}")
+async def patch_layout_component(
+    component_id: str,
+    payload: ComponentDefinitionPatchPayload,
+    request: Request,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    component_uuid = _as_uuid_or_400(component_id, field_name="component_id")
+    row = await session.get(LayoutComponentDefinition, component_uuid)
+    if not row:
+        raise HTTPException(status_code=404, detail="Component definition not found")
+
+    before = _serialize_component(row)
+    if payload.schema_json is not None:
+        _validate_json_schema_or_400(payload.schema_json)
+        row.schema_json = payload.schema_json
+    if payload.name is not None:
+        row.name = payload.name.strip()
+    if payload.is_active is not None:
+        row.is_active = bool(payload.is_active)
+    row.version = int(row.version) + 1
+    row.updated_at = datetime.now(timezone.utc)
+
+    await write_layout_audit_log(
+        session,
+        actor_user_id=current_user.get("id"),
+        action=LayoutAuditAction.UPDATE_SCHEMA,
+        entity_type="layout_component_definition",
+        entity_id=str(row.id),
+        before_json=before,
+        after_json={
+            "key": row.key,
+            "name": row.name,
+            "schema_json": row.schema_json,
+            "is_active": bool(row.is_active),
+            "version": int(row.version),
+        },
+        ip=request.client.host if request and request.client else None,
+        user_agent=request.headers.get("user-agent") if request else None,
+    )
+    await session.commit()
+    return {"ok": True, "item": _serialize_component(row)}
+
+
+@router.get("/admin/site/content-layout/pages")
+async def list_layout_pages(
+    page_type: Optional[LayoutPageType] = Query(default=None),
+    country: Optional[str] = Query(default=None),
+    module: Optional[str] = Query(default=None),
+    category_id: Optional[str] = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=25, ge=1, le=100),
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    query = select(LayoutPage)
+    if page_type:
+        query = query.where(LayoutPage.page_type == page_type)
+    if country:
+        query = query.where(LayoutPage.country == country.upper())
+    if module:
+        query = query.where(LayoutPage.module == module.strip())
+    if category_id:
+        category_uuid = _as_uuid_or_400(category_id, field_name="category_id")
+        query = query.where(LayoutPage.category_id == category_uuid)
+
+    count_result = await session.execute(select(func.count()).select_from(query.subquery()))
+    total = int(count_result.scalar() or 0)
+
+    rows_result = await session.execute(
+        query.order_by(desc(LayoutPage.updated_at), LayoutPage.id.asc()).offset((page - 1) * limit).limit(limit)
+    )
+    rows = rows_result.scalars().all()
+    return {
+        "items": [_serialize_layout_page(row) for row in rows],
+        "pagination": {"page": page, "limit": limit, "total": total},
+    }
+
+
+@router.post("/admin/site/content-layout/pages")
+async def create_layout_page_admin(
+    payload: LayoutPageCreatePayload,
+    request: Request,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    try:
+        row = await create_layout_page(
+            session,
+            page_type=payload.page_type,
+            country=payload.country,
+            module=payload.module,
+            category_id=payload.category_id,
+            actor_user_id=current_user.get("id"),
+        )
+        await session.commit()
+    except ValueError as exc:
+        await session.rollback()
+        if str(exc) == "layout_page_scope_conflict":
+            raise HTTPException(status_code=409, detail="Layout page scope already exists") from exc
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    _invalidate_resolve_cache()
+    return {"ok": True, "item": _serialize_layout_page(row)}
+
+
+@router.patch("/admin/site/content-layout/pages/{page_id}")
+async def patch_layout_page_admin(
+    page_id: str,
+    payload: LayoutPagePatchPayload,
+    request: Request,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    page_uuid = _as_uuid_or_400(page_id, field_name="page_id")
+    row = await session.get(LayoutPage, page_uuid)
+    if not row:
+        raise HTTPException(status_code=404, detail="Layout page not found")
+
+    before = _serialize_layout_page(row)
+    if payload.country is not None:
+        row.country = payload.country.upper()
+    if payload.module is not None:
+        row.module = payload.module.strip()
+    if payload.category_id is not None:
+        row.category_id = _as_uuid_or_400(payload.category_id, field_name="category_id")
+    row.updated_at = datetime.now(timezone.utc)
+
+    try:
+        await session.flush()
+    except IntegrityError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=409, detail="Layout page scope already exists") from exc
+
+    await write_layout_audit_log(
+        session,
+        actor_user_id=current_user.get("id"),
+        action=LayoutAuditAction.CREATE_PAGE,
+        entity_type="layout_page",
+        entity_id=str(row.id),
+        before_json=before,
+        after_json=_serialize_layout_page(row),
+        ip=request.client.host if request and request.client else None,
+        user_agent=request.headers.get("user-agent") if request else None,
+    )
+    await session.commit()
+    _invalidate_resolve_cache()
+    return {"ok": True, "item": _serialize_layout_page(row)}
+
+
+@router.post("/admin/site/content-layout/pages/{page_id}/revisions/draft")
+async def create_draft_revision_admin(
+    page_id: str,
+    payload: LayoutDraftPayload,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    try:
+        row = await create_draft_revision(
+            session,
+            layout_page_id=page_id,
+            payload_json=payload.payload_json,
+            actor_user_id=current_user.get("id"),
+        )
+        await session.commit()
+    except ValueError as exc:
+        await session.rollback()
+        code = str(exc)
+        if code == "layout_page_not_found":
+            raise HTTPException(status_code=404, detail="Layout page not found") from exc
+        if code == "layout_revision_version_conflict":
+            raise HTTPException(status_code=409, detail="Revision version conflict") from exc
+        raise HTTPException(status_code=400, detail=code) from exc
+
+    return {"ok": True, "item": _serialize_layout_revision(row)}
+
+
+@router.patch("/admin/site/content-layout/revisions/{revision_id}/draft")
+async def patch_draft_revision_admin(
+    revision_id: str,
+    payload: LayoutDraftPayload,
+    request: Request,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    revision_uuid = _as_uuid_or_400(revision_id, field_name="revision_id")
+    row = await session.get(LayoutRevision, revision_uuid)
+    if not row:
+        raise HTTPException(status_code=404, detail="Revision not found")
+    if row.status != LayoutRevisionStatus.DRAFT:
+        raise HTTPException(status_code=400, detail="Only draft revisions can be updated")
+
+    before = _serialize_layout_revision(row)
+    row.payload_json = payload.payload_json or {}
+
+    await write_layout_audit_log(
+        session,
+        actor_user_id=current_user.get("id"),
+        action=LayoutAuditAction.CREATE_REVISION,
+        entity_type="layout_revision",
+        entity_id=str(row.id),
+        before_json=before,
+        after_json=_serialize_layout_revision(row),
+        ip=request.client.host if request and request.client else None,
+        user_agent=request.headers.get("user-agent") if request else None,
+    )
+    await session.commit()
+    return {"ok": True, "item": _serialize_layout_revision(row)}
+
+
+@router.post("/admin/site/content-layout/revisions/{revision_id}/publish")
+async def publish_revision_admin(
+    revision_id: str,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    try:
+        published = await publish_revision(
+            session,
+            revision_id=revision_id,
+            actor_user_id=current_user.get("id"),
+        )
+        await session.commit()
+    except ValueError as exc:
+        await session.rollback()
+        code = str(exc)
+        if code == "revision_not_found":
+            raise HTTPException(status_code=404, detail="Revision not found") from exc
+        if code in {"only_draft_can_be_published", "published_revision_conflict"}:
+            raise HTTPException(status_code=409, detail=code) from exc
+        raise HTTPException(status_code=400, detail=code) from exc
+    except IntegrityError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=409, detail="Publish conflict") from exc
+
+    _METRICS["publish_count"] += 1
+    _invalidate_resolve_cache()
+    return {"ok": True, "item": _serialize_layout_revision(published)}
+
+
+@router.post("/admin/site/content-layout/revisions/{revision_id}/archive")
+async def archive_revision_admin(
+    revision_id: str,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    try:
+        row = await archive_revision(
+            session,
+            revision_id=revision_id,
+            actor_user_id=current_user.get("id"),
+        )
+        await session.commit()
+    except ValueError as exc:
+        await session.rollback()
+        code = str(exc)
+        if code == "revision_not_found":
+            raise HTTPException(status_code=404, detail="Revision not found") from exc
+        raise HTTPException(status_code=400, detail=code) from exc
+
+    _invalidate_resolve_cache()
+    return {"ok": True, "item": _serialize_layout_revision(row)}
+
+
+@router.get("/admin/site/content-layout/pages/{page_id}/revisions")
+async def list_revisions_for_page(
+    page_id: str,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    page_uuid = _as_uuid_or_400(page_id, field_name="page_id")
+    page_row = await session.get(LayoutPage, page_uuid)
+    if not page_row:
+        raise HTTPException(status_code=404, detail="Layout page not found")
+
+    result = await session.execute(
+        select(LayoutRevision)
+        .where(LayoutRevision.layout_page_id == page_uuid)
+        .order_by(desc(LayoutRevision.version), desc(LayoutRevision.created_at))
+        .limit(100)
+    )
+    rows = result.scalars().all()
+    return {"items": [_serialize_layout_revision(row) for row in rows]}
+
+
+@router.post("/admin/site/content-layout/bindings")
+async def bind_layout_page_to_category(
+    payload: LayoutBindingPayload,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    try:
+        row = await bind_category_to_page(
+            session,
+            country=payload.country,
+            module=payload.module,
+            category_id=payload.category_id,
+            layout_page_id=payload.layout_page_id,
+            actor_user_id=current_user.get("id"),
+        )
+        await session.commit()
+    except ValueError as exc:
+        await session.rollback()
+        code = str(exc)
+        if code in {"layout_page_not_found"}:
+            raise HTTPException(status_code=404, detail="Layout page not found") from exc
+        if code in {"active_binding_conflict"}:
+            raise HTTPException(status_code=409, detail=code) from exc
+        raise HTTPException(status_code=400, detail=code) from exc
+
+    _METRICS["binding_changes"] += 1
+    _invalidate_resolve_cache()
+    return {"ok": True, "item": _serialize_binding(row)}
+
+
+@router.post("/admin/site/content-layout/bindings/unbind")
+async def unbind_layout_page_from_category(
+    payload: LayoutUnbindPayload,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    try:
+        unbound_count = await unbind_category(
+            session,
+            country=payload.country,
+            module=payload.module,
+            category_id=payload.category_id,
+            actor_user_id=current_user.get("id"),
+        )
+        await session.commit()
+    except ValueError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    _METRICS["binding_changes"] += 1
+    _invalidate_resolve_cache()
+    return {"ok": True, "unbound_count": int(unbound_count)}
+
+
+@router.get("/admin/site/content-layout/bindings/active")
+async def get_active_binding(
+    country: str,
+    module: str,
+    category_id: str,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    category_uuid = _as_uuid_or_400(category_id, field_name="category_id")
+    result = await session.execute(
+        select(LayoutBinding)
+        .where(
+            and_(
+                LayoutBinding.country == country.upper(),
+                LayoutBinding.module == module.strip(),
+                LayoutBinding.category_id == category_uuid,
+                LayoutBinding.is_active.is_(True),
+            )
+        )
+        .order_by(desc(LayoutBinding.updated_at))
+        .limit(1)
+    )
+    row = result.scalar_one_or_none()
+    if not row:
+        return {"item": None}
+    return {"item": _serialize_binding(row)}
+
+
+@router.get("/admin/site/content-layout/audit-logs")
+async def list_layout_audit_logs(
+    entity_type: Optional[str] = Query(default=None),
+    entity_id: Optional[str] = Query(default=None),
+    actor_user_id: Optional[str] = Query(default=None),
+    action: Optional[LayoutAuditAction] = Query(default=None),
+    start_at: Optional[datetime] = Query(default=None),
+    end_at: Optional[datetime] = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=25, ge=1, le=200),
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    query = select(LayoutAuditLog)
+    if entity_type:
+        query = query.where(LayoutAuditLog.entity_type == entity_type)
+    if entity_id:
+        query = query.where(LayoutAuditLog.entity_id == entity_id)
+    if actor_user_id:
+        query = query.where(LayoutAuditLog.actor_user_id == _as_uuid_or_400(actor_user_id, field_name="actor_user_id"))
+    if action:
+        query = query.where(LayoutAuditLog.action == action)
+    if start_at:
+        query = query.where(LayoutAuditLog.created_at >= start_at)
+    if end_at:
+        query = query.where(LayoutAuditLog.created_at <= end_at)
+
+    count_result = await session.execute(select(func.count()).select_from(query.subquery()))
+    total = int(count_result.scalar() or 0)
+    rows_result = await session.execute(
+        query.order_by(desc(LayoutAuditLog.created_at)).offset((page - 1) * limit).limit(limit)
+    )
+    rows = rows_result.scalars().all()
+    return {
+        "items": [
+            {
+                "id": str(row.id),
+                "actor_user_id": str(row.actor_user_id) if row.actor_user_id else None,
+                "action": row.action.value,
+                "entity_type": row.entity_type,
+                "entity_id": row.entity_id,
+                "before_json": row.before_json,
+                "after_json": row.after_json,
+                "ip": row.ip,
+                "user_agent": row.user_agent,
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+            }
+            for row in rows
+        ],
+        "pagination": {"page": page, "limit": limit, "total": total},
+    }
+
+
+async def _resolve_effective_layout(
+    session: AsyncSession,
+    *,
+    country: str,
+    module: str,
+    page_type: LayoutPageType,
+    category_id: Optional[str],
+) -> dict[str, Any]:
+    category_uuid = _as_uuid_or_400(category_id, field_name="category_id") if category_id else None
+
+    if category_uuid:
+        bound_page_result = await session.execute(
+            select(LayoutPage)
+            .join(LayoutBinding, LayoutBinding.layout_page_id == LayoutPage.id)
+            .where(
+                and_(
+                    LayoutBinding.country == country,
+                    LayoutBinding.module == module,
+                    LayoutBinding.category_id == category_uuid,
+                    LayoutBinding.is_active.is_(True),
+                    LayoutPage.page_type == page_type,
+                )
+            )
+            .order_by(desc(LayoutBinding.updated_at))
+            .limit(1)
+        )
+        bound_page = bound_page_result.scalar_one_or_none()
+        if bound_page:
+            published = await get_latest_published_revision_for_page(session, layout_page_id=bound_page.id)
+            if not published:
+                raise HTTPException(status_code=409, detail="bound_layout_has_no_published_revision")
+            _METRICS["resolve_binding_hits"] += 1
+            return {
+                "source": "binding",
+                "layout_page": _serialize_layout_page(bound_page),
+                "revision": _serialize_layout_revision(published),
+            }
+
+    default_page_result = await session.execute(
+        select(LayoutPage)
+        .where(
+            and_(
+                LayoutPage.country == country,
+                LayoutPage.module == module,
+                LayoutPage.page_type == page_type,
+                LayoutPage.category_id.is_(None),
+            )
+        )
+        .order_by(desc(LayoutPage.updated_at))
+        .limit(1)
+    )
+    default_page = default_page_result.scalar_one_or_none()
+    if not default_page:
+        raise HTTPException(status_code=404, detail="layout_page_not_found")
+
+    published = await get_latest_published_revision_for_page(session, layout_page_id=default_page.id)
+    if not published:
+        raise HTTPException(status_code=409, detail="default_layout_has_no_published_revision")
+
+    _METRICS["resolve_default_hits"] += 1
+    return {
+        "source": "default",
+        "layout_page": _serialize_layout_page(default_page),
+        "revision": _serialize_layout_revision(published),
+    }
+
+
+@router.get("/site/content-layout/resolve")
+async def resolve_content_layout(
+    country: str,
+    module: str,
+    page_type: LayoutPageType,
+    category_id: Optional[str] = None,
+    session: AsyncSession = Depends(get_db),
+):
+    started_at = time.perf_counter()
+    normalized_country = country.upper()
+    normalized_module = module.strip()
+
+    _METRICS["resolve_requests"] += 1
+    key = _cache_key(normalized_country, normalized_module, page_type, category_id)
+    now_ts = time.time()
+    cached = _RESOLVE_CACHE.get(key)
+    if cached and cached[0] > now_ts:
+        _METRICS["resolve_cache_hits"] += 1
+        elapsed_ms = (time.perf_counter() - started_at) * 1000
+        _METRICS["resolve_total_latency_ms"] += elapsed_ms
+        logger.info("layout_resolve source=cache key=%s latency_ms=%.2f", key, elapsed_ms)
+        return {"source": "cache", **cached[1]}
+
+    _METRICS["resolve_cache_misses"] += 1
+    payload = await _resolve_effective_layout(
+        session,
+        country=normalized_country,
+        module=normalized_module,
+        page_type=page_type,
+        category_id=category_id,
+    )
+    _RESOLVE_CACHE[key] = (now_ts + RESOLVE_CACHE_TTL_SECONDS, payload)
+    elapsed_ms = (time.perf_counter() - started_at) * 1000
+    _METRICS["resolve_total_latency_ms"] += elapsed_ms
+    logger.info("layout_resolve source=db key=%s strategy=%s latency_ms=%.2f", key, payload.get("source"), elapsed_ms)
+    return payload
+
+
+@router.get("/admin/site/content-layout/metrics")
+async def get_layout_builder_metrics(
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+):
+    requests_total = int(_METRICS.get("resolve_requests", 0))
+    avg_latency = (
+        float(_METRICS.get("resolve_total_latency_ms", 0.0)) / requests_total
+        if requests_total > 0
+        else 0.0
+    )
+    return {
+        "metrics": {
+            "resolve_requests": requests_total,
+            "resolve_cache_hits": int(_METRICS.get("resolve_cache_hits", 0)),
+            "resolve_cache_misses": int(_METRICS.get("resolve_cache_misses", 0)),
+            "resolve_cache_hit_rate": (
+                round((int(_METRICS.get("resolve_cache_hits", 0)) / requests_total) * 100, 2)
+                if requests_total > 0
+                else 0.0
+            ),
+            "resolve_binding_hits": int(_METRICS.get("resolve_binding_hits", 0)),
+            "resolve_default_hits": int(_METRICS.get("resolve_default_hits", 0)),
+            "publish_count": int(_METRICS.get("publish_count", 0)),
+            "binding_changes": int(_METRICS.get("binding_changes", 0)),
+            "resolve_avg_latency_ms": round(avg_latency, 2),
+        }
+    }
