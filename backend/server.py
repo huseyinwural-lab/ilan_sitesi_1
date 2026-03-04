@@ -29995,7 +29995,7 @@ async def admin_create_category(
         if isinstance(schema, dict):
             schema_status = schema.get("status", schema_status or "draft")
 
-    slug_json = {"tr": slug, "en": slug, "de": slug}
+    slug_json = {"tr": slug, "de": slug, "fr": slug, "en": slug}
     depth = (parent.depth + 1) if parent else 0
     path = f"{parent.path}.{slug}" if parent and parent.path else slug
     allowed_countries = [country_code] if country_code else sorted(SUPPORTED_COUNTRIES)
@@ -30051,7 +30051,7 @@ async def admin_create_category(
     )
     session.add(category)
 
-    for lang in ("tr", "en", "de"):
+    for lang in ("tr", "de", "fr"):
         session.add(
             CategoryTranslation(
                 category_id=category.id,
