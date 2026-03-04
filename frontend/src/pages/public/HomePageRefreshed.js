@@ -222,12 +222,27 @@ export default function HomePageRefreshed() {
     return moduleOrder.map((moduleKey) => {
       const moduleMeta = MODULES.find((item) => item.key === moduleKey) || { key: moduleKey, label: moduleKey, accent: '#64748b' };
       const categories = categoriesByModule[moduleKey] || [];
+      const byId = new Map();
       const byParent = new Map();
       categories.forEach((item) => {
+        byId.set(item.id, item);
         const parentKey = item.parent_id || 'root';
         if (!byParent.has(parentKey)) byParent.set(parentKey, []);
         byParent.get(parentKey).push(item);
       });
+
+      const aggregateCache = new Map();
+      const aggregateCount = (categoryId) => {
+        if (!categoryId) return 0;
+        if (aggregateCache.has(categoryId)) return aggregateCache.get(categoryId);
+        const node = byId.get(categoryId);
+        if (!node) return 0;
+        const own = Number(node.listing_count || 0);
+        const children = byParent.get(categoryId) || [];
+        const total = own + children.reduce((sum, child) => sum + aggregateCount(child.id), 0);
+        aggregateCache.set(categoryId, total);
+        return total;
+      };
 
       const orderList = Array.isArray(layout.module_l1_order?.[moduleKey]) ? layout.module_l1_order[moduleKey] : [];
       const orderIndex = new Map(orderList.map((item, index) => [item, index]));
@@ -240,39 +255,39 @@ export default function HomePageRefreshed() {
             return ai - bi;
           }
           return normalizeLabel(a, language).localeCompare(normalizeLabel(b, language), LANGUAGE_LOCALE_MAP[language] || 'tr-TR');
-        })
-      const items = [];
-      roots.forEach((root) => {
+        });
+
+      const rootRows = roots.map((root) => {
         const children = [...(byParent.get(root.id) || [])]
           .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
           .map((child) => ({
             id: child.id,
             name: normalizeLabel(child, language),
             slug: child.slug || child.id,
+            total_count: aggregateCount(child.id),
           }));
 
-        if (children.length > 0) {
-          children.forEach((child) => items.push(child));
-          return;
-        }
-
-        items.push({
+        return {
           id: root.id,
           name: normalizeLabel(root, language),
           slug: root.slug || root.id,
-        });
+          icon_svg: root.icon_svg || null,
+          total_count: aggregateCount(root.id),
+          children,
+        };
       });
 
       return {
         module_key: moduleKey,
         module_label: moduleMeta.label,
         module_accent: moduleMeta.accent,
-        items,
+        module_total_count: rootRows.reduce((sum, row) => sum + Number(row.total_count || 0), 0),
+        roots: rootRows,
       };
     });
   }, [categoriesByModule, language, layout.module_l1_order, layout.module_l1_order_mode, moduleOrder]);
 
-  const moduleItemLimit = clamp((layout.l1_initial_limit || 6) * 2, 6, 20, 10);
+  const moduleRootLimit = clamp(layout.l1_initial_limit, 1, 20, 6);
   const cardColumnCount = clamp(layout.listing_module_grid_columns, 2, 6, 4);
 
   return (
@@ -306,31 +321,61 @@ export default function HomePageRefreshed() {
               <div className="home-kktc-empty" data-testid="home-kktc-categories-loading">Kategoriler yükleniyor...</div>
             ) : moduleGroups.map((moduleGroup) => {
               const expandedModule = Boolean(expandedModules[moduleGroup.module_key]);
-              const visibleItems = expandedModule ? moduleGroup.items : moduleGroup.items.slice(0, moduleItemLimit);
+              const visibleRoots = expandedModule ? moduleGroup.roots : moduleGroup.roots.slice(0, moduleRootLimit);
 
               return (
                 <section key={moduleGroup.module_key} className="home-kktc-module" data-testid={`home-kktc-module-${moduleGroup.module_key}`}>
                   <div className="home-kktc-module-title" style={{ '--module-accent': moduleGroup.module_accent }} data-testid={`home-kktc-module-title-${moduleGroup.module_key}`}>
                     <div className="home-kktc-module-title-main" data-testid={`home-kktc-module-title-main-${moduleGroup.module_key}`}>
                       <span className="home-kktc-module-marker" data-testid={`home-kktc-module-marker-${moduleGroup.module_key}`} aria-hidden="true" />
-                      <span>{moduleGroup.module_label}</span>
+                      <span>
+                        {moduleGroup.module_label}
+                        <span className="home-kktc-module-count" data-testid={`home-kktc-module-count-${moduleGroup.module_key}`}> ({formatCount(moduleGroup.module_total_count)})</span>
+                      </span>
                     </div>
                   </div>
 
                   <div className="home-kktc-plain-list" data-testid={`home-kktc-plain-list-${moduleGroup.module_key}`}>
-                    {visibleItems.map((item) => (
-                      <Link
-                        key={item.id}
-                        to={`/search?category=${encodeURIComponent(item.slug)}`}
-                        className="home-kktc-plain-item"
-                        data-testid={`home-kktc-plain-item-${item.id}`}
-                      >
-                        {item.name}
-                      </Link>
+                    {visibleRoots.map((root) => (
+                      <div key={root.id} className="home-kktc-root-group" data-testid={`home-kktc-root-group-${root.id}`}>
+                        <Link
+                          to={`/search?category=${encodeURIComponent(root.slug)}`}
+                          className="home-kktc-root-line"
+                          data-testid={`home-kktc-root-line-${root.id}`}
+                        >
+                          <span
+                            className="home-kktc-root-icon"
+                            style={{ '--root-accent': moduleGroup.module_accent }}
+                            data-testid={`home-kktc-root-icon-${root.id}`}
+                          >
+                            {root.icon_svg ? <span dangerouslySetInnerHTML={{ __html: root.icon_svg }} data-testid={`home-kktc-root-icon-svg-${root.id}`} /> : null}
+                          </span>
+                          <span className="home-kktc-root-line-text" data-testid={`home-kktc-root-line-text-${root.id}`}>
+                            {root.name}
+                            <span className="home-kktc-root-count" data-testid={`home-kktc-root-count-${root.id}`}> ({formatCount(root.total_count)})</span>
+                          </span>
+                        </Link>
+
+                        {root.children.length > 0 ? (
+                          <div className="home-kktc-child-lines" data-testid={`home-kktc-child-lines-${root.id}`}>
+                            {root.children.map((child) => (
+                              <Link
+                                key={child.id}
+                                to={`/search?category=${encodeURIComponent(child.slug)}`}
+                                className="home-kktc-child-line"
+                                data-testid={`home-kktc-child-line-${child.id}`}
+                              >
+                                {child.name}
+                                <span className="home-kktc-child-count" data-testid={`home-kktc-child-count-${child.id}`}> ({formatCount(child.total_count)})</span>
+                              </Link>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
                     ))}
                   </div>
 
-                  {moduleGroup.items.length > moduleItemLimit ? (
+                  {moduleGroup.roots.length > moduleRootLimit ? (
                     <div className="home-kktc-module-toggle-wrap" data-testid={`home-kktc-module-toggle-wrap-${moduleGroup.module_key}`}>
                       <button
                         type="button"

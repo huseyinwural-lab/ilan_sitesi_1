@@ -102,6 +102,25 @@ const parseApiError = async (response) => {
   return payload?.message || 'İşlem başarısız';
 };
 
+const readFileAsText = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(String(reader.result || ''));
+  reader.onerror = () => reject(new Error('Dosya okunamadı'));
+  reader.readAsText(file);
+});
+
+const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(String(reader.result || ''));
+  reader.onerror = () => reject(new Error('Dosya okunamadı'));
+  reader.readAsDataURL(file);
+});
+
+const wrapDataUrlAsSvg = (dataUrl) => {
+  const safeDataUrl = String(dataUrl || '').replace(/"/g, '&quot;');
+  return `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><image href="${safeDataUrl}" x="0" y="0" width="24" height="24" preserveAspectRatio="xMidYMid slice"/></svg>`;
+};
+
 const CategoryIconPreview = ({ iconSvg, testId }) => {
   if (iconSvg) {
     return <span className="h-7 w-7 rounded-full border bg-white p-1" dangerouslySetInnerHTML={{ __html: iconSvg }} data-testid={testId} />;
@@ -125,6 +144,8 @@ export default function AdminHomeCategoryDesignV2() {
   const [modalOpen, setModalOpen] = useState(false);
   const [categorySaving, setCategorySaving] = useState(false);
   const [categoryForm, setCategoryForm] = useState(EMPTY_CATEGORY_FORM);
+  const [iconUploadStatus, setIconUploadStatus] = useState('');
+  const [iconUploadError, setIconUploadError] = useState('');
 
   const authHeader = useMemo(() => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` }), []);
   const countryCode = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
@@ -317,6 +338,8 @@ export default function AdminHomeCategoryDesignV2() {
   const openCreateModal = ({ moduleKey, parentId = '' }) => {
     setCrudError('');
     setCrudStatus('');
+    setIconUploadStatus('');
+    setIconUploadError('');
     setCategoryForm({
       ...EMPTY_CATEGORY_FORM,
       module: moduleKey,
@@ -329,6 +352,8 @@ export default function AdminHomeCategoryDesignV2() {
   const openEditModal = (item) => {
     setCrudError('');
     setCrudStatus('');
+    setIconUploadStatus('');
+    setIconUploadError('');
     setCategoryForm({
       id: item.id,
       name: item.name || '',
@@ -346,6 +371,42 @@ export default function AdminHomeCategoryDesignV2() {
     if (categorySaving) return;
     setModalOpen(false);
     setCategoryForm(EMPTY_CATEGORY_FORM);
+    setIconUploadStatus('');
+    setIconUploadError('');
+  };
+
+  const handleIconFileUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIconUploadStatus('');
+    setIconUploadError('');
+
+    try {
+      const isSvg = file.type === 'image/svg+xml' || String(file.name || '').toLowerCase().endsWith('.svg');
+      const isRaster = file.type.startsWith('image/');
+
+      if (!isSvg && !isRaster) {
+        throw new Error('Sadece SVG/PNG/JPG/WEBP ikon dosyası yükleyebilirsiniz.');
+      }
+
+      if (isSvg) {
+        const svgText = (await readFileAsText(file)).trim();
+        if (!svgText.toLowerCase().includes('<svg')) {
+          throw new Error('Yüklenen SVG dosyası geçerli değil.');
+        }
+        setCategoryForm((prev) => ({ ...prev, icon_svg: svgText }));
+        setIconUploadStatus('SVG dosyası yüklendi.');
+      } else {
+        const dataUrl = await readFileAsDataUrl(file);
+        setCategoryForm((prev) => ({ ...prev, icon_svg: wrapDataUrlAsSvg(dataUrl) }));
+        setIconUploadStatus('Görsel yüklendi ve SVG ikon formatına dönüştürüldü.');
+      }
+    } catch (uploadError) {
+      setIconUploadError(uploadError?.message || 'İkon dosyası yüklenemedi.');
+    } finally {
+      event.target.value = '';
+    }
   };
 
   const handleCategorySave = async () => {
@@ -771,6 +832,33 @@ export default function AdminHomeCategoryDesignV2() {
                   data-testid="home-category-crud-field-icon"
                 />
               </label>
+
+              <div className="rounded-md border border-dashed p-3" data-testid="home-category-crud-field-icon-upload-wrap">
+                <div className="mb-2 text-xs font-semibold text-slate-600">İkon Dosya Yükle (Ana kategoriler için önerilir)</div>
+                <input
+                  type="file"
+                  accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp"
+                  onChange={handleIconFileUpload}
+                  className="block w-full text-xs"
+                  data-testid="home-category-crud-field-icon-upload"
+                />
+                <div className="mt-2 text-[11px] text-slate-500" data-testid="home-category-crud-field-icon-upload-help">
+                  SVG dosyasını direkt yükleyebilir veya PNG/JPG/WEBP dosyasını otomatik SVG ikona çevirebilirsiniz.
+                </div>
+                {iconUploadStatus ? <div className="mt-2 text-xs text-emerald-600" data-testid="home-category-crud-field-icon-upload-status">{iconUploadStatus}</div> : null}
+                {iconUploadError ? <div className="mt-2 text-xs text-rose-600" data-testid="home-category-crud-field-icon-upload-error">{iconUploadError}</div> : null}
+              </div>
+
+              <div className="flex items-center justify-end" data-testid="home-category-crud-icon-clear-wrap">
+                <button
+                  type="button"
+                  className="h-8 rounded-md border px-3 text-xs"
+                  onClick={() => setCategoryForm((prev) => ({ ...prev, icon_svg: '' }))}
+                  data-testid="home-category-crud-icon-clear"
+                >
+                  İkonu Temizle
+                </button>
+              </div>
 
               <div className="rounded-md border bg-slate-50 p-3" data-testid="home-category-crud-icon-preview-wrap">
                 <div className="mb-2 text-xs font-semibold text-slate-600">Icon Önizleme</div>
