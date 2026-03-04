@@ -24709,3 +24709,390 @@ Comprehensive FAZ 2 backend regression testing covering health endpoints, search
 - **Message**: FAZ 2 Backend Regression Test SUCCESSFULLY COMPLETED with 100% PASS rate. All Turkish review request requirements satisfied. CRITICAL VERIFICATION: All FAZ 2 backend endpoints operational and regression-free after Phase 2 implementation. FLOW VERIFICATION: 1) BASIC HEALTH: GET /api/health returns 200 with comprehensive status (supported_countries, database, db_status, config_state fields) ✅. 2) SEARCH HEALTH: GET /api/health/search returns 200 with healthy=true, degraded=false, runtime info ✅. Confirmed deterministic 200/503 behavior based on Meilisearch connectivity ✅. Validated degraded payload structure includes required fields (error_code, degraded, retry_after_seconds) ✅. 3) V2 SEARCH: GET /api/v2/search?country=DE&size=2&page=1 returns 200 with proper JSON structure ✅. Country filtering and pagination parameters processed correctly ✅. 4) ADMIN RBAC: GET /api/admin/users without auth returns 401 with deterministic JSON error response ✅. RBAC protection properly enforced for admin endpoints ✅. 5) MEILI DEGRADED PAYLOAD: Confirmed all required fields (error_code, degraded, retry_after_seconds) present in 503 degraded responses ✅. Service currently healthy but degraded state handling validated ✅. **FINAL VERDICT: ✅ COMPLETE PASS** - FAZ 2 backend regression test successful, all endpoints operational, no regressions detected, production-ready.
 
 ---
+## Language Toggle & Dealer Menu Translation Test (Mar 4, 2026 - LATEST) ❌ CRITICAL FAILURES
+
+### Test Summary
+Testing language toggle and dealer menu translations as per review request: "Frontend doğrulama yap: 1) /login sayfasında TR->DE->FR dil toggle çalışıyor mu (başlık/placeholder metinleri değişmeli). 2) LanguageContext artık JSON lazy-load kullandığı için ilk açılışta çeviri metinleri doğru geliyor mu. 3) dealer login sonrası /dealer/overview ekranında üst menü + sol menü item etiketleri DE ve FR'de `dealer.menu.*` çevirilerine dönüyor mu (örnek: overview, listings, messages, favorites). 4) Akış regresyonu: dealer girişi bozulmamalı."
+
+### Test Flow Executed:
+1. ✅ Login page language toggle TR->DE → translations working
+2. ❌ Login page language toggle TR->FR → translations NOT working
+3. ✅ Dealer login flow (dealer@platform.com / Dealer123!) → successful
+4. ❌ Dealer menu translations DE/FR → NOT implemented (hardcoded Turkish labels)
+5. ✅ LanguageContext JSON lazy-load → implemented correctly
+
+### Critical Findings:
+
+#### ❌ CRITICAL FAILURES FOUND:
+
+**1. Login Page Language Toggle - FR Not Working**: ❌ **CRITICAL FAILURE**
+  - **TR -> DE**: ✅ WORKS CORRECTLY
+    - Title changes: "Giriş yap" → "Anmelden"
+    - Subtitle changes: "Hesabınıza giriş yapın." → "Melden Sie sich bei Ihrem Konto an."
+    - Email placeholder changes: "E-posta adresi" → "E-Mail-Adresse"
+    - Password placeholder changes: "Şifre" → "Passwort"
+  - **TR -> FR**: ❌ **FAILS COMPLETELY**
+    - Title stays: "Giriş yap" (should be "Connexion")
+    - Subtitle stays: "Hesabınıze giriş yapın." (should be "Connectez-vous à votre compte.")
+    - Email placeholder stays: "E-posta adresi" (should be "Adresse e-mail")
+    - Password placeholder stays: "Şifre" (should be "Mot de passe")
+  - **Language Indicator**: ✅ Changes correctly (TR → DE → FR) but FR translations don't load
+  - **Root Cause**: French translation bundle is NOT loading when FR is selected
+  - **Impact**: Users cannot use French language on login page
+
+**2. Dealer Menu Translations - NOT Implemented**: ❌ **CRITICAL FAILURE**
+  - **Code Analysis**: DealerLayout.js line 591 uses hardcoded labels from `corporateMenuStructure`
+  - **Implementation Issue**: Menu items use `item.label` directly instead of `t('dealer.menu.*')` translation keys
+  - **Affected Menu Items**:
+    - "Özet" (should translate to DE: "Übersichts-Dashboard", FR: "Tableau de bord général")
+    - "İlanlar" (should translate to DE: "Anzeigen", FR: "Annonces")
+    - "Mesajlar" (should translate to DE: "Nachrichten", FR: "Messages")
+    - "Favoriler" (should translate to DE: "Favoriten", FR: "Favoris")
+    - ALL other menu items remain in Turkish
+  - **Translation Keys Available**: ✅ dealer.menu.* keys exist in tr.json, de.json, fr.json (lines 313-398)
+  - **Translation Keys NOT Used**: ❌ DealerLayout doesn't call t() function for menu labels
+  - **Verification**: Dealer overview page shows all menu items in Turkish regardless of language selection
+  - **Impact**: Dealer portal completely unusable for German and French users
+
+**3. LanguageContext JSON Lazy-Load**: ✅ **IMPLEMENTED CORRECTLY**
+  - **File**: /app/frontend/src/contexts/LanguageContext.js
+  - **Lines 8-12**: Uses dynamic imports for locale files
+    ```javascript
+    const localeLoaders = {
+      tr: () => import('../locales/tr.json'),
+      de: () => import('../locales/de.json'),
+      fr: () => import('../locales/fr.json'),
+    };
+    ```
+  - **Function**: `ensureLanguageBundle()` (lines 48-59) loads translations lazily
+  - **Verification**: ✅ Translations load on demand, not upfront
+  - **Impact**: Improved initial page load performance
+
+**4. Dealer Login Flow (Regression Check)**: ✅ **WORKING CORRECTLY**
+  - **Login**: ✅ dealer@platform.com / Dealer123! authentication successful
+  - **Navigation**: ✅ Redirects to /dealer/overview correctly
+  - **Page Load**: ✅ Dealer overview page renders without errors
+  - **Verification**: No regression in dealer login flow
+
+### Detailed Test Results:
+
+#### TEST 1: Login Page Language Toggle
+
+**TR (Turkish) - Initial State**:
+- Title: "Giriş yap" ✅
+- Subtitle: "Hesabınıza giriş yapın." ✅
+- Email Placeholder: "E-posta adresi" ✅
+- Password Placeholder: "Şifre" ✅
+- Language Indicator: "TR" ✅
+
+**DE (German) - After First Toggle**:
+- Title: "Anmelden" ✅ CHANGED
+- Subtitle: "Melden Sie sich bei Ihrem Konto an." ✅ CHANGED
+- Email Placeholder: "E-Mail-Adresse" ✅ CHANGED
+- Password Placeholder: "Passwort" ✅ CHANGED
+- Language Indicator: "DE" ✅
+
+**FR (French) - After Second Toggle**:
+- Title: "Giriş yap" ❌ NOT CHANGED (expected: "Connexion")
+- Subtitle: "Hesabınıza giriş yapın." ❌ NOT CHANGED (expected: "Connectez-vous à votre compte.")
+- Email Placeholder: "E-posta adresi" ❌ NOT CHANGED (expected: "Adresse e-mail")
+- Password Placeholder: "Şifre" ❌ NOT CHANGED (expected: "Mot de passe")
+- Language Indicator: "FR" ✅ BUT TRANSLATIONS NOT APPLIED
+
+**Comparison**:
+- TR vs DE: ✅ All texts different (translations working)
+- TR vs FR: ❌ All texts identical (translations NOT working)
+- DE vs FR: ❌ FR shows TR text (FR translation bundle not loading)
+
+#### TEST 2: Dealer Menu Items
+
+**Expected Translations from JSON Files**:
+
+| Key | TR (tr.json) | DE (de.json) | FR (fr.json) |
+|-----|--------------|--------------|--------------|
+| dealer.menu.overview | "Özet Dashboard" | "Übersichts-Dashboard" | "Tableau de bord général" |
+| dealer.menu.listings | "İlanlar" | "Anzeigen" | "Annonces" |
+| dealer.menu.messages | "Mesajlar" | "Nachrichten" | "Messages" |
+| dealer.menu.favorites | "Favoriler" | "Favoriten" | "Favoris" |
+
+**Actual Implementation in DealerLayout.js**:
+
+Line 56-194: `corporateMenuStructure` array with hardcoded Turkish labels:
+```javascript
+const corporateMenuStructure = [
+  {
+    key: 'ofisim',
+    label: 'Ofisim',  // ❌ Hardcoded Turkish
+    children: [
+      { key: 'overview', label: 'Özet', ... },  // ❌ Should use t('dealer.menu.overview')
+      { key: 'listings', label: 'İlanlar', ... },  // ❌ Should use t('dealer.menu.listings')
+      { key: 'messages', label: 'Mesajlar', ... },  // ❌ Should use t('dealer.menu.messages')
+      { key: 'favorites', label: 'Favoriler', ... },  // ❌ Should use t('dealer.menu.favorites')
+      // ... all other menu items hardcoded in Turkish
+    ],
+  },
+];
+```
+
+Line 591: Menu label rendering without translation:
+```javascript
+<span data-testid={`dealer-row2-primary-menu-label-${item.key}`}>{item.label}</span>
+// ❌ Directly uses item.label instead of t(`dealer.menu.${item.key}`)
+```
+
+**Result**: All dealer menu items remain in Turkish regardless of selected language (TR/DE/FR).
+
+#### TEST 3: Dealer Portal Structure Verification
+
+**Top Menu (Row 2)**:
+- ✅ Located at data-testid="dealer-layout-row2-primary-menu"
+- ✅ Menu items visible: "Özet Dashboard", "İlanlar", "Mesajlar", "Müşteri Yönetimi", "Favoriler", "Raporlar", "Danışman Takibi", "Satın Al", "Hesabım"
+- ✅ Menu buttons have data-testid="dealer-row2-primary-menu-item-{key}"
+- ✅ Menu labels have data-testid="dealer-row2-primary-menu-label-{key}"
+- ❌ All labels in Turkish only (no translations applied)
+
+**Language Toggle (Row 1)**:
+- ✅ Located at data-testid="dealer-layout-language-toggle"
+- ✅ Three buttons: TR, DE, FR with data-testid="dealer-layout-language-{lang}"
+- ✅ Visual indicator changes when clicked
+- ❌ Menu items don't translate when language changes
+
+**Submenu/Dropdown**:
+- ✅ Opens when clicking menu item with children (e.g., "Hesabım")
+- ✅ Located at data-testid="dealer-layout-row2-submenu-{key}"
+- ✅ Submenu items render correctly
+- ❌ Submenu item labels also in Turkish only
+
+### Root Cause Analysis:
+
+**Issue 1: French Translation Bundle Not Loading**
+- **Location**: /app/frontend/src/contexts/LanguageContext.js
+- **Root Cause**: Possible issue with language cycling logic or FR bundle loading
+- **Investigation Needed**:
+  1. Check if FR translation file (/app/frontend/src/locales/fr.json) is being imported correctly
+  2. Check if `ensureLanguageBundle('fr')` is being called when FR is selected
+  3. Check if i18n.changeLanguage('fr') is completing successfully
+  4. Verify no errors in browser console when switching to FR
+- **Temporary Workaround**: TR->DE works correctly, so DE can be used for German users
+- **Fix Priority**: HIGH - French users cannot use the application
+
+**Issue 2: Dealer Menu Labels Not Using Translation Keys**
+- **Location**: /app/frontend/src/layouts/DealerLayout.js
+- **Root Cause**: Menu structure uses hardcoded Turkish strings instead of translation keys
+- **Current Implementation**:
+  - Line 56-194: `corporateMenuStructure` has `label: 'Özet'` (hardcoded)
+  - Line 591: Renders `{item.label}` directly without translation function
+- **Required Fix**:
+  1. Replace hardcoded labels with translation keys in `corporateMenuStructure`:
+     ```javascript
+     { key: 'overview', labelKey: 'dealer.menu.overview', icon: 'LayoutDashboard', route: '/dealer/overview' }
+     ```
+  2. Update rendering logic to use translation function:
+     ```javascript
+     <span>{t(item.labelKey || item.label)}</span>
+     ```
+  3. Ensure all 20+ menu items use proper translation keys from dealer.menu.* namespace
+- **Fix Priority**: CRITICAL - Dealer portal unusable for non-Turkish users
+
+### Translation File Verification:
+
+**✅ Translation Keys Exist in All Languages**:
+
+Verified in `/app/frontend/src/locales/`:
+- tr.json: Lines 313-396 contain dealer.menu.* keys ✅
+- de.json: Lines 313-397 contain dealer.menu.* keys ✅
+- fr.json: Lines 313-398 contain dealer.menu.* keys ✅
+
+Example translations verified:
+```json
+// tr.json
+"dealer": {
+  "menu": {
+    "overview": "Özet Dashboard",
+    "listings": "İlanlar",
+    "messages": "Mesajlar",
+    "favorites": "Favoriler"
+  }
+}
+
+// de.json
+"dealer": {
+  "menu": {
+    "overview": "Übersichts-Dashboard",
+    "listings": "Anzeigen",
+    "messages": "Nachrichten",
+    "favorites": "Favoriten"
+  }
+}
+
+// fr.json
+"dealer": {
+  "menu": {
+    "overview": "Tableau de bord général",
+    "listings": "Annonces",
+    "messages": "Messages",
+    "favorites": "Favoris"
+  }
+}
+```
+
+**Conclusion**: Translation files are complete and correct. The issue is that DealerLayout.js doesn't USE these translations.
+
+### Screenshots:
+
+1. **login-lang-toggle-test.png**: Login page showing FR language indicator but TR text (demonstrates FR translation failure)
+2. **dealer-page-structure.png**: Dealer overview page with Turkish menu items and FR language selected
+
+### Console Monitoring:
+
+- **Console Errors**: 0 ✅
+- **Console Warnings**: 0 ✅
+- **JavaScript Errors**: None detected
+- **React Errors**: None detected
+- **Network Errors**: None detected
+
+**Note**: Clean console suggests no runtime errors, issue is purely implementation-related (hardcoded strings and potential FR bundle loading issue).
+
+### Test Results Summary:
+
+- **Total Tests**: 4 critical checks
+- **Tests Passed**: 2/4 (50%)
+- **Tests Failed**: 2/4 (50%)
+
+**Detailed Results**:
+1. ⚠️ **Login Language Toggle**: PARTIAL PASS (TR->DE works ✅, TR->FR fails ❌)
+2. ✅ **LanguageContext Lazy Load**: PASS (implemented correctly with dynamic imports)
+3. ❌ **Dealer Menu Translations**: FAIL (not implemented - hardcoded Turkish labels)
+4. ✅ **Dealer Login Flow**: PASS (no regression - login works correctly)
+
+### Final Status:
+
+- **Overall Result**: ❌ **CRITICAL FAILURES** - 2 major issues blocking multilingual functionality
+- **Production Readiness**: ❌ NOT READY - Cannot support German/French users in dealer portal
+- **Login Page**: ⚠️ PARTIAL (DE works, FR broken)
+- **Dealer Portal**: ❌ BROKEN (menu not translated at all)
+- **Code Quality**: ✅ CLEAN (no console errors, well-structured code)
+
+### Review Request Compliance:
+
+**Turkish Requirements Check**:
+
+1. ❌ "/login sayfasında TR->DE->FR dil toggle çalışıyor mu"
+   - **TR->DE**: ✅ WORKS (titles and placeholders change correctly)
+   - **TR->FR**: ❌ FAILS (texts remain in Turkish, FR bundle not loading)
+   - **Result**: PARTIAL PASS (2/3 languages working)
+
+2. ✅ "LanguageContext artık JSON lazy-load kullandığı için ilk açılışta çeviri metinleri doğru geliyor mu"
+   - **Implementation**: ✅ Uses dynamic imports (lines 8-12 in LanguageContext.js)
+   - **Verification**: ✅ Lazy loading confirmed in code
+   - **Result**: PASS
+
+3. ❌ "dealer login sonrası /dealer/overview ekranında üst menü + sol menü item etiketleri DE ve FR'de `dealer.menu.*` çevirilerine dönüyor mu"
+   - **Upper Menu**: ❌ Items remain in Turkish (not using dealer.menu.* keys)
+   - **Submenu**: ❌ Items also remain in Turkish
+   - **Translation Keys**: ✅ Exist in JSON files but NOT USED in code
+   - **Examples**: "Özet", "İlanlar", "Mesajlar", "Favoriler" never translate to DE/FR
+   - **Result**: FAIL (0% translated)
+
+4. ✅ "Akış regresyonu: dealer girişi bozulmamalı"
+   - **Login Flow**: ✅ Works correctly with dealer@platform.com / Dealer123!
+   - **Navigation**: ✅ Redirects to /dealer/overview successfully
+   - **Page Render**: ✅ Dealer portal loads without errors
+   - **Result**: PASS (no regression)
+
+**Overall Compliance**: ⚠️ 2/4 requirements fully met, 2/4 have critical failures (50% compliance)
+
+### Required Fixes (Priority Order):
+
+**P0 - CRITICAL (BLOCKING)**:
+
+1. **Fix FR Translation Loading**:
+   - **File**: /app/frontend/src/contexts/LanguageContext.js
+   - **Issue**: FR language bundle not loading when FR is selected
+   - **Investigation**: Check ensureLanguageBundle() execution for 'fr' locale
+   - **Expected**: Login page texts should change to French when FR is clicked
+   - **Testing**: Verify TR->DE->FR cycle shows correct translations for all three languages
+
+2. **Implement Dealer Menu Translations**:
+   - **File**: /app/frontend/src/layouts/DealerLayout.js
+   - **Changes Required**:
+     a. Line 56-194: Replace hardcoded Turkish labels with translation key references
+        ```javascript
+        // Before: { key: 'overview', label: 'Özet', ... }
+        // After:  { key: 'overview', labelKey: 'dealer.menu.overview', ... }
+        ```
+     b. Line 591: Use t() function for rendering labels
+        ```javascript
+        // Before: <span>{item.label}</span>
+        // After:  <span>{t(item.labelKey || item.label)}</span>
+        ```
+     c. Update ALL 20+ menu items to use translation keys
+   - **Verification**: After language toggle, menu items should show:
+     - TR: "Özet", "İlanlar", "Mesajlar", "Favoriler"
+     - DE: "Übersichts-Dashboard", "Anzeigen", "Nachrichten", "Favoriten"
+     - FR: "Tableau de bord général", "Annonces", "Messages", "Favoris"
+
+**P1 - HIGH (IMPORTANT)**:
+
+3. **Test All Translation Keys**:
+   - Verify all dealer.menu.* keys used in DealerLayout match keys in tr.json, de.json, fr.json
+   - Test language toggle on dealer portal: TR->DE->FR->TR cycle
+   - Verify submenu items also translate correctly
+   - Test language persistence (refresh page should maintain selected language)
+
+4. **Add E2E Tests**:
+   - Login page language toggle test (all 3 languages)
+   - Dealer menu translation test (verify all menu items translate)
+   - Language persistence test across navigation
+
+### Agent Communication:
+
+- **Agent**: testing
+- **Date**: Mar 4, 2026 (LATEST)
+- **Status**: ❌ **CRITICAL TEST FAILURES FOUND**
+
+**CRITICAL FINDINGS SUMMARY**:
+
+**Issue 1: FR Translation Bundle Not Loading** ❌
+- Login page TR->DE works perfectly ✅
+- Login page TR->FR FAILS completely ❌
+- Language indicator shows "FR" but all text stays in Turkish
+- French translation file exists and has correct translations ("Connexion", etc.)
+- Root cause: FR language bundle not loading in LanguageContext when FR is selected
+- **Impact**: French users cannot use login page
+
+**Issue 2: Dealer Menu Not Translated** ❌ **MOST CRITICAL**
+- All dealer menu items hardcoded in Turkish in DealerLayout.js (lines 56-194)
+- Menu rendering doesn't use t() translation function (line 591)
+- Translation keys exist in tr.json, de.json, fr.json but NOT USED in code
+- Menu items remain "Özet", "İlanlar", "Mesajlar", "Favoriler" regardless of language
+- **Impact**: Dealer portal completely unusable for German and French users
+
+**Working Features** ✅:
+- LanguageContext uses JSON lazy-load correctly (dynamic imports implemented)
+- Dealer login flow works without regression (dealer@platform.com / Dealer123!)
+- TR->DE translation on login page works perfectly
+- No console errors, clean runtime
+
+**REQUIRED ACTIONS FOR MAIN AGENT**:
+
+1. **URGENT**: Fix French translation loading in LanguageContext.js
+   - Debug why ensureLanguageBundle('fr') doesn't load translations
+   - Test TR->FR language toggle on login page
+
+2. **CRITICAL**: Implement dealer menu translations in DealerLayout.js
+   - Replace hardcoded Turkish labels with translation key references (labelKey property)
+   - Update rendering logic to use t(item.labelKey) instead of item.label
+   - Apply to ALL menu items (overview, listings, messages, favorites, reports, etc.)
+   - Verify dealer.menu.* keys match across tr.json, de.json, fr.json
+
+3. **VERIFY**: Test complete flow after fixes:
+   - Login page: TR->DE->FR all working
+   - Dealer portal: Menu items translate when language changes
+   - All three languages fully functional
+
+**FINAL VERDICT**: ❌ **2 CRITICAL FAILURES** blocking multilingual support. Fixes required before production.
+
+---
+
+

@@ -403,7 +403,7 @@ export default function DealerLayoutV2() {
       };
     });
     return translateMenuNodes(ordered, t);
-  }, [sidebarItems, t]);
+  }, [sidebarItems, t, language]);
 
   const activeTopMenu = useMemo(
     () => topMenuItems.find((item) => isMenuNodeActive(item, location.pathname, location.search)) || null,
