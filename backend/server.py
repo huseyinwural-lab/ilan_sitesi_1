@@ -16439,7 +16439,7 @@ async def _record_category_version_sql(
         published_by=_safe_uuid(actor.get("id")) if status == "published" else None,
     )
     session.add(version)
-    await session.commit()
+    await session.flush()
 
     if max_versions and max_versions > 0:
         versions_res = await session.execute(
@@ -16451,7 +16451,7 @@ async def _record_category_version_sql(
         if len(versions) > max_versions:
             for old in versions[max_versions:]:
                 await session.delete(old)
-            await session.commit()
+            await session.flush()
 
     return version
 
@@ -16475,7 +16475,7 @@ async def _mark_latest_category_version_published_sql(
         latest_row.status = "published"
         latest_row.published_at = now
         latest_row.published_by = _safe_uuid(actor.get("id"))
-        await session.commit()
+        await session.flush()
         return latest_row
 
     return await _record_category_version_sql(session, category_id, schema_snapshot, actor, "published", max_versions=max_versions)
@@ -30091,11 +30091,14 @@ async def admin_create_category(
 
     if schema:
         if schema_status == "draft":
-            async with AsyncSessionLocal() as version_session:
-                await _record_category_version_sql(version_session, category.id, schema, current_user, "draft")
+            await _record_category_version_sql(session, category.id, schema, current_user, "draft")
         else:
-            async with AsyncSessionLocal() as version_session:
-                await _record_category_version_sql(version_session, category.id, schema, current_user, "published")
+            await _record_category_version_sql(session, category.id, schema, current_user, "published")
+        try:
+            await session.commit()
+        except IntegrityError as exc:
+            await session.rollback()
+            _raise_category_integrity_error(exc)
 
     result = await session.execute(
         select(Category)
@@ -30408,11 +30411,14 @@ async def admin_update_category(
 
     if schema:
         if schema_status == "draft":
-            async with AsyncSessionLocal() as version_session:
-                await _record_category_version_sql(version_session, category.id, schema, current_user, "draft")
+            await _record_category_version_sql(session, category.id, schema, current_user, "draft")
         else:
-            async with AsyncSessionLocal() as version_session:
-                await _mark_latest_category_version_published_sql(version_session, category.id, schema, current_user)
+            await _mark_latest_category_version_published_sql(session, category.id, schema, current_user)
+        try:
+            await session.commit()
+        except IntegrityError as exc:
+            await session.rollback()
+            _raise_category_integrity_error(exc)
 
     refreshed = await session.execute(
         select(Category)
