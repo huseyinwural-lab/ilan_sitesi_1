@@ -1590,7 +1590,7 @@ async def _ensure_fixture_category_schema(session: AsyncSession):
     name = "E2E Fixture Category"
     country_code = "DE"
 
-    slug_json = {"tr": slug, "en": slug, "de": slug}
+    slug_json = {"tr": slug, "de": slug, "fr": slug, "en": slug}
     now_dt = datetime.now(timezone.utc)
 
     result = await session.execute(
@@ -1689,7 +1689,7 @@ async def _ensure_fixture_category_schema(session: AsyncSession):
     )
     session.add(category)
     await session.flush()
-    for lang in ("tr", "en", "de"):
+    for lang in ("tr", "de", "fr"):
         session.add(
             CategoryTranslation(
                 category_id=category.id,
@@ -15318,7 +15318,7 @@ def _serialize_category_translation(translation: CategoryTranslation) -> dict:
 
 def _pick_category_name(translations: list[CategoryTranslation], slug_value: Optional[str]) -> str:
     preferred = None
-    for lang in ("tr", "en", "de", "fr"):
+    for lang in ("tr", "de", "fr", "en"):
         preferred = next((t for t in translations if t.language == lang), None)
         if preferred:
             break
@@ -15329,7 +15329,7 @@ def _pick_category_name(translations: list[CategoryTranslation], slug_value: Opt
 
 def _pick_category_slug(slug_value) -> Optional[str]:
     if isinstance(slug_value, dict):
-        return slug_value.get("tr") or slug_value.get("en") or slug_value.get("de") or slug_value.get("fr") or next(iter(slug_value.values()), None)
+        return slug_value.get("tr") or slug_value.get("de") or slug_value.get("fr") or slug_value.get("en") or next(iter(slug_value.values()), None)
     return slug_value
 
 
@@ -30311,7 +30311,7 @@ async def admin_update_category(
 
     if "slug" in updates:
         slug_json = dict(category.slug or {})
-        slug_json.update({"tr": updates["slug"], "en": updates["slug"], "de": updates["slug"]})
+        slug_json.update({"tr": updates["slug"], "de": updates["slug"], "fr": updates["slug"], "en": updates["slug"]})
         updates["slug"] = slug_json
 
     if "slug" in updates and "path" not in updates:
@@ -30330,8 +30330,9 @@ async def admin_update_category(
 
     if "name" in updates:
         translations = list(category.translations or [])
+        target_languages = ("tr", "de", "fr")
         if not translations:
-            for lang in ("tr", "en", "de"):
+            for lang in target_languages:
                 session.add(
                     CategoryTranslation(
                         category_id=category.id,
@@ -30343,9 +30344,22 @@ async def admin_update_category(
                     )
                 )
         else:
-            for translation in translations:
-                if translation.language in {"tr", "en", "de"}:
-                    translation.name = updates["name"]
+            translations_map = {t.language: t for t in translations}
+            for lang in target_languages:
+                existing_translation = translations_map.get(lang)
+                if existing_translation:
+                    existing_translation.name = updates["name"]
+                else:
+                    session.add(
+                        CategoryTranslation(
+                            category_id=category.id,
+                            language=lang,
+                            name=updates["name"],
+                            description=None,
+                            meta_title=None,
+                            meta_description=None,
+                        )
+                    )
 
     if payload.wizard_edit_event:
         role = current_user.get("role")
