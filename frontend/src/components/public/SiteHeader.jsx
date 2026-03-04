@@ -281,6 +281,8 @@ export default function SiteHeader({ mode, refreshToken }) {
           className={`items-center gap-3 ${menuOpen ? 'flex' : 'hidden'} md:flex`}
           data-testid="site-header-actions"
         >
+          {!isAuthenticated ? renderLanguageSelector() : null}
+
           {!isAuthenticated && (
             <div className="flex items-center gap-2" data-testid="site-header-guest">
               <div className="flex items-center gap-2" data-testid="site-header-guest-links-wrap">
@@ -305,7 +307,6 @@ export default function SiteHeader({ mode, refreshToken }) {
                   </div>
                 )}
               </div>
-              {renderLanguageSelector()}
             </div>
           )}
 

@@ -73,7 +73,7 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
     };
   }, [layoutOverride, refreshToken]);
 
-  const rows = Array.isArray(layout.rows) ? layout.rows : [];
+  const rows = Array.isArray(layout?.rows) ? layout.rows : [];
   const hasRenderableRows = rows.some((row) => {
     const columns = Array.isArray(row?.columns) ? row.columns : [];
     return columns.some((col) => {
@@ -106,7 +106,7 @@ export default function SiteFooter({ layoutOverride, refreshToken }) {
     return total + rowLinks;
   }, 0);
 
-  if (!layout || !hasRenderableRows || !hasMenuLinkGroups || menuLinkCount < 2) {
+  if (!layout || !hasRenderableRows || !hasMenuLinkGroups || menuLinkCount < 6) {
     return renderFallbackFooter();
   }
 
