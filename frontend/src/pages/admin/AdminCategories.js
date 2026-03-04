@@ -3673,7 +3673,9 @@ const AdminCategories = () => {
                 <div className="font-semibold text-slate-900" style={{ paddingLeft: `${Math.min(Number(item.depth || 0), 5) * 12}px` }} data-testid={`categories-row-name-${item.id}`}>{item.name}</div>
                 <div className="text-slate-800" data-testid={`categories-row-slug-${item.id}`}>{item.slug}</div>
                 <div className="text-slate-800" data-testid={`categories-row-country-${item.id}`}>{item.country_code || "global"}</div>
-                <div className="text-slate-800" data-testid={`categories-row-module-${item.id}`}>{item.module || '-'}</div>
+                <div className="text-slate-800" data-testid={`categories-row-module-${item.id}`}>
+                  {CATEGORY_MODULE_OPTIONS.find((option) => option.value === item.module)?.label || item.module || '-'}
+                </div>
                 <div className="text-slate-800" data-testid={`categories-row-sort-${item.id}`}>{item.sort_order}</div>
                 <div>
                   <span className={`px-2 py-1 rounded text-xs ${item.active_flag ? "bg-green-100 text-green-700" : "bg-gray-100 text-slate-800"}`} data-testid={`categories-row-status-${item.id}`}>
