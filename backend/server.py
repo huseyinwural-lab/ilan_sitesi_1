@@ -30091,9 +30091,11 @@ async def admin_create_category(
 
     if schema:
         if schema_status == "draft":
-            await _record_category_version_sql(session, category.id, schema, current_user, "draft")
+            async with AsyncSessionLocal() as version_session:
+                await _record_category_version_sql(version_session, category.id, schema, current_user, "draft")
         else:
-            await _record_category_version_sql(session, category.id, schema, current_user, "published")
+            async with AsyncSessionLocal() as version_session:
+                await _record_category_version_sql(version_session, category.id, schema, current_user, "published")
 
     result = await session.execute(
         select(Category)
@@ -30406,9 +30408,11 @@ async def admin_update_category(
 
     if schema:
         if schema_status == "draft":
-            await _record_category_version_sql(session, category.id, schema, current_user, "draft")
+            async with AsyncSessionLocal() as version_session:
+                await _record_category_version_sql(version_session, category.id, schema, current_user, "draft")
         else:
-            await _mark_latest_category_version_published_sql(session, category.id, schema, current_user)
+            async with AsyncSessionLocal() as version_session:
+                await _mark_latest_category_version_published_sql(version_session, category.id, schema, current_user)
 
     refreshed = await session.execute(
         select(Category)
