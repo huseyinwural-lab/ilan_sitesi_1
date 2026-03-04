@@ -6,7 +6,7 @@ import sys
 import time
 
 # Configuration
-BASE_URL = "https://admin-categories-2.preview.emergentagent.com/api"
+BASE_URL = "https://category-results.preview.emergentagent.com/api"
 
 class FAZ2RegressionTester:
     def __init__(self):

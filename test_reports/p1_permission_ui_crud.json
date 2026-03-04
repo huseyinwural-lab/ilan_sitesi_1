@@ -1,6 +1,6 @@
 {
   "task": "P1.1 Granular Permission UI CRUD",
-  "base_url": "https://admin-categories-2.preview.emergentagent.com",
+  "base_url": "https://category-results.preview.emergentagent.com",
   "sample_users": [
     {
       "id": "2aab6675-9004-422f-9f2a-86809aefa37b",

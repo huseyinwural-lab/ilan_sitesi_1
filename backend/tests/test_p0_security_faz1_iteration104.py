@@ -16,7 +16,7 @@ import requests
 import time
 import re
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://admin-categories-2.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://category-results.preview.emergentagent.com").rstrip("/")
 DEALER_EMAIL = "dealer@platform.com"
 DEALER_PASSWORD = "Dealer123!"
 

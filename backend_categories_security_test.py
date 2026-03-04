@@ -7,7 +7,7 @@ import uuid
 from typing import Dict, List, Any
 
 # Configuration from review request
-BASE_URL = "https://admin-categories-2.preview.emergentagent.com/api"
+BASE_URL = "https://category-results.preview.emergentagent.com/api"
 ADMIN_CREDENTIALS = {
     "email": "admin@platform.com", 
     "password": "Admin123!"

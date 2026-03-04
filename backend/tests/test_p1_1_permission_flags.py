@@ -3,7 +3,7 @@ import uuid
 import requests
 
 
-BASE_URL = "https://admin-categories-2.preview.emergentagent.com"
+BASE_URL = "https://category-results.preview.emergentagent.com"
 
 CREDS = {
     "super_admin": {"email": "admin@platform.com", "password": "Admin123!"},

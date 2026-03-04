@@ -1,7 +1,7 @@
 # P0_1_SECURITY_HARDENING_CLOSED
 
 **Tarih:** 2026-02-24 13:47:41 UTC
-**Ortam URL:** https://admin-categories-2.preview.emergentagent.com
+**Ortam URL:** https://category-results.preview.emergentagent.com
 **Commit Ref:** cf717b52
 **Durum:** CLOSED
 

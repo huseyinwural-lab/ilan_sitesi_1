@@ -2,7 +2,7 @@
 
 **Status:** CLOSED ✅
 **Commit:** c906a8ec
-**Environment:** https://admin-categories-2.preview.emergentagent.com
+**Environment:** https://category-results.preview.emergentagent.com
 **Evidence File:** /app/memory/MODERATION_FREEZE_EVIDENCE.md
 
 ## Verification Summary

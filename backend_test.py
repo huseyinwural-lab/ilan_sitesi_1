@@ -5,7 +5,7 @@ import json
 import sys
 
 # Configuration
-BASE_URL = "https://admin-categories-2.preview.emergentagent.com/api"
+BASE_URL = "https://category-results.preview.emergentagent.com/api"
 DEALER_CREDENTIALS = {
     "email": "dealer@platform.com",
     "password": "Dealer123!"
