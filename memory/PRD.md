@@ -1107,4 +1107,28 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Dealer login regresyonu yok
 
 ### Not
-- Dealer üst bar dil butonlarının görünürlüğü mevcut corporate UI config’e bağlı (`language_switcher` bloğu). Çeviri altyapısı çalışır durumda; buton görünürlüğü config ile açılıp kapatılıyor.
+- Önceki durumda dealer üst bar dil butonları config’e bağlıydı; bu davranış aşağıdaki yeni güncelleme ile iyileştirildi.
+
+## 2026-03-04 (Namespace Split v2 + Route Preload Kural Güncellemesi + language_switcher Default Open)
+
+### Tamamlananlar
+- i18n dosyaları dil + namespace bazında ayrıldı:
+  - `frontend/src/locales/{tr,de,fr}/auth.json`
+  - `frontend/src/locales/{tr,de,fr}/dealer.json`
+  - `frontend/src/locales/{tr,de,fr}/admin.json`
+- `LanguageContext` route bazlı namespace preload kuralı revize edildi:
+  - `/login`, `/register`, `/verify-email` → `auth`
+  - `/dealer/login`, `/dealer/*` → `dealer`
+  - `/admin/*`, `/backoffice/*` → `admin`
+  - diğer route’lar → preload yok, ihtiyaç halinde lazy-load
+- `DealerLayoutV2` içinde `language_switcher` için default açık kuralı uygulandı:
+  - corporate header config’te block/row eksikse **visible=true**
+  - config missing durumunda info log basılıyor.
+
+### Test Sonucu
+- `testing_agent` PASS: `/app/test_reports/iteration_109.json`
+  - namespace separation PASS
+  - route preload rule PASS
+  - login TR/DE/FR PASS
+  - dealer language switcher default-visible PASS
+  - dealer.menu TR/DE/FR PASS
