@@ -44,6 +44,59 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - **P2:** Vasıta kategorilerinin `vehicle-makes` kaynağına refactor.
 - **P2:** FAZ 3 mock veri temizliği (`academy.modules`).
 
+## 2026-03-04 (P0 — Dynamic Page Builder Foundation / Content-Only)
+
+### Uygulananlar (Backend Foundation)
+- Yeni modeller + migration eklendi:
+  - `layout_component_definitions`
+  - `layout_pages`
+  - `layout_revisions`
+  - `layout_bindings`
+  - `layout_audit_logs`
+- Migration dosyası: `backend/migrations/versions/p74_layout_builder_foundation.py`
+  - JSON object check constraint’leri
+  - deterministik unique scope (category_id NULL için COALESCE)
+  - tek published revision partial unique index
+  - tek aktif binding partial unique index
+- Domain servisleri (transactional) eklendi (`app/domains/layout_builder/service.py`):
+  - `create_layout_page`
+  - `create_draft_revision`
+  - `publish_revision`
+  - `archive_revision`
+  - `bind_category_to_page`
+  - `unbind_category`
+  - audit log yazımı
+
+### Admin & Public API
+- Yeni router: `app/routers/layout_builder_routes.py`
+- Admin endpoint grubu:
+  - Component definitions CRUD + schema validation
+  - Layout pages create/list/patch
+  - Revision draft/patch/publish/archive/history
+  - Bind/unbind + active binding görüntüleme
+  - Audit logs filtreleme
+  - Metrics endpoint
+- Public endpoint:
+  - `GET /api/site/content-layout/resolve`
+  - Öncelik: category binding -> default page fallback
+  - Cache katmanı + publish/binding değişiminde invalidation
+
+### Sözleşme (P0 D)
+- Render contract v1 dokümanı eklendi:
+  - `backend/app/domains/layout_builder/RENDER_CONTRACT_V1.md`
+
+### Test Durumu
+- Migration apply + rollback doğrulandı (`p74 -> p73 -> p74`).
+- Self-test: create page -> draft -> publish -> resolve -> metrics PASS.
+- Testing agent raporu: `/app/test_reports/iteration_119.json`
+  - 30/30 PASS; tek LOW bug (cache source field) fixlendi.
+- Ek doğrulama: `deep_testing_backend_v2` sonucu 16/16 PASS.
+
+### Bu Fazdan Sonra
+- P1: Admin tarafında Layout Manager görsel ekranı (component library, sortable canvas, width selector).
+- P1: Content-only builder’ın Home/Search L1/L2 runtime renderer ile frontend entegrasyonu.
+- P2: İlan Ver adımlarında kontrollü (iş kuralı bozmayan) dinamik içerik düzeni.
+
 ### P0 — Google Autocomplete Real Mode (manuel key destekli)
 - Backend eklendi:
   - `GET /api/places/config`
