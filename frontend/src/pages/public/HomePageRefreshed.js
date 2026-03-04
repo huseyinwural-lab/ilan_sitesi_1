@@ -12,16 +12,13 @@ const MODULES = [
   { key: 'other', label: 'Diğer', accent: '#a55df8' },
 ];
 
-const QUICK_LINKS = [
-  { key: 'jobs', label: 'İş İlanları', href: '/search?q=is' },
-  { key: 'services', label: 'Ustalar ve Hizmetler', href: '/search?q=hizmet' },
-];
-
 const LANGUAGE_LOCALE_MAP = {
   tr: 'tr-TR',
   de: 'de-DE',
   fr: 'fr-FR',
 };
+
+const normalizeCompare = (value) => String(value || '').trim().toLocaleLowerCase('tr-TR');
 
 const SLIDES = [
   {
@@ -150,6 +147,7 @@ export default function HomePageRefreshed() {
   const [categoriesByModule, setCategoriesByModule] = useState({});
   const [showcaseItems, setShowcaseItems] = useState([]);
   const [recentItems, setRecentItems] = useState([]);
+  const [urgentTotal, setUrgentTotal] = useState(0);
   const [expandedModules, setExpandedModules] = useState({});
   const [activeSlide, setActiveSlide] = useState(0);
 
@@ -173,9 +171,10 @@ export default function HomePageRefreshed() {
       const nextLayout = normalizeLayout(layoutPayload?.config);
       const cardCount = Math.max(4, nextLayout.listing_lx_limit || 8);
 
-      const [showcasePayload, recentPayload] = await Promise.all([
+      const [showcasePayload, recentPayload, urgentPayload] = await Promise.all([
         fetchJsonWithTimeout(`${API}/v2/search?country=${countryCode}&size=${cardCount}&limit=${cardCount}&page=1&doping_type=showcase&sort=date_desc&${cacheBuster}`, {}),
         fetchJsonWithTimeout(`${API}/v2/search?country=${countryCode}&size=${cardCount}&limit=${cardCount}&page=1&sort=date_desc&${cacheBuster}`, {}),
+        fetchJsonWithTimeout(`${API}/v2/search?country=${countryCode}&size=1&limit=1&page=1&doping_type=urgent&${cacheBuster}`, {}),
       ]);
 
       if (!active) return;
@@ -190,6 +189,7 @@ export default function HomePageRefreshed() {
       setCategoriesByModule(categoryMap);
       setShowcaseItems(Array.isArray(showcasePayload?.items) ? showcasePayload.items : []);
       setRecentItems(Array.isArray(recentPayload?.items) ? recentPayload.items : []);
+      setUrgentTotal(Number(urgentPayload?.pagination?.total ?? urgentPayload?.total ?? 0));
       setLoading(false);
     };
 
@@ -257,19 +257,41 @@ export default function HomePageRefreshed() {
           return normalizeLabel(a, language).localeCompare(normalizeLabel(b, language), LANGUAGE_LOCALE_MAP[language] || 'tr-TR');
         });
 
-      const rootRows = roots.map((root) => {
-        const children = [...(byParent.get(root.id) || [])]
+      const moduleLabelKey = normalizeCompare(moduleMeta.label);
+      const duplicateModuleRoot = roots.find((root) => normalizeCompare(normalizeLabel(root, language)) === moduleLabelKey);
+      const nonDuplicateRoots = roots.filter((root) => normalizeCompare(normalizeLabel(root, language)) !== moduleLabelKey);
+      const promotedRoots = duplicateModuleRoot ? [...(byParent.get(duplicateModuleRoot.id) || [])] : [];
+      const effectiveRoots = [...promotedRoots, ...nonDuplicateRoots]
+        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
+
+      const rootRows = effectiveRoots.map((root) => {
+        const rootName = normalizeLabel(root, language);
+        const baseChildren = [...(byParent.get(root.id) || [])]
           .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
           .map((child) => ({
             id: child.id,
             name: normalizeLabel(child, language),
             slug: child.slug || child.id,
             total_count: aggregateCount(child.id),
+            href: `/search?category=${encodeURIComponent(child.slug || child.id)}`,
           }));
+
+        const children = normalizeCompare(rootName) === normalizeCompare('İş İlanları')
+          ? [
+            {
+              id: 'urgent-listings',
+              name: 'Acil İlanlar',
+              slug: 'urgent',
+              total_count: urgentTotal,
+              href: '/search?doping=urgent',
+            },
+            ...baseChildren,
+          ]
+          : baseChildren;
 
         return {
           id: root.id,
-          name: normalizeLabel(root, language),
+          name: rootName,
           slug: root.slug || root.id,
           icon_svg: root.icon_svg || null,
           total_count: aggregateCount(root.id),
@@ -285,7 +307,7 @@ export default function HomePageRefreshed() {
         roots: rootRows,
       };
     });
-  }, [categoriesByModule, language, layout.module_l1_order, layout.module_l1_order_mode, moduleOrder]);
+  }, [categoriesByModule, language, layout.module_l1_order, layout.module_l1_order_mode, moduleOrder, urgentTotal]);
 
   const moduleRootLimit = clamp(layout.l1_initial_limit, 1, 20, 6);
   const cardColumnCount = clamp(layout.listing_module_grid_columns, 2, 6, 4);
@@ -298,19 +320,6 @@ export default function HomePageRefreshed() {
 
       <div className="home-kktc-main" style={{ '--home-left-width': `${layout.column_width}px` }} data-testid="home-kktc-main">
         <aside className="home-kktc-categories" data-testid="home-kktc-category-column">
-          <div className="home-kktc-shortcuts" data-testid="home-kktc-shortcuts">
-            {QUICK_LINKS.map((linkItem) => (
-              <Link
-                key={linkItem.key}
-                to={linkItem.href}
-                className="home-kktc-shortcut-link"
-                data-testid={`home-kktc-shortcut-link-${linkItem.key}`}
-              >
-                <span className="home-kktc-shortcut-label" data-testid={`home-kktc-shortcut-label-${linkItem.key}`}>{linkItem.label}</span>
-              </Link>
-            ))}
-          </div>
-
           <div className="home-kktc-modules" data-testid="home-kktc-module-list">
             {loading ? (
               <div className="home-kktc-empty" data-testid="home-kktc-categories-loading">Kategoriler yükleniyor...</div>
@@ -320,15 +329,6 @@ export default function HomePageRefreshed() {
 
               return (
                 <section key={moduleGroup.module_key} className="home-kktc-module" data-testid={`home-kktc-module-${moduleGroup.module_key}`}>
-                  <div className="home-kktc-module-title" data-testid={`home-kktc-module-title-${moduleGroup.module_key}`}>
-                    <div className="home-kktc-module-title-main" data-testid={`home-kktc-module-title-main-${moduleGroup.module_key}`}>
-                      <span>
-                        {moduleGroup.module_label}
-                        <span className="home-kktc-module-count" data-testid={`home-kktc-module-count-${moduleGroup.module_key}`}> ({formatCount(moduleGroup.module_total_count)})</span>
-                      </span>
-                    </div>
-                  </div>
-
                   <div className="home-kktc-plain-list" data-testid={`home-kktc-plain-list-${moduleGroup.module_key}`}>
                     {visibleRoots.map((root) => (
                       <div key={root.id} className="home-kktc-root-group" data-testid={`home-kktc-root-group-${root.id}`}>
@@ -351,7 +351,7 @@ export default function HomePageRefreshed() {
                             {root.children.map((child) => (
                               <Link
                                 key={child.id}
-                                to={`/search?category=${encodeURIComponent(child.slug)}`}
+                                to={child.href || `/search?category=${encodeURIComponent(child.slug)}`}
                                 className="home-kktc-child-line"
                                 data-testid={`home-kktc-child-line-${child.id}`}
                               >
