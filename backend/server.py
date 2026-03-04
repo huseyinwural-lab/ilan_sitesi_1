@@ -29950,13 +29950,14 @@ async def admin_create_category(
         segment_input = payload.vehicle_segment
         if not segment_input and isinstance(payload.form_schema, dict):
             segment_input = _vehicle_segment_from_schema(payload.form_schema)
-        vehicle_link_status = await _resolve_vehicle_segment_from_master(session, segment_input=segment_input)
-        vehicle_segment = vehicle_link_status["segment"]
-        await _assert_vehicle_segment_unique_in_country(
-            session,
-            vehicle_segment=vehicle_segment,
-            country_code=country_code,
-        )
+        if segment_input:
+            vehicle_link_status = await _resolve_vehicle_segment_from_master(session, segment_input=segment_input)
+            vehicle_segment = vehicle_link_status["segment"]
+            await _assert_vehicle_segment_unique_in_country(
+                session,
+                vehicle_segment=vehicle_segment,
+                country_code=country_code,
+            )
 
     slug_query = await session.execute(
         select(Category)
@@ -30229,14 +30230,15 @@ async def admin_update_category(
             segment_input = _vehicle_segment_from_schema(schema) if isinstance(schema, dict) else None
         if not segment_input:
             segment_input = _vehicle_segment_from_schema(category.form_schema)
-        vehicle_link_status = await _resolve_vehicle_segment_from_master(session, segment_input=segment_input)
-        vehicle_segment = vehicle_link_status["segment"]
-        await _assert_vehicle_segment_unique_in_country(
-            session,
-            vehicle_segment=vehicle_segment,
-            country_code=country_value,
-            exclude_category_id=category.id,
-        )
+        if segment_input:
+            vehicle_link_status = await _resolve_vehicle_segment_from_master(session, segment_input=segment_input)
+            vehicle_segment = vehicle_link_status["segment"]
+            await _assert_vehicle_segment_unique_in_country(
+                session,
+                vehicle_segment=vehicle_segment,
+                country_code=country_value,
+                exclude_category_id=category.id,
+            )
 
     if payload.active_flag is not None:
         updates["is_enabled"] = payload.active_flag
