@@ -2835,11 +2835,12 @@ const AdminCategories = () => {
         if (!node.is_leaf) {
           const children = Array.isArray(node.children) ? node.children : [];
           if (children.length === 0) {
-            treeFieldErrors[`level-${pathKey}-children`] = "Alt seviye yoksa leaf seçilmelidir.";
-            return `${label} için alt seviye bulunamadı. Leaf işaretleyin.`;
+            node.is_leaf = true;
+            node.children = [];
+          } else {
+            const nestedError = validateTree(children, levelIndex + 1);
+            if (nestedError) return nestedError;
           }
-          const nestedError = validateTree(children, levelIndex + 1);
-          if (nestedError) return nestedError;
         }
       }
 
