@@ -752,7 +752,7 @@ async def resolve_content_layout(
         elapsed_ms = (time.perf_counter() - started_at) * 1000
         _METRICS["resolve_total_latency_ms"] += elapsed_ms
         logger.info("layout_resolve source=cache key=%s latency_ms=%.2f", key, elapsed_ms)
-        return {"source": "cache", **cached[1]}
+        return {**cached[1], "source": "cache"}
 
     _METRICS["resolve_cache_misses"] += 1
     payload = await _resolve_effective_layout(

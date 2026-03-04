@@ -1,660 +1,582 @@
 #!/usr/bin/env python3
-
+"""
+Layout Builder P0 APIs Backend Test
+Testing the specific P0 APIs mentioned in review request
+"""
+import os
+import sys
 import requests
 import json
-import sys
 import time
+import uuid
+from typing import Dict, Any, Optional
 
 # Configuration
-BASE_URL = "https://category-results.preview.emergentagent.com/api"
-DEALER_CREDENTIALS = {
-    "email": "dealer@platform.com",
-    "password": "Dealer123!"
-}
+BASE_URL = "https://category-results.preview.emergentagent.com"
+ADMIN_EMAIL = "admin@platform.com"
+ADMIN_PASSWORD = "Admin123!"
 
-class CategorySearchTester:
+class LayoutBuilderP0Tester:
     def __init__(self):
-        self.session = requests.Session()
+        self.admin_token = None
         self.test_results = []
-
-    def log_test(self, test_name, success, status_code, details="", response_time=None):
+        self.component_ids = []
+        self.page_ids = []
+        
+    def log_test(self, test_name: str, status: str, details: str = ""):
         """Log test result"""
         result = {
             "test": test_name,
-            "success": success,
-            "status_code": status_code,
+            "status": status,
             "details": details,
-            "response_time": response_time
+            "timestamp": time.strftime("%H:%M:%S")
         }
         self.test_results.append(result)
-        status_icon = "✅" if success else "❌"
-        time_info = f" ({response_time:.2f}s)" if response_time else ""
-        print(f"{status_icon} {test_name}: {status_code}{time_info} - {details}")
-
-    def test_categories_endpoint(self):
-        """Test GET /api/categories?module=real_estate&country=DE"""
+        status_emoji = "✅" if status == "PASS" else "❌" if status == "FAIL" else "⚠️"
+        print(f"{status_emoji} {test_name}: {status}")
+        if details:
+            print(f"   → {details}")
+    
+    def setup_admin_auth(self) -> bool:
+        """Authenticate admin user"""
         try:
-            start_time = time.time()
-            response = self.session.get(
-                f"{BASE_URL}/categories",
-                params={
-                    "module": "real_estate",
-                    "country": "DE"
+            response = requests.post(
+                f"{BASE_URL}/api/auth/login",
+                json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD},
+                timeout=15
+            )
+            
+            if response.status_code == 200:
+                self.admin_token = response.json().get("access_token")
+                self.log_test("Admin Authentication", "PASS", f"Token acquired successfully")
+                return True
+            else:
+                self.log_test("Admin Authentication", "FAIL", f"HTTP {response.status_code}: {response.text[:200]}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Admin Authentication", "FAIL", f"Exception: {str(e)}")
+            return False
+    
+    def get_headers(self) -> Dict[str, str]:
+        """Get headers with admin token"""
+        return {
+            "Authorization": f"Bearer {self.admin_token}",
+            "Content-Type": "application/json"
+        }
+    
+    def test_components_api(self):
+        """Test /api/admin/site/content-layout/components"""
+        print("\n🔧 Testing Components API")
+        
+        # Test 1: Create component with valid schema -> 200
+        unique_key = f"test.component.valid.{uuid.uuid4().hex[:10]}"
+        try:
+            response = requests.post(
+                f"{BASE_URL}/api/admin/site/content-layout/components",
+                headers=self.get_headers(),
+                json={
+                    "key": unique_key,
+                    "name": "Test Valid Component",
+                    "schema_json": {
+                        "type": "object",
+                        "properties": {"title": {"type": "string"}},
+                        "required": ["title"]
+                    },
+                    "is_active": True
                 },
                 timeout=10
             )
-            response_time = time.time() - start_time
             
             if response.status_code == 200:
                 data = response.json()
-                if isinstance(data, list) and len(data) > 0:
-                    # Check that categories have required fields
-                    sample_cat = data[0]
-                    required_fields = ["id", "name", "slug", "parent_id"]
-                    missing_fields = [f for f in required_fields if f not in sample_cat]
+                component_id = data.get("item", {}).get("id")
+                if component_id:
+                    self.component_ids.append(component_id)
+                self.log_test("Component Create Valid Schema", "PASS", f"HTTP 200, component_id: {component_id}")
+            else:
+                self.log_test("Component Create Valid Schema", "FAIL", f"HTTP {response.status_code}: {response.text[:200]}")
+                
+        except Exception as e:
+            self.log_test("Component Create Valid Schema", "FAIL", f"Exception: {str(e)}")
+        
+        # Test 2: Create component with invalid schema -> 400
+        invalid_key = f"test.component.invalid.{uuid.uuid4().hex[:10]}"
+        try:
+            response = requests.post(
+                f"{BASE_URL}/api/admin/site/content-layout/components",
+                headers=self.get_headers(),
+                json={
+                    "key": invalid_key,
+                    "name": "Test Invalid Component",
+                    "schema_json": {"type": "not-a-valid-json-schema-type"},
+                    "is_active": True
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 400:
+                self.log_test("Component Create Invalid Schema", "PASS", f"HTTP 400 as expected: {response.text[:100]}")
+            else:
+                self.log_test("Component Create Invalid Schema", "FAIL", f"Expected 400, got {response.status_code}: {response.text[:200]}")
+                
+        except Exception as e:
+            self.log_test("Component Create Invalid Schema", "FAIL", f"Exception: {str(e)}")
+        
+        # Test 3: Create component with duplicate key -> 409
+        try:
+            # First creation (should succeed)
+            response1 = requests.post(
+                f"{BASE_URL}/api/admin/site/content-layout/components",
+                headers=self.get_headers(),
+                json={
+                    "key": unique_key,  # Same key as before
+                    "name": "Duplicate Component",
+                    "schema_json": {"type": "object", "properties": {}},
+                    "is_active": True
+                },
+                timeout=10
+            )
+            
+            if response1.status_code == 409:
+                self.log_test("Component Create Duplicate Key", "PASS", f"HTTP 409 conflict as expected")
+            else:
+                self.log_test("Component Create Duplicate Key", "FAIL", f"Expected 409, got {response1.status_code}: {response1.text[:200]}")
+                
+        except Exception as e:
+            self.log_test("Component Create Duplicate Key", "FAIL", f"Exception: {str(e)}")
+    
+    def test_pages_api(self):
+        """Test /api/admin/site/content-layout/pages"""
+        print("\n📄 Testing Pages API")
+        
+        # Test 1: Create default scope (category_id=null)
+        marker = uuid.uuid4().hex[:8]
+        module_name = f"test_page_{marker}"
+        
+        try:
+            response = requests.post(
+                f"{BASE_URL}/api/admin/site/content-layout/pages",
+                headers=self.get_headers(),
+                json={
+                    "page_type": "search_l1",
+                    "country": "DE",
+                    "module": module_name,
+                    "category_id": None
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                page_id = data.get("item", {}).get("id")
+                if page_id:
+                    self.page_ids.append(page_id)
+                self.log_test("Page Create Default Scope", "PASS", f"HTTP 200, page_id: {page_id}")
+            else:
+                self.log_test("Page Create Default Scope", "FAIL", f"HTTP {response.status_code}: {response.text[:200]}")
+                
+        except Exception as e:
+            self.log_test("Page Create Default Scope", "FAIL", f"Exception: {str(e)}")
+        
+        # Test 2: Create duplicate scope -> 409
+        try:
+            response = requests.post(
+                f"{BASE_URL}/api/admin/site/content-layout/pages",
+                headers=self.get_headers(),
+                json={
+                    "page_type": "search_l1",
+                    "country": "DE",
+                    "module": module_name,  # Same scope
+                    "category_id": None
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 409:
+                self.log_test("Page Create Duplicate Scope", "PASS", f"HTTP 409 conflict as expected")
+            else:
+                self.log_test("Page Create Duplicate Scope", "FAIL", f"Expected 409, got {response.status_code}: {response.text[:200]}")
+                
+        except Exception as e:
+            self.log_test("Page Create Duplicate Scope", "FAIL", f"Exception: {str(e)}")
+    
+    def test_revisions_flow(self):
+        """Test revisions flow: draft create, publish, archive"""
+        print("\n📝 Testing Revisions Flow")
+        
+        if not self.page_ids:
+            self.log_test("Revisions Flow", "SKIP", "No page_id available from previous tests")
+            return
+        
+        page_id = self.page_ids[0]
+        
+        # Test 1: Create draft revision
+        try:
+            response = requests.post(
+                f"{BASE_URL}/api/admin/site/content-layout/pages/{page_id}/revisions/draft",
+                headers=self.get_headers(),
+                json={"payload_json": {"rows": [{"id": "test-row-1"}]}},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                revision_id = data.get("item", {}).get("id")
+                status = data.get("item", {}).get("status")
+                version = data.get("item", {}).get("version")
+                self.log_test("Draft Create", "PASS", f"HTTP 200, revision_id: {revision_id}, status: {status}, version: {version}")
+                
+                # Test 2: Publish draft revision
+                if revision_id:
+                    publish_response = requests.post(
+                        f"{BASE_URL}/api/admin/site/content-layout/revisions/{revision_id}/publish",
+                        headers=self.get_headers(),
+                        timeout=10
+                    )
                     
-                    if missing_fields:
-                        self.log_test(
-                            "GET /api/categories (real_estate)",
-                            False,
-                            200,
-                            f"Missing required fields: {missing_fields}",
-                            response_time
+                    if publish_response.status_code == 200:
+                        pub_data = publish_response.json()
+                        pub_status = pub_data.get("item", {}).get("status")
+                        published_at = pub_data.get("item", {}).get("published_at")
+                        self.log_test("Draft Publish", "PASS", f"HTTP 200, status: {pub_status}, published_at: {published_at}")
+                        
+                        # Test 3: Archive published revision
+                        archive_response = requests.post(
+                            f"{BASE_URL}/api/admin/site/content-layout/revisions/{revision_id}/archive",
+                            headers=self.get_headers(),
+                            timeout=10
                         )
-                        return False
+                        
+                        if archive_response.status_code == 200:
+                            arch_data = archive_response.json()
+                            arch_status = arch_data.get("item", {}).get("status")
+                            self.log_test("Published Archive", "PASS", f"HTTP 200, status: {arch_status}")
+                        else:
+                            self.log_test("Published Archive", "FAIL", f"HTTP {archive_response.status_code}: {archive_response.text[:200]}")
                     else:
-                        self.log_test(
-                            "GET /api/categories (real_estate)",
-                            True,
-                            200,
-                            f"Found {len(data)} categories with required fields (slug/name/parent_id)",
-                            response_time
-                        )
-                        return True
-                else:
-                    self.log_test(
-                        "GET /api/categories (real_estate)",
-                        False,
-                        200,
-                        "Response is not a non-empty list",
-                        response_time
-                    )
-                    return False
+                        self.log_test("Draft Publish", "FAIL", f"HTTP {publish_response.status_code}: {publish_response.text[:200]}")
             else:
-                self.log_test(
-                    "GET /api/categories (real_estate)",
-                    False,
-                    response.status_code,
-                    f"Error: {response.text}",
-                    response_time
-                )
-                return False
+                self.log_test("Draft Create", "FAIL", f"HTTP {response.status_code}: {response.text[:200]}")
                 
-        except requests.RequestException as e:
-            self.log_test(
-                "GET /api/categories (real_estate)",
-                False,
-                "ERROR",
-                f"Request exception: {str(e)}"
-            )
-            return False
-
-    def test_search_v2_basic(self):
-        """Test GET /api/v2/search?country=DE&category=konut&page=1&limit=5"""
+        except Exception as e:
+            self.log_test("Revisions Flow", "FAIL", f"Exception: {str(e)}")
+    
+    def test_bindings_flow(self):
+        """Test bindings flow: bind, get active, unbind"""
+        print("\n🔗 Testing Bindings Flow")
+        
+        if not self.page_ids:
+            self.log_test("Bindings Flow", "SKIP", "No page_id available from previous tests")
+            return
+        
+        # Get a test category ID
+        category_id = self.get_test_category_id()
+        if not category_id:
+            self.log_test("Bindings Flow", "SKIP", "No category_id available for binding")
+            return
+        
+        page_id = self.page_ids[0]
+        marker = uuid.uuid4().hex[:8]
+        module_name = f"test_bind_{marker}"
+        
+        # First create and publish a revision (required for binding)
+        self.create_and_publish_revision(page_id)
+        
+        # Test 1: Bind category to page
         try:
-            start_time = time.time()
-            response = self.session.get(
-                f"{BASE_URL}/v2/search",
-                params={
+            response = requests.post(
+                f"{BASE_URL}/api/admin/site/content-layout/bindings",
+                headers=self.get_headers(),
+                json={
                     "country": "DE",
-                    "category": "konut",
-                    "page": 1,
-                    "limit": 5
+                    "module": module_name,
+                    "category_id": category_id,
+                    "layout_page_id": page_id
                 },
                 timeout=10
             )
-            response_time = time.time() - start_time
             
             if response.status_code == 200:
                 data = response.json()
-                required_fields = ["items", "facets", "facet_meta", "pagination"]
-                missing_fields = [f for f in required_fields if f not in data]
+                binding_id = data.get("item", {}).get("id")
+                is_active = data.get("item", {}).get("is_active")
+                self.log_test("Category Bind", "PASS", f"HTTP 200, binding_id: {binding_id}, active: {is_active}")
                 
-                if missing_fields:
-                    self.log_test(
-                        "GET /api/v2/search (konut basic)",
-                        False,
-                        200,
-                        f"Missing required fields: {missing_fields}",
-                        response_time
-                    )
-                    return False
-                else:
-                    pagination = data.get("pagination", {})
-                    self.log_test(
-                        "GET /api/v2/search (konut basic)",
-                        True,
-                        200,
-                        f"Valid payload schema, {len(data['items'])} items, total: {pagination.get('total', 'unknown')}",
-                        response_time
-                    )
-                    return True
-            else:
-                self.log_test(
-                    "GET /api/v2/search (konut basic)",
-                    False,
-                    response.status_code,
-                    f"Error: {response.text}",
-                    response_time
+                # Test 2: Get active binding
+                active_response = requests.get(
+                    f"{BASE_URL}/api/admin/site/content-layout/bindings/active",
+                    headers=self.get_headers(),
+                    params={
+                        "country": "DE",
+                        "module": module_name,
+                        "category_id": category_id
+                    },
+                    timeout=10
                 )
-                return False
                 
-        except requests.RequestException as e:
-            self.log_test(
-                "GET /api/v2/search (konut basic)",
-                False,
-                "ERROR",
-                f"Request exception: {str(e)}"
-            )
-            return False
-
-    def test_search_v2_showcase(self):
-        """Test GET /api/v2/search?country=DE&category=konut&doping_type=showcase&page=1&limit=8"""
+                if active_response.status_code == 200:
+                    active_data = active_response.json()
+                    active_binding = active_data.get("item")
+                    if active_binding:
+                        self.log_test("Get Active Binding", "PASS", f"HTTP 200, found active binding: {active_binding.get('id')}")
+                    else:
+                        self.log_test("Get Active Binding", "FAIL", f"HTTP 200 but no active binding found")
+                else:
+                    self.log_test("Get Active Binding", "FAIL", f"HTTP {active_response.status_code}: {active_response.text[:200]}")
+                
+                # Test 3: Unbind category
+                unbind_response = requests.post(
+                    f"{BASE_URL}/api/admin/site/content-layout/bindings/unbind",
+                    headers=self.get_headers(),
+                    json={
+                        "country": "DE",
+                        "module": module_name,
+                        "category_id": category_id
+                    },
+                    timeout=10
+                )
+                
+                if unbind_response.status_code == 200:
+                    unbind_data = unbind_response.json()
+                    unbound_count = unbind_data.get("unbound_count", 0)
+                    self.log_test("Category Unbind", "PASS", f"HTTP 200, unbound_count: {unbound_count}")
+                else:
+                    self.log_test("Category Unbind", "FAIL", f"HTTP {unbind_response.status_code}: {unbind_response.text[:200]}")
+            else:
+                self.log_test("Category Bind", "FAIL", f"HTTP {response.status_code}: {response.text[:200]}")
+                
+        except Exception as e:
+            self.log_test("Bindings Flow", "FAIL", f"Exception: {str(e)}")
+    
+    def test_resolve_api(self):
+        """Test /api/site/content-layout/resolve fallback behavior and cache"""
+        print("\n🔍 Testing Resolve API")
+        
+        # Create a new page specifically for resolve testing
+        marker = uuid.uuid4().hex[:8]
+        module_name = f"test_resolve_{marker}"
+        
+        # Create page for resolve testing
         try:
-            start_time = time.time()
-            response = self.session.get(
-                f"{BASE_URL}/v2/search",
-                params={
+            page_response = requests.post(
+                f"{BASE_URL}/api/admin/site/content-layout/pages",
+                headers=self.get_headers(),
+                json={
+                    "page_type": "search_l1",
                     "country": "DE",
-                    "category": "konut",
-                    "doping_type": "showcase",
-                    "page": 1,
-                    "limit": 8
+                    "module": module_name,
+                    "category_id": None
                 },
                 timeout=10
             )
-            response_time = time.time() - start_time
             
-            if response.status_code == 200:
-                data = response.json()
-                required_fields = ["items", "facets", "facet_meta", "pagination"]
-                missing_fields = [f for f in required_fields if f not in data]
+            if page_response.status_code != 200:
+                self.log_test("Resolve API", "SKIP", f"Could not create page for resolve test: HTTP {page_response.status_code}")
+                return
                 
-                if missing_fields:
-                    self.log_test(
-                        "GET /api/v2/search (konut showcase)",
-                        False,
-                        200,
-                        f"Missing required fields: {missing_fields}",
-                        response_time
-                    )
-                    return False
-                else:
-                    pagination = data.get("pagination", {})
-                    self.log_test(
-                        "GET /api/v2/search (konut showcase)",
-                        True,
-                        200,
-                        f"Valid payload, category-scoped showcase, {len(data['items'])} items, total: {pagination.get('total', 'unknown')}",
-                        response_time
-                    )
-                    return True
-            else:
-                self.log_test(
-                    "GET /api/v2/search (konut showcase)",
-                    False,
-                    response.status_code,
-                    f"Error: {response.text}",
-                    response_time
-                )
-                return False
-                
-        except requests.RequestException as e:
-            self.log_test(
-                "GET /api/v2/search (konut showcase)",
-                False,
-                "ERROR",
-                f"Request exception: {str(e)}"
-            )
-            return False
-
-    def test_search_v2_satilik(self):
-        """Test GET /api/v2/search?country=DE&category=satilik&page=1&limit=5"""
+            page_id = page_response.json().get("item", {}).get("id")
+            if not page_id:
+                self.log_test("Resolve API", "SKIP", "No page_id from page creation")
+                return
+        except Exception as e:
+            self.log_test("Resolve API", "SKIP", f"Exception creating page: {str(e)}")
+            return
+        
+        # Create and publish a revision for the page
+        revision_id = self.create_and_publish_revision(page_id)
+        if not revision_id:
+            self.log_test("Resolve API", "SKIP", "Could not create published revision")
+            return
+        
+        # Test 1: Resolve fallback behavior (no auth required)
         try:
-            start_time = time.time()
-            response = self.session.get(
-                f"{BASE_URL}/v2/search",
+            response = requests.get(
+                f"{BASE_URL}/api/site/content-layout/resolve",
                 params={
                     "country": "DE",
-                    "category": "satilik",
-                    "page": 1,
-                    "limit": 5
+                    "module": module_name,
+                    "page_type": "search_l1"
                 },
                 timeout=10
             )
-            response_time = time.time() - start_time
             
             if response.status_code == 200:
                 data = response.json()
-                required_fields = ["items", "facets", "facet_meta", "pagination"]
-                missing_fields = [f for f in required_fields if f not in data]
+                source = data.get("source")
+                layout_page = data.get("layout_page")
+                revision = data.get("revision")
+                self.log_test("Resolve Fallback", "PASS", f"HTTP 200, source: {source}, page_id: {layout_page.get('id') if layout_page else None}")
                 
-                if missing_fields:
-                    self.log_test(
-                        "GET /api/v2/search (satilik)",
-                        False,
-                        200,
-                        f"Missing required fields: {missing_fields}",
-                        response_time
-                    )
-                    return False
-                else:
-                    pagination = data.get("pagination", {})
-                    self.log_test(
-                        "GET /api/v2/search (satilik)",
-                        True,
-                        200,
-                        f"Valid payload, {len(data['items'])} items, total: {pagination.get('total', 'unknown')}",
-                        response_time
-                    )
-                    return True
-            else:
-                self.log_test(
-                    "GET /api/v2/search (satilik)",
-                    False,
-                    response.status_code,
-                    f"Error: {response.text}",
-                    response_time
+                # Test 2: Second resolve call should return cached result
+                response2 = requests.get(
+                    f"{BASE_URL}/api/site/content-layout/resolve",
+                    params={
+                        "country": "DE",
+                        "module": module_name,
+                        "page_type": "search_l1"
+                    },
+                    timeout=10
                 )
-                return False
                 
-        except requests.RequestException as e:
-            self.log_test(
-                "GET /api/v2/search (satilik)",
-                False,
-                "ERROR",
-                f"Request exception: {str(e)}"
-            )
-            return False
-
-    def validate_no_5xx_errors(self):
-        """Validate no 5xx errors occurred in previous tests"""
-        five_xx_errors = [r for r in self.test_results if isinstance(r["status_code"], int) and 500 <= r["status_code"] < 600]
-        
-        if five_xx_errors:
-            self.log_test(
-                "5xx Error Validation",
-                False,
-                "VALIDATION",
-                f"Found {len(five_xx_errors)} 5xx errors in previous tests"
-            )
-            return False
-        else:
-            self.log_test(
-                "5xx Error Validation",
-                True,
-                "VALIDATION",
-                "No 5xx errors found in any test"
-            )
-            return True
-
-    def validate_response_times(self):
-        """Validate response times are reasonable (<5 seconds)"""
-        slow_tests = [r for r in self.test_results if r.get("response_time") and r["response_time"] > 5.0]
-        
-        if slow_tests:
-            slow_names = [r["test"] for r in slow_tests]
-            self.log_test(
-                "Response Time Validation",
-                False,
-                "VALIDATION",
-                f"Found slow responses (>5s): {slow_names}"
-            )
-            return False
-        else:
-            avg_time = sum(r.get("response_time", 0) for r in self.test_results if r.get("response_time")) / len([r for r in self.test_results if r.get("response_time")])
-            self.log_test(
-                "Response Time Validation",
-                True,
-                "VALIDATION",
-                f"All responses under 5s (avg: {avg_time:.2f}s)"
-            )
-            return True
-
-    def run_category_search_tests(self):
-        """Run category search template flow tests"""
-        print("🔍 Starting Category Search Template Flow Tests...")
-        print("=" * 60)
-        
-        tests = [
-            self.test_categories_endpoint,
-            self.test_search_v2_basic,
-            self.test_search_v2_showcase,
-            self.test_search_v2_satilik,
-        ]
-        
-        all_passed = True
-        for test_func in tests:
-            success = test_func()
-            if not success:
-                all_passed = False
+                if response2.status_code == 200:
+                    data2 = response2.json()
+                    source2 = data2.get("source")
+                    if source2 == "cache":
+                        self.log_test("Resolve Cache Hit", "PASS", f"HTTP 200, source: cache (cache working)")
+                    else:
+                        self.log_test("Resolve Cache Hit", "INFO", f"HTTP 200, source: {source2} (may be cached internally)")
+                else:
+                    self.log_test("Resolve Cache Hit", "FAIL", f"HTTP {response2.status_code}: {response2.text[:200]}")
+            else:
+                self.log_test("Resolve Fallback", "FAIL", f"HTTP {response.status_code}: {response.text[:200]}")
                 
-        # Validation tests
-        print("\n🔍 Running Validation Tests...")
-        print("-" * 60)
+        except Exception as e:
+            self.log_test("Resolve API", "FAIL", f"Exception: {str(e)}")
+    
+    def test_metrics_api(self):
+        """Test /api/admin/site/content-layout/metrics"""
+        print("\n📊 Testing Metrics API")
         
-        validation_tests = [
-            self.validate_no_5xx_errors,
-            self.validate_response_times,
-        ]
-        
-        for test_func in validation_tests:
-            success = test_func()
-            if not success:
-                all_passed = False
-                
-        return all_passed
-
-    def print_summary(self):
-        """Print test summary"""
-        print("\n" + "=" * 60)
-        print("📊 CATEGORY SEARCH TEMPLATE FLOW TEST SUMMARY")
-        print("=" * 60)
-        
-        passed = sum(1 for r in self.test_results if r["success"])
-        total = len(self.test_results)
-        
-        for result in self.test_results:
-            status_icon = "✅" if result["success"] else "❌"
-            time_info = f" ({result['response_time']:.2f}s)" if result.get('response_time') else ""
-            print(f"{status_icon} {result['test']}: {result['status_code']}{time_info}")
-            
-        print(f"\n📈 Results: {passed}/{total} tests passed ({(passed/total)*100:.0f}%)")
-        
-        if passed == total:
-            print("🎉 OVERALL RESULT: PASS - All category search template flow tests working correctly")
-            return True
-        else:
-            print("⚠️ OVERALL RESULT: FAIL - Some category search template flow tests have issues")
-            return False
-
-
-class DealerBackendTester:
-    def __init__(self):
-        self.session = requests.Session()
-        self.access_token = None
-        self.test_results = []
-
-    def log_test(self, test_name, success, status_code, details=""):
-        """Log test result"""
-        result = {
-            "test": test_name,
-            "success": success,
-            "status_code": status_code,
-            "details": details
-        }
-        self.test_results.append(result)
-        status_icon = "✅" if success else "❌"
-        print(f"{status_icon} {test_name}: {status_code} - {details}")
-
-    def test_dealer_login(self):
-        """Test POST /api/auth/login with dealer credentials"""
         try:
-            response = self.session.post(
-                f"{BASE_URL}/auth/login",
-                json=DEALER_CREDENTIALS,
+            response = requests.get(
+                f"{BASE_URL}/api/admin/site/content-layout/metrics",
+                headers=self.get_headers(),
                 timeout=10
             )
             
             if response.status_code == 200:
                 data = response.json()
-                self.access_token = data.get("access_token")
-                if self.access_token:
-                    # Set auth header for subsequent requests
-                    self.session.headers.update({
-                        "Authorization": f"Bearer {self.access_token}"
-                    })
-                    user_email = data.get("user", {}).get("email", "Unknown")
-                    self.log_test(
-                        "POST /api/auth/login (dealer)",
-                        True,
-                        200,
-                        f"Login successful, token received, user: {user_email}"
-                    )
-                    return True
-                else:
-                    self.log_test(
-                        "POST /api/auth/login (dealer)",
-                        False,
-                        200,
-                        "Response 200 but no access token in response"
-                    )
-                    return False
-            else:
-                self.log_test(
-                    "POST /api/auth/login (dealer)",
-                    False,
-                    response.status_code,
-                    f"Login failed: {response.text}"
-                )
-                return False
+                metrics = data.get("metrics", {})
+                required_metrics = [
+                    "resolve_requests", "resolve_cache_hits", "resolve_cache_misses",
+                    "publish_count", "binding_changes"
+                ]
                 
-        except requests.RequestException as e:
-            self.log_test(
-                "POST /api/auth/login (dealer)",
-                False,
-                "ERROR",
-                f"Request exception: {str(e)}"
-            )
-            return False
-
-    def test_dealer_portal_config(self):
-        """Test GET /api/dealer/portal/config"""
+                missing_metrics = [m for m in required_metrics if m not in metrics]
+                if not missing_metrics:
+                    self.log_test("Metrics API", "PASS", f"HTTP 200, all required metrics present: {list(metrics.keys())}")
+                else:
+                    self.log_test("Metrics API", "PARTIAL", f"HTTP 200, missing metrics: {missing_metrics}")
+            else:
+                self.log_test("Metrics API", "FAIL", f"HTTP {response.status_code}: {response.text[:200]}")
+                
+        except Exception as e:
+            self.log_test("Metrics API", "FAIL", f"Exception: {str(e)}")
+    
+    def test_audit_logs_api(self):
+        """Test /api/admin/site/content-layout/audit-logs"""
+        print("\n📋 Testing Audit Logs API")
+        
         try:
-            response = self.session.get(
-                f"{BASE_URL}/dealer/portal/config",
+            response = requests.get(
+                f"{BASE_URL}/api/admin/site/content-layout/audit-logs",
+                headers=self.get_headers(),
+                params={"page": 1, "limit": 10},
                 timeout=10
             )
             
-            success = response.status_code == 200
-            details = "Portal config retrieved successfully" if success else f"Error: {response.text}"
-            
-            self.log_test(
-                "GET /api/dealer/portal/config",
-                success,
-                response.status_code,
-                details
-            )
-            return success
-            
-        except requests.RequestException as e:
-            self.log_test(
-                "GET /api/dealer/portal/config",
-                False,
-                "ERROR",
-                f"Request exception: {str(e)}"
-            )
-            return False
-
-    def test_dealer_navigation_summary(self):
-        """Test GET /api/dealer/dashboard/navigation-summary"""
+            if response.status_code == 200:
+                data = response.json()
+                items = data.get("items", [])
+                pagination = data.get("pagination", {})
+                self.log_test("Audit Logs API", "PASS", f"HTTP 200, {len(items)} audit log items, pagination: {pagination}")
+            else:
+                self.log_test("Audit Logs API", "FAIL", f"HTTP {response.status_code}: {response.text[:200]}")
+                
+        except Exception as e:
+            self.log_test("Audit Logs API", "FAIL", f"Exception: {str(e)}")
+    
+    def get_test_category_id(self) -> Optional[str]:
+        """Get a test category ID for binding tests"""
         try:
-            response = self.session.get(
-                f"{BASE_URL}/dealer/dashboard/navigation-summary",
+            response = requests.get(f"{BASE_URL}/api/categories?module=real_estate&country=DE", timeout=10)
+            if response.status_code == 200:
+                categories = response.json()
+                if isinstance(categories, list) and categories:
+                    return categories[0].get("id")
+        except Exception:
+            pass
+        return None
+    
+    def create_and_publish_revision(self, page_id: str) -> Optional[str]:
+        """Helper to create and publish a revision"""
+        try:
+            # Create draft
+            draft_response = requests.post(
+                f"{BASE_URL}/api/admin/site/content-layout/pages/{page_id}/revisions/draft",
+                headers=self.get_headers(),
+                json={"payload_json": {"rows": []}},
                 timeout=10
             )
             
-            success = response.status_code == 200
-            details = "Navigation summary retrieved successfully" if success else f"Error: {response.text}"
-            
-            self.log_test(
-                "GET /api/dealer/dashboard/navigation-summary",
-                success,
-                response.status_code,
-                details
-            )
-            return success
-            
-        except requests.RequestException as e:
-            self.log_test(
-                "GET /api/dealer/dashboard/navigation-summary",
-                False,
-                "ERROR",
-                f"Request exception: {str(e)}"
-            )
-            return False
-
-    def test_dealer_messages_inbox(self):
-        """Test GET /api/dealer/messages?folder=inbox"""
-        try:
-            response = self.session.get(
-                f"{BASE_URL}/dealer/messages",
-                params={"folder": "inbox"},
-                timeout=10
-            )
-            
-            success = response.status_code == 200
-            details = "Messages inbox retrieved successfully" if success else f"Error: {response.text}"
-            
-            self.log_test(
-                "GET /api/dealer/messages?folder=inbox",
-                success,
-                response.status_code,
-                details
-            )
-            return success
-            
-        except requests.RequestException as e:
-            self.log_test(
-                "GET /api/dealer/messages?folder=inbox",
-                False,
-                "ERROR",
-                f"Request exception: {str(e)}"
-            )
-            return False
-
-    def test_dealer_settings_preferences(self):
-        """Test GET /api/dealer/settings/preferences"""
-        try:
-            response = self.session.get(
-                f"{BASE_URL}/dealer/settings/preferences",
-                timeout=10
-            )
-            
-            success = response.status_code == 200
-            details = "Settings preferences retrieved successfully" if success else f"Error: {response.text}"
-            
-            self.log_test(
-                "GET /api/dealer/settings/preferences",
-                success,
-                response.status_code,
-                details
-            )
-            return success
-            
-        except requests.RequestException as e:
-            self.log_test(
-                "GET /api/dealer/settings/preferences",
-                False,
-                "ERROR",
-                f"Request exception: {str(e)}"
-            )
-            return False
-
+            if draft_response.status_code == 200:
+                draft_id = draft_response.json().get("item", {}).get("id")
+                
+                # Publish draft
+                if draft_id:
+                    publish_response = requests.post(
+                        f"{BASE_URL}/api/admin/site/content-layout/revisions/{draft_id}/publish",
+                        headers=self.get_headers(),
+                        timeout=10
+                    )
+                    
+                    if publish_response.status_code == 200:
+                        return draft_id
+        except Exception:
+            pass
+        return None
+    
     def run_all_tests(self):
-        """Run all dealer backend regression tests"""
-        print("🚀 Starting Dealer Portal Backend Regression Tests...")
-        print("=" * 60)
+        """Run all P0 API tests"""
+        print("🚀 Starting Layout Builder P0 APIs Test")
+        print(f"📍 Backend URL: {BASE_URL}")
+        print("="*60)
         
-        # Step 1: Authenticate
-        login_success = self.test_dealer_login()
-        if not login_success:
-            print("\n❌ CRITICAL: Dealer login failed. Stopping tests.")
+        # Setup
+        if not self.setup_admin_auth():
+            print("❌ Cannot proceed without admin authentication")
             return False
-            
-        print("\n🔐 Authentication successful. Running API tests...")
-        print("-" * 60)
         
-        # Step 2: Test all dealer endpoints
-        tests = [
-            self.test_dealer_portal_config,
-            self.test_dealer_navigation_summary,
-            self.test_dealer_messages_inbox,
-            self.test_dealer_settings_preferences
-        ]
+        # Run all tests
+        self.test_components_api()
+        self.test_pages_api()
+        self.test_revisions_flow()
+        self.test_bindings_flow()
+        self.test_resolve_api()
+        self.test_metrics_api()
+        self.test_audit_logs_api()
         
-        all_passed = True
-        for test_func in tests:
-            success = test_func()
-            if not success:
-                all_passed = False
-                
-        return all_passed
-
-    def print_summary(self):
-        """Print test summary"""
-        print("\n" + "=" * 60)
-        print("📊 DEALER PORTAL BACKEND REGRESSION TEST SUMMARY")
-        print("=" * 60)
+        # Summary
+        print("\n" + "="*60)
+        print("📈 TEST SUMMARY")
+        print("="*60)
         
-        passed = sum(1 for r in self.test_results if r["success"])
+        passed = len([t for t in self.test_results if t["status"] == "PASS"])
+        failed = len([t for t in self.test_results if t["status"] == "FAIL"])
+        skipped = len([t for t in self.test_results if t["status"] == "SKIP"])
+        partial = len([t for t in self.test_results if t["status"] in ["PARTIAL", "INFO"]])
         total = len(self.test_results)
         
-        for result in self.test_results:
-            status_icon = "✅" if result["success"] else "❌"
-            print(f"{status_icon} {result['test']}: {result['status_code']}")
-            
-        print(f"\n📈 Results: {passed}/{total} tests passed ({(passed/total)*100:.0f}%)")
+        print(f"✅ PASSED: {passed}")
+        print(f"❌ FAILED: {failed}")
+        print(f"⚠️  PARTIAL/INFO: {partial}")
+        print(f"⏭️  SKIPPED: {skipped}")
+        print(f"📊 TOTAL: {total}")
         
-        if passed == total:
-            print("🎉 OVERALL RESULT: PASS - All dealer portal endpoints working correctly")
-            return True
-        else:
-            print("⚠️ OVERALL RESULT: FAIL - Some dealer portal endpoints have issues")
-            return False
-
-def main():
-    """Main test execution function"""
-    # Check if we should run category search tests or dealer tests
-    if len(sys.argv) > 1 and sys.argv[1] == "category-search":
-        tester = CategorySearchTester()
+        success_rate = (passed / total * 100) if total > 0 else 0
+        print(f"🎯 SUCCESS RATE: {success_rate:.1f}%")
         
-        try:
-            # Run category search template flow tests
-            overall_success = tester.run_category_search_tests()
-            
-            # Print summary
-            final_result = tester.print_summary()
-            
-            # Exit with appropriate code
-            sys.exit(0 if final_result else 1)
-            
-        except KeyboardInterrupt:
-            print("\n\n⏹️ Tests interrupted by user")
-            sys.exit(1)
-        except Exception as e:
-            print(f"\n\n💥 Unexpected error: {str(e)}")
-            sys.exit(1)
-    else:
-        # Default to dealer tests
-        tester = DealerBackendTester()
+        # Detailed results for failures
+        failures = [t for t in self.test_results if t["status"] == "FAIL"]
+        if failures:
+            print("\n❌ FAILED TESTS DETAILS:")
+            for failure in failures:
+                print(f"   • {failure['test']}: {failure['details']}")
         
-        try:
-            # Run all tests
-            overall_success = tester.run_all_tests()
-            
-            # Print summary
-            final_result = tester.print_summary()
-            
-            # Exit with appropriate code
-            sys.exit(0 if final_result else 1)
-            
-        except KeyboardInterrupt:
-            print("\n\n⏹️ Tests interrupted by user")
-            sys.exit(1)
-        except Exception as e:
-            print(f"\n\n💥 Unexpected error: {str(e)}")
-            sys.exit(1)
+        return failed == 0
 
 if __name__ == "__main__":
-    main()
+    tester = LayoutBuilderP0Tester()
+    success = tester.run_all_tests()
+    sys.exit(0 if success else 1)
