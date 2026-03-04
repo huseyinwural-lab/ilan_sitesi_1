@@ -1,21 +1,42 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 const SUPPORTED_LANGUAGES = ['tr', 'de', 'fr'];
 const FALLBACK_LANGUAGE = 'tr';
+const AVAILABLE_NAMESPACES = ['auth', 'dealer', 'admin'];
+const ROUTE_CHANGE_EVENT = 'emergent:route-change';
 
 const localeLoaders = {
-  tr: () => import('../locales/tr.json'),
-  de: () => import('../locales/de.json'),
-  fr: () => import('../locales/fr.json'),
+  tr: {
+    auth: () => import('../locales/tr/auth.json'),
+    dealer: () => import('../locales/tr/dealer.json'),
+    admin: () => import('../locales/tr/admin.json'),
+  },
+  de: {
+    auth: () => import('../locales/de/auth.json'),
+    dealer: () => import('../locales/de/dealer.json'),
+    admin: () => import('../locales/de/admin.json'),
+  },
+  fr: {
+    auth: () => import('../locales/fr/auth.json'),
+    dealer: () => import('../locales/fr/dealer.json'),
+    admin: () => import('../locales/fr/admin.json'),
+  },
 };
 
-const loadedLanguages = new Set();
+const loadedBundles = new Set();
+const pendingBundleLoads = new Map();
+let historyPatched = false;
 
 const normalizeLanguage = (value) => {
   const normalized = String(value || '').trim().toLowerCase();
   return SUPPORTED_LANGUAGES.includes(normalized) ? normalized : FALLBACK_LANGUAGE;
+};
+
+const normalizeNamespace = (value) => {
+  const normalized = String(value || '').trim().toLowerCase();
+  return AVAILABLE_NAMESPACES.includes(normalized) ? normalized : 'admin';
 };
 
 const readStoredLanguage = () => {
@@ -24,6 +45,63 @@ const readStoredLanguage = () => {
   } catch {
     return FALLBACK_LANGUAGE;
   }
+};
+
+const readCurrentPathname = () => {
+  try {
+    return window.location.pathname || '/';
+  } catch {
+    return '/';
+  }
+};
+
+const resolveRouteNamespaces = (pathname) => {
+  const path = String(pathname || '').trim().toLowerCase();
+  if (path === '/login' || path === '/register' || path === '/verify-email') {
+    return ['auth'];
+  }
+  if (path === '/dealer' || path === '/dealer/login' || path.startsWith('/dealer/')) {
+    return ['dealer'];
+  }
+  if (path === '/admin' || path.startsWith('/admin/') || path === '/backoffice' || path.startsWith('/backoffice/')) {
+    return ['admin'];
+  }
+  return [];
+};
+
+const inferNamespaceFromKey = (key) => {
+  const normalizedKey = String(key || '').trim();
+  if (normalizedKey.startsWith('auth.')) return 'auth';
+  if (normalizedKey.startsWith('dealer.')) return 'dealer';
+  if (normalizedKey.startsWith('admin.')) return 'admin';
+  return 'admin';
+};
+
+const patchHistoryForRouteEvents = () => {
+  if (historyPatched || typeof window === 'undefined') {
+    return;
+  }
+
+  const dispatch = () => {
+    window.dispatchEvent(new Event(ROUTE_CHANGE_EVENT));
+  };
+
+  const originalPushState = window.history.pushState.bind(window.history);
+  const originalReplaceState = window.history.replaceState.bind(window.history);
+
+  window.history.pushState = (...args) => {
+    const result = originalPushState(...args);
+    dispatch();
+    return result;
+  };
+
+  window.history.replaceState = (...args) => {
+    const result = originalReplaceState(...args);
+    dispatch();
+    return result;
+  };
+
+  historyPatched = true;
 };
 
 const initialLanguage = readStoredLanguage();
@@ -45,32 +123,87 @@ if (!i18n.isInitialized) {
     .catch(() => undefined);
 }
 
-const ensureLanguageBundle = async (language) => {
-  const normalized = normalizeLanguage(language);
-  if (loadedLanguages.has(normalized)) {
-    return normalized;
+const ensureNamespaceBundle = async (language, namespace) => {
+  const normalizedLanguage = normalizeLanguage(language);
+  const normalizedNamespace = normalizeNamespace(namespace);
+  const cacheKey = `${normalizedLanguage}:${normalizedNamespace}`;
+
+  if (loadedBundles.has(cacheKey)) {
+    return cacheKey;
   }
 
-  const module = await localeLoaders[normalized]();
-  const resources = module?.default || module || {};
-  i18n.addResourceBundle(normalized, 'translation', resources, true, true);
-  loadedLanguages.add(normalized);
-  return normalized;
+  if (pendingBundleLoads.has(cacheKey)) {
+    return pendingBundleLoads.get(cacheKey);
+  }
+
+  const loader = localeLoaders[normalizedLanguage]?.[normalizedNamespace];
+  if (!loader) {
+    return cacheKey;
+  }
+
+  const pending = loader()
+    .then((module) => {
+      const resources = module?.default || module || {};
+      i18n.addResourceBundle(normalizedLanguage, 'translation', resources, true, true);
+      loadedBundles.add(cacheKey);
+      return cacheKey;
+    })
+    .finally(() => {
+      pendingBundleLoads.delete(cacheKey);
+    });
+
+  pendingBundleLoads.set(cacheKey, pending);
+  return pending;
+};
+
+const preloadNamespacesForRoute = async (pathname, language) => {
+  const namespaces = resolveRouteNamespaces(pathname);
+  if (!namespaces.length) {
+    return;
+  }
+
+  const unique = Array.from(new Set(namespaces.map(normalizeNamespace)));
+  await Promise.all(
+    unique.flatMap((namespace) => [
+      ensureNamespaceBundle(FALLBACK_LANGUAGE, namespace),
+      ensureNamespaceBundle(language, namespace),
+    ]),
+  );
 };
 
 const LanguageContext = createContext(null);
 
 export function LanguageProvider({ children }) {
   const [language, setLanguageState] = useState(initialLanguage);
+  const [pathname, setPathname] = useState(readCurrentPathname());
   const [ready, setReady] = useState(false);
+  const [bundleVersion, setBundleVersion] = useState(0);
+  const activeLoadRef = useRef(new Set());
+
+  useEffect(() => {
+    patchHistoryForRouteEvents();
+
+    const syncPath = () => {
+      setPathname(readCurrentPathname());
+    };
+
+    window.addEventListener(ROUTE_CHANGE_EVENT, syncPath);
+    window.addEventListener('popstate', syncPath);
+    window.addEventListener('hashchange', syncPath);
+
+    return () => {
+      window.removeEventListener(ROUTE_CHANGE_EVENT, syncPath);
+      window.removeEventListener('popstate', syncPath);
+      window.removeEventListener('hashchange', syncPath);
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
 
     const bootstrap = async () => {
       const targetLanguage = normalizeLanguage(language);
-      await ensureLanguageBundle(FALLBACK_LANGUAGE);
-      await ensureLanguageBundle(targetLanguage);
+      await preloadNamespacesForRoute(pathname, targetLanguage);
       await i18n.changeLanguage(targetLanguage);
 
       try {
@@ -78,9 +211,11 @@ export function LanguageProvider({ children }) {
       } catch {
         // noop
       }
+
       document.documentElement.lang = targetLanguage;
 
       if (active) {
+        setBundleVersion((prev) => prev + 1);
         setReady(true);
       }
     };
@@ -94,7 +229,7 @@ export function LanguageProvider({ children }) {
     return () => {
       active = false;
     };
-  }, [language]);
+  }, [language, pathname]);
 
   useEffect(() => {
     const handleLanguageChange = (nextLanguage) => {
@@ -112,8 +247,38 @@ export function LanguageProvider({ children }) {
     setLanguageState(normalizeLanguage(nextLanguage));
   }, []);
 
+  const lazyLoadNamespace = useCallback((namespaceKey) => {
+    const namespace = normalizeNamespace(namespaceKey);
+    const languageKey = normalizeLanguage(language);
+    const cacheKey = `${languageKey}:${namespace}`;
+
+    if (loadedBundles.has(cacheKey) || activeLoadRef.current.has(cacheKey)) {
+      return;
+    }
+
+    activeLoadRef.current.add(cacheKey);
+    Promise.all([
+      ensureNamespaceBundle(FALLBACK_LANGUAGE, namespace),
+      ensureNamespaceBundle(languageKey, namespace),
+    ])
+      .then(() => {
+        setBundleVersion((prev) => prev + 1);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        activeLoadRef.current.delete(cacheKey);
+      });
+  }, [language]);
+
   const t = useCallback((key, fallbackOrOptions = undefined, maybeOptions = undefined) => {
+    if (typeof key !== 'string' || !key) {
+      return '';
+    }
+
     const baseOptions = { lng: language };
+    if (!i18n.exists(key, baseOptions)) {
+      lazyLoadNamespace(inferNamespaceFromKey(key));
+    }
 
     if (typeof fallbackOrOptions === 'string') {
       return i18n.t(key, { ...baseOptions, defaultValue: fallbackOrOptions, ...(maybeOptions || {}) });
@@ -122,7 +287,7 @@ export function LanguageProvider({ children }) {
       return i18n.t(key, { ...baseOptions, ...fallbackOrOptions });
     }
     return i18n.t(key, { ...baseOptions, defaultValue: key });
-  }, [language]);
+  }, [language, lazyLoadNamespace]);
 
   const value = useMemo(
     () => ({
@@ -132,7 +297,7 @@ export function LanguageProvider({ children }) {
       ready,
       supportedLanguages: SUPPORTED_LANGUAGES,
     }),
-    [language, ready, setLanguage, t],
+    [language, ready, setLanguage, t, bundleVersion],
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

@@ -1,0 +1,112 @@
+{
+  "summary": "Iteration 109 - i18n namespace separation and language_switcher default-visible testing. All features PASS. LanguageContext correctly implements route-based namespace preloading (auth/dealer/admin). Language switcher in DealerLayoutV2 is visible by default even when corporate header config is missing or doesn't include the block.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "DealerMessages",
+        "issues": ["Hydration warning: <tr> cannot be child of <span>, <span> cannot be child of <tbody> - not blocking but should be fixed"]
+      }
+    ]
+  },
+  "features_tested": {
+    "i18n_namespace_separation": {
+      "status": "PASS",
+      "description": "i18n files correctly separated by language + namespace",
+      "structure": {
+        "tr": ["auth.json", "dealer.json", "admin.json"],
+        "de": ["auth.json", "dealer.json", "admin.json"],
+        "fr": ["auth.json", "dealer.json", "admin.json"]
+      },
+      "lazy_loading": "Dynamic imports via localeLoaders object"
+    },
+    "route_preload_rules": {
+      "status": "PASS",
+      "description": "resolveRouteNamespaces function correctly maps routes to namespaces",
+      "rules": {
+        "/login, /register, /verify-email": "auth namespace",
+        "/dealer, /dealer/login, /dealer/*": "dealer namespace",
+        "/admin, /admin/*, /backoffice, /backoffice/*": "admin namespace",
+        "other_routes": "no preload (lazy on demand)"
+      }
+    },
+    "login_page_language_switching": {
+      "status": "PASS",
+      "url": "/login",
+      "tr_title": "Giriş yap",
+      "de_title": "Anmelden",
+      "fr_title": "Connexion",
+      "tr_banner": "Avrupa'nın en yeni ve geniş ilan platformu Annoncia'ya hoş geldiniz...",
+      "de_banner": "Willkommen bei Annoncia, Europas neuer und umfangreicher Kleinanzeigenplattform...",
+      "fr_banner": "Bienvenue sur Annoncia, la plus nouvelle et vaste plateforme d'annonces en Europe...",
+      "toggle_cycle": "TR -> DE -> FR -> TR works correctly"
+    },
+    "dealer_layout_language_switcher_visibility": {
+      "status": "PASS",
+      "description": "Language switcher visible by default even when config is missing",
+      "console_logs_observed": [
+        "[dealer-header] config_missing: language_switcher fallback=visible",
+        "[dealer-header] config_missing_block: language_switcher fallback=visible"
+      ],
+      "buttons_visible": ["TR", "DE", "FR"],
+      "implementation": "hasCorporateBlock returns true for language_switcher when row/block missing"
+    },
+    "dealer_menu_translations_tr": {
+      "status": "PASS",
+      "create_listing_button": "İlan Ver",
+      "top_menu_labels": ["Özet Dashboard", "İlanlar", "Mesajlar", "Müşteri Yönetimi", "Favoriler"],
+      "sidebar_labels": ["Ziyaret Sayısı", "Mağaza Performansı", "Yayındaki İlan Sayısı", "Talep Olan Müşteri Sayısı", "Müşteriye Uygun İlanlar", "Eklenebilir Widget Alanı"],
+      "quick_menu_labels": ["Yayında Olan İlanlar", "Gelen Mesajlar", "Müşteri Listesi", "Favori İlanlar", "Paket Özeti", "Kayıtlı Kartlarım"]
+    },
+    "dealer_menu_translations_de": {
+      "status": "PASS",
+      "create_listing_button": "Anzeige erstellen",
+      "search_placeholder": "Anzeige, Kunde oder Bericht suchen",
+      "logout_button": "Abmelden"
+    },
+    "dealer_menu_translations_fr": {
+      "status": "PASS",
+      "create_listing_button": "Publier une annonce",
+      "search_placeholder": "Rechercher une annonce, un client ou un rapport",
+      "logout_button": "Déconnexion"
+    },
+    "dealer_login_regression": {
+      "status": "PASS",
+      "credentials": "dealer@platform.com / Dealer123!",
+      "redirect": "/dealer/overview",
+      "top_menu_items_count": 11,
+      "navigation": "Listings/Messages/Overview menu clicks work"
+    }
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_109.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "LanguageContext namespace loader implementation is correct - uses dynamic imports for lazy loading",
+    "Route preload rules correctly implemented in resolveRouteNamespaces function",
+    "DealerLayoutV2 language_switcher default-visible fallback implemented correctly with info console logs",
+    "Minor: DealerMessages page has HTML nesting hydration warnings (span/tbody/tr) - cosmetic issue"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only test)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "dealer": "dealer@platform.com / Dealer123!"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "mocked_api": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+  "context_for_next_testing_agent": "i18n namespace separation fully implemented: tr/de/fr folders with auth.json, dealer.json, admin.json in each. Route preload rules: /login=/register=/verify-email->auth, /dealer/*->dealer, /admin/*=/backoffice/*->admin, others lazy. Language switcher in DealerLayoutV2 is visible by default via hasCorporateBlock fallback logic - console logs confirm this behavior. All dealer.menu.* translations verified for TR/DE/FR."
+}

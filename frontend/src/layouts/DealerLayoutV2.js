@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   BarChart3,
@@ -355,6 +355,7 @@ export default function DealerLayoutV2() {
     left_menu: {},
   });
   const [corporateHeaderData, setCorporateHeaderData] = useState({ logo_url: null, items: [] });
+  const languageSwitcherLogRef = useRef({ configUnreadable: false, blockMissing: false });
 
   const corporateRowMap = useMemo(() => {
     const rows = Array.isArray(corporateHeaderConfig?.rows) ? corporateHeaderConfig.rows : [];
@@ -369,7 +370,25 @@ export default function DealerLayoutV2() {
 
   const hasCorporateBlock = (rowId, type, fallback = true) => {
     const row = corporateRowMap[rowId];
-    if (!row) return fallback;
+    if (!row) {
+      if (type === 'language_switcher') {
+        if (!languageSwitcherLogRef.current.configUnreadable) {
+          console.info('[dealer-header] config_missing: language_switcher fallback=visible');
+          languageSwitcherLogRef.current.configUnreadable = true;
+        }
+        return true;
+      }
+      return fallback;
+    }
+
+    if (type === 'language_switcher' && !row.has(type)) {
+      if (!languageSwitcherLogRef.current.blockMissing) {
+        console.info('[dealer-header] config_missing_block: language_switcher fallback=visible');
+        languageSwitcherLogRef.current.blockMissing = true;
+      }
+      return true;
+    }
+
     return row.has(type);
   };
 
