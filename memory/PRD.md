@@ -1311,3 +1311,26 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Modül başlıkları görünür
   - Root/child kategori link navigasyonu çalışıyor (`/search?category=...`)
   - Yatay taşma/overlay yok
+
+## 2026-03-04 (Yeni İstek Uygulandı — Ana Kategori İkon Input + Parantezli Toplamlar)
+
+### Uygulananlar
+- **Admin > Site Design > Home Category** modalına ikon için çift giriş eklendi:
+  - `Icon SVG` textarea (manuel kod)
+  - `İkon Dosya Yükle` input (SVG/PNG/JPG/WEBP)
+- Görsel dosya yüklemede otomatik dönüşüm eklendi:
+  - PNG/JPG/WEBP dosyası otomatik olarak SVG wrapper içine alınarak `icon_svg` alanına yazılıyor.
+- Homepage sol menüde toplam sayaçlar güncellendi (kullanıcı seçimine göre):
+  - Modül başlıklarında parantezli toplam: `Emlak (x)`
+  - Ana kategori satırlarında parantezli toplam: `Arsa (x)`
+  - Alt kategori satırlarında parantezli toplam: `Imara Acik Arsa (x)`
+- Toplam hesap mantığı (B/B tercihi):
+  - Ana kategori = kendi ilan + tüm alt kırılımlar toplamı
+  - Alt kategori = kendi ilan + varsa alt kırılımlar toplamı
+
+### Test Durumu
+- `auto_frontend_testing_agent` PASS:
+  - module/root/child count badge’leri görünür ve doğru selector’larda
+  - kategori link navigasyonu çalışıyor
+  - admin modalda hem textarea hem upload input mevcut
+  - upload input ile görsel yükleme sonrası textarea’da SVG oluşuyor
