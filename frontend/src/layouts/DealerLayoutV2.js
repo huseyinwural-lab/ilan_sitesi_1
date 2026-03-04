@@ -770,7 +770,11 @@ export default function DealerLayoutV2() {
                     data-testid={`dealer-layout-v2-row1-quick-action-${item.key}`}
                   >
                     <Icon size={15} />
-                    <span>{item.label_i18n_key?.includes('message') ? t('dealer.layout.quick_action_messages', 'Mesajlar') : t('dealer.layout.quick_action_shortcut', 'Kısayol')}</span>
+                    <span>
+                      {item.label_i18n_key
+                        ? t(item.label_i18n_key, item.label || t('dealer.layout.quick_action_shortcut', 'Kısayol'))
+                        : t(`dealer.menu.${item.key}`, item.label || t('dealer.layout.quick_action_shortcut', 'Kısayol'))}
+                    </span>
                   </NavLink>
                 );
               }) : null}

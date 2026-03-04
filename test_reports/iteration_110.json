@@ -1,0 +1,144 @@
+{
+  "summary": "Iteration 110 - i18n namespace split and DE/FR translations testing. All features PASS. Namespace structure verified (common, auth, dealer, admin in tr/de/fr folders). Route preload rules correctly implemented. Language switcher visible by default. DealerOverview and DealerReports pages show correct translations for TR/DE/FR with no remaining Turkish text in non-TR modes.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "DealerReports",
+        "issues": ["Hydration warning: <tr> cannot be child of <span>, <span> cannot be child of <tbody> - cosmetic issue, not blocking"]
+      }
+    ]
+  },
+  "features_tested": {
+    "namespace_split_structure": {
+      "status": "PASS",
+      "description": "Namespace files correctly structured in locales/{lang}/{namespace}.json format",
+      "structure": {
+        "tr": ["common.json", "auth.json", "dealer.json", "admin.json"],
+        "de": ["common.json", "auth.json", "dealer.json", "admin.json"],
+        "fr": ["common.json", "auth.json", "dealer.json", "admin.json"]
+      }
+    },
+    "route_preload_rules": {
+      "status": "PASS",
+      "description": "resolveRouteNamespaces function correctly maps routes to namespaces",
+      "rules": {
+        "/login, /register, /verify-email": "common + auth",
+        "/dealer, /dealer/login, /dealer/*": "common + dealer",
+        "/admin, /admin/*, /backoffice, /backoffice/*": "common + admin",
+        "other_routes": "common only"
+      }
+    },
+    "t_function_namespace_resolution": {
+      "status": "PASS",
+      "description": "inferNamespaceFromKey correctly resolves auth.*, dealer.*, admin.* to respective namespaces, others to common"
+    },
+    "language_switcher_visibility": {
+      "status": "PASS",
+      "description": "Language switcher visible by default in DealerLayoutV2 even when config missing",
+      "console_logs": [
+        "[dealer-header] config_missing: language_switcher fallback=visible",
+        "[dealer-header] config_missing_block: language_switcher fallback=visible"
+      ],
+      "buttons_visible": ["TR", "DE", "FR"]
+    },
+    "dealer_overview_translations": {
+      "status": "PASS",
+      "translations": {
+        "TR": {
+          "title": "Özet",
+          "refresh": "Yenile",
+          "create_listing": "İlan Ver",
+          "menu_labels": ["Özet Dashboard", "İlanlar", "Mesajlar", "Müşteri Yönetimi", "Favoriler", "Raporlar", "Paket Raporları", "Doping Kullanım Raporu", "Danışman Takibi", "Satın Al", "Hesabım"]
+        },
+        "DE": {
+          "title": "Übersicht",
+          "refresh": "Aktualisieren",
+          "create_listing": "Anzeige erstellen",
+          "sidebar_items": ["Übersichts-Dashboard", "Besuchszahl", "Filialleistung", "Abmelden"]
+        },
+        "FR": {
+          "title": "Résumé",
+          "refresh": "Actualiser",
+          "create_listing": "Publier une annonce",
+          "sidebar_items": ["Déconnexion", "Menu rapide personnel", "Récents", "Mes favoris"]
+        }
+      }
+    },
+    "dealer_reports_translations": {
+      "status": "PASS",
+      "translations": {
+        "TR": {
+          "title": "Raporlar",
+          "subtitle": "Performans, paket ve doping raporlarını tek ekrandan takip edin.",
+          "views_label": "Son 7 Gün Görüntülenme",
+          "contact_label": "Lead/İletişim Tıklaması",
+          "period_tabs": ["7 Gün", "14 Gün", "30 Gün", "90 Gün"],
+          "section_tabs": ["Saatlik Ziyaret Sayısı", "Yayındaki İlan Raporu", "Görüntülenme Raporu", "Favoriye Alınma Raporu", "Gelen Mesaj Raporu", "Gelen Arama Raporu (Mobil)", "Paket Raporları", "Doping Kullanım Raporu"],
+          "series_title": "Günlük Seri",
+          "table_headers": ["Tarih", "Değer"]
+        },
+        "DE": {
+          "title": "Berichte",
+          "subtitle": "Verfolgen Sie Leistungs-, Paket- und Dopingberichte auf einem einzigen Bildschirm.",
+          "views_label": "Aufrufe der letzten 7 Tage",
+          "contact_label": "Lead-/Kontaktklicks",
+          "period_tabs": ["7 Tage", "14 Tage", "30 Tage", "90 Tage"],
+          "section_tabs": ["Stündliche Besuchszahl", "Bericht zu aktiven Anzeigen", "Aufrufbericht", "Favoritenbericht", "Eingangs-Nachrichtenbericht", "Eingehende Anrufe (Mobil)", "Paketberichte", "Doping-Nutzungsbericht"],
+          "series_title": "Tagesreihe",
+          "table_headers": ["Datum", "Wert"]
+        },
+        "FR": {
+          "title": "Rapports",
+          "subtitle": "Suivez les rapports de performance, de forfait et de dopings sur un seul écran.",
+          "views_label": "Vues des 7 derniers jours",
+          "contact_label": "Clics lead/contact",
+          "period_tabs": ["7 jours", "14 jours", "30 jours", "90 jours"],
+          "section_tabs": ["Nombre de visites horaire", "Rapport des annonces actives", "Rapport de vues", "Rapport d'ajout en favori", "Rapport des messages reçus", "Rapport des appels entrants (mobile)", "Rapports de forfait", "Rapport d'utilisation des dopings"],
+          "series_title": "Série quotidienne",
+          "table_headers": ["Date", "Valeur"]
+        }
+      }
+    },
+    "legacy_locale_deprecation": {
+      "status": "PASS",
+      "check_script": "node /app/frontend/scripts/check-legacy-locales-deprecated.mjs",
+      "result": "✅ Legacy locale deprecate/read-only kontrolleri geçti",
+      "legacy_files_exist": ["tr.json", "de.json", "fr.json"],
+      "no_code_imports": true,
+      "deprecation_notice": "DEPRECATION.md created with usage rules"
+    }
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_110.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "LanguageContext namespace implementation is solid - uses dynamic imports for lazy loading",
+    "Route preload rules in resolveRouteNamespaces function work correctly: common+auth for login routes, common+dealer for dealer routes, common+admin for admin routes",
+    "DealerLayoutV2 language_switcher fallback logic works - visible by default with info logs when config missing",
+    "All dealer.overview.* and dealer.reports.* keys are properly translated in DE and FR namespaces",
+    "Minor: DealerReports has HTML nesting hydration warnings (span inside tbody) - should be fixed but not blocking"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (frontend only test)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "dealer": "dealer@platform.com / Dealer123!"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "mocked_api": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+  "context_for_next_testing_agent": "i18n namespace split fully verified: locales/{tr,de,fr}/{common,auth,dealer,admin}.json structure. Route preload: /login|register|verify-email->common+auth, /dealer/*->common+dealer, /admin/*->common+admin, others->common. Language switcher in DealerLayoutV2 visible by default via hasCorporateBlock fallback. All dealer page translations (overview, reports) confirmed working for TR/DE/FR. Legacy monolith files (tr.json, de.json, fr.json) exist but are marked deprecated with no code imports."
+}

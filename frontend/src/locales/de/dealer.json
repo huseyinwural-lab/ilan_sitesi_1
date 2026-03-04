@@ -2,7 +2,7 @@
   "dealer": {
     "layout": {
       "user_fallback": "Firmenbenutzer",
-      "brand_fallback": "S Ofisim",
+      "brand_fallback": "Mein Büro",
       "search_placeholder": "Anzeige, Kunde oder Bericht suchen",
       "create_listing": "Anzeige erstellen",
       "quick_action_shortcut": "Shortcut",
@@ -51,6 +51,99 @@
       },
       "security": {
         "save_button": "Sicherheitsinformationen speichern"
+      }
+    },
+    "overview": {
+      "title": "Übersicht",
+      "source": "Quelle",
+      "default_source": "Standard",
+      "refresh": "Aktualisieren",
+      "loading": "Wird geladen…",
+      "open": "Öffnen",
+      "quick_nav": "Schnellzugriff",
+      "widgets_empty": "Kein Widget gefunden.",
+      "errors": {
+        "fetch_failed": "Dashboard-Zusammenfassung konnte nicht geladen werden"
+      },
+      "store_performance": {
+        "title": "Filialleistung",
+        "goto_reports": "Zu den Berichten",
+        "visit_24h": "Besuchszahl (letzte 24 Stunden)",
+        "visit_7d": "Besuchszahl (letzte 7 Tage)",
+        "empty": "Keine Besuchsdaten für Anzeigen gefunden.",
+        "table": {
+          "listing": "Anzeige",
+          "visit": "Besuche",
+          "detail": "Detail"
+        }
+      },
+      "package": {
+        "title": "Paketinformationen",
+        "used": "Verwendet",
+        "remaining": "Verbleibend",
+        "goto_purchase": "Zur Kaufseite"
+      },
+      "kpi": {
+        "published": "Anzahl aktiver Anzeigen",
+        "demand_customers": "Interessierte Kunden",
+        "matching_listings": "Passende Anzeigen für Kunden"
+      },
+      "notice": {
+        "no_demand_data": "Keine Daten verfügbar, da keine Kunden- oder Nachfrageeinträge vorhanden sind."
+      }
+    },
+    "reports": {
+      "title": "Berichte",
+      "subtitle": "Verfolgen Sie Leistungs-, Paket- und Dopingberichte auf einem einzigen Bildschirm.",
+      "refresh": "Aktualisieren",
+      "loading": "Wird geladen...",
+      "days": "{{days}} Tage",
+      "empty": "Keine Einträge",
+      "errors": {
+        "fetch_failed": "Berichtsdaten konnten nicht geladen werden"
+      },
+      "kpi": {
+        "views_7d": "Aufrufe der letzten 7 Tage",
+        "contact_clicks": "Lead-/Kontaktklicks"
+      },
+      "sections": {
+        "hourly_visit_report": "Stündliche Besuchszahl",
+        "listing_report": "Bericht zu aktiven Anzeigen",
+        "views_report": "Aufrufbericht",
+        "favorites_report": "Favoritenbericht",
+        "messages_report": "Eingangs-Nachrichtenbericht",
+        "mobile_calls_report": "Eingehende Anrufe (Mobil)",
+        "package_reports": "Paketberichte",
+        "doping_usage": "Doping-Nutzungsbericht"
+      },
+      "metrics": {
+        "current_period": "Aktueller Zeitraum",
+        "previous_period": "Vorheriger Zeitraum",
+        "change": "Änderung",
+        "total": "Gesamt"
+      },
+      "series": {
+        "title": "Tagesreihe"
+      },
+      "table": {
+        "date": "Datum",
+        "value": "Wert",
+        "views": "Aufrufe"
+      },
+      "package": {
+        "title": "Paketbericht",
+        "used": "Verwendet",
+        "remaining": "Verbleibend",
+        "limit": "Limit",
+        "table": {
+          "listing": "Anzeige",
+          "usage_type": "Nutzungstyp"
+        }
+      },
+      "doping": {
+        "total_doping": "Gesamt-Doping",
+        "total_views": "Gesamtaufrufe",
+        "doping": "Doping"
       }
     },
     "menu": {

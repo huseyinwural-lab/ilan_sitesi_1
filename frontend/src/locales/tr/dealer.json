@@ -53,6 +53,99 @@
         "save_button": "Güvenlik Bilgilerini Kaydet"
       }
     },
+    "overview": {
+      "title": "Özet",
+      "source": "Kaynak",
+      "default_source": "Default",
+      "refresh": "Yenile",
+      "loading": "Yükleniyor…",
+      "open": "Aç",
+      "quick_nav": "Hızlı Geçiş",
+      "widgets_empty": "Widget bulunamadı.",
+      "errors": {
+        "fetch_failed": "Dashboard özeti alınamadı"
+      },
+      "store_performance": {
+        "title": "Mağaza Performansı",
+        "goto_reports": "Raporlara Git",
+        "visit_24h": "Ziyaret Sayısı (Son 24 Saat)",
+        "visit_7d": "Ziyaret Sayısı (Son 7 Gün)",
+        "empty": "İlan ziyaret verisi bulunamadı.",
+        "table": {
+          "listing": "İlan",
+          "visit": "Ziyaret",
+          "detail": "Detay"
+        }
+      },
+      "package": {
+        "title": "Paket Bilgisi",
+        "used": "Kullanılan",
+        "remaining": "Kalan",
+        "goto_purchase": "Satın Alma Sayfasına Git"
+      },
+      "kpi": {
+        "published": "Yayındaki İlan Sayısı",
+        "demand_customers": "Talebi Olan Müşteri",
+        "matching_listings": "Müşteriye Uygun İlanlar"
+      },
+      "notice": {
+        "no_demand_data": "Müşteri veya talep kaydı olmadığı için veri gösterilemiyor."
+      }
+    },
+    "reports": {
+      "title": "Raporlar",
+      "subtitle": "Performans, paket ve doping raporlarını tek ekrandan takip edin.",
+      "refresh": "Yenile",
+      "loading": "Yükleniyor...",
+      "days": "{{days}} Gün",
+      "empty": "Kayıt yok",
+      "errors": {
+        "fetch_failed": "Rapor verisi alınamadı"
+      },
+      "kpi": {
+        "views_7d": "Son 7 Gün Görüntülenme",
+        "contact_clicks": "Lead/İletişim Tıklaması"
+      },
+      "sections": {
+        "hourly_visit_report": "Saatlik Ziyaret Sayısı",
+        "listing_report": "Yayındaki İlan Raporu",
+        "views_report": "Görüntülenme Raporu",
+        "favorites_report": "Favoriye Alınma Raporu",
+        "messages_report": "Gelen Mesaj Raporu",
+        "mobile_calls_report": "Gelen Arama Raporu (Mobil)",
+        "package_reports": "Paket Raporları",
+        "doping_usage": "Doping Kullanım Raporu"
+      },
+      "metrics": {
+        "current_period": "Mevcut Dönem",
+        "previous_period": "Önceki Dönem",
+        "change": "Değişim",
+        "total": "Toplam"
+      },
+      "series": {
+        "title": "Günlük Seri"
+      },
+      "table": {
+        "date": "Tarih",
+        "value": "Değer",
+        "views": "Görüntülenme"
+      },
+      "package": {
+        "title": "Paket Raporu",
+        "used": "Kullanılan",
+        "remaining": "Kalan",
+        "limit": "Limit",
+        "table": {
+          "listing": "İlan",
+          "usage_type": "Kullanım Tipi"
+        }
+      },
+      "doping": {
+        "total_doping": "Toplam Doping",
+        "total_views": "Toplam Görüntülenme",
+        "doping": "Doping"
+      }
+    },
     "menu": {
       "overview": "Özet Dashboard",
       "visit_count": "Ziyaret Sayısı",

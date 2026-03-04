@@ -4,21 +4,27 @@ import { initReactI18next } from 'react-i18next';
 
 const SUPPORTED_LANGUAGES = ['tr', 'de', 'fr'];
 const FALLBACK_LANGUAGE = 'tr';
-const AVAILABLE_NAMESPACES = ['auth', 'dealer', 'admin'];
+const AVAILABLE_NAMESPACES = ['common', 'auth', 'dealer', 'admin'];
 const ROUTE_CHANGE_EVENT = 'emergent:route-change';
+const APP_ENV = String(process.env.REACT_APP_ENVIRONMENT || process.env.NODE_ENV || 'development').toLowerCase();
+const IS_PRODUCTION_ENV = APP_ENV === 'production';
+const STRICT_MISSING_KEY_MODE = String(process.env.REACT_APP_I18N_STRICT_MODE || '').toLowerCase() === 'true';
 
 const localeLoaders = {
   tr: {
+    common: () => import('../locales/tr/common.json'),
     auth: () => import('../locales/tr/auth.json'),
     dealer: () => import('../locales/tr/dealer.json'),
     admin: () => import('../locales/tr/admin.json'),
   },
   de: {
+    common: () => import('../locales/de/common.json'),
     auth: () => import('../locales/de/auth.json'),
     dealer: () => import('../locales/de/dealer.json'),
     admin: () => import('../locales/de/admin.json'),
   },
   fr: {
+    common: () => import('../locales/fr/common.json'),
     auth: () => import('../locales/fr/auth.json'),
     dealer: () => import('../locales/fr/dealer.json'),
     admin: () => import('../locales/fr/admin.json'),
@@ -28,6 +34,7 @@ const localeLoaders = {
 const loadedBundles = new Set();
 const pendingBundleLoads = new Map();
 let historyPatched = false;
+const missingKeyLogCache = new Set();
 
 const normalizeLanguage = (value) => {
   const normalized = String(value || '').trim().toLowerCase();
@@ -36,7 +43,7 @@ const normalizeLanguage = (value) => {
 
 const normalizeNamespace = (value) => {
   const normalized = String(value || '').trim().toLowerCase();
-  return AVAILABLE_NAMESPACES.includes(normalized) ? normalized : 'admin';
+  return AVAILABLE_NAMESPACES.includes(normalized) ? normalized : 'common';
 };
 
 const readStoredLanguage = () => {
@@ -58,15 +65,15 @@ const readCurrentPathname = () => {
 const resolveRouteNamespaces = (pathname) => {
   const path = String(pathname || '').trim().toLowerCase();
   if (path === '/login' || path === '/register' || path === '/verify-email') {
-    return ['auth'];
+    return ['common', 'auth'];
   }
   if (path === '/dealer' || path === '/dealer/login' || path.startsWith('/dealer/')) {
-    return ['dealer'];
+    return ['common', 'dealer'];
   }
   if (path === '/admin' || path.startsWith('/admin/') || path === '/backoffice' || path.startsWith('/backoffice/')) {
-    return ['admin'];
+    return ['common', 'admin'];
   }
-  return [];
+  return ['common'];
 };
 
 const inferNamespaceFromKey = (key) => {
@@ -74,7 +81,35 @@ const inferNamespaceFromKey = (key) => {
   if (normalizedKey.startsWith('auth.')) return 'auth';
   if (normalizedKey.startsWith('dealer.')) return 'dealer';
   if (normalizedKey.startsWith('admin.')) return 'admin';
-  return 'admin';
+  return 'common';
+};
+
+const logMissingKey = ({ key, language, namespace, pathname }) => {
+  const cacheKey = `${language}:${namespace}:${pathname}:${key}`;
+  if (missingKeyLogCache.has(cacheKey)) {
+    return;
+  }
+  missingKeyLogCache.add(cacheKey);
+
+  const payload = {
+    event: 'i18n_missing_key',
+    key,
+    language,
+    namespace,
+    pathname,
+    env: APP_ENV,
+    timestamp: new Date().toISOString(),
+  };
+
+  if (IS_PRODUCTION_ENV) {
+    console.info('[i18n_missing_key]', payload);
+    return;
+  }
+
+  console.warn('[i18n_missing_key]', payload);
+  if (STRICT_MISSING_KEY_MODE) {
+    throw new Error(`i18n missing key: ${key}`);
+  }
 };
 
 const patchHistoryForRouteEvents = () => {
@@ -276,8 +311,26 @@ export function LanguageProvider({ children }) {
     }
 
     const baseOptions = { lng: language };
-    if (!i18n.exists(key, baseOptions)) {
-      lazyLoadNamespace(inferNamespaceFromKey(key));
+    const keyNamespace = inferNamespaceFromKey(key);
+    const exists = i18n.exists(key, baseOptions);
+
+    if (!exists) {
+      lazyLoadNamespace(keyNamespace);
+      logMissingKey({
+        key,
+        language,
+        namespace: keyNamespace,
+        pathname,
+      });
+
+      if (IS_PRODUCTION_ENV) {
+        return '—';
+      }
+
+      if (typeof fallbackOrOptions === 'string' && fallbackOrOptions.trim()) {
+        return fallbackOrOptions;
+      }
+      return '—';
     }
 
     if (typeof fallbackOrOptions === 'string') {
@@ -287,7 +340,7 @@ export function LanguageProvider({ children }) {
       return i18n.t(key, { ...baseOptions, ...fallbackOrOptions });
     }
     return i18n.t(key, { ...baseOptions, defaultValue: key });
-  }, [language, lazyLoadNamespace]);
+  }, [language, lazyLoadNamespace, pathname]);
 
   const value = useMemo(
     () => ({

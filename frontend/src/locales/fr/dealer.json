@@ -2,7 +2,7 @@
   "dealer": {
     "layout": {
       "user_fallback": "Utilisateur professionnel",
-      "brand_fallback": "S Ofisim",
+      "brand_fallback": "Mon bureau",
       "search_placeholder": "Rechercher une annonce, un client ou un rapport",
       "create_listing": "Publier une annonce",
       "quick_action_shortcut": "Raccourci",
@@ -51,6 +51,99 @@
       },
       "security": {
         "save_button": "Enregistrer les informations de sécurité"
+      }
+    },
+    "overview": {
+      "title": "Résumé",
+      "source": "Source",
+      "default_source": "Par défaut",
+      "refresh": "Actualiser",
+      "loading": "Chargement…",
+      "open": "Ouvrir",
+      "quick_nav": "Accès rapide",
+      "widgets_empty": "Aucun widget trouvé.",
+      "errors": {
+        "fetch_failed": "Impossible de récupérer le résumé du tableau de bord"
+      },
+      "store_performance": {
+        "title": "Performance de la boutique",
+        "goto_reports": "Aller aux rapports",
+        "visit_24h": "Nombre de visites (24 dernières heures)",
+        "visit_7d": "Nombre de visites (7 derniers jours)",
+        "empty": "Aucune donnée de visite d’annonce trouvée.",
+        "table": {
+          "listing": "Annonce",
+          "visit": "Visites",
+          "detail": "Détail"
+        }
+      },
+      "package": {
+        "title": "Informations du forfait",
+        "used": "Utilisé",
+        "remaining": "Restant",
+        "goto_purchase": "Aller à la page d’achat"
+      },
+      "kpi": {
+        "published": "Nombre d’annonces actives",
+        "demand_customers": "Clients intéressés",
+        "matching_listings": "Annonces adaptées aux clients"
+      },
+      "notice": {
+        "no_demand_data": "Aucune donnée affichable car il n’existe aucun enregistrement client ou demande."
+      }
+    },
+    "reports": {
+      "title": "Rapports",
+      "subtitle": "Suivez les rapports de performance, de forfait et de dopings sur un seul écran.",
+      "refresh": "Actualiser",
+      "loading": "Chargement...",
+      "days": "{{days}} jours",
+      "empty": "Aucun enregistrement",
+      "errors": {
+        "fetch_failed": "Impossible de récupérer les données du rapport"
+      },
+      "kpi": {
+        "views_7d": "Vues des 7 derniers jours",
+        "contact_clicks": "Clics lead/contact"
+      },
+      "sections": {
+        "hourly_visit_report": "Nombre de visites horaire",
+        "listing_report": "Rapport des annonces actives",
+        "views_report": "Rapport de vues",
+        "favorites_report": "Rapport d’ajout en favori",
+        "messages_report": "Rapport des messages reçus",
+        "mobile_calls_report": "Rapport des appels entrants (mobile)",
+        "package_reports": "Rapports de forfait",
+        "doping_usage": "Rapport d’utilisation des dopings"
+      },
+      "metrics": {
+        "current_period": "Période actuelle",
+        "previous_period": "Période précédente",
+        "change": "Variation",
+        "total": "Total"
+      },
+      "series": {
+        "title": "Série quotidienne"
+      },
+      "table": {
+        "date": "Date",
+        "value": "Valeur",
+        "views": "Vues"
+      },
+      "package": {
+        "title": "Rapport de forfait",
+        "used": "Utilisé",
+        "remaining": "Restant",
+        "limit": "Limite",
+        "table": {
+          "listing": "Annonce",
+          "usage_type": "Type d’utilisation"
+        }
+      },
+      "doping": {
+        "total_doping": "Total dopings",
+        "total_views": "Total vues",
+        "doping": "Doping"
       }
     },
     "menu": {
