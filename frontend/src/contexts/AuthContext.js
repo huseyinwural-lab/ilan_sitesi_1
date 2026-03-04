@@ -3,6 +3,7 @@ import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+const EMERGENT_AUTH_URL = 'https://auth.emergentagent.com/';
 
 const AuthContext = createContext(null);
 
@@ -79,6 +80,23 @@ export function AuthProvider({ children }) {
     return applySession(response.data);
   };
 
+  const startGoogleLogin = (portalScope = 'account') => {
+    const resolvedPortal = portalScope === 'dealer' ? 'dealer' : 'account';
+    localStorage.setItem('oauth_portal_scope', resolvedPortal);
+    const redirectUri = `${window.location.origin}/auth/google/callback`;
+    // REMINDER: Emergent auth endpoints are fixed. Do not change URL/method/headers without re-validating against /app/auth_testing.md.
+    const authUrl = `${EMERGENT_AUTH_URL}?redirect=${encodeURIComponent(redirectUri)}`;
+    window.location.assign(authUrl);
+  };
+
+  const loginWithEmergentGoogleSession = async (sessionId, portalScope = 'account') => {
+    const response = await axios.post(`${API}/auth/google/emergent/exchange`, {
+      session_id: sessionId,
+      portal_scope: portalScope,
+    });
+    return applySession(response.data);
+  };
+
   const logout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
@@ -94,7 +112,18 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, hasPermission, token, refreshUser, applySession }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      login,
+      logout,
+      hasPermission,
+      token,
+      refreshUser,
+      applySession,
+      startGoogleLogin,
+      loginWithEmergentGoogleSession,
+    }}>
       {children}
     </AuthContext.Provider>
   );

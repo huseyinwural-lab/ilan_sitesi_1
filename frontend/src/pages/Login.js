@@ -15,11 +15,12 @@ export default function Login({ portalContext = 'account' }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null); // { code, retry_after_seconds, expected, actual }
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [portalSelection, setPortalSelection] = useState(
     portalContext === 'dealer' ? 'dealer' : 'account'
   );
-  const { login, logout } = useAuth();
+  const { login, logout, startGoogleLogin } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -29,6 +30,18 @@ export default function Login({ portalContext = 'account' }) {
   const registerPath = portalSelection === 'dealer' ? '/dealer/register' : '/register';
   const verifyPath = portalSelection === 'dealer' ? '/dealer/verify-email' : '/verify-email';
   const showTotpInput = ['TOTP_REQUIRED', 'INVALID_TOTP', 'TOTP_SETUP_INCOMPLETE'].includes(error?.code);
+
+  const handleGoogleLogin = () => {
+    if (socialLoading) return;
+    setError(null);
+    setSocialLoading(true);
+    try {
+      startGoogleLogin(portalSelection);
+    } catch (err) {
+      setSocialLoading(false);
+      setError({ code: 'UNKNOWN', message: err?.message || 'Google giriş başlatılamadı.' });
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -389,11 +402,14 @@ export default function Login({ portalContext = 'account' }) {
               <div className="space-y-3" data-testid="login-social">
                 <button
                   type="button"
+                  onClick={handleGoogleLogin}
                   className="w-full h-11 rounded-md border text-sm font-medium hover:bg-muted/40"
                   data-testid="login-google"
-                  disabled
+                  disabled={socialLoading}
                 >
-                  {t('auth.login.google_soon', 'Google ile giriş yap (Yakında)')}
+                  {socialLoading
+                    ? t('auth.login.submit_loading', 'Yükleniyor...')
+                    : t('auth.login.google_continue', 'Google ile devam et')}
                 </button>
                 <button
                   type="button"

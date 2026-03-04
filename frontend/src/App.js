@@ -55,6 +55,7 @@ import AdminInviteAccept from '@/pages/admin/AdminInviteAccept';
 import SupportPage from '@/pages/Support';
 import Register from '@/pages/Register';
 import VerifyEmail from '@/pages/VerifyEmail';
+import GoogleCallbackPage from '@/pages/auth/GoogleCallbackPage';
 import ListingCategorySelect from '@/pages/listing/ListingCategorySelect';
 import VehicleSelector from '@/pages/listing/VehicleSelector';
 import ListingDetails from '@/pages/listing/ListingDetails';
@@ -190,6 +191,7 @@ function App() {
                   <Route path="/dealer/register" element={<Register portalContext="dealer" />} />
                   <Route path="/verify-email" element={<VerifyEmail portalContext="account" />} />
                   <Route path="/dealer/verify-email" element={<VerifyEmail portalContext="dealer" />} />
+                  <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
                   <Route path="/admin/invite/accept" element={<AdminInviteAccept />} />
                   <Route path="/admin/login" element={<BackofficeLogin />} />
 

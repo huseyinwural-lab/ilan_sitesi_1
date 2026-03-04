@@ -337,6 +337,7 @@ GOOGLE_MAPS_COUNTRY_OPTIONS_SETTING_KEY = "listing.address.country_options"
 LISTING_CREATE_CONFIG_SETTING_KEY = "listing.create.config"
 LISTING_SITE_DESIGN_SETTING_KEY = "listing.site.design"
 SITE_HEADER_VARIANTS_SETTING_KEY = "site.header.variants.v1"
+EMERGENT_GOOGLE_SESSION_DATA_URL = "https://demobackend.emergentagent.com/auth/v1/session-data"
 PLACES_RATE_LIMIT_WINDOW_SECONDS = 60
 PLACES_RATE_LIMIT_MAX_REQUESTS = 45
 _places_rate_limit_tracker: Dict[str, deque] = defaultdict(deque)
@@ -347,6 +348,11 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
     totp_code: Optional[str] = None
+
+
+class EmergentGoogleExchangePayload(BaseModel):
+    session_id: str
+    portal_scope: Optional[str] = "account"
 
 
 class ConsumerRegisterPayload(BaseModel):
@@ -5278,6 +5284,167 @@ async def list_public_countries(session: AsyncSession = Depends(get_sql_session)
         }
         for country in countries
     ]
+
+
+async def _fetch_emergent_google_session_data(session_id: str) -> Dict[str, Any]:
+    # REMINDER: Emergent auth endpoints are fixed. Do not change URL/method/headers without re-validating against /app/auth_testing.md.
+    trimmed_session_id = (session_id or "").strip()
+    if not trimmed_session_id:
+        raise HTTPException(status_code=400, detail="Session ID zorunludur")
+
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(
+                EMERGENT_GOOGLE_SESSION_DATA_URL,
+                headers={"X-Session-ID": trimmed_session_id},
+            )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Google oturum doğrulaması başarısız") from exc
+
+    if response.status_code != 200:
+        raise HTTPException(status_code=401, detail="Geçersiz veya süresi dolmuş Google oturumu")
+
+    try:
+        payload = response.json()
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Google oturum verisi okunamadı") from exc
+
+    return payload if isinstance(payload, dict) else {}
+
+
+def _extract_emergent_google_user_data(payload: Dict[str, Any]) -> Dict[str, Optional[str]]:
+    candidate_roots = [
+        payload,
+        payload.get("user") if isinstance(payload.get("user"), dict) else {},
+        payload.get("data") if isinstance(payload.get("data"), dict) else {},
+        payload.get("profile") if isinstance(payload.get("profile"), dict) else {},
+        payload.get("session") if isinstance(payload.get("session"), dict) else {},
+    ]
+
+    user_nodes: List[dict] = []
+    for root in candidate_roots:
+        if not isinstance(root, dict):
+            continue
+        user_nodes.append(root)
+        nested_user = root.get("user")
+        if isinstance(nested_user, dict):
+            user_nodes.append(nested_user)
+
+    def pick_value(*keys: str) -> Optional[str]:
+        for node in user_nodes:
+            for key in keys:
+                value = node.get(key)
+                if isinstance(value, str) and value.strip():
+                    return value.strip()
+        return None
+
+    return {
+        "email": pick_value("email"),
+        "name": pick_value("name", "full_name", "display_name"),
+        "picture": pick_value("picture", "avatar", "image", "photo_url", "picture_url"),
+    }
+
+
+@api_router.post("/auth/google/emergent/exchange", response_model=TokenResponse)
+async def auth_google_emergent_exchange(
+    payload: EmergentGoogleExchangePayload,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    requested_portal = (payload.portal_scope or "account").strip().lower()
+    if requested_portal not in {"account", "dealer"}:
+        requested_portal = "account"
+
+    emergent_payload = await _fetch_emergent_google_session_data(payload.session_id)
+    user_data = _extract_emergent_google_user_data(emergent_payload)
+    email = (user_data.get("email") or "").lower().strip()
+    if not email:
+        raise HTTPException(status_code=400, detail="Google hesabından e-posta alınamadı")
+
+    query_result = await session.execute(select(SqlUser).where(SqlUser.email == email))
+    user = query_result.scalar_one_or_none()
+
+    role_for_new_user = "dealer" if requested_portal == "dealer" else "individual"
+    display_name = (user_data.get("name") or email.split("@")[0] or "Google User").strip()
+
+    if user:
+        existing_scope = _resolve_portal_scope(user.role)
+        if existing_scope != requested_portal and existing_scope in {"account", "dealer"}:
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "code": "PORTAL_MISMATCH",
+                    "expected": requested_portal,
+                    "actual": existing_scope,
+                },
+            )
+
+        if not user.is_active:
+            raise HTTPException(status_code=403, detail="Hesap askıya alınmış")
+
+        if not user.full_name and display_name:
+            user.full_name = display_name
+        if user_data.get("picture"):
+            user.profile_image_url = user_data.get("picture")
+        if not user.is_verified:
+            user.is_verified = True
+        if not user.preferred_language:
+            user.preferred_language = "tr"
+        if not user.country_code:
+            user.country_code = "DE"
+    else:
+        random_password_hash = get_password_hash(secrets.token_urlsafe(24))
+        user = SqlUser(
+            email=email,
+            hashed_password=random_password_hash,
+            full_name=display_name,
+            role=role_for_new_user,
+            country_code="DE",
+            country_scope=["DE"],
+            preferred_language="tr",
+            is_verified=True,
+            is_active=True,
+            profile_image_url=user_data.get("picture"),
+        )
+        session.add(user)
+        await session.flush()
+
+    credential_row = (
+        await session.execute(
+            select(UserCredential).where(
+                UserCredential.user_id == user.id,
+                UserCredential.provider == "google",
+            )
+        )
+    ).scalar_one_or_none()
+    if not credential_row:
+        session.add(UserCredential(user_id=user.id, provider="google", password_hash=None))
+
+    if user.role == "dealer":
+        await _get_or_create_dealer_profile(session, user)
+    else:
+        await _get_or_create_consumer_profile(
+            session,
+            user,
+            language=user.preferred_language or "tr",
+            country_code=user.country_code or "DE",
+        )
+
+    user.last_login = datetime.now(timezone.utc)
+    await session.commit()
+    await session.refresh(user)
+
+    token_data = {
+        "sub": str(user.id),
+        "email": user.email,
+        "role": user.role,
+        "portal_scope": _resolve_portal_scope(user.role),
+        "token_version": TOKEN_VERSION,
+    }
+    return TokenResponse(
+        access_token=create_access_token(token_data),
+        refresh_token=create_refresh_token(token_data),
+        user=_user_to_response(user),
+    )
 
 
 @api_router.post("/auth/register/consumer", response_model=RegisterVerificationResponse, status_code=201)

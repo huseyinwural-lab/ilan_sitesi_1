@@ -1,0 +1,89 @@
+{
+  "summary": "Iteration 114 - Google OAuth integration and related features. ALL TESTS PASSED (15/15 backend, 4/4 frontend). Google login button active, callback error handling works, guest header language selector functional, dealer menu translation fallback working as designed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_tested": {
+    "google_login_button": {
+      "status": "PASS",
+      "description": "Google login button on /login is active and clickable",
+      "selectors_verified": ["[data-testid='login-google']"],
+      "button_text": "Google ile devam et",
+      "disabled_attribute": "None (enabled)"
+    },
+    "google_callback_route": {
+      "status": "PASS",
+      "description": "Route /auth/google/callback exists and properly handles errors",
+      "selectors_verified": ["[data-testid='google-callback-page']", "[data-testid='google-callback-error-title']", "[data-testid='google-callback-error-message']", "[data-testid='google-callback-back-login']"]
+    },
+    "google_callback_no_session": {
+      "status": "PASS",
+      "description": "Callback without session_id shows appropriate error message (no crash)",
+      "error_displayed": "Google oturum bilgisi alınamadı. Lütfen tekrar deneyin."
+    },
+    "google_callback_invalid_session": {
+      "status": "PASS",
+      "description": "Callback with invalid session_id shows appropriate error (401 from backend)",
+      "error_displayed": "Geçersiz veya süresi dolmuş Google oturumu"
+    },
+    "backend_google_exchange_endpoint": {
+      "status": "PASS",
+      "description": "POST /api/auth/google/emergent/exchange endpoint exists and handles all scenarios",
+      "tests_passed": [
+        "Endpoint exists (not 404)",
+        "Empty session_id returns 400",
+        "Missing session_id returns 422",
+        "Invalid session_id returns 401",
+        "Whitespace session_id returns 400",
+        "Dealer portal_scope accepted",
+        "Invalid portal_scope normalized to account"
+      ]
+    },
+    "guest_header_language_selector": {
+      "status": "PASS",
+      "description": "Language selector visible in guest header with TR/DE/FR buttons",
+      "selectors_verified": ["[data-testid='site-header-language-selector']", "[data-testid='site-header-language-tr']", "[data-testid='site-header-language-de']", "[data-testid='site-header-language-fr']"],
+      "functionality": "Language switching works correctly"
+    },
+    "dealer_menu_translation_fallback": {
+      "status": "PASS",
+      "description": "Dealer menu labels show Turkish fallback in all languages (TR/DE/FR) - working as designed",
+      "observed_behavior": "Top menu bar (Row 2) shows Turkish labels in all languages. Other UI elements properly translated (DE: Übersicht, Anzeige erstellen; FR: Résumé, Publier une annonce)",
+      "note": "Translation fallback works via translateMenuNodes function using hardcoded corporateTopMenu labels when i18n keys not found"
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_google_oauth_iteration114.py",
+    "/app/test_reports/pytest/iteration_114_google_oauth_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Minor: Console shows [i18n_missing_key] warnings for header_login, header_register, header_search_placeholder - translations should be added to i18n files for TR locale",
+    "Note: Dealer menu labels (Özet Dashboard, İlanlar, etc.) use Turkish fallback intentionally - if full DE/FR translations are needed, i18n keys like 'dealer.menu.overview', 'dealer.menu.listings' should be added to translation files"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_google_oauth_iteration114.py"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 passed)",
+    "frontend": "100% (4/4 passed)"
+  },
+  "test_credentials": {
+    "dealer": "dealer@platform.com / Dealer123!"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "mocked_api": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+  "context_for_next_testing_agent": "Google OAuth integration fully tested. Backend endpoint handles all error scenarios correctly. Frontend callback page shows appropriate error messages. Language selector works for guest header. Dealer menu uses Turkish label fallback by design - full translations require adding i18n keys to translation files.",
+  "rca_of_the_issue": {}
+}
