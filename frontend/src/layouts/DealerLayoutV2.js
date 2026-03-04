@@ -304,10 +304,43 @@ const flattenMenuNodes = (nodes) => {
   return list;
 };
 
+const buildMenuLabelKeyMap = (nodes) => {
+  const map = new Map();
+  const walk = (items) => {
+    (items || []).forEach((item) => {
+      if (item?.label && item?.key && !map.has(item.label)) {
+        map.set(item.label, item.key);
+      }
+      if (Array.isArray(item?.children) && item.children.length) {
+        walk(item.children);
+      }
+    });
+  };
+  walk(nodes);
+  return map;
+};
+
+const dealerMenuLabelKeyMap = buildMenuLabelKeyMap(corporateTopMenu);
+
+const resolveDealerMenuLabel = (node, t) => {
+  const label = node?.label || '';
+  const explicitI18nKey = typeof node?.label_i18n_key === 'string' ? node.label_i18n_key.trim() : '';
+  if (explicitI18nKey) {
+    return t(explicitI18nKey, label || explicitI18nKey);
+  }
+
+  const knownKey = node?.key || dealerMenuLabelKeyMap.get(label);
+  if (knownKey) {
+    return t(`dealer.menu.${knownKey}`, label || knownKey);
+  }
+
+  return label;
+};
+
 const translateMenuNodes = (nodes, t) => (
   (nodes || []).map((node) => ({
     ...node,
-    label: t(`dealer.menu.${node.key}`, node.label),
+    label: resolveDealerMenuLabel(node, t),
     children: translateMenuNodes(node.children || [], t),
   }))
 );

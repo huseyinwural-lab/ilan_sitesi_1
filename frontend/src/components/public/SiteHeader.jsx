@@ -10,7 +10,7 @@ const API = `${BACKEND_URL}/api`;
 
 export default function SiteHeader({ mode, refreshToken }) {
   const { user, logout } = useAuth();
-  const { t } = useLanguage();
+  const { t, language, setLanguage, supportedLanguages = ['tr', 'de', 'fr'] } = useLanguage();
   const navigate = useNavigate();
   const [headerData, setHeaderData] = useState({ logo_url: null, items: [] });
   const [searchOpen, setSearchOpen] = useState(false);
@@ -168,6 +168,25 @@ export default function SiteHeader({ mode, refreshToken }) {
     </div>
   );
 
+  const renderLanguageSelector = () => (
+    <div className="ml-1 flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1" data-testid="site-header-language-selector">
+      {supportedLanguages.map((lang) => {
+        const isActive = language === lang;
+        return (
+          <button
+            key={lang}
+            type="button"
+            onClick={() => setLanguage(lang)}
+            className={`rounded-full px-2 py-1 text-[11px] font-semibold uppercase transition ${isActive ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+            data-testid={`site-header-language-${lang}`}
+          >
+            {lang}
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
     <header className="sticky top-0 z-40 border-b bg-[var(--header-bg)] text-[var(--header-text)]" data-testid="site-header">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3" data-testid="site-header-container">
@@ -281,6 +300,7 @@ export default function SiteHeader({ mode, refreshToken }) {
                   </Link>
                 </>
               )}
+              {renderLanguageSelector()}
             </div>
           )}
 
