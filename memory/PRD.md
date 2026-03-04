@@ -1247,3 +1247,47 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ### Doğrulama
 - Smoke test: ana sayfada `Giriş Yap` + `Üye Ol` görünüyor, auth öğeleri (`İlan Ver`, mesaj/bildirim ikonları) görünmüyor.
+
+## 2026-03-04 (P0 Tamamlandı — Homepage Redesign + Dinamik Kategori CRUD)
+
+### Tamamlananlar
+- **Yeni homepage** (`HomePageRefreshed`) ilankktc.com referansına yakın modern düzende yeniden inşa edildi:
+  - Sol dinamik kategori kolonu (modül bazlı), acil ilan sayacı, kategori arama
+  - Üst slider/hero alanı + CTA
+  - `Vitrin İlanları` ve `Son İlanlar` dinamik kart gridleri
+  - Kategori linkleri ` /search?category=... ` route’una bağlandı
+- **Admin site-design/home-category sayfası** v2 ile genişletildi:
+  - Layout ayarları korunup geliştirilerek devam ettirildi
+  - **Kategori CRUD (ana + alt kategori)** eklendi
+  - Formda **sort_order** ve **icon_svg** düzenleme alanları eklendi
+- **Backend kategori API** genişletildi:
+  - `CategoryCreatePayload` / `CategoryUpdatePayload` içine `icon_svg` eklendi
+  - Category serializer çıktısına `icon_svg` eklendi
+  - `form_schema.category_meta.home_icon_svg` ile persist/geri dönüş sağlandı
+
+### Güvenlik Hotfix (LOW issue kapatıldı)
+- `icon_svg` tarafında server-side doğrulama sıkılaştırıldı:
+  - `<script>` tag, `on*=` event handler, `javascript:` ve `foreignObject` engellendi
+  - Doğrulama hem direkt `icon_svg` payload’ında hem de `form_schema.category_meta.home_icon_svg` içinde zorunlu hale getirildi
+  - Unsafe SVG verisi response serialize aşamasında da filtrelenir hale getirildi
+
+### Ek Stabilizasyon Düzeltmesi
+- Search endpointte kategori slug çözümleme hatası giderildi:
+  - SQLAlchemy `astext` kaynaklı 500 hatası kaldırıldı (`as_string()` geçişi)
+  - Belirsiz/geçersiz kategori slug için API artık 500 yerine boş sonuç (`total=0`) döndürüyor
+
+### Test Durumu
+- `testing_agent` raporu: `/app/test_reports/iteration_117.json`
+  - Homepage yeni tasarım + dinamik veri akışları: PASS
+  - Admin home-category page + CRUD: PASS
+  - icon_svg backend akışı: PASS
+- Ek self-test:
+  - `POST /api/admin/categories` (script içeren SVG) => **400**
+  - Güvenli SVG ile create/update/delete => **201/200/200**
+
+### Kalan Öncelikler
+- **P1:** Apple social login entegrasyonu (Admin’de credential girildikten sonra tamamlanacak)
+- **P1:** `check-legacy-locales-deprecated.mjs` script + CI entegrasyonu
+- **P2:** Route-based header rules + test senaryoları
+- **P2:** `common.json` namespace daraltma/refactor
+- **P2:** FAZ 3 `academy.modules` mock verisinin kaldırılması

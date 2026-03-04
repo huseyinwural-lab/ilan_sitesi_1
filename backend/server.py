@@ -15669,6 +15669,19 @@ def _category_translation_map(translations: list[CategoryTranslation]) -> dict:
 CATEGORY_ICON_SVG_MAX_LENGTH = 5000
 
 
+def _is_svg_markup_unsafe(raw: str) -> bool:
+    lowered = raw.lower()
+    if re.search(r"<\s*/?\s*script", lowered):
+        return True
+    if re.search(r"on[a-z]+\s*=", lowered):
+        return True
+    if "javascript:" in lowered:
+        return True
+    if "<foreignobject" in lowered:
+        return True
+    return False
+
+
 def _normalize_category_icon_svg(value: Any) -> Optional[str]:
     if value is None:
         return None
@@ -15687,8 +15700,7 @@ def _normalize_category_icon_svg(value: Any) -> Optional[str]:
     if "<svg" not in lowered or "</svg>" not in lowered:
         raise HTTPException(status_code=400, detail="icon_svg geçerli bir <svg>...</svg> içermelidir")
 
-    blocked_tokens = ("<script", "javascript:", "onload=", "onerror=", "onclick=")
-    if any(token in lowered for token in blocked_tokens):
+    if _is_svg_markup_unsafe(raw):
         raise HTTPException(status_code=400, detail="icon_svg güvenli olmayan içerik içeriyor")
 
     return raw
@@ -15702,8 +15714,40 @@ def _extract_category_icon_svg_from_schema(form_schema: Any) -> Optional[str]:
         return None
     value = category_meta.get("home_icon_svg")
     if isinstance(value, str) and value.strip():
-        return value.strip()
+        raw = value.strip()
+        lowered = raw.lower()
+        if len(raw) > CATEGORY_ICON_SVG_MAX_LENGTH:
+            return None
+        if "<svg" not in lowered or "</svg>" not in lowered:
+            return None
+        if _is_svg_markup_unsafe(raw):
+            return None
+        return raw
     return None
+
+
+def _sanitize_category_schema_icon_svg(schema: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    if not isinstance(schema, dict):
+        return schema
+
+    sanitized = deepcopy(schema)
+    category_meta = sanitized.get("category_meta")
+    if not isinstance(category_meta, dict):
+        return sanitized
+
+    if "home_icon_svg" not in category_meta:
+        return sanitized
+
+    normalized = _normalize_category_icon_svg(category_meta.get("home_icon_svg"))
+    if normalized in (None, ""):
+        category_meta.pop("home_icon_svg", None)
+    else:
+        category_meta["home_icon_svg"] = normalized
+
+    if not category_meta:
+        sanitized.pop("category_meta", None)
+
+    return sanitized
 
 
 def _merge_category_icon_svg_schema(existing_schema: Optional[Dict[str, Any]], icon_svg: Optional[str]) -> Optional[Dict[str, Any]]:
@@ -29931,6 +29975,7 @@ async def admin_create_category(
     schema_status = None
     if payload.form_schema is not None:
         schema = _normalize_category_schema(payload.form_schema)
+        schema = _sanitize_category_schema_icon_svg(schema)
         schema_status = schema.get("status", "published")
         if not hierarchy_complete:
             raise HTTPException(status_code=409, detail="Kategori hiyerarşisi tamamlanmadan kaydedilemez")
@@ -30206,6 +30251,7 @@ async def admin_update_category(
 
     if payload.form_schema is not None:
         schema = _normalize_category_schema(payload.form_schema)
+        schema = _sanitize_category_schema_icon_svg(schema)
         schema_status = schema.get("status", "published")
         hierarchy_complete = updates.get("hierarchy_complete", category.hierarchy_complete)
         if not hierarchy_complete:
@@ -33404,16 +33450,20 @@ async def _resolve_category_uuid_for_search(session: AsyncSession, category: Opt
         return uuid.UUID(category_value)
     except ValueError:
         result = await session.execute(
-            select(Category.id).where(
+            select(Category.id)
+            .where(
                 or_(
-                    Category.slug["tr"].astext == category_value,
-                    Category.slug["de"].astext == category_value,
-                    Category.slug["fr"].astext == category_value,
-                    Category.slug["en"].astext == category_value,
-                )
+                    Category.slug["tr"].as_string() == category_value,
+                    Category.slug["de"].as_string() == category_value,
+                    Category.slug["fr"].as_string() == category_value,
+                    Category.slug["en"].as_string() == category_value,
+                ),
+                Category.is_deleted.is_(False),
             )
+            .order_by(Category.updated_at.desc())
+            .limit(1)
         )
-        return result.scalar_one_or_none()
+        return result.scalars().first()
 
 
 async def _resolve_vehicle_numeric_filter(session: AsyncSession, value: Optional[str], model: str) -> Optional[int]:
@@ -33982,6 +34032,15 @@ async def public_search_v2(
         raise HTTPException(status_code=503, detail=f"MEILI_SEARCH_UNAVAILABLE: {exc}") from exc
 
     category_uuid = await _resolve_category_uuid_for_search(session, category)
+    if category and not category_uuid:
+        response.headers["Cache-Control"] = "no-store"
+        return {
+            "items": [],
+            "facets": {},
+            "facet_meta": {},
+            "pagination": {"total": 0, "page": page, "pages": 0},
+        }
+
     make_id_num = await _resolve_vehicle_numeric_filter(session, make, "make")
     model_id_num = await _resolve_vehicle_numeric_filter(session, model, "model")
 
