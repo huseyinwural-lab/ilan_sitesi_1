@@ -1,0 +1,356 @@
+[
+  {
+    "path": "/admin",
+    "label": "Kontrol Paneli",
+    "testId": "dashboard-control-panel",
+    "roles_expr": "roles.dashboard"
+  },
+  {
+    "path": "/admin/dashboard",
+    "label": "Genel Bakış",
+    "testId": "dashboard-overview",
+    "roles_expr": "roles.dashboard"
+  },
+  {
+    "path": "/admin/country-compare",
+    "label": "Ülke Karşılaştırma",
+    "testId": "dashboard-country-compare",
+    "roles_expr": "roles.dashboard"
+  },
+  {
+    "path": "/admin/admin-users",
+    "label": "Admin Kullanıcıları",
+    "testId": "management-admin-users",
+    "roles_expr": "roles.adminOnly"
+  },
+  {
+    "path": "/admin/roles",
+    "label": "Rol Tanımları",
+    "testId": "management-roles",
+    "roles_expr": "roles.adminOnly"
+  },
+  {
+    "path": "/admin/rbac-matrix",
+    "label": "Yetki Atama (RBAC Matrix)",
+    "testId": "management-rbac-matrix",
+    "roles_expr": "roles.adminOnly"
+  },
+  {
+    "path": "/admin/permissions",
+    "label": "Permission Yönetimi",
+    "testId": "management-permissions",
+    "roles_expr": "roles.adminOnly"
+  },
+  {
+    "path": "/admin/individual-users",
+    "label": "Bireysel Kullanıcılar",
+    "testId": "members-individual-users",
+    "roles_expr": "roles.userOps"
+  },
+  {
+    "path": "/admin/dealers",
+    "label": "Kurumsal Kullanıcılar",
+    "testId": "members-corporate-users",
+    "roles_expr": "roles.userOps"
+  },
+  {
+    "path": "/admin/individual-applications",
+    "label": "Bireysel Üye Başvurular",
+    "testId": "members-individual-applications",
+    "roles_expr": "roles.userOps"
+  },
+  {
+    "path": "/admin/dealer-applications",
+    "label": "Kurumsal Üye Başvurular",
+    "testId": "members-corporate-applications",
+    "roles_expr": "roles.userOps"
+  },
+  {
+    "path": "/admin/moderation",
+    "label": "Moderation Queue",
+    "testId": "listings-moderation-queue",
+    "roles_expr": "roles.moderation"
+  },
+  {
+    "path": "/admin/reports",
+    "label": "Rapor Paneli",
+    "testId": "listings-reports-panel",
+    "roles_expr": "roles.moderation"
+  },
+  {
+    "path": "/admin/listings",
+    "label": "Tüm İlanlar",
+    "testId": "listings-all",
+    "roles_expr": "roles.moderation"
+  },
+  {
+    "path": "/admin/listings/paid",
+    "label": "Ücretli İlanlar",
+    "testId": "listings-paid",
+    "roles_expr": "roles.moderation"
+  },
+  {
+    "path": "/admin/listings/featured",
+    "label": "Vitrin İlanlar",
+    "testId": "listings-featured",
+    "roles_expr": "roles.moderation"
+  },
+  {
+    "path": "/admin/listings/urgent",
+    "label": "Acil İlanlar",
+    "testId": "listings-urgent",
+    "roles_expr": "roles.moderation"
+  },
+  {
+    "path": "/admin/individual-listing-applications",
+    "label": "Bireysel İlan Başvuruları",
+    "testId": "listings-individual-applications",
+    "roles_expr": "roles.moderation"
+  },
+  {
+    "path": "/admin/individual-listing-applications/paid",
+    "label": "Bireysel Ücretli İlan",
+    "testId": "listings-individual-paid",
+    "roles_expr": "roles.moderation"
+  },
+  {
+    "path": "/admin/individual-listing-applications/featured",
+    "label": "Bireysel Vitrin İlan",
+    "testId": "listings-individual-featured",
+    "roles_expr": "roles.moderation"
+  },
+  {
+    "path": "/admin/individual-listing-applications/urgent",
+    "label": "Bireysel Acil İlan",
+    "testId": "listings-individual-urgent",
+    "roles_expr": "roles.moderation"
+  },
+  {
+    "path": "/admin/corporate-listing-applications",
+    "label": "Kurumsal İlan Başvuruları",
+    "testId": "listings-corporate-applications",
+    "roles_expr": "roles.moderation"
+  },
+  {
+    "path": "/admin/corporate-listing-applications/paid",
+    "label": "Kurumsal Ücretli İlan",
+    "testId": "listings-corporate-paid",
+    "roles_expr": "roles.moderation"
+  },
+  {
+    "path": "/admin/corporate-listing-applications/featured",
+    "label": "Kurumsal Vitrin İlan",
+    "testId": "listings-corporate-featured",
+    "roles_expr": "roles.moderation"
+  },
+  {
+    "path": "/admin/corporate-listing-applications/urgent",
+    "label": "Kurumsal Acil İlan",
+    "testId": "listings-corporate-urgent",
+    "roles_expr": "roles.moderation"
+  },
+  {
+    "path": "/admin/ads",
+    "label": "Reklam Yönetimi",
+    "testId": "ads-management",
+    "roles_expr": "roles.adsManager"
+  },
+  {
+    "path": "/admin/ads/campaigns",
+    "label": "Kampanyalar",
+    "testId": "ads-campaigns",
+    "roles_expr": "roles.adsManager"
+  },
+  {
+    "path": "/admin/pricing/campaign",
+    "label": "Kampanya Modu",
+    "testId": "pricing-campaign-mode",
+    "roles_expr": "roles.pricingManager"
+  },
+  {
+    "path": "/admin/pricing/tiers",
+    "label": "Bireysel Kampanyalar",
+    "testId": "pricing-individual-campaigns",
+    "roles_expr": "roles.pricingManager"
+  },
+  {
+    "path": "/admin/pricing/packages",
+    "label": "Kurumsal Kampanyalar",
+    "testId": "pricing-corporate-campaigns",
+    "roles_expr": "roles.pricingManager"
+  },
+  {
+    "path": "/admin/site-design/header",
+    "label": "Header Yönetimi",
+    "testId": "site-design-header-management",
+    "roles_expr": "roles.adminOnly"
+  },
+  {
+    "path": "/admin/site-design/footer",
+    "label": "Footer Yönetimi",
+    "testId": "site-design-footer-management",
+    "roles_expr": "roles.adminOnly"
+  },
+  {
+    "path": "/admin/site-design/theme",
+    "label": "Tema Yönetimi",
+    "testId": "site-design-theme-management",
+    "roles_expr": "roles.adminOnly"
+  },
+  {
+    "path": "/admin/site-design/showcase",
+    "label": "Vitrin Yönetimi",
+    "testId": "site-design-showcase-management",
+    "roles_expr": "roles.adminOnly"
+  },
+  {
+    "path": "/admin/site-design/home-category",
+    "label": "Ana Site Kategorisi",
+    "testId": "site-design-home-category",
+    "roles_expr": "roles.adminOnly"
+  },
+  {
+    "path": "/admin/site-design/listing",
+    "label": "İlan Tasarım",
+    "testId": "site-design-listing-design",
+    "roles_expr": "roles.adminOnly"
+  },
+  {
+    "path": "/admin/site-design/listing-flow-settings?focus=listing-create",
+    "label": "İlan Ver Akış Ayarları",
+    "testId": "site-design-listing-flow-settings",
+    "roles_expr": "roles.adminOnly"
+  },
+  {
+    "path": "/admin/site-design/content-builder",
+    "label": "Content Builder",
+    "testId": "site-design-content-builder",
+    "roles_expr": "roles.adminOnly"
+  },
+  {
+    "path": "/admin/user-interface-design",
+    "label": "Kullanıcı Tasarım",
+    "testId": "site-design-user-interface-design",
+    "roles_expr": "roles.uiDesigner"
+  },
+  {
+    "path": "/admin/ops/publish-health",
+    "label": "Publish Health",
+    "testId": "ops-publish-health",
+    "roles_expr": "roles.opsReliability"
+  },
+  {
+    "path": "/admin/info-pages",
+    "label": "Bilgi Sayfaları",
+    "testId": "content-info-pages",
+    "roles_expr": "roles.contentPublish"
+  },
+  {
+    "path": "/admin/categories",
+    "label": "Kategoriler",
+    "testId": "catalog-categories",
+    "roles_expr": "roles.catalogView"
+  },
+  {
+    "path": "/admin/categories/import-export",
+    "label": "Kategori Import/Export",
+    "testId": "catalog-categories-import-export",
+    "roles_expr": "roles.catalogAdmin"
+  },
+  {
+    "path": "/admin/attributes",
+    "label": "Özellikler",
+    "testId": "catalog-attributes",
+    "roles_expr": "roles.catalogAdmin"
+  },
+  {
+    "path": "/admin/dealer-portal-config",
+    "label": "Kurumsal Menü Yönetimi",
+    "testId": "catalog-dealer-portal-config",
+    "roles_expr": "roles.adminOnly"
+  },
+  {
+    "path": "/admin/vehicle-makes",
+    "label": "Araç Markaları",
+    "testId": "vehicle-makes",
+    "roles_expr": "roles.vehicleAdmin"
+  },
+  {
+    "path": "/admin/vehicle-models",
+    "label": "Araç Modelleri",
+    "testId": "vehicle-models",
+    "roles_expr": "roles.vehicleAdmin"
+  },
+  {
+    "path": "/admin/vehicle-master-import",
+    "label": "Araç Master Data Import",
+    "testId": "vehicle-master-import",
+    "roles_expr": "roles.vehicleAdmin"
+  },
+  {
+    "path": "/admin/finance-overview",
+    "label": "Finans Overview",
+    "testId": "finance-overview",
+    "roles_expr": "roles.finance"
+  },
+  {
+    "path": "/admin/plans",
+    "label": "Planlar",
+    "testId": "finance-plans",
+    "roles_expr": "roles.finance"
+  },
+  {
+    "path": "/admin/invoices",
+    "label": "Faturalar",
+    "testId": "finance-invoices",
+    "roles_expr": "roles.finance"
+  },
+  {
+    "path": "/admin/payments",
+    "label": "Transactions Log",
+    "testId": "finance-transactions-log",
+    "roles_expr": "roles.finance"
+  },
+  {
+    "path": "/admin/subscriptions",
+    "label": "Subscriptions",
+    "testId": "finance-subscriptions",
+    "roles_expr": "roles.finance"
+  },
+  {
+    "path": "/admin/ledger",
+    "label": "Ledger",
+    "testId": "finance-ledger",
+    "roles_expr": "roles.finance"
+  },
+  {
+    "path": "/admin/tax-rates",
+    "label": "Vergi Oranları",
+    "testId": "finance-tax-rates",
+    "roles_expr": "roles.finance"
+  },
+  {
+    "path": "/admin/countries",
+    "label": "Ülkeler",
+    "testId": "system-countries",
+    "roles_expr": "roles.system"
+  },
+  {
+    "path": "/admin/audit",
+    "label": "Audit Dashboard",
+    "testId": "system-audit-dashboard",
+    "roles_expr": "roles.adminOnly"
+  },
+  {
+    "path": "/admin/system-settings",
+    "label": "Sistem Ayarları",
+    "testId": "system-settings",
+    "roles_expr": "roles.system"
+  },
+  {
+    "path": "/admin/system-settings?focus=google-maps",
+    "label": "Google Maps Ayarları",
+    "testId": "system-google-maps-settings",
+    "roles_expr": "roles.system"
+  }
+]

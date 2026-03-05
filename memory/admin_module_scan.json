@@ -1,0 +1,1305 @@
+[
+  {
+    "route": "/",
+    "component": "Dashboard",
+    "file": "/app/frontend/src/pages/Dashboard.js",
+    "data_testid_count": 64,
+    "sample_testids": [
+      "dashboard",
+      "dashboard-activity-cta",
+      "dashboard-activity-deleted",
+      "dashboard-activity-empty",
+      "dashboard-activity-new-listings",
+      "dashboard-activity-new-users",
+      "dashboard-activity-skeleton",
+      "dashboard-activity-summary",
+      "dashboard-batch-publish-card",
+      "dashboard-batch-publish-errors",
+      "dashboard-batch-publish-interval",
+      "dashboard-batch-publish-processed"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/admin-users",
+    "component": "AdminUsersPage",
+    "file": "/app/frontend/src/pages/admin/AdminUsers.js",
+    "data_testid_count": 47,
+    "sample_testids": [
+      "admin-users-bulk-actions",
+      "admin-users-bulk-deactivate",
+      "admin-users-bulk-error",
+      "admin-users-create-button",
+      "admin-users-delete-cancel",
+      "admin-users-delete-confirm",
+      "admin-users-delete-message",
+      "admin-users-delete-modal",
+      "admin-users-delete-title",
+      "admin-users-empty",
+      "admin-users-error",
+      "admin-users-filter-icon"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/roles",
+    "component": "AdminRolesPage",
+    "file": "/app/frontend/src/pages/admin/AdminRoles.js",
+    "data_testid_count": 3,
+    "sample_testids": [
+      "admin-roles-page",
+      "admin-roles-readonly-banner",
+      "admin-roles-title"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/rbac-matrix",
+    "component": "RBACMatrixPage",
+    "file": "/app/frontend/src/pages/admin/RBACMatrix.js",
+    "data_testid_count": 6,
+    "sample_testids": [
+      "rbac-matrix-page",
+      "rbac-matrix-readonly-banner",
+      "rbac-matrix-snapshot-card",
+      "rbac-matrix-snapshot-state",
+      "rbac-matrix-snapshot-title",
+      "rbac-matrix-title"
+    ],
+    "api_paths": [
+      "/api/admin/permissions/snapshot"
+    ],
+    "methods": []
+  },
+  {
+    "route": "/individual-users",
+    "component": "IndividualUsersPage",
+    "file": "/app/frontend/src/pages/admin/IndividualUsers.js",
+    "data_testid_count": 36,
+    "sample_testids": [
+      "individual-users-action-cancel",
+      "individual-users-action-confirm",
+      "individual-users-action-message",
+      "individual-users-action-modal",
+      "individual-users-action-title",
+      "individual-users-controls",
+      "individual-users-empty",
+      "individual-users-error",
+      "individual-users-export-button",
+      "individual-users-filters",
+      "individual-users-header-actions",
+      "individual-users-header-created"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/individual-applications",
+    "component": "IndividualApplicationsPage",
+    "file": "/app/frontend/src/pages/admin/IndividualApplications.js",
+    "data_testid_count": 0,
+    "sample_testids": [],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/feature-flags",
+    "component": "FeatureFlags",
+    "file": "/app/frontend/src/pages/FeatureFlags.js",
+    "data_testid_count": 2,
+    "sample_testids": [
+      "create-flag-btn",
+      "feature-flags-page"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/categories",
+    "component": "AdminCategories",
+    "file": "/app/frontend/src/pages/admin/AdminCategories.js",
+    "data_testid_count": 242,
+    "sample_testids": [
+      "admin-categories-page",
+      "categories-active-checkbox",
+      "categories-active-wrapper",
+      "categories-bulk-actions-bar",
+      "categories-bulk-actions-buttons",
+      "categories-bulk-actions-summary",
+      "categories-bulk-activate",
+      "categories-bulk-deactivate",
+      "categories-bulk-delete",
+      "categories-bulk-delete-actions",
+      "categories-bulk-delete-cancel",
+      "categories-bulk-delete-confirm"
+    ],
+    "api_paths": [
+      "/api/admin/analytics/events",
+      "/api/admin/categories",
+      "/api/admin/categories/",
+      "/api/admin/categories/bulk-actions",
+      "/api/admin/categories/bulk-actions/jobs/",
+      "/api/admin/categories/image-upload",
+      "/api/admin/categories/order-index/preview?",
+      "/api/admin/categories/seed/real-estate-standard?country=",
+      "/api/admin/categories/vehicle-segment/link-status?",
+      "/api/admin/categories?",
+      "/api/admin/vehicle-master-import/jobs/api",
+      "/api/admin/vehicle-master-import/jobs/upload"
+    ],
+    "methods": [
+      "DELETE",
+      "PATCH",
+      "POST"
+    ]
+  },
+  {
+    "route": "/categories/import-export",
+    "component": "AdminCategoriesImportExport",
+    "file": "/app/frontend/src/pages/admin/AdminCategoriesImportExport.jsx",
+    "data_testid_count": 44,
+    "sample_testids": [
+      "admin-categories-import-export-page",
+      "categories-apply-result",
+      "categories-export-actions",
+      "categories-export-country",
+      "categories-export-csv",
+      "categories-export-desc",
+      "categories-export-filters",
+      "categories-export-module",
+      "categories-export-title",
+      "categories-import-apply",
+      "categories-import-apply-hint",
+      "categories-import-country"
+    ],
+    "api_paths": [],
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/attributes",
+    "component": "AdminAttributes",
+    "file": "/app/frontend/src/pages/admin/AdminAttributes.js",
+    "data_testid_count": 18,
+    "sample_testids": [
+      "admin-attributes-page",
+      "attributes-active-checkbox",
+      "attributes-cancel",
+      "attributes-category-select",
+      "attributes-country-input",
+      "attributes-create-open",
+      "attributes-error",
+      "attributes-filter-category",
+      "attributes-filterable-checkbox",
+      "attributes-key-input",
+      "attributes-modal",
+      "attributes-modal-close"
+    ],
+    "api_paths": [
+      "/api/admin/attributes",
+      "/api/admin/attributes/",
+      "/api/admin/attributes?",
+      "/api/admin/categories"
+    ],
+    "methods": []
+  },
+  {
+    "route": "/dealer-portal-config",
+    "component": "AdminDealerPortalConfig",
+    "file": "/app/frontend/src/pages/admin/AdminDealerPortalConfigDraft.jsx",
+    "data_testid_count": 43,
+    "sample_testids": [
+      "admin-dealer-config-actions",
+      "admin-dealer-config-diff-panel",
+      "admin-dealer-config-diff-title",
+      "admin-dealer-config-diff-total",
+      "admin-dealer-config-draft-meta",
+      "admin-dealer-config-error",
+      "admin-dealer-config-header",
+      "admin-dealer-config-header-card",
+      "admin-dealer-config-header-list",
+      "admin-dealer-config-header-title-quick",
+      "admin-dealer-config-loading",
+      "admin-dealer-config-modules-card"
+    ],
+    "api_paths": [],
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/moderation",
+    "component": "ModerationQueue",
+    "file": "/app/frontend/src/pages/ModerationQueue.js",
+    "data_testid_count": 32,
+    "sample_testids": [
+      "moderation-action-cancel",
+      "moderation-action-dialog",
+      "moderation-action-reason",
+      "moderation-action-reason-note",
+      "moderation-action-submit",
+      "moderation-bulk-approve",
+      "moderation-bulk-bar",
+      "moderation-bulk-cancel",
+      "moderation-bulk-dialog",
+      "moderation-bulk-reason",
+      "moderation-bulk-reason-note",
+      "moderation-bulk-reject"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/reports",
+    "component": "AdminReportsPage",
+    "file": "/app/frontend/src/pages/admin/AdminReports.js",
+    "data_testid_count": 48,
+    "sample_testids": [
+      "admin-reports-context",
+      "admin-reports-page",
+      "admin-reports-title",
+      "report-detail-close",
+      "report-detail-conversation-id",
+      "report-detail-empty",
+      "report-detail-id",
+      "report-detail-listing-price",
+      "report-detail-listing-status",
+      "report-detail-listing-title",
+      "report-detail-loading",
+      "report-detail-message-id"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/listings/featured",
+    "component": "AdminListingsPage",
+    "file": "/app/frontend/src/pages/admin/AdminListings.js",
+    "data_testid_count": 27,
+    "sample_testids": [
+      "admin-listings-context",
+      "admin-listings-title",
+      "listing-action-cancel-button",
+      "listing-action-confirm-button",
+      "listing-action-modal",
+      "listing-action-note-input",
+      "listing-action-reason-input",
+      "listing-action-subtitle",
+      "listing-action-title",
+      "listings-category-option-all",
+      "listings-category-select",
+      "listings-clear-filters-button"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/listings/urgent",
+    "component": "AdminListingsPage",
+    "file": "/app/frontend/src/pages/admin/AdminListings.js",
+    "data_testid_count": 27,
+    "sample_testids": [
+      "admin-listings-context",
+      "admin-listings-title",
+      "listing-action-cancel-button",
+      "listing-action-confirm-button",
+      "listing-action-modal",
+      "listing-action-note-input",
+      "listing-action-reason-input",
+      "listing-action-subtitle",
+      "listing-action-title",
+      "listings-category-option-all",
+      "listings-category-select",
+      "listings-clear-filters-button"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/listings/paid",
+    "component": "AdminListingsPage",
+    "file": "/app/frontend/src/pages/admin/AdminListings.js",
+    "data_testid_count": 27,
+    "sample_testids": [
+      "admin-listings-context",
+      "admin-listings-title",
+      "listing-action-cancel-button",
+      "listing-action-confirm-button",
+      "listing-action-modal",
+      "listing-action-note-input",
+      "listing-action-reason-input",
+      "listing-action-subtitle",
+      "listing-action-title",
+      "listings-category-option-all",
+      "listings-category-select",
+      "listings-clear-filters-button"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/individual-listing-applications",
+    "component": "IndividualListingApplicationsPage",
+    "file": "/app/frontend/src/pages/admin/IndividualListingApplications.js",
+    "data_testid_count": 0,
+    "sample_testids": [],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/individual-listing-applications/paid",
+    "component": "AdminListingsPage",
+    "file": "/app/frontend/src/pages/admin/AdminListings.js",
+    "data_testid_count": 27,
+    "sample_testids": [
+      "admin-listings-context",
+      "admin-listings-title",
+      "listing-action-cancel-button",
+      "listing-action-confirm-button",
+      "listing-action-modal",
+      "listing-action-note-input",
+      "listing-action-reason-input",
+      "listing-action-subtitle",
+      "listing-action-title",
+      "listings-category-option-all",
+      "listings-category-select",
+      "listings-clear-filters-button"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/individual-listing-applications/featured",
+    "component": "AdminListingsPage",
+    "file": "/app/frontend/src/pages/admin/AdminListings.js",
+    "data_testid_count": 27,
+    "sample_testids": [
+      "admin-listings-context",
+      "admin-listings-title",
+      "listing-action-cancel-button",
+      "listing-action-confirm-button",
+      "listing-action-modal",
+      "listing-action-note-input",
+      "listing-action-reason-input",
+      "listing-action-subtitle",
+      "listing-action-title",
+      "listings-category-option-all",
+      "listings-category-select",
+      "listings-clear-filters-button"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/individual-listing-applications/urgent",
+    "component": "AdminListingsPage",
+    "file": "/app/frontend/src/pages/admin/AdminListings.js",
+    "data_testid_count": 27,
+    "sample_testids": [
+      "admin-listings-context",
+      "admin-listings-title",
+      "listing-action-cancel-button",
+      "listing-action-confirm-button",
+      "listing-action-modal",
+      "listing-action-note-input",
+      "listing-action-reason-input",
+      "listing-action-subtitle",
+      "listing-action-title",
+      "listings-category-option-all",
+      "listings-category-select",
+      "listings-clear-filters-button"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/corporate-listing-applications",
+    "component": "CorporateListingApplicationsPage",
+    "file": "/app/frontend/src/pages/admin/CorporateListingApplications.js",
+    "data_testid_count": 0,
+    "sample_testids": [],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/corporate-listing-applications/paid",
+    "component": "AdminListingsPage",
+    "file": "/app/frontend/src/pages/admin/AdminListings.js",
+    "data_testid_count": 27,
+    "sample_testids": [
+      "admin-listings-context",
+      "admin-listings-title",
+      "listing-action-cancel-button",
+      "listing-action-confirm-button",
+      "listing-action-modal",
+      "listing-action-note-input",
+      "listing-action-reason-input",
+      "listing-action-subtitle",
+      "listing-action-title",
+      "listings-category-option-all",
+      "listings-category-select",
+      "listings-clear-filters-button"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/corporate-listing-applications/featured",
+    "component": "AdminListingsPage",
+    "file": "/app/frontend/src/pages/admin/AdminListings.js",
+    "data_testid_count": 27,
+    "sample_testids": [
+      "admin-listings-context",
+      "admin-listings-title",
+      "listing-action-cancel-button",
+      "listing-action-confirm-button",
+      "listing-action-modal",
+      "listing-action-note-input",
+      "listing-action-reason-input",
+      "listing-action-subtitle",
+      "listing-action-title",
+      "listings-category-option-all",
+      "listings-category-select",
+      "listings-clear-filters-button"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/corporate-listing-applications/urgent",
+    "component": "AdminListingsPage",
+    "file": "/app/frontend/src/pages/admin/AdminListings.js",
+    "data_testid_count": 27,
+    "sample_testids": [
+      "admin-listings-context",
+      "admin-listings-title",
+      "listing-action-cancel-button",
+      "listing-action-confirm-button",
+      "listing-action-modal",
+      "listing-action-note-input",
+      "listing-action-reason-input",
+      "listing-action-subtitle",
+      "listing-action-title",
+      "listings-category-option-all",
+      "listings-category-select",
+      "listings-clear-filters-button"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/ads",
+    "component": "AdminAdsManagement",
+    "file": "/app/frontend/src/pages/admin/AdminAdsManagement.js",
+    "data_testid_count": 46,
+    "sample_testids": [
+      "admin-ads-active",
+      "admin-ads-active-conflict",
+      "admin-ads-analytics-apply",
+      "admin-ads-analytics-breakdown",
+      "admin-ads-analytics-breakdown-title",
+      "admin-ads-analytics-content",
+      "admin-ads-analytics-empty",
+      "admin-ads-analytics-end",
+      "admin-ads-analytics-error",
+      "admin-ads-analytics-filters",
+      "admin-ads-analytics-group-ad",
+      "admin-ads-analytics-group-campaign"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/ads/campaigns",
+    "component": "AdminAdsCampaigns",
+    "file": "/app/frontend/src/pages/admin/AdminAdsCampaigns.js",
+    "data_testid_count": 36,
+    "sample_testids": [
+      "admin-ads-campaigns",
+      "admin-campaigns-ads-empty",
+      "admin-campaigns-ads-link",
+      "admin-campaigns-ads-select",
+      "admin-campaigns-ads-tab",
+      "admin-campaigns-create",
+      "admin-campaigns-create-advertiser",
+      "admin-campaigns-create-budget",
+      "admin-campaigns-create-button",
+      "admin-campaigns-create-currency",
+      "admin-campaigns-create-end",
+      "admin-campaigns-create-name"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/pricing/campaign",
+    "component": "AdminPricingCampaign",
+    "file": "/app/frontend/src/pages/admin/AdminPricingCampaign.js",
+    "data_testid_count": 18,
+    "sample_testids": [
+      "admin-pricing-campaign-card",
+      "admin-pricing-campaign-dates",
+      "admin-pricing-campaign-end",
+      "admin-pricing-campaign-error",
+      "admin-pricing-campaign-form",
+      "admin-pricing-campaign-page",
+      "admin-pricing-campaign-publish",
+      "admin-pricing-campaign-save",
+      "admin-pricing-campaign-scope",
+      "admin-pricing-campaign-start",
+      "admin-pricing-campaign-status",
+      "admin-pricing-campaign-status-detail"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/pricing/tiers",
+    "component": "AdminPricingTiers",
+    "file": "/app/frontend/src/pages/admin/AdminPricingTiers.js",
+    "data_testid_count": 27,
+    "sample_testids": [
+      "admin-pricing-individual-create",
+      "admin-pricing-individual-empty",
+      "admin-pricing-individual-error",
+      "admin-pricing-individual-modal",
+      "admin-pricing-individual-modal-active",
+      "admin-pricing-individual-modal-active-toggle",
+      "admin-pricing-individual-modal-cancel",
+      "admin-pricing-individual-modal-card",
+      "admin-pricing-individual-modal-close",
+      "admin-pricing-individual-modal-currency",
+      "admin-pricing-individual-modal-days",
+      "admin-pricing-individual-modal-end"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/pricing/packages",
+    "component": "AdminPricingPackages",
+    "file": "/app/frontend/src/pages/admin/AdminPricingPackages.js",
+    "data_testid_count": 27,
+    "sample_testids": [
+      "admin-pricing-corporate-create",
+      "admin-pricing-corporate-empty",
+      "admin-pricing-corporate-error",
+      "admin-pricing-corporate-modal",
+      "admin-pricing-corporate-modal-active",
+      "admin-pricing-corporate-modal-active-toggle",
+      "admin-pricing-corporate-modal-cancel",
+      "admin-pricing-corporate-modal-card",
+      "admin-pricing-corporate-modal-close",
+      "admin-pricing-corporate-modal-currency",
+      "admin-pricing-corporate-modal-days",
+      "admin-pricing-corporate-modal-end"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/dashboard",
+    "component": "AdminDashboardPage",
+    "file": "/app/frontend/src/pages/admin/AdminDashboard.js",
+    "data_testid_count": 0,
+    "sample_testids": [],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/country-compare",
+    "component": "AdminCountryComparePage",
+    "file": "/app/frontend/src/pages/admin/AdminCountryCompare.js",
+    "data_testid_count": 55,
+    "sample_testids": [
+      "admin-country-compare-page",
+      "country-compare-bar-chart",
+      "country-compare-bar-empty",
+      "country-compare-bar-list",
+      "country-compare-controls",
+      "country-compare-country-list",
+      "country-compare-custom-end",
+      "country-compare-custom-range",
+      "country-compare-custom-start",
+      "country-compare-empty",
+      "country-compare-error",
+      "country-compare-export-csv"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/system-settings",
+    "component": "AdminSystemSettingsPage",
+    "file": "/app/frontend/src/pages/admin/AdminSystemSettings.js",
+    "data_testid_count": 183,
+    "sample_testids": [
+      "admin-system-settings-page",
+      "system-settings-apple-signin-actions",
+      "system-settings-apple-signin-card",
+      "system-settings-apple-signin-clear-private-key",
+      "system-settings-apple-signin-client-id-input",
+      "system-settings-apple-signin-client-id-wrap",
+      "system-settings-apple-signin-error",
+      "system-settings-apple-signin-hint",
+      "system-settings-apple-signin-input-grid",
+      "system-settings-apple-signin-key-id-input",
+      "system-settings-apple-signin-key-id-wrap",
+      "system-settings-apple-signin-loading"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/listings",
+    "component": "AdminListingsPage",
+    "file": "/app/frontend/src/pages/admin/AdminListings.js",
+    "data_testid_count": 27,
+    "sample_testids": [
+      "admin-listings-context",
+      "admin-listings-title",
+      "listing-action-cancel-button",
+      "listing-action-confirm-button",
+      "listing-action-modal",
+      "listing-action-note-input",
+      "listing-action-reason-input",
+      "listing-action-subtitle",
+      "listing-action-title",
+      "listings-category-option-all",
+      "listings-category-select",
+      "listings-clear-filters-button"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/invoices",
+    "component": "AdminInvoicesPage",
+    "file": "/app/frontend/src/pages/admin/AdminInvoices.js",
+    "data_testid_count": 66,
+    "sample_testids": [
+      "admin-invoices-context",
+      "admin-invoices-page",
+      "admin-invoices-scope-badge",
+      "admin-invoices-title",
+      "invoice-amount-max",
+      "invoice-amount-min",
+      "invoice-country-required",
+      "invoice-create-amount",
+      "invoice-create-close",
+      "invoice-create-country",
+      "invoice-create-currency",
+      "invoice-create-dealer"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/payments",
+    "component": "AdminPaymentsPage",
+    "file": "/app/frontend/src/pages/admin/AdminPayments.js",
+    "data_testid_count": 15,
+    "sample_testids": [
+      "admin-transactions-apply-filters",
+      "admin-transactions-export-csv",
+      "admin-transactions-filter-end-date",
+      "admin-transactions-filter-listing-id",
+      "admin-transactions-filter-query",
+      "admin-transactions-filter-start-date",
+      "admin-transactions-filter-status",
+      "admin-transactions-filter-user-id",
+      "admin-transactions-filters",
+      "admin-transactions-header",
+      "admin-transactions-page",
+      "admin-transactions-scope-badge"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/finance-overview",
+    "component": "AdminFinanceOverviewPage",
+    "file": "/app/frontend/src/pages/admin/AdminFinanceOverview.js",
+    "data_testid_count": 32,
+    "sample_testids": [
+      "admin-finance-card-active-subscriptions",
+      "admin-finance-card-failed-rate",
+      "admin-finance-card-failed-rate-value",
+      "admin-finance-card-mrr",
+      "admin-finance-card-mrr-empty",
+      "admin-finance-card-refund-rate",
+      "admin-finance-card-refund-rate-value",
+      "admin-finance-card-revenue",
+      "admin-finance-card-revenue-empty",
+      "admin-finance-export-invoices",
+      "admin-finance-export-ledger",
+      "admin-finance-export-payments"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/subscriptions",
+    "component": "AdminSubscriptionsPage",
+    "file": "/app/frontend/src/pages/admin/AdminSubscriptions.js",
+    "data_testid_count": 15,
+    "sample_testids": [
+      "admin-subscriptions-detail-close",
+      "admin-subscriptions-detail-invoice-count",
+      "admin-subscriptions-detail-panel",
+      "admin-subscriptions-detail-plan",
+      "admin-subscriptions-detail-provider",
+      "admin-subscriptions-detail-status",
+      "admin-subscriptions-detail-title",
+      "admin-subscriptions-detail-user",
+      "admin-subscriptions-header",
+      "admin-subscriptions-page",
+      "admin-subscriptions-scope-badge",
+      "admin-subscriptions-status-filter"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/ledger",
+    "component": "AdminLedgerPage",
+    "file": "/app/frontend/src/pages/admin/AdminLedger.js",
+    "data_testid_count": 13,
+    "sample_testids": [
+      "admin-ledger-empty",
+      "admin-ledger-error",
+      "admin-ledger-filter-apply",
+      "admin-ledger-filter-reference-id",
+      "admin-ledger-filter-reference-type",
+      "admin-ledger-filters",
+      "admin-ledger-header",
+      "admin-ledger-loading",
+      "admin-ledger-page",
+      "admin-ledger-scope-badge",
+      "admin-ledger-subtitle",
+      "admin-ledger-table"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/tax-rates",
+    "component": "AdminTaxRatesPage",
+    "file": "/app/frontend/src/pages/admin/AdminTaxRates.js",
+    "data_testid_count": 16,
+    "sample_testids": [
+      "admin-tax-context",
+      "admin-tax-rates-page",
+      "admin-tax-title",
+      "tax-create-open",
+      "tax-empty",
+      "tax-form-active",
+      "tax-form-country",
+      "tax-form-effective",
+      "tax-form-error",
+      "tax-form-rate",
+      "tax-form-submit",
+      "tax-loading"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/plans",
+    "component": "AdminPlansPage",
+    "file": "/app/frontend/src/pages/admin/AdminPlans.js",
+    "data_testid_count": 58,
+    "sample_testids": [
+      "plans-create-button",
+      "plans-db-banner",
+      "plans-error",
+      "plans-filter-chip-country",
+      "plans-filter-chip-global",
+      "plans-filter-chips",
+      "plans-filter-country",
+      "plans-filter-country-label",
+      "plans-filter-scope",
+      "plans-filter-scope-label",
+      "plans-filter-search-button",
+      "plans-filter-search-input"
+    ],
+    "api_paths": [
+      "/api/admin/plans",
+      "/api/admin/plans/",
+      "/api/health/db"
+    ],
+    "methods": []
+  },
+  {
+    "route": "/dealers/:dealerId",
+    "component": "AdminDealerDetailPage",
+    "file": "/app/frontend/src/pages/admin/AdminDealerDetail.js",
+    "data_testid_count": 27,
+    "sample_testids": [
+      "dealer-detail-ban-reason",
+      "dealer-detail-card",
+      "dealer-detail-email",
+      "dealer-detail-empty",
+      "dealer-detail-id",
+      "dealer-detail-loading",
+      "dealer-detail-page",
+      "dealer-detail-risk-level",
+      "dealer-detail-status",
+      "dealer-detail-title",
+      "dealer-invoice-card",
+      "dealer-plan-assign"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/dealers",
+    "component": "DealersPage",
+    "file": "/app/frontend/src/pages/admin/Dealers.js",
+    "data_testid_count": 66,
+    "sample_testids": [
+      "dealer-drawer",
+      "dealer-drawer-actions",
+      "dealer-drawer-audit",
+      "dealer-drawer-audit-empty",
+      "dealer-drawer-audit-error",
+      "dealer-drawer-audit-loading",
+      "dealer-drawer-close",
+      "dealer-drawer-company",
+      "dealer-drawer-contact",
+      "dealer-drawer-country",
+      "dealer-drawer-created",
+      "dealer-drawer-delete"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/dealer-applications",
+    "component": "DealerApplicationsPage",
+    "file": "/app/frontend/src/pages/admin/DealerApplications.js",
+    "data_testid_count": 0,
+    "sample_testids": [],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/permissions",
+    "component": "AdminPermissionsPage",
+    "file": "/app/frontend/src/pages/admin/AdminPermissions.js",
+    "data_testid_count": 57,
+    "sample_testids": [
+      "admin-permissions-content-grid",
+      "admin-permissions-draft-actions",
+      "admin-permissions-draft-card",
+      "admin-permissions-draft-close",
+      "admin-permissions-draft-country-multiselect",
+      "admin-permissions-draft-global-scope",
+      "admin-permissions-draft-global-scope-label",
+      "admin-permissions-draft-header",
+      "admin-permissions-draft-reason",
+      "admin-permissions-draft-reason-wrap",
+      "admin-permissions-draft-scope",
+      "admin-permissions-draft-submit"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/audit",
+    "component": "AdminAuditDashboard",
+    "file": "/app/frontend/src/pages/admin/AdminAuditDashboard.js",
+    "data_testid_count": 54,
+    "sample_testids": [
+      "admin-audit-anomalies-card",
+      "admin-audit-anomalies-empty-wrap",
+      "admin-audit-anomalies-list",
+      "admin-audit-anomalies-title",
+      "admin-audit-apply-filters",
+      "admin-audit-clear-filters",
+      "admin-audit-dashboard-header",
+      "admin-audit-dashboard-page",
+      "admin-audit-dashboard-subtitle",
+      "admin-audit-dashboard-title",
+      "admin-audit-events-card",
+      "admin-audit-events-table"
+    ],
+    "api_paths": [
+      "/api/admin/audit-logs",
+      "/api/admin/audit-logs/event-types",
+      "/api/admin/audit/dashboard/anomalies",
+      "/api/admin/audit/dashboard/schema",
+      "/api/admin/audit/dashboard/stats",
+      "/api/countries"
+    ],
+    "methods": []
+  },
+  {
+    "route": "/audit-logs",
+    "component": "AuditLogs",
+    "file": "/app/frontend/src/pages/AuditLogs.js",
+    "data_testid_count": 59,
+    "sample_testids": [
+      "audit-logs-action",
+      "audit-logs-actions",
+      "audit-logs-admin-user",
+      "audit-logs-copy-resource",
+      "audit-logs-copy-status",
+      "audit-logs-country",
+      "audit-logs-date-from",
+      "audit-logs-date-to",
+      "audit-logs-db-banner",
+      "audit-logs-detail-action",
+      "audit-logs-detail-actions",
+      "audit-logs-detail-actor"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/site-design/header",
+    "component": "AdminHeaderManagement",
+    "file": "/app/frontend/src/pages/admin/AdminHeaderManagement.js",
+    "data_testid_count": 26,
+    "sample_testids": [
+      "admin-header-add-link-button",
+      "admin-header-current-mode-title",
+      "admin-header-error",
+      "admin-header-file-input",
+      "admin-header-links-editor",
+      "admin-header-links-empty",
+      "admin-header-links-list",
+      "admin-header-links-title",
+      "admin-header-management",
+      "admin-header-mode-tabs",
+      "admin-header-preview",
+      "admin-header-preview-auth"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/site-design/footer",
+    "component": "AdminFooterManagement",
+    "file": "/app/frontend/src/pages/admin/AdminFooterManagement.js",
+    "data_testid_count": 15,
+    "sample_testids": [
+      "admin-footer-actions",
+      "admin-footer-add-row",
+      "admin-footer-builder",
+      "admin-footer-empty",
+      "admin-footer-error",
+      "admin-footer-management",
+      "admin-footer-preview",
+      "admin-footer-publish",
+      "admin-footer-rows",
+      "admin-footer-save-draft",
+      "admin-footer-status",
+      "admin-footer-subtitle"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/site-design/theme",
+    "component": "AdminThemeManagement",
+    "file": "/app/frontend/src/pages/admin/AdminThemeManagement.js",
+    "data_testid_count": 36,
+    "sample_testids": [
+      "admin-theme-actions",
+      "admin-theme-active-version",
+      "admin-theme-editor",
+      "admin-theme-error",
+      "admin-theme-header",
+      "admin-theme-layout",
+      "admin-theme-loading",
+      "admin-theme-management",
+      "admin-theme-meta",
+      "admin-theme-mode-tabs",
+      "admin-theme-preview",
+      "admin-theme-preview-dark"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/site-design/showcase",
+    "component": "AdminShowcaseManagement",
+    "file": "/app/frontend/src/pages/admin/AdminShowcaseManagement.js",
+    "data_testid_count": 32,
+    "sample_testids": [
+      "admin-showcase-category-add",
+      "admin-showcase-category-block",
+      "admin-showcase-category-default-columns",
+      "admin-showcase-category-default-grid",
+      "admin-showcase-category-default-listing-count",
+      "admin-showcase-category-default-rows",
+      "admin-showcase-category-empty",
+      "admin-showcase-category-enabled",
+      "admin-showcase-category-enabled-wrap",
+      "admin-showcase-category-list",
+      "admin-showcase-category-list-header",
+      "admin-showcase-category-title"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/site-design/home-category",
+    "component": "AdminHomeCategoryDesignV2",
+    "file": "/app/frontend/src/pages/admin/AdminHomeCategoryDesignV2.js",
+    "data_testid_count": 75,
+    "sample_testids": [
+      "home-category-crud-add-root",
+      "home-category-crud-card",
+      "home-category-crud-empty",
+      "home-category-crud-error",
+      "home-category-crud-field-active",
+      "home-category-crud-field-active-wrap",
+      "home-category-crud-field-icon",
+      "home-category-crud-field-icon-upload",
+      "home-category-crud-field-icon-upload-error",
+      "home-category-crud-field-icon-upload-help",
+      "home-category-crud-field-icon-upload-status",
+      "home-category-crud-field-icon-upload-wrap"
+    ],
+    "api_paths": [],
+    "methods": [
+      "DELETE",
+      "PATCH",
+      "PUT"
+    ]
+  },
+  {
+    "route": "/site-design/listing",
+    "component": "AdminListingDesign",
+    "file": "/app/frontend/src/pages/admin/AdminListingDesign.js",
+    "data_testid_count": 53,
+    "sample_testids": [
+      "admin-listing-design-actions",
+      "admin-listing-design-address-country-mode",
+      "admin-listing-design-address-module-apply",
+      "admin-listing-design-address-requirements",
+      "admin-listing-design-contact-message-toggle",
+      "admin-listing-design-contact-message-toggle-wrap",
+      "admin-listing-design-contact-phone-toggle",
+      "admin-listing-design-contact-phone-toggle-wrap",
+      "admin-listing-design-duration-discount-toggle",
+      "admin-listing-design-duration-discount-wrap",
+      "admin-listing-design-error",
+      "admin-listing-design-google-country-options"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/site-design/listing-flow-settings",
+    "component": "AdminSystemSettingsPage",
+    "file": "/app/frontend/src/pages/admin/AdminSystemSettings.js",
+    "data_testid_count": 183,
+    "sample_testids": [
+      "admin-system-settings-page",
+      "system-settings-apple-signin-actions",
+      "system-settings-apple-signin-card",
+      "system-settings-apple-signin-clear-private-key",
+      "system-settings-apple-signin-client-id-input",
+      "system-settings-apple-signin-client-id-wrap",
+      "system-settings-apple-signin-error",
+      "system-settings-apple-signin-hint",
+      "system-settings-apple-signin-input-grid",
+      "system-settings-apple-signin-key-id-input",
+      "system-settings-apple-signin-key-id-wrap",
+      "system-settings-apple-signin-loading"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/site-design/content-builder",
+    "component": "AdminContentBuilder",
+    "file": "/app/frontend/src/pages/admin/AdminContentBuilder.js",
+    "data_testid_count": 117,
+    "sample_testids": [
+      "admin-content-builder-add-row-button",
+      "admin-content-builder-apply-preset-button",
+      "admin-content-builder-binding-action-grid",
+      "admin-content-builder-binding-active-empty",
+      "admin-content-builder-binding-active-page-id",
+      "admin-content-builder-binding-active-summary",
+      "admin-content-builder-binding-bind-button",
+      "admin-content-builder-binding-category-input",
+      "admin-content-builder-binding-category-search-input",
+      "admin-content-builder-binding-category-search-wrap",
+      "admin-content-builder-binding-category-tree",
+      "admin-content-builder-binding-category-tree-empty"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/user-interface-design",
+    "component": "AdminUserInterfaceDesignV2",
+    "file": "/app/frontend/src/pages/admin/AdminUserInterfaceDesignV2.jsx",
+    "data_testid_count": 9,
+    "sample_testids": [
+      "admin-user-interface-design-header",
+      "admin-user-interface-design-page",
+      "admin-user-interface-design-subtitle",
+      "admin-user-interface-design-tab-content",
+      "admin-user-interface-design-tab-corporate-header",
+      "admin-user-interface-design-tab-dashboard",
+      "admin-user-interface-design-tab-theme",
+      "admin-user-interface-design-tabs",
+      "admin-user-interface-design-title"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/ops/publish-health",
+    "component": "AdminPublishHealthPage",
+    "file": "/app/frontend/src/pages/admin/ops/AdminPublishHealthPage.jsx",
+    "data_testid_count": 49,
+    "sample_testids": [
+      "ops-alert-channel-breakdown-grid",
+      "ops-alert-last-failure-timestamp",
+      "ops-alert-metrics-refresh-button",
+      "ops-alert-open-html-report-button",
+      "ops-alert-reliability-grid",
+      "ops-alert-rerun-actions",
+      "ops-alert-rerun-button",
+      "ops-alert-rerun-card",
+      "ops-alert-rerun-channel-results",
+      "ops-alert-rerun-channel-results-empty",
+      "ops-alert-rerun-channel-selection",
+      "ops-alert-rerun-description"
+    ],
+    "api_paths": [],
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "route": "/info-pages",
+    "component": "AdminInfoPages",
+    "file": "/app/frontend/src/pages/admin/AdminInfoPages.js",
+    "data_testid_count": 33,
+    "sample_testids": [
+      "admin-info-pages",
+      "admin-info-pages-cancel",
+      "admin-info-pages-content-de",
+      "admin-info-pages-content-fr",
+      "admin-info-pages-content-tr",
+      "admin-info-pages-create",
+      "admin-info-pages-empty",
+      "admin-info-pages-error",
+      "admin-info-pages-modal",
+      "admin-info-pages-modal-card",
+      "admin-info-pages-modal-close",
+      "admin-info-pages-modal-title"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/countries",
+    "component": "AdminCountriesPage",
+    "file": "/app/frontend/src/pages/admin/AdminCountries.js",
+    "data_testid_count": 19,
+    "sample_testids": [
+      "admin-countries-page",
+      "admin-countries-title",
+      "countries-create-open",
+      "countries-empty",
+      "countries-form-active",
+      "countries-form-code",
+      "countries-form-currency",
+      "countries-form-error",
+      "countries-form-language",
+      "countries-form-name",
+      "countries-form-submit",
+      "countries-iso-picker"
+    ],
+    "api_paths": [],
+    "methods": []
+  },
+  {
+    "route": "/vehicle-makes",
+    "component": "AdminVehicleMakes",
+    "file": "/app/frontend/src/pages/admin/AdminVehicleMakes.js",
+    "data_testid_count": 25,
+    "sample_testids": [
+      "admin-vehicle-makes-page",
+      "vehicle-makes-active-checkbox",
+      "vehicle-makes-bulk-delete",
+      "vehicle-makes-cancel",
+      "vehicle-makes-country",
+      "vehicle-makes-country-input",
+      "vehicle-makes-create-open",
+      "vehicle-makes-error",
+      "vehicle-makes-filter-type",
+      "vehicle-makes-filters",
+      "vehicle-makes-header-actions",
+      "vehicle-makes-header-active"
+    ],
+    "api_paths": [
+      "/api/admin/vehicle-makes",
+      "/api/admin/vehicle-makes/",
+      "/api/admin/vehicle-makes/bulk-delete"
+    ],
+    "methods": []
+  },
+  {
+    "route": "/vehicle-models",
+    "component": "AdminVehicleModels",
+    "file": "/app/frontend/src/pages/admin/AdminVehicleModels.js",
+    "data_testid_count": 28,
+    "sample_testids": [
+      "admin-vehicle-models-page",
+      "vehicle-models-active-checkbox",
+      "vehicle-models-bulk-delete",
+      "vehicle-models-cancel",
+      "vehicle-models-country",
+      "vehicle-models-create-open",
+      "vehicle-models-error",
+      "vehicle-models-filter-make",
+      "vehicle-models-filter-type",
+      "vehicle-models-filters",
+      "vehicle-models-header-actions",
+      "vehicle-models-header-active"
+    ],
+    "api_paths": [
+      "/api/admin/vehicle-makes",
+      "/api/admin/vehicle-models",
+      "/api/admin/vehicle-models/",
+      "/api/admin/vehicle-models/bulk-delete"
+    ],
+    "methods": []
+  },
+  {
+    "route": "/vehicle-master-import",
+    "component": "AdminVehicleMasterImport",
+    "file": "/app/frontend/src/pages/admin/AdminVehicleMasterImport.js",
+    "data_testid_count": 59,
+    "sample_testids": [
+      "vehicle-import-api-dry-run",
+      "vehicle-import-api-dry-run-toggle",
+      "vehicle-import-api-error",
+      "vehicle-import-api-flags",
+      "vehicle-import-api-full-results",
+      "vehicle-import-api-preview-button",
+      "vehicle-import-api-preview-output",
+      "vehicle-import-api-sold-in-us",
+      "vehicle-import-api-status",
+      "vehicle-import-api-submit",
+      "vehicle-import-job-detail",
+      "vehicle-import-job-detail-empty"
+    ],
+    "api_paths": [],
+    "methods": []
+  }
+]

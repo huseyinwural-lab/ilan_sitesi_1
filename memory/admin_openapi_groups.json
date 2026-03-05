@@ -1,0 +1,2072 @@
+{
+  "payments": [
+    {
+      "method": "GET",
+      "path": "/api/payments/checkout/status/{session_id}",
+      "summary": "Get Checkout Status",
+      "operationId": "get_checkout_status_api_payments_checkout_status__session_id__get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/payments/create-checkout-session",
+      "summary": "Create Checkout Session",
+      "operationId": "create_checkout_session_api_payments_create_checkout_session_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/payments/create-intent",
+      "summary": "Create Listing Payment Intent",
+      "operationId": "create_listing_payment_intent_api_payments_create_intent_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/payments/runtime-config",
+      "summary": "Get Payments Runtime Config",
+      "operationId": "get_payments_runtime_config_api_payments_runtime_config_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/payments/stripe/webhook",
+      "summary": "Stripe Payment Intent Webhook",
+      "operationId": "stripe_payment_intent_webhook_api_payments_stripe_webhook_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/payments/webhook",
+      "summary": "Stripe Payment Intent Webhook",
+      "operationId": "stripe_payment_intent_webhook_api_payments_webhook_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/payments/{payment_id}/reconcile",
+      "summary": "Reconcile Listing Payment",
+      "operationId": "reconcile_listing_payment_api_payments__payment_id__reconcile_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/payments/{payment_id}/status",
+      "summary": "Get Listing Payment Status",
+      "operationId": "get_listing_payment_status_api_payments__payment_id__status_get"
+    }
+  ],
+  "admin": [
+    {
+      "method": "GET",
+      "path": "/api/admin/ads",
+      "summary": "List Ads Admin",
+      "operationId": "list_ads_admin_api_admin_ads_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/ads",
+      "summary": "Create Ad",
+      "operationId": "create_ad_api_admin_ads_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ads/analytics",
+      "summary": "Get Ads Analytics",
+      "operationId": "get_ads_analytics_api_admin_ads_analytics_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ads/campaigns",
+      "summary": "List Ad Campaigns",
+      "operationId": "list_ad_campaigns_api_admin_ads_campaigns_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/ads/campaigns",
+      "summary": "Create Ad Campaign",
+      "operationId": "create_ad_campaign_api_admin_ads_campaigns_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ads/campaigns/{campaign_id}",
+      "summary": "Get Ad Campaign",
+      "operationId": "get_ad_campaign_api_admin_ads_campaigns__campaign_id__get"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/ads/campaigns/{campaign_id}",
+      "summary": "Update Ad Campaign",
+      "operationId": "update_ad_campaign_api_admin_ads_campaigns__campaign_id__patch"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/ads/campaigns/{campaign_id}/ads/{ad_id}",
+      "summary": "Unlink Ad From Campaign",
+      "operationId": "unlink_ad_from_campaign_api_admin_ads_campaigns__campaign_id__ads__ad_id__delete"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/ads/campaigns/{campaign_id}/ads/{ad_id}",
+      "summary": "Link Ad To Campaign",
+      "operationId": "link_ad_to_campaign_api_admin_ads_campaigns__campaign_id__ads__ad_id__post"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/ads/{ad_id}",
+      "summary": "Delete Ad",
+      "operationId": "delete_ad_api_admin_ads__ad_id__delete"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/ads/{ad_id}",
+      "summary": "Update Ad",
+      "operationId": "update_ad_api_admin_ads__ad_id__patch"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/ads/{ad_id}/upload",
+      "summary": "Upload Ad Asset",
+      "operationId": "upload_ad_asset_api_admin_ads__ad_id__upload_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/analytics/events",
+      "summary": "Track Admin Wizard Event",
+      "operationId": "track_admin_wizard_event_api_admin_analytics_events_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/applications/assignees",
+      "summary": "List Support Application Assignees",
+      "operationId": "list_support_application_assignees_api_admin_applications_assignees_get"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/applications/{application_id}/status",
+      "summary": "Update Support Application Status",
+      "operationId": "update_support_application_status_api_admin_applications__application_id__status_patch"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/attributes",
+      "summary": "Admin List Attributes",
+      "operationId": "admin_list_attributes_api_admin_attributes_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/attributes",
+      "summary": "Admin Create Attribute",
+      "operationId": "admin_create_attribute_api_admin_attributes_post"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/attributes/{attribute_id}",
+      "summary": "Admin Delete Attribute",
+      "operationId": "admin_delete_attribute_api_admin_attributes__attribute_id__delete"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/attributes/{attribute_id}",
+      "summary": "Admin Update Attribute",
+      "operationId": "admin_update_attribute_api_admin_attributes__attribute_id__patch"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/audit-logs",
+      "summary": "Admin List Audit Logs",
+      "operationId": "admin_list_audit_logs_api_admin_audit_logs_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/audit-logs/actions",
+      "summary": "Admin Audit Actions",
+      "operationId": "admin_audit_actions_api_admin_audit_logs_actions_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/audit-logs/event-types",
+      "summary": "Admin Audit Event Types",
+      "operationId": "admin_audit_event_types_api_admin_audit_logs_event_types_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/audit-logs/export",
+      "summary": "Admin Export Audit Logs",
+      "operationId": "admin_export_audit_logs_api_admin_audit_logs_export_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/audit-logs/resources",
+      "summary": "Admin Audit Resources",
+      "operationId": "admin_audit_resources_api_admin_audit_logs_resources_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/audit-logs/{log_id}",
+      "summary": "Admin Audit Log Detail",
+      "operationId": "admin_audit_log_detail_api_admin_audit_logs__log_id__get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/audit/dashboard/anomalies",
+      "summary": "Admin Audit Dashboard Anomalies",
+      "operationId": "admin_audit_dashboard_anomalies_api_admin_audit_dashboard_anomalies_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/audit/dashboard/events",
+      "summary": "Admin Audit Dashboard Events",
+      "operationId": "admin_audit_dashboard_events_api_admin_audit_dashboard_events_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/audit/dashboard/schema",
+      "summary": "Admin Audit Dashboard Schema",
+      "operationId": "admin_audit_dashboard_schema_api_admin_audit_dashboard_schema_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/audit/dashboard/stats",
+      "summary": "Admin Audit Dashboard Stats",
+      "operationId": "admin_audit_dashboard_stats_api_admin_audit_dashboard_stats_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/campaigns",
+      "summary": "List Campaigns",
+      "operationId": "list_campaigns_api_admin_campaigns_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/campaigns",
+      "summary": "Create Campaign",
+      "operationId": "create_campaign_api_admin_campaigns_post"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/campaigns/{campaign_id}",
+      "summary": "Archive Campaign",
+      "operationId": "archive_campaign_api_admin_campaigns__campaign_id__delete"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/campaigns/{campaign_id}",
+      "summary": "Get Campaign Detail",
+      "operationId": "get_campaign_detail_api_admin_campaigns__campaign_id__get"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/admin/campaigns/{campaign_id}",
+      "summary": "Update Campaign",
+      "operationId": "update_campaign_api_admin_campaigns__campaign_id__put"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/campaigns/{campaign_id}/activate",
+      "summary": "Activate Campaign",
+      "operationId": "activate_campaign_api_admin_campaigns__campaign_id__activate_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/campaigns/{campaign_id}/archive",
+      "summary": "Archive Campaign Action",
+      "operationId": "archive_campaign_action_api_admin_campaigns__campaign_id__archive_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/campaigns/{campaign_id}/pause",
+      "summary": "Pause Campaign",
+      "operationId": "pause_campaign_api_admin_campaigns__campaign_id__pause_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/categories",
+      "summary": "Admin List Categories",
+      "operationId": "admin_list_categories_api_admin_categories_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/categories",
+      "summary": "Admin Create Category",
+      "operationId": "admin_create_category_api_admin_categories_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/categories/bulk-actions",
+      "summary": "Admin Categories Bulk Actions",
+      "operationId": "admin_categories_bulk_actions_api_admin_categories_bulk_actions_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/categories/bulk-actions/jobs/{job_id}",
+      "summary": "Admin Categories Bulk Action Job Status",
+      "operationId": "admin_categories_bulk_action_job_status_api_admin_categories_bulk_actions_jobs__job_id__get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/categories/image-upload",
+      "summary": "Admin Upload Category Image",
+      "operationId": "admin_upload_category_image_api_admin_categories_image_upload_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/categories/import-export/export/csv",
+      "summary": "Admin Export Categories Csv",
+      "operationId": "admin_export_categories_csv_api_admin_categories_import_export_export_csv_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/categories/import-export/export/json",
+      "summary": "Admin Export Categories Json",
+      "operationId": "admin_export_categories_json_api_admin_categories_import_export_export_json_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/categories/import-export/export/xlsx",
+      "summary": "Admin Export Categories Xlsx",
+      "operationId": "admin_export_categories_xlsx_api_admin_categories_import_export_export_xlsx_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/categories/import-export/import/commit",
+      "summary": "Admin Import Categories Commit",
+      "operationId": "admin_import_categories_commit_api_admin_categories_import_export_import_commit_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/categories/import-export/import/dry-run",
+      "summary": "Admin Import Categories Dry Run",
+      "operationId": "admin_import_categories_dry_run_api_admin_categories_import_export_import_dry_run_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/categories/import-export/import/dry-run/pdf",
+      "summary": "Admin Import Categories Dry Run Pdf",
+      "operationId": "admin_import_categories_dry_run_pdf_api_admin_categories_import_export_import_dry_run_pdf_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/categories/import-export/sample/csv",
+      "summary": "Admin Export Category Sample Csv",
+      "operationId": "admin_export_category_sample_csv_api_admin_categories_import_export_sample_csv_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/categories/import-export/sample/xlsx",
+      "summary": "Admin Export Category Sample Xlsx",
+      "operationId": "admin_export_category_sample_xlsx_api_admin_categories_import_export_sample_xlsx_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/categories/order-index/preview",
+      "summary": "Admin Category Order Index Preview",
+      "operationId": "admin_category_order_index_preview_api_admin_categories_order_index_preview_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/categories/seed/real-estate-standard",
+      "summary": "Admin Seed Real Estate Standard Hierarchy",
+      "operationId": "admin_seed_real_estate_standard_hierarchy_api_admin_categories_seed_real_estate_standard_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/categories/vehicle-segment/link-status",
+      "summary": "Admin Category Vehicle Segment Link Status",
+      "operationId": "admin_category_vehicle_segment_link_status_api_admin_categories_vehicle_segment_link_status_get"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/categories/{category_id}",
+      "summary": "Admin Delete Category",
+      "operationId": "admin_delete_category_api_admin_categories__category_id__delete"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/categories/{category_id}",
+      "summary": "Admin Update Category",
+      "operationId": "admin_update_category_api_admin_categories__category_id__patch"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/categories/{category_id}/export/csv",
+      "summary": "Admin Export Category Csv",
+      "operationId": "admin_export_category_csv_api_admin_categories__category_id__export_csv_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/categories/{category_id}/export/pdf",
+      "summary": "Admin Export Category Pdf",
+      "operationId": "admin_export_category_pdf_api_admin_categories__category_id__export_pdf_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/categories/{category_id}/versions",
+      "summary": "Admin List Category Versions",
+      "operationId": "admin_list_category_versions_api_admin_categories__category_id__versions_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/categories/{category_id}/versions/{version_id}",
+      "summary": "Admin Get Category Version",
+      "operationId": "admin_get_category_version_api_admin_categories__category_id__versions__version_id__get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/countries",
+      "summary": "Admin List Countries",
+      "operationId": "admin_list_countries_api_admin_countries_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/countries",
+      "summary": "Admin Create Country",
+      "operationId": "admin_create_country_api_admin_countries_post"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/countries/{code}",
+      "summary": "Admin Delete Country",
+      "operationId": "admin_delete_country_api_admin_countries__code__delete"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/countries/{code}",
+      "summary": "Admin Get Country",
+      "operationId": "admin_get_country_api_admin_countries__code__get"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/countries/{code}",
+      "summary": "Admin Update Country",
+      "operationId": "admin_update_country_api_admin_countries__code__patch"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/dashboard/country-compare",
+      "summary": "Admin Dashboard Country Compare",
+      "operationId": "admin_dashboard_country_compare_api_admin_dashboard_country_compare_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/dashboard/country-compare/export/csv",
+      "summary": "Admin Dashboard Country Compare Export Csv",
+      "operationId": "admin_dashboard_country_compare_export_csv_api_admin_dashboard_country_compare_export_csv_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/dashboard/export/pdf",
+      "summary": "Admin Dashboard Export Pdf",
+      "operationId": "admin_dashboard_export_pdf_api_admin_dashboard_export_pdf_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/dashboard/summary",
+      "summary": "Admin Dashboard Summary",
+      "operationId": "admin_dashboard_summary_api_admin_dashboard_summary_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/dealer-applications",
+      "summary": "Admin List Dealer Applications",
+      "operationId": "admin_list_dealer_applications_api_admin_dealer_applications_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/dealer-applications/{app_id}/approve",
+      "summary": "Admin Approve Dealer Application",
+      "operationId": "admin_approve_dealer_application_api_admin_dealer_applications__app_id__approve_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/dealer-applications/{app_id}/reject",
+      "summary": "Admin Reject Dealer Application",
+      "operationId": "admin_reject_dealer_application_api_admin_dealer_applications__app_id__reject_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/dealer-portal/config",
+      "summary": "Admin Dealer Portal Config",
+      "operationId": "admin_dealer_portal_config_api_admin_dealer_portal_config_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/dealer-portal/config/draft/publish",
+      "summary": "Admin Dealer Portal Draft Publish",
+      "operationId": "admin_dealer_portal_draft_publish_api_admin_dealer_portal_config_draft_publish_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/dealer-portal/config/draft/save",
+      "summary": "Admin Dealer Portal Draft Save",
+      "operationId": "admin_dealer_portal_draft_save_api_admin_dealer_portal_config_draft_save_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/dealer-portal/config/preview",
+      "summary": "Admin Dealer Portal Config Preview",
+      "operationId": "admin_dealer_portal_config_preview_api_admin_dealer_portal_config_preview_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/dealer-portal/config/revisions",
+      "summary": "Admin Dealer Portal Revisions",
+      "operationId": "admin_dealer_portal_revisions_api_admin_dealer_portal_config_revisions_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/dealer-portal/config/rollback",
+      "summary": "Admin Dealer Portal Rollback",
+      "operationId": "admin_dealer_portal_rollback_api_admin_dealer_portal_config_rollback_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/dealer-portal/modules/reorder",
+      "summary": "Admin Dealer Portal Module Reorder",
+      "operationId": "admin_dealer_portal_module_reorder_api_admin_dealer_portal_modules_reorder_post"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/dealer-portal/modules/{module_id}",
+      "summary": "Admin Dealer Portal Module Update",
+      "operationId": "admin_dealer_portal_module_update_api_admin_dealer_portal_modules__module_id__patch"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/dealer-portal/nav/reorder",
+      "summary": "Admin Dealer Portal Nav Reorder",
+      "operationId": "admin_dealer_portal_nav_reorder_api_admin_dealer_portal_nav_reorder_post"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/dealer-portal/nav/{item_id}",
+      "summary": "Admin Dealer Portal Nav Update",
+      "operationId": "admin_dealer_portal_nav_update_api_admin_dealer_portal_nav__item_id__patch"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/dealers",
+      "summary": "Admin List Dealers",
+      "operationId": "admin_list_dealers_api_admin_dealers_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/dealers/{dealer_id}",
+      "summary": "Admin Get Dealer Detail",
+      "operationId": "admin_get_dealer_detail_api_admin_dealers__dealer_id__get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/dealers/{dealer_id}/audit-logs",
+      "summary": "Admin Get Dealer Audit Logs",
+      "operationId": "admin_get_dealer_audit_logs_api_admin_dealers__dealer_id__audit_logs_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/dealers/{dealer_id}/plan",
+      "summary": "Admin Assign Dealer Plan",
+      "operationId": "admin_assign_dealer_plan_api_admin_dealers__dealer_id__plan_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/dealers/{dealer_id}/status",
+      "summary": "Admin Set Dealer Status",
+      "operationId": "admin_set_dealer_status_api_admin_dealers__dealer_id__status_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/doping/requests",
+      "summary": "List Doping Requests",
+      "operationId": "list_doping_requests_api_admin_doping_requests_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/doping/requests/{request_id}/approve",
+      "summary": "Approve Doping Request",
+      "operationId": "approve_doping_request_api_admin_doping_requests__request_id__approve_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/doping/requests/{request_id}/mark-paid",
+      "summary": "Mark Doping Paid",
+      "operationId": "mark_doping_paid_api_admin_doping_requests__request_id__mark_paid_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/doping/requests/{request_id}/publish",
+      "summary": "Publish Doping Request",
+      "operationId": "publish_doping_request_api_admin_doping_requests__request_id__publish_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/export",
+      "summary": "Admin Finance Export",
+      "operationId": "admin_finance_export_api_admin_finance_export_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/ledger",
+      "summary": "Admin Finance Ledger List",
+      "operationId": "admin_finance_ledger_list_api_admin_finance_ledger_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/finance/ledger/{entry_id}/reverse",
+      "summary": "Admin Finance Reverse Ledger Entry",
+      "operationId": "admin_finance_reverse_ledger_entry_api_admin_finance_ledger__entry_id__reverse_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/overview",
+      "summary": "Admin Finance Overview",
+      "operationId": "admin_finance_overview_api_admin_finance_overview_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/product-prices",
+      "summary": "Admin Finance Product Prices",
+      "operationId": "admin_finance_product_prices_api_admin_finance_product_prices_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/products",
+      "summary": "Admin Finance Products",
+      "operationId": "admin_finance_products_api_admin_finance_products_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/finance/products",
+      "summary": "Admin Finance Create Product",
+      "operationId": "admin_finance_create_product_api_admin_finance_products_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/finance/products/{product_id}/prices",
+      "summary": "Admin Finance Create Product Price",
+      "operationId": "admin_finance_create_product_price_api_admin_finance_products__product_id__prices_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/revenue",
+      "summary": "Admin Revenue",
+      "operationId": "admin_revenue_api_admin_finance_revenue_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/subscriptions",
+      "summary": "Admin Finance Subscriptions",
+      "operationId": "admin_finance_subscriptions_api_admin_finance_subscriptions_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/subscriptions/{subscription_id}",
+      "summary": "Admin Finance Subscription Detail",
+      "operationId": "admin_finance_subscription_detail_api_admin_finance_subscriptions__subscription_id__get"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/finance/subscriptions/{subscription_id}/status",
+      "summary": "Admin Finance Update Subscription Status",
+      "operationId": "admin_finance_update_subscription_status_api_admin_finance_subscriptions__subscription_id__status_patch"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/tax-profiles",
+      "summary": "Admin Finance Tax Profiles",
+      "operationId": "admin_finance_tax_profiles_api_admin_finance_tax_profiles_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/finance/tax-profiles",
+      "summary": "Admin Finance Create Tax Profile",
+      "operationId": "admin_finance_create_tax_profile_api_admin_finance_tax_profiles_post"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/finance/tax-profiles/{profile_id}",
+      "summary": "Admin Finance Update Tax Profile",
+      "operationId": "admin_finance_update_tax_profile_api_admin_finance_tax_profiles__profile_id__patch"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/finance/trace/{invoice_id}",
+      "summary": "Admin Finance Trace",
+      "operationId": "admin_finance_trace_api_admin_finance_trace__invoice_id__get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/footer/layout",
+      "summary": "Get Footer Layout Admin",
+      "operationId": "get_footer_layout_admin_api_admin_footer_layout_get"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/admin/footer/layout",
+      "summary": "Save Footer Layout",
+      "operationId": "save_footer_layout_api_admin_footer_layout_put"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/footer/layout/publish",
+      "summary": "Publish Footer Layout",
+      "operationId": "publish_footer_layout_api_admin_footer_layout_publish_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/footer/layout/{layout_id}",
+      "summary": "Get Footer Layout Version",
+      "operationId": "get_footer_layout_version_api_admin_footer_layout__layout_id__get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/footer/layout/{layout_id}/publish",
+      "summary": "Publish Footer Layout Version",
+      "operationId": "publish_footer_layout_version_api_admin_footer_layout__layout_id__publish_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/footer/layouts",
+      "summary": "List Footer Layouts",
+      "operationId": "list_footer_layouts_api_admin_footer_layouts_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/individual-applications",
+      "summary": "Admin List Individual Applications",
+      "operationId": "admin_list_individual_applications_api_admin_individual_applications_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/individual-applications/{app_id}/approve",
+      "summary": "Admin Approve Individual Application",
+      "operationId": "admin_approve_individual_application_api_admin_individual_applications__app_id__approve_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/individual-applications/{app_id}/reject",
+      "summary": "Admin Reject Individual Application",
+      "operationId": "admin_reject_individual_application_api_admin_individual_applications__app_id__reject_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/individual-users",
+      "summary": "List Individual Users",
+      "operationId": "list_individual_users_api_admin_individual_users_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/individual-users/export/csv",
+      "summary": "Admin Individual Users Export Csv",
+      "operationId": "admin_individual_users_export_csv_api_admin_individual_users_export_csv_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/info-pages",
+      "summary": "List Info Pages",
+      "operationId": "list_info_pages_api_admin_info_pages_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/info-pages",
+      "summary": "Create Info Page",
+      "operationId": "create_info_page_api_admin_info_pages_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/info-pages/{page_id}",
+      "summary": "Get Info Page Admin",
+      "operationId": "get_info_page_admin_api_admin_info_pages__page_id__get"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/info-pages/{page_id}",
+      "summary": "Update Info Page",
+      "operationId": "update_info_page_api_admin_info_pages__page_id__patch"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/invite/accept",
+      "summary": "Admin Invite Accept",
+      "operationId": "admin_invite_accept_api_admin_invite_accept_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/invite/preview",
+      "summary": "Admin Invite Preview",
+      "operationId": "admin_invite_preview_api_admin_invite_preview_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/invoices",
+      "summary": "Admin List Invoices",
+      "operationId": "admin_list_invoices_api_admin_invoices_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/invoices",
+      "summary": "Admin Create Invoice",
+      "operationId": "admin_create_invoice_api_admin_invoices_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/invoices/export/csv",
+      "summary": "Admin Export Invoices Csv",
+      "operationId": "admin_export_invoices_csv_api_admin_invoices_export_csv_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/invoices/{invoice_id}",
+      "summary": "Admin Invoice Detail",
+      "operationId": "admin_invoice_detail_api_admin_invoices__invoice_id__get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/invoices/{invoice_id}/cancel",
+      "summary": "Admin Invoice Cancel",
+      "operationId": "admin_invoice_cancel_api_admin_invoices__invoice_id__cancel_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/invoices/{invoice_id}/download-pdf",
+      "summary": "Admin Invoice Download Pdf",
+      "operationId": "admin_invoice_download_pdf_api_admin_invoices__invoice_id__download_pdf_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/invoices/{invoice_id}/generate-pdf",
+      "summary": "Admin Invoice Generate Pdf",
+      "operationId": "admin_invoice_generate_pdf_api_admin_invoices__invoice_id__generate_pdf_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/invoices/{invoice_id}/mark-paid",
+      "summary": "Admin Invoice Mark Paid",
+      "operationId": "admin_invoice_mark_paid_api_admin_invoices__invoice_id__mark_paid_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/invoices/{invoice_id}/refund",
+      "summary": "Admin Invoice Refund",
+      "operationId": "admin_invoice_refund_api_admin_invoices__invoice_id__refund_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/invoices/{invoice_id}/regenerate-pdf",
+      "summary": "Admin Invoice Regenerate Pdf",
+      "operationId": "admin_invoice_regenerate_pdf_api_admin_invoices__invoice_id__regenerate_pdf_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ledger/export/csv",
+      "summary": "Admin Export Ledger Csv",
+      "operationId": "admin_export_ledger_csv_api_admin_ledger_export_csv_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/listings",
+      "summary": "Admin Listings",
+      "operationId": "admin_listings_api_admin_listings_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/listings/batch-publish/run",
+      "summary": "Admin Run Batch Publish Scheduler Once",
+      "operationId": "admin_run_batch_publish_scheduler_once_api_admin_listings_batch_publish_run_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/listings/batch-publish/stats",
+      "summary": "Admin Get Batch Publish Stats",
+      "operationId": "admin_get_batch_publish_stats_api_admin_listings_batch_publish_stats_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/listings/{listing_id}/approve",
+      "summary": "Admin Approve Listing",
+      "operationId": "admin_approve_listing_api_admin_listings__listing_id__approve_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/listings/{listing_id}/doping",
+      "summary": "Admin Update Listing Doping",
+      "operationId": "admin_update_listing_doping_api_admin_listings__listing_id__doping_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/listings/{listing_id}/force-unpublish",
+      "summary": "Admin Force Unpublish Listing",
+      "operationId": "admin_force_unpublish_listing_api_admin_listings__listing_id__force_unpublish_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/listings/{listing_id}/needs_revision",
+      "summary": "Admin Needs Revision Listing",
+      "operationId": "admin_needs_revision_listing_api_admin_listings__listing_id__needs_revision_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/listings/{listing_id}/reject",
+      "summary": "Admin Reject Listing",
+      "operationId": "admin_reject_listing_api_admin_listings__listing_id__reject_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/listings/{listing_id}/soft-delete",
+      "summary": "Admin Soft Delete Listing",
+      "operationId": "admin_soft_delete_listing_api_admin_listings__listing_id__soft_delete_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/media/pipeline/performance",
+      "summary": "Admin Media Pipeline Performance",
+      "operationId": "admin_media_pipeline_performance_api_admin_media_pipeline_performance_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/media/watermark/preview",
+      "summary": "Admin Watermark Preview",
+      "operationId": "admin_watermark_preview_api_admin_media_watermark_preview_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/media/watermark/settings",
+      "summary": "Admin Get Watermark Pipeline Settings",
+      "operationId": "admin_get_watermark_pipeline_settings_api_admin_media_watermark_settings_get"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/media/watermark/settings",
+      "summary": "Admin Update Watermark Pipeline Settings",
+      "operationId": "admin_update_watermark_pipeline_settings_api_admin_media_watermark_settings_patch"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/menu-items",
+      "summary": "Admin List Menu Items",
+      "operationId": "admin_list_menu_items_api_admin_menu_items_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/menu-items",
+      "summary": "Admin Create Menu Item",
+      "operationId": "admin_create_menu_item_api_admin_menu_items_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/menu-items/health",
+      "summary": "Admin Menu Items Health",
+      "operationId": "admin_menu_items_health_api_admin_menu_items_health_get"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/menu-items/{menu_id}",
+      "summary": "Admin Delete Menu Item",
+      "operationId": "admin_delete_menu_item_api_admin_menu_items__menu_id__delete"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/menu-items/{menu_id}",
+      "summary": "Admin Update Menu Item",
+      "operationId": "admin_update_menu_item_api_admin_menu_items__menu_id__patch"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/moderation/bulk-approve",
+      "summary": "Admin Bulk Approve Listings",
+      "operationId": "admin_bulk_approve_listings_api_admin_moderation_bulk_approve_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/moderation/bulk-reject",
+      "summary": "Admin Bulk Reject Listings",
+      "operationId": "admin_bulk_reject_listings_api_admin_moderation_bulk_reject_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/moderation/listings/{listing_id}",
+      "summary": "Moderation Listing Detail",
+      "operationId": "moderation_listing_detail_api_admin_moderation_listings__listing_id__get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/moderation/queue",
+      "summary": "Moderation Queue",
+      "operationId": "moderation_queue_api_admin_moderation_queue_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/moderation/queue/count",
+      "summary": "Moderation Queue Count",
+      "operationId": "moderation_queue_count_api_admin_moderation_queue_count_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/payments",
+      "summary": "Admin List Payments",
+      "operationId": "admin_list_payments_api_admin_payments_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/payments/export/csv",
+      "summary": "Admin Export Payments Csv",
+      "operationId": "admin_export_payments_csv_api_admin_payments_export_csv_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/payments/runtime-health",
+      "summary": "Get Admin Payments Runtime Health",
+      "operationId": "get_admin_payments_runtime_health_api_admin_payments_runtime_health_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/permissions/flags",
+      "summary": "Admin Permissions Flags",
+      "operationId": "admin_permissions_flags_api_admin_permissions_flags_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/permissions/grant",
+      "summary": "Admin Permissions Grant",
+      "operationId": "admin_permissions_grant_api_admin_permissions_grant_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/permissions/me",
+      "summary": "Admin Permissions Me",
+      "operationId": "admin_permissions_me_api_admin_permissions_me_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/permissions/migrate-from-roles",
+      "summary": "Admin Permissions Migrate From Roles",
+      "operationId": "admin_permissions_migrate_from_roles_api_admin_permissions_migrate_from_roles_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/permissions/overrides",
+      "summary": "Admin Permissions Overrides",
+      "operationId": "admin_permissions_overrides_api_admin_permissions_overrides_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/permissions/overrides/export",
+      "summary": "Admin Permissions Overrides Export",
+      "operationId": "admin_permissions_overrides_export_api_admin_permissions_overrides_export_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/permissions/revoke",
+      "summary": "Admin Permissions Revoke",
+      "operationId": "admin_permissions_revoke_api_admin_permissions_revoke_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/permissions/shadow-diff",
+      "summary": "Admin Permissions Shadow Diff",
+      "operationId": "admin_permissions_shadow_diff_api_admin_permissions_shadow_diff_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/permissions/snapshot",
+      "summary": "Admin Permissions Snapshot",
+      "operationId": "admin_permissions_snapshot_api_admin_permissions_snapshot_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/permissions/users",
+      "summary": "Admin Permissions Users",
+      "operationId": "admin_permissions_users_api_admin_permissions_users_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/plans",
+      "summary": "Admin List Plans",
+      "operationId": "admin_list_plans_api_admin_plans_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/plans",
+      "summary": "Admin Create Plan",
+      "operationId": "admin_create_plan_api_admin_plans_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/plans/{plan_id}",
+      "summary": "Admin Get Plan",
+      "operationId": "admin_get_plan_api_admin_plans__plan_id__get"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/admin/plans/{plan_id}",
+      "summary": "Admin Update Plan",
+      "operationId": "admin_update_plan_api_admin_plans__plan_id__put"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/plans/{plan_id}/archive",
+      "summary": "Admin Archive Plan",
+      "operationId": "admin_archive_plan_api_admin_plans__plan_id__archive_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/plans/{plan_id}/toggle-active",
+      "summary": "Admin Toggle Plan Active",
+      "operationId": "admin_toggle_plan_active_api_admin_plans__plan_id__toggle_active_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/pricing/campaign",
+      "summary": "Get Pricing Campaign",
+      "operationId": "get_pricing_campaign_api_admin_pricing_campaign_get"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/admin/pricing/campaign",
+      "summary": "Update Pricing Campaign",
+      "operationId": "update_pricing_campaign_api_admin_pricing_campaign_put"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/pricing/campaign-items",
+      "summary": "List Pricing Campaign Items",
+      "operationId": "list_pricing_campaign_items_api_admin_pricing_campaign_items_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/pricing/campaign-items",
+      "summary": "Create Pricing Campaign Item",
+      "operationId": "create_pricing_campaign_item_api_admin_pricing_campaign_items_post"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/pricing/campaign-items/{item_id}",
+      "summary": "Delete Pricing Campaign Item",
+      "operationId": "delete_pricing_campaign_item_api_admin_pricing_campaign_items__item_id__delete"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/admin/pricing/campaign-items/{item_id}",
+      "summary": "Update Pricing Campaign Item",
+      "operationId": "update_pricing_campaign_item_api_admin_pricing_campaign_items__item_id__put"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/pricing/campaign-items/{item_id}/status",
+      "summary": "Update Pricing Campaign Item Status",
+      "operationId": "update_pricing_campaign_item_status_api_admin_pricing_campaign_items__item_id__status_patch"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/pricing/packages",
+      "summary": "List Pricing Packages Admin",
+      "operationId": "list_pricing_packages_admin_api_admin_pricing_packages_get"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/admin/pricing/packages",
+      "summary": "Update Pricing Packages",
+      "operationId": "update_pricing_packages_api_admin_pricing_packages_put"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/pricing/tiers",
+      "summary": "List Pricing Tiers",
+      "operationId": "list_pricing_tiers_api_admin_pricing_tiers_get"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/admin/pricing/tiers",
+      "summary": "Update Pricing Tiers",
+      "operationId": "update_pricing_tiers_api_admin_pricing_tiers_put"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/reports",
+      "summary": "Admin Reports",
+      "operationId": "admin_reports_api_admin_reports_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/reports/messages",
+      "summary": "Admin Message Reports",
+      "operationId": "admin_message_reports_api_admin_reports_messages_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/reports/messages/{report_id}/status",
+      "summary": "Admin Message Report Status Change",
+      "operationId": "admin_message_report_status_change_api_admin_reports_messages__report_id__status_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/reports/{report_id}",
+      "summary": "Admin Report Detail",
+      "operationId": "admin_report_detail_api_admin_reports__report_id__get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/reports/{report_id}/status",
+      "summary": "Admin Report Status Change",
+      "operationId": "admin_report_status_change_api_admin_reports__report_id__status_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/search/meili/contract",
+      "summary": "Admin Search Meili Contract",
+      "operationId": "admin_search_meili_contract_api_admin_search_meili_contract_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/search/meili/health",
+      "summary": "Admin Search Meili Health",
+      "operationId": "admin_search_meili_health_api_admin_search_meili_health_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/search/meili/reindex",
+      "summary": "Admin Reindex Search Projection",
+      "operationId": "admin_reindex_search_projection_api_admin_search_meili_reindex_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/search/meili/stage-smoke",
+      "summary": "Admin Search Meili Stage Smoke",
+      "operationId": "admin_search_meili_stage_smoke_api_admin_search_meili_stage_smoke_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/search/meili/sync-jobs",
+      "summary": "Admin List Search Sync Jobs",
+      "operationId": "admin_list_search_sync_jobs_api_admin_search_meili_sync_jobs_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/search/meili/sync-jobs/process",
+      "summary": "Admin Process Search Sync Jobs",
+      "operationId": "admin_process_search_sync_jobs_api_admin_search_meili_sync_jobs_process_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/search/meili/sync-jobs/retry-dead-letter",
+      "summary": "Admin Retry Dead Letter Search Sync Jobs",
+      "operationId": "admin_retry_dead_letter_search_sync_jobs_api_admin_search_meili_sync_jobs_retry_dead_letter_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/session/health",
+      "summary": "Admin Session Health",
+      "operationId": "admin_session_health_api_admin_session_health_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site/header",
+      "summary": "Admin Get Site Header",
+      "operationId": "admin_get_site_header_api_admin_site_header_get"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/admin/site/header",
+      "summary": "Admin Update Site Header",
+      "operationId": "admin_update_site_header_api_admin_site_header_put"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/site/header/logo",
+      "summary": "Upload Site Header Logo",
+      "operationId": "upload_site_header_logo_api_admin_site_header_logo_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site/home-category-layout",
+      "summary": "Get Home Category Layout Admin",
+      "operationId": "get_home_category_layout_admin_api_admin_site_home_category_layout_get"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/admin/site/home-category-layout",
+      "summary": "Save Home Category Layout Admin",
+      "operationId": "save_home_category_layout_admin_api_admin_site_home_category_layout_put"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site/listing-design",
+      "summary": "Get Admin Listing Design",
+      "operationId": "get_admin_listing_design_api_admin_site_listing_design_get"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/admin/site/listing-design",
+      "summary": "Save Admin Listing Design",
+      "operationId": "save_admin_listing_design_api_admin_site_listing_design_put"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/site/listing-design/publish",
+      "summary": "Publish Admin Listing Design",
+      "operationId": "publish_admin_listing_design_api_admin_site_listing_design_publish_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/site/listing-design/rollback",
+      "summary": "Rollback Admin Listing Design",
+      "operationId": "rollback_admin_listing_design_api_admin_site_listing_design_rollback_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site/showcase-layout",
+      "summary": "Get Showcase Layout Admin",
+      "operationId": "get_showcase_layout_admin_api_admin_site_showcase_layout_get"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/admin/site/showcase-layout/config",
+      "summary": "Save Showcase Layout Config",
+      "operationId": "save_showcase_layout_config_api_admin_site_showcase_layout_config_put"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/site/showcase-layout/config/{layout_id}",
+      "summary": "Delete Showcase Layout Config",
+      "operationId": "delete_showcase_layout_config_api_admin_site_showcase_layout_config__layout_id__delete"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site/showcase-layout/config/{layout_id}",
+      "summary": "Get Showcase Layout Config",
+      "operationId": "get_showcase_layout_config_api_admin_site_showcase_layout_config__layout_id__get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/site/showcase-layout/config/{layout_id}/publish",
+      "summary": "Publish Showcase Layout Config",
+      "operationId": "publish_showcase_layout_config_api_admin_site_showcase_layout_config__layout_id__publish_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site/showcase-layout/configs",
+      "summary": "List Showcase Layout Configs",
+      "operationId": "list_showcase_layout_configs_api_admin_site_showcase_layout_configs_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site/theme",
+      "summary": "Get Site Theme Admin",
+      "operationId": "get_site_theme_admin_api_admin_site_theme_get"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/admin/site/theme/config",
+      "summary": "Save Site Theme Config",
+      "operationId": "save_site_theme_config_api_admin_site_theme_config_put"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site/theme/config/{theme_id}",
+      "summary": "Get Site Theme Config",
+      "operationId": "get_site_theme_config_api_admin_site_theme_config__theme_id__get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/site/theme/config/{theme_id}/publish",
+      "summary": "Publish Site Theme Config",
+      "operationId": "publish_site_theme_config_api_admin_site_theme_config__theme_id__publish_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site/theme/configs",
+      "summary": "List Site Theme Configs",
+      "operationId": "list_site_theme_configs_api_admin_site_theme_configs_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/system-settings",
+      "summary": "Admin List System Settings",
+      "operationId": "admin_list_system_settings_api_admin_system_settings_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/system-settings",
+      "summary": "Admin Create System Setting",
+      "operationId": "admin_create_system_setting_api_admin_system_settings_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/system-settings/apple-signin",
+      "summary": "Admin Get Apple Signin Settings",
+      "operationId": "admin_get_apple_signin_settings_api_admin_system_settings_apple_signin_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/system-settings/apple-signin",
+      "summary": "Admin Save Apple Signin Settings",
+      "operationId": "admin_save_apple_signin_settings_api_admin_system_settings_apple_signin_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/system-settings/cloudflare",
+      "summary": "Admin Get Cloudflare Config",
+      "operationId": "admin_get_cloudflare_config_api_admin_system_settings_cloudflare_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/system-settings/cloudflare",
+      "summary": "Admin Update Cloudflare Config",
+      "operationId": "admin_update_cloudflare_config_api_admin_system_settings_cloudflare_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/system-settings/cloudflare/canary",
+      "summary": "Admin Cloudflare Canary",
+      "operationId": "admin_cloudflare_canary_api_admin_system_settings_cloudflare_canary_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/system-settings/google-maps",
+      "summary": "Admin Get Google Maps Settings",
+      "operationId": "admin_get_google_maps_settings_api_admin_system_settings_google_maps_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/system-settings/google-maps",
+      "summary": "Admin Save Google Maps Settings",
+      "operationId": "admin_save_google_maps_settings_api_admin_system_settings_google_maps_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/system-settings/listing-create",
+      "summary": "Admin Get Listing Create Config",
+      "operationId": "admin_get_listing_create_config_api_admin_system_settings_listing_create_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/system-settings/listing-create",
+      "summary": "Admin Save Listing Create Config",
+      "operationId": "admin_save_listing_create_config_api_admin_system_settings_listing_create_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/system-settings/meilisearch",
+      "summary": "Admin Get Meilisearch Active Config",
+      "operationId": "admin_get_meilisearch_active_config_api_admin_system_settings_meilisearch_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/system-settings/meilisearch",
+      "summary": "Admin Create Meilisearch Config",
+      "operationId": "admin_create_meilisearch_config_api_admin_system_settings_meilisearch_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/system-settings/meilisearch/history",
+      "summary": "Admin List Meilisearch Config History",
+      "operationId": "admin_list_meilisearch_config_history_api_admin_system_settings_meilisearch_history_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/system-settings/meilisearch/{config_id}/activate",
+      "summary": "Admin Activate Meilisearch Config",
+      "operationId": "admin_activate_meilisearch_config_api_admin_system_settings_meilisearch__config_id__activate_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/system-settings/meilisearch/{config_id}/revoke",
+      "summary": "Admin Revoke Meilisearch Config",
+      "operationId": "admin_revoke_meilisearch_config_api_admin_system_settings_meilisearch__config_id__revoke_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/system-settings/meilisearch/{config_id}/test",
+      "summary": "Admin Test Meilisearch Config",
+      "operationId": "admin_test_meilisearch_config_api_admin_system_settings_meilisearch__config_id__test_post"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/system-settings/{setting_id}",
+      "summary": "Admin Update System Setting",
+      "operationId": "admin_update_system_setting_api_admin_system_settings__setting_id__patch"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/system/health-detail",
+      "summary": "Ops Health Detail Route",
+      "operationId": "ops_health_detail_route_api_admin_system_health_detail_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/system/health-summary",
+      "summary": "Ops Health Summary Route",
+      "operationId": "ops_health_summary_route_api_admin_system_health_summary_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/tax-rates",
+      "summary": "Admin List Tax Rates",
+      "operationId": "admin_list_tax_rates_api_admin_tax_rates_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/tax-rates",
+      "summary": "Admin Create Tax Rate",
+      "operationId": "admin_create_tax_rate_api_admin_tax_rates_post"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/tax-rates/{tax_id}",
+      "summary": "Admin Delete Tax Rate",
+      "operationId": "admin_delete_tax_rate_api_admin_tax_rates__tax_id__delete"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/tax-rates/{tax_id}",
+      "summary": "Admin Update Tax Rate",
+      "operationId": "admin_update_tax_rate_api_admin_tax_rates__tax_id__patch"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/users",
+      "summary": "List Admin Users",
+      "operationId": "list_admin_users_api_admin_users_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/users",
+      "summary": "Create Admin User",
+      "operationId": "create_admin_user_api_admin_users_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/users/bulk-deactivate",
+      "summary": "Bulk Deactivate Admins",
+      "operationId": "bulk_deactivate_admins_api_admin_users_bulk_deactivate_post"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/users/{user_id}",
+      "summary": "Delete User",
+      "operationId": "delete_user_api_admin_users__user_id__delete"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/users/{user_id}",
+      "summary": "Update Admin User",
+      "operationId": "update_admin_user_api_admin_users__user_id__patch"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/users/{user_id}/activate",
+      "summary": "Activate User",
+      "operationId": "activate_user_api_admin_users__user_id__activate_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/users/{user_id}/detail",
+      "summary": "Admin User Detail",
+      "operationId": "admin_user_detail_api_admin_users__user_id__detail_get"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/users/{user_id}/risk-level",
+      "summary": "Admin Update Risk Level",
+      "operationId": "admin_update_risk_level_api_admin_users__user_id__risk_level_patch"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/users/{user_id}/suspend",
+      "summary": "Suspend User",
+      "operationId": "suspend_user_api_admin_users__user_id__suspend_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/vehicle-import/apply",
+      "summary": "Admin Vehicle Import Apply",
+      "operationId": "admin_vehicle_import_apply_api_admin_vehicle_import_apply_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/vehicle-import/dry-run",
+      "summary": "Admin Vehicle Import Dry Run",
+      "operationId": "admin_vehicle_import_dry_run_api_admin_vehicle_import_dry_run_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/vehicle-makes",
+      "summary": "Admin List Vehicle Makes",
+      "operationId": "admin_list_vehicle_makes_api_admin_vehicle_makes_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/vehicle-makes",
+      "summary": "Admin Create Vehicle Make",
+      "operationId": "admin_create_vehicle_make_api_admin_vehicle_makes_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/vehicle-makes/bulk-delete",
+      "summary": "Admin Bulk Delete Vehicle Makes",
+      "operationId": "admin_bulk_delete_vehicle_makes_api_admin_vehicle_makes_bulk_delete_post"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/vehicle-makes/{make_id}",
+      "summary": "Admin Delete Vehicle Make",
+      "operationId": "admin_delete_vehicle_make_api_admin_vehicle_makes__make_id__delete"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/vehicle-makes/{make_id}",
+      "summary": "Admin Update Vehicle Make",
+      "operationId": "admin_update_vehicle_make_api_admin_vehicle_makes__make_id__patch"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/vehicle-master-import/jobs",
+      "summary": "List Vehicle Import Jobs",
+      "operationId": "list_vehicle_import_jobs_api_admin_vehicle_master_import_jobs_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/vehicle-master-import/jobs/api",
+      "summary": "Create Vehicle Import Job From Api",
+      "operationId": "create_vehicle_import_job_from_api_api_admin_vehicle_master_import_jobs_api_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/vehicle-master-import/jobs/upload",
+      "summary": "Create Vehicle Import Job From Upload",
+      "operationId": "create_vehicle_import_job_from_upload_api_admin_vehicle_master_import_jobs_upload_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/vehicle-master-import/jobs/{job_id}",
+      "summary": "Get Vehicle Import Job",
+      "operationId": "get_vehicle_import_job_api_admin_vehicle_master_import_jobs__job_id__get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/vehicle-models",
+      "summary": "Admin List Vehicle Models",
+      "operationId": "admin_list_vehicle_models_api_admin_vehicle_models_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/vehicle-models",
+      "summary": "Admin Create Vehicle Model",
+      "operationId": "admin_create_vehicle_model_api_admin_vehicle_models_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/vehicle-models/bulk-delete",
+      "summary": "Admin Bulk Delete Vehicle Models",
+      "operationId": "admin_bulk_delete_vehicle_models_api_admin_vehicle_models_bulk_delete_post"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/vehicle-models/{model_id}",
+      "summary": "Admin Delete Vehicle Model",
+      "operationId": "admin_delete_vehicle_model_api_admin_vehicle_models__model_id__delete"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/vehicle-models/{model_id}",
+      "summary": "Admin Update Vehicle Model",
+      "operationId": "admin_update_vehicle_model_api_admin_vehicle_models__model_id__patch"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/webhooks/events/{event_id}/replay",
+      "summary": "Admin Replay Webhook Event",
+      "operationId": "admin_replay_webhook_event_api_admin_webhooks_events__event_id__replay_post"
+    }
+  ],
+  "categories": [
+    {
+      "method": "GET",
+      "path": "/api/categories",
+      "summary": "List Categories",
+      "operationId": "list_categories_api_categories_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/categories/children",
+      "summary": "List Category Children",
+      "operationId": "list_category_children_api_categories_children_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/categories/search",
+      "summary": "Search Categories",
+      "operationId": "search_categories_api_categories_search_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/categories/validate",
+      "summary": "Validate Category Selection",
+      "operationId": "validate_category_selection_api_categories_validate_get"
+    }
+  ],
+  "site": [
+    {
+      "method": "GET",
+      "path": "/api/site/assets/{asset_key}",
+      "summary": "Get Site Asset",
+      "operationId": "get_site_asset_api_site_assets__asset_key__get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/site/footer",
+      "summary": "Get Footer Layout",
+      "operationId": "get_footer_layout_api_site_footer_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/site/header",
+      "summary": "Get Site Header",
+      "operationId": "get_site_header_api_site_header_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/site/home-category-layout",
+      "summary": "Get Site Home Category Layout",
+      "operationId": "get_site_home_category_layout_api_site_home_category_layout_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/site/listing-design",
+      "summary": "Get Site Listing Design",
+      "operationId": "get_site_listing_design_api_site_listing_design_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/site/showcase-layout",
+      "summary": "Get Site Showcase Layout",
+      "operationId": "get_site_showcase_layout_api_site_showcase_layout_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/site/theme",
+      "summary": "Get Site Theme",
+      "operationId": "get_site_theme_api_site_theme_get"
+    }
+  ],
+  "layout_builder": [
+    {
+      "method": "GET",
+      "path": "/api/admin/site/content-layout/audit-logs",
+      "summary": "List Layout Audit Logs",
+      "operationId": "list_layout_audit_logs_api_admin_site_content_layout_audit_logs_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/site/content-layout/bindings",
+      "summary": "Bind Layout Page To Category",
+      "operationId": "bind_layout_page_to_category_api_admin_site_content_layout_bindings_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site/content-layout/bindings/active",
+      "summary": "Get Active Binding",
+      "operationId": "get_active_binding_api_admin_site_content_layout_bindings_active_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/site/content-layout/bindings/unbind",
+      "summary": "Unbind Layout Page From Category",
+      "operationId": "unbind_layout_page_from_category_api_admin_site_content_layout_bindings_unbind_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site/content-layout/components",
+      "summary": "List Layout Components",
+      "operationId": "list_layout_components_api_admin_site_content_layout_components_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/site/content-layout/components",
+      "summary": "Create Layout Component",
+      "operationId": "create_layout_component_api_admin_site_content_layout_components_post"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/site/content-layout/components/{component_id}",
+      "summary": "Patch Layout Component",
+      "operationId": "patch_layout_component_api_admin_site_content_layout_components__component_id__patch"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site/content-layout/metrics",
+      "summary": "Get Layout Builder Metrics",
+      "operationId": "get_layout_builder_metrics_api_admin_site_content_layout_metrics_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site/content-layout/pages",
+      "summary": "List Layout Pages",
+      "operationId": "list_layout_pages_api_admin_site_content_layout_pages_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/site/content-layout/pages",
+      "summary": "Create Layout Page Admin",
+      "operationId": "create_layout_page_admin_api_admin_site_content_layout_pages_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/site/content-layout/pages/seed-defaults",
+      "summary": "Seed Standard Layout Pages Admin",
+      "operationId": "seed_standard_layout_pages_admin_api_admin_site_content_layout_pages_seed_defaults_post"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/site/content-layout/pages/{page_id}",
+      "summary": "Patch Layout Page Admin",
+      "operationId": "patch_layout_page_admin_api_admin_site_content_layout_pages__page_id__patch"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site/content-layout/pages/{page_id}/revisions",
+      "summary": "List Revisions For Page",
+      "operationId": "list_revisions_for_page_api_admin_site_content_layout_pages__page_id__revisions_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/site/content-layout/pages/{page_id}/revisions/draft",
+      "summary": "Create Draft Revision Admin",
+      "operationId": "create_draft_revision_admin_api_admin_site_content_layout_pages__page_id__revisions_draft_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/site/content-layout/preset-events",
+      "summary": "Create Layout Preset Event",
+      "operationId": "create_layout_preset_event_api_admin_site_content_layout_preset_events_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site/content-layout/preset-events/summary",
+      "summary": "Get Layout Preset Event Summary",
+      "operationId": "get_layout_preset_event_summary_api_admin_site_content_layout_preset_events_summary_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/site/content-layout/revisions/{revision_id}/archive",
+      "summary": "Archive Revision Admin",
+      "operationId": "archive_revision_admin_api_admin_site_content_layout_revisions__revision_id__archive_post"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/site/content-layout/revisions/{revision_id}/draft",
+      "summary": "Patch Draft Revision Admin",
+      "operationId": "patch_draft_revision_admin_api_admin_site_content_layout_revisions__revision_id__draft_patch"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/site/content-layout/revisions/{revision_id}/policy-autofix",
+      "summary": "Auto Fix Revision Policy Admin",
+      "operationId": "auto_fix_revision_policy_admin_api_admin_site_content_layout_revisions__revision_id__policy_autofix_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/site/content-layout/revisions/{revision_id}/policy-report",
+      "summary": "Get Revision Policy Report Admin",
+      "operationId": "get_revision_policy_report_admin_api_admin_site_content_layout_revisions__revision_id__policy_report_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/site/content-layout/revisions/{revision_id}/publish",
+      "summary": "Publish Revision Admin",
+      "operationId": "publish_revision_admin_api_admin_site_content_layout_revisions__revision_id__publish_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/site/content-layout/resolve",
+      "summary": "Resolve Content Layout",
+      "operationId": "resolve_content_layout_api_site_content_layout_resolve_get"
+    }
+  ],
+  "ui_designer": [
+    {
+      "method": "GET",
+      "path": "/api/admin/ops/alert-delivery-metrics",
+      "summary": "Admin Ops Alert Delivery Metrics",
+      "operationId": "admin_ops_alert_delivery_metrics_api_admin_ops_alert_delivery_metrics_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/ops/alert-delivery/rerun-simulation",
+      "summary": "Admin Ops Alert Delivery Rerun Simulation",
+      "operationId": "admin_ops_alert_delivery_rerun_simulation_api_admin_ops_alert_delivery_rerun_simulation_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/ui/configs/header/logo",
+      "summary": "Admin Upload Header Logo",
+      "operationId": "admin_upload_header_logo_api_admin_ui_configs_header_logo_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ui/configs/{config_type}",
+      "summary": "Admin Get Ui Config",
+      "operationId": "admin_get_ui_config_api_admin_ui_configs__config_type__get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/ui/configs/{config_type}",
+      "summary": "Admin Save Ui Config",
+      "operationId": "admin_save_ui_config_api_admin_ui_configs__config_type__post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/ui/configs/{config_type}/conflict-sync",
+      "summary": "Admin Ui Config Conflict Sync",
+      "operationId": "admin_ui_config_conflict_sync_api_admin_ui_configs__config_type__conflict_sync_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ui/configs/{config_type}/diff",
+      "summary": "Admin Ui Config Diff",
+      "operationId": "admin_ui_config_diff_api_admin_ui_configs__config_type__diff_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ui/configs/{config_type}/ops-alerts/delivery-audit",
+      "summary": "Admin Ui Publish Alert Delivery Audit",
+      "operationId": "admin_ui_publish_alert_delivery_audit_api_admin_ui_configs__config_type__ops_alerts_delivery_audit_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ui/configs/{config_type}/ops-alerts/html-report",
+      "summary": "Admin Ui Publish Alerts Html Report",
+      "operationId": "admin_ui_publish_alerts_html_report_api_admin_ui_configs__config_type__ops_alerts_html_report_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ui/configs/{config_type}/ops-alerts/secret-checklist",
+      "summary": "Admin Ui Publish Alerts Secret Checklist",
+      "operationId": "admin_ui_publish_alerts_secret_checklist_api_admin_ui_configs__config_type__ops_alerts_secret_checklist_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ui/configs/{config_type}/ops-alerts/secret-presence",
+      "summary": "Admin Ui Publish Alerts Secret Presence",
+      "operationId": "admin_ui_publish_alerts_secret_presence_api_admin_ui_configs__config_type__ops_alerts_secret_presence_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/ui/configs/{config_type}/ops-alerts/simulate",
+      "summary": "Admin Ui Publish Alerts Simulate",
+      "operationId": "admin_ui_publish_alerts_simulate_api_admin_ui_configs__config_type__ops_alerts_simulate_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ui/configs/{config_type}/ops-thresholds",
+      "summary": "Admin Ui Publish Ops Thresholds",
+      "operationId": "admin_ui_publish_ops_thresholds_api_admin_ui_configs__config_type__ops_thresholds_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/ui/configs/{config_type}/publish",
+      "summary": "Admin Publish Latest Ui Config",
+      "operationId": "admin_publish_latest_ui_config_api_admin_ui_configs__config_type__publish_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ui/configs/{config_type}/publish-audits",
+      "summary": "Admin Ui Publish Audits",
+      "operationId": "admin_ui_publish_audits_api_admin_ui_configs__config_type__publish_audits_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/ui/configs/{config_type}/rollback",
+      "summary": "Admin Rollback Ui Config",
+      "operationId": "admin_rollback_ui_config_api_admin_ui_configs__config_type__rollback_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/ui/logo-assets/cleanup",
+      "summary": "Admin Cleanup Logo Assets",
+      "operationId": "admin_cleanup_logo_assets_api_admin_ui_logo_assets_cleanup_post"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ui/logo-assets/health",
+      "summary": "Admin Logo Assets Health",
+      "operationId": "admin_logo_assets_health_api_admin_ui_logo_assets_health_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ui/permissions",
+      "summary": "Get Ui Designer Permissions",
+      "operationId": "get_ui_designer_permissions_api_admin_ui_permissions_get"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ui/theme-assignments",
+      "summary": "Admin List Ui Theme Assignments",
+      "operationId": "admin_list_ui_theme_assignments_api_admin_ui_theme_assignments_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/ui/theme-assignments",
+      "summary": "Admin Assign Ui Theme",
+      "operationId": "admin_assign_ui_theme_api_admin_ui_theme_assignments_post"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/ui/theme-assignments/{assignment_id}",
+      "summary": "Admin Delete Ui Theme Assignment",
+      "operationId": "admin_delete_ui_theme_assignment_api_admin_ui_theme_assignments__assignment_id__delete"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ui/themes",
+      "summary": "Admin List Ui Themes",
+      "operationId": "admin_list_ui_themes_api_admin_ui_themes_get"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/ui/themes",
+      "summary": "Admin Create Ui Theme",
+      "operationId": "admin_create_ui_theme_api_admin_ui_themes_post"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/admin/ui/themes/{theme_id}",
+      "summary": "Admin Delete Ui Theme",
+      "operationId": "admin_delete_ui_theme_api_admin_ui_themes__theme_id__delete"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/ui/themes/{theme_id}",
+      "summary": "Admin Get Ui Theme",
+      "operationId": "admin_get_ui_theme_api_admin_ui_themes__theme_id__get"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/ui/themes/{theme_id}",
+      "summary": "Admin Update Ui Theme",
+      "operationId": "admin_update_ui_theme_api_admin_ui_themes__theme_id__patch"
+    }
+  ],
+  "reports": [
+    {
+      "method": "POST",
+      "path": "/api/reports",
+      "summary": "Create Report",
+      "operationId": "create_report_api_reports_post"
+    },
+    {
+      "method": "POST",
+      "path": "/api/reports/messages",
+      "summary": "Create Message Report",
+      "operationId": "create_message_report_api_reports_messages_post"
+    }
+  ],
+  "system-settings": [
+    {
+      "method": "GET",
+      "path": "/api/system-settings/effective",
+      "summary": "System Settings Effective",
+      "operationId": "system_settings_effective_api_system_settings_effective_get"
+    }
+  ],
+  "attributes": [
+    {
+      "method": "GET",
+      "path": "/api/attributes",
+      "summary": "Public Attributes",
+      "operationId": "public_attributes_api_attributes_get"
+    }
+  ]
+}
