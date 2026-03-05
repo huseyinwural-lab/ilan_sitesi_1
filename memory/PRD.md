@@ -22,6 +22,45 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ## 2026-03-05 (P0 — Content Builder Component Veri Kaynağı Tanımlama)
 
+## 2026-03-05 (P0 — Backend Policy Lock + RBAC Görünürlük Kolonu)
+
+### Kullanıcı Talebi (Uygulandı)
+- `layout_component_definitions` seviyesinde component veri kaynağı policy tanımları backend tarafında kilitlendi.
+- Content Builder veri matrisi ve component kartlarına `RBAC Görünürlük` bilgisi eklendi.
+
+### Uygulananlar
+- **Backend** (`layout_builder_routes.py`)
+  - Kilitli policy sözlüğü eklendi (`LOCKED_COMPONENT_POLICY_BY_KEY`) ve kapsam:
+    - category navigator (yeni + alias key’ler)
+    - CTA, Listing Grid/List/Card
+    - Sub Category Block
+    - Ad Slot (alias key’ler dahil)
+    - Media family (hero/carousel/image/video + mevcut media aliasları)
+    - Map Block (yeni + alias)
+  - `/api/admin/site/content-layout/components` response’una:
+    - `policy_locked`
+    - `data_source_spec` (menu/data/api/source/options/usage/rbac)
+    alanları eklendi.
+  - Kilitli component için PATCH engeli eklendi:
+    - `403` + `code=component_policy_locked`
+  - Kilitli key ile create çağrısında:
+    - component adı policy’den zorlanır
+    - `is_active=true` zorlanır
+- **Frontend** (`AdminContentBuilder.js`)
+  - Matrix tabloya `RBAC Görünürlük` kolonu eklendi.
+  - Library source-spec kartına `RBAC` satırı eklendi.
+  - source-spec çözümleyici backend’den gelen `data_source_spec` alanını öncelikli kullanacak şekilde güncellendi.
+
+### Test Durumu
+- Backend self-test PASS:
+  - create/list doğrulaması: `policy_locked=true`, `data_source_spec.rbac_visibility` dolu
+  - PATCH denemesi: `403 component_policy_locked`
+- Frontend smoke PASS:
+  - Matrix’te RBAC kolonu görünür
+  - Category Navigator kartında RBAC bilgisi görünür
+- `deep_testing_backend_v2` PASS
+- `auto_frontend_testing_agent` PASS (5/5)
+
 ### Kullanıcı Talebi (Uygulandı)
 - Content Builder içinde component bazlı veri kaynağı tanımları sabitlendi (çağırdığı menü + veri kaynağı + API + kullanım).
 - Verilen görev emrine göre Component Data Source matrisi eklendi ve component kartlarında kaynak bilgisi gösterildi.
