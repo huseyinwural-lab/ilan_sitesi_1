@@ -1060,6 +1060,19 @@ export default function SearchPage() {
     ),
   };
 
+  const runtimeContext = useMemo(() => ({
+    countryCode,
+    searchItems: Array.isArray(data?.items) ? data.items : [],
+    categoryShowcase,
+    selectedListingId,
+    featuredListing: (Array.isArray(data?.items) && data.items.length > 0 ? data.items[0] : null)
+      || (Array.isArray(categoryShowcase) && categoryShowcase.length > 0 ? categoryShowcase[0] : null),
+    listingCandidates: [
+      ...(Array.isArray(data?.items) ? data.items : []),
+      ...(Array.isArray(categoryShowcase) ? categoryShowcase : []),
+    ].filter(Boolean),
+  }), [countryCode, data, categoryShowcase, selectedListingId]);
+
   return (
     <div data-testid="search-page">
       <div className="container mx-auto px-4 py-6">
@@ -1072,6 +1085,7 @@ export default function SearchPage() {
             <LayoutRenderer
               payload={resolvedCategoryLayout?.revision?.payload_json}
               registry={runtimeRegistry}
+              runtimeContext={runtimeContext}
               dataTestIdPrefix="search-runtime-layout"
             />
           </section>

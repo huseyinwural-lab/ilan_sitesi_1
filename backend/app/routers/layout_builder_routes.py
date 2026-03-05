@@ -308,6 +308,7 @@ def _build_listing_policy_report(payload_json: dict[str, Any]) -> dict[str, Any]
                 "status": "fail",
                 "blocking": True,
                 "detail": "rows dizisi zorunlu",
+                "fix_suggestion": "Payload içinde rows dizisini oluşturun ve en az bir row ekleyin.",
             }
         ]
         return {
@@ -315,6 +316,7 @@ def _build_listing_policy_report(payload_json: dict[str, Any]) -> dict[str, Any]
             "passed": False,
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "checks": checks,
+            "suggested_fixes": [checks[0]["fix_suggestion"]],
             "stats": stats,
         }
 
@@ -432,6 +434,7 @@ def _build_listing_policy_report(payload_json: dict[str, Any]) -> dict[str, Any]
             "status": "pass" if isinstance(rows, list) and stats["row_count"] > 0 else "fail",
             "blocking": True,
             "detail": f"Row sayısı: {stats['row_count']}",
+            "fix_suggestion": "En az bir row ve her row içinde en az bir column tanımlayın.",
         },
         {
             "id": "layout_limits",
@@ -439,6 +442,7 @@ def _build_listing_policy_report(payload_json: dict[str, Any]) -> dict[str, Any]
             "status": "pass" if stats["row_count"] <= LISTING_MAX_ROWS and stats["limit_violations"] == 0 else "fail",
             "blocking": True,
             "detail": f"Limit ihlali: {stats['limit_violations']}",
+            "fix_suggestion": f"Row <= {LISTING_MAX_ROWS}, column/row <= {LISTING_MAX_COLUMNS_PER_ROW}, component/column <= {LISTING_MAX_COMPONENTS_PER_COLUMN} olacak şekilde düzenleyin.",
         },
         {
             "id": "unique_ids",
@@ -446,6 +450,7 @@ def _build_listing_policy_report(payload_json: dict[str, Any]) -> dict[str, Any]
             "status": "pass" if stats["duplicate_id_violations"] == 0 else "fail",
             "blocking": True,
             "detail": f"Duplicate/eksik id ihlali: {stats['duplicate_id_violations']}",
+            "fix_suggestion": "Her row/column/component için benzersiz ve boş olmayan id kullanın.",
         },
         {
             "id": "width_breakpoints",
@@ -453,6 +458,7 @@ def _build_listing_policy_report(payload_json: dict[str, Any]) -> dict[str, Any]
             "status": "pass" if stats["width_violations"] == 0 else "fail",
             "blocking": True,
             "detail": f"Width ihlali: {stats['width_violations']}",
+            "fix_suggestion": "Tüm column width değerlerini desktop/tablet/mobile için 1..12 aralığında tanımlayın.",
         },
         {
             "id": "allowed_components",
@@ -460,6 +466,7 @@ def _build_listing_policy_report(payload_json: dict[str, Any]) -> dict[str, Any]
             "status": "pass" if stats["allowed_component_violations"] == 0 else "fail",
             "blocking": True,
             "detail": f"İzinli olmayan bileşen ihlali: {stats['allowed_component_violations']}",
+            "fix_suggestion": "Sadece listing.create.default-content, shared.text-block, shared.ad-slot ve interactive.doping-selector kullanın.",
         },
         {
             "id": "props_policy",
@@ -467,6 +474,7 @@ def _build_listing_policy_report(payload_json: dict[str, Any]) -> dict[str, Any]
             "status": "pass" if stats["props_violations"] == 0 else "fail",
             "blocking": True,
             "detail": f"Prop ihlali: {stats['props_violations']}",
+            "fix_suggestion": "Her bileşende yalnızca whitelist prop alanlarını gönderin (fazla alanları kaldırın).",
         },
         {
             "id": "default_component",
@@ -474,6 +482,7 @@ def _build_listing_policy_report(payload_json: dict[str, Any]) -> dict[str, Any]
             "status": "pass" if stats["default_component_count"] == 1 else "fail",
             "blocking": True,
             "detail": f"Default component sayısı: {stats['default_component_count']}",
+            "fix_suggestion": "Payload içinde listing.create.default-content bileşeni tam olarak 1 adet olmalı.",
         },
         {
             "id": "ad_placement",
@@ -481,6 +490,7 @@ def _build_listing_policy_report(payload_json: dict[str, Any]) -> dict[str, Any]
             "status": "pass" if stats["ad_placement_violations"] == 0 else "fail",
             "blocking": True,
             "detail": f"Placement ihlali: {stats['ad_placement_violations']}",
+            "fix_suggestion": "shared.ad-slot placement değerini whitelist içinden seçin (AD_HOME_TOP / AD_SEARCH_TOP / AD_LOGIN_1).",
         },
         {
             "id": "doping_selector",
@@ -488,6 +498,7 @@ def _build_listing_policy_report(payload_json: dict[str, Any]) -> dict[str, Any]
             "status": "pass" if stats["doping_selector_count"] <= 1 and stats["doping_violations"] == 0 else "fail",
             "blocking": True,
             "detail": f"Selector sayısı: {stats['doping_selector_count']}, ihlal: {stats['doping_violations']}",
+            "fix_suggestion": "interactive.doping-selector en fazla 1 adet olmalı; available_dopings whitelist'ten seçilmeli ve default_selected listedeki bir değer olmalı.",
         },
         {
             "id": "total_components",
@@ -495,7 +506,14 @@ def _build_listing_policy_report(payload_json: dict[str, Any]) -> dict[str, Any]
             "status": "pass" if stats["total_component_count"] > 0 else "fail",
             "blocking": True,
             "detail": f"Toplam bileşen: {stats['total_component_count']}",
+            "fix_suggestion": "Canvas üzerinde en az bir bileşen bulundurun.",
         },
+    ]
+
+    suggested_fixes = [
+        check["fix_suggestion"]
+        for check in checks
+        if check.get("status") == "fail" and check.get("fix_suggestion")
     ]
 
     passed = all(check["status"] == "pass" for check in checks if check.get("blocking"))
@@ -504,6 +522,7 @@ def _build_listing_policy_report(payload_json: dict[str, Any]) -> dict[str, Any]
         "passed": bool(passed),
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "checks": checks,
+        "suggested_fixes": suggested_fixes,
         "stats": stats,
     }
 
@@ -968,8 +987,10 @@ async def get_revision_policy_report_admin(
                         "status": "pass",
                         "blocking": False,
                         "detail": "Bu page_type için listing_create policy report uygulanmaz.",
+                        "fix_suggestion": None,
                     }
                 ],
+                "suggested_fixes": [],
                 "stats": {},
             },
         }

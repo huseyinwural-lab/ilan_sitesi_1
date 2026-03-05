@@ -1,11 +1,30 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AdSlot from '@/components/public/AdSlot';
 
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const FALLBACK_IMAGES = ['/homepage/slide-1.jpg', '/homepage/slide-2.jpg', '/homepage/slide-3.jpg'];
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const listingDetailCache = new Map();
+const listingDetailPending = new Map();
+const similarItemsCache = new Map();
+const similarItemsPending = new Map();
 
 const toNumber = (value, fallback) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const parseCoordinate = (value) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  return parsed;
+};
+
+const resolveMediaUrl = (url) => {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url)) return url;
+  return `${process.env.REACT_APP_BACKEND_URL}${url}`;
 };
 
 const normalizeItems = (items, fallbackPrefix = 'item') => {
@@ -19,11 +38,171 @@ const normalizeItems = (items, fallbackPrefix = 'item') => {
       return {
         id: item.id || `${fallbackPrefix}-${index}`,
         label: item.label || item.title || item.name || `Öğe ${index + 1}`,
-        url: item.url || item.route || '#',
+        url: item.url || item.route || (item.id ? `/ilan/${item.id}` : '#'),
         count: item.count,
+        price: item.price,
+        currency: item.currency,
+        image_url: item.image_url,
       };
     })
     .filter(Boolean);
+};
+
+const normalizeListingFromCandidate = (candidate) => {
+  if (!candidate || typeof candidate !== 'object') return null;
+  const id = candidate.id || candidate.listing_id || null;
+  return {
+    id,
+    title: candidate.title || candidate.name || 'İlan',
+    description: candidate.description || '',
+    price: candidate.price ?? candidate.price_amount ?? null,
+    currency: candidate.currency || candidate.currency_primary || 'EUR',
+    media: Array.isArray(candidate.media)
+      ? candidate.media.map((item) => ({ ...item, url: resolveMediaUrl(item?.url || item?.image_url || item?.thumbnail_url) }))
+      : (candidate.image_url ? [{ url: resolveMediaUrl(candidate.image_url), is_cover: true }] : []),
+    location: {
+      city: candidate.city || candidate?.location?.city || '',
+      country: candidate.country || candidate?.location?.country || '',
+      latitude: candidate.lat ?? candidate.latitude ?? candidate?.location?.latitude ?? null,
+      longitude: candidate.lng ?? candidate.longitude ?? candidate?.location?.longitude ?? null,
+    },
+    seller: candidate.seller || null,
+    attributes: candidate.attributes || {},
+  };
+};
+
+const inferListingIdFromRuntime = (props, runtimeContext) => {
+  const directId = String(props?.listing_id || runtimeContext?.listingId || runtimeContext?.selectedListingId || runtimeContext?.listing?.id || '').trim();
+  if (UUID_REGEX.test(directId)) return directId;
+
+  const fromCandidates = [
+    runtimeContext?.featuredListing,
+    ...(Array.isArray(runtimeContext?.listingCandidates) ? runtimeContext.listingCandidates : []),
+    ...(Array.isArray(runtimeContext?.searchItems) ? runtimeContext.searchItems : []),
+    ...(Array.isArray(runtimeContext?.showcaseItems) ? runtimeContext.showcaseItems : []),
+    ...(Array.isArray(runtimeContext?.recentItems) ? runtimeContext.recentItems : []),
+  ]
+    .map((item) => String(item?.id || item?.listing_id || '').trim())
+    .find((id) => UUID_REGEX.test(id));
+  if (fromCandidates) return fromCandidates;
+
+  if (typeof window !== 'undefined') {
+    const match = window.location.pathname.match(/\/ilan\/([0-9a-f-]{36})/i);
+    if (match?.[1] && UUID_REGEX.test(match[1])) return match[1];
+  }
+  return null;
+};
+
+const fetchListingDetail = async (listingId) => {
+  if (!listingId) return null;
+  if (listingDetailCache.has(listingId)) return listingDetailCache.get(listingId);
+  if (listingDetailPending.has(listingId)) return listingDetailPending.get(listingId);
+
+  const request = fetch(`${API}/v1/listings/vehicle/${listingId}?preview=1`, { cache: 'no-store' })
+    .then(async (response) => {
+      if (!response.ok) return null;
+      const payload = await response.json();
+      const normalized = {
+        ...payload,
+        media: Array.isArray(payload?.media)
+          ? payload.media.map((item) => ({ ...item, url: resolveMediaUrl(item?.url), thumbnail_url: resolveMediaUrl(item?.thumbnail_url) }))
+          : [],
+      };
+      listingDetailCache.set(listingId, normalized);
+      return normalized;
+    })
+    .catch(() => null)
+    .finally(() => {
+      listingDetailPending.delete(listingId);
+    });
+
+  listingDetailPending.set(listingId, request);
+  return request;
+};
+
+const fetchSimilarListings = async (listingId) => {
+  if (!listingId) return [];
+  if (similarItemsCache.has(listingId)) return similarItemsCache.get(listingId);
+  if (similarItemsPending.has(listingId)) return similarItemsPending.get(listingId);
+
+  const request = fetch(`${API}/v1/listings/vehicle/${listingId}/similar?limit=8`, { cache: 'no-store' })
+    .then(async (response) => {
+      if (!response.ok) return [];
+      const payload = await response.json();
+      const items = normalizeItems(payload?.items || [], 'similar-live').map((item) => ({
+        ...item,
+        image_url: resolveMediaUrl(item.image_url),
+        url: item.id ? `/ilan/${item.id}` : '#',
+      }));
+      similarItemsCache.set(listingId, items);
+      return items;
+    })
+    .catch(() => [])
+    .finally(() => {
+      similarItemsPending.delete(listingId);
+    });
+
+  similarItemsPending.set(listingId, request);
+  return request;
+};
+
+const useRuntimeListingData = (props, runtimeContext) => {
+  const initialListing = useMemo(() => {
+    return normalizeListingFromCandidate(props?.listing_payload)
+      || normalizeListingFromCandidate(runtimeContext?.listing)
+      || normalizeListingFromCandidate(runtimeContext?.featuredListing)
+      || normalizeListingFromCandidate((runtimeContext?.listingCandidates || [])[0])
+      || normalizeListingFromCandidate((runtimeContext?.searchItems || [])[0])
+      || null;
+  }, [props?.listing_payload, runtimeContext]);
+
+  const [listing, setListing] = useState(initialListing);
+  const [similarItems, setSimilarItems] = useState(() => normalizeItems(props?.items || runtimeContext?.similarItems || [], 'similar-runtime'));
+
+  const inferredListingId = useMemo(() => inferListingIdFromRuntime(props, runtimeContext), [props, runtimeContext]);
+
+  useEffect(() => {
+    setListing(initialListing);
+  }, [initialListing]);
+
+  useEffect(() => {
+    let alive = true;
+    if (!inferredListingId) return () => {
+      alive = false;
+    };
+
+    fetchListingDetail(inferredListingId).then((payload) => {
+      if (!alive || !payload) return;
+      const normalized = normalizeListingFromCandidate(payload);
+      if (normalized) setListing(normalized);
+    });
+
+    return () => {
+      alive = false;
+    };
+  }, [inferredListingId]);
+
+  useEffect(() => {
+    let alive = true;
+    if (!inferredListingId) return () => {
+      alive = false;
+    };
+
+    fetchSimilarListings(inferredListingId).then((items) => {
+      if (!alive) return;
+      if (Array.isArray(items) && items.length > 0) setSimilarItems(items);
+    });
+
+    return () => {
+      alive = false;
+    };
+  }, [inferredListingId]);
+
+  return {
+    listing,
+    similarItems,
+    listingId: inferredListingId,
+  };
 };
 
 export const BreadcrumbHeaderBlock = ({ props }) => {
@@ -79,10 +258,11 @@ export const StickyActionBarBlock = ({ props }) => {
   );
 };
 
-const CategoryNavigatorBase = ({ props, mode }) => {
+const CategoryNavigatorBase = ({ props, mode, runtimeContext }) => {
   const title = props?.title || (mode === 'top' ? 'Kırılımlar' : 'Kategoriler');
   const showCounts = props?.show_counts !== false;
-  const rawItems = props?.items || props?.menu_snapshot?.children || ['Emlak', 'Vasıta', 'Yedek Parça', 'İkinci El'];
+  const runtimeItems = Array.isArray(runtimeContext?.categories) ? runtimeContext.categories : null;
+  const rawItems = props?.items || props?.menu_snapshot?.children || runtimeItems || ['Emlak', 'Vasıta', 'Yedek Parça', 'İkinci El'];
   const items = normalizeItems(rawItems, `cat-${mode}`);
 
   return (
@@ -105,11 +285,17 @@ const CategoryNavigatorBase = ({ props, mode }) => {
   );
 };
 
-export const CategoryNavigatorSideBlock = ({ props }) => <CategoryNavigatorBase props={props} mode="side" />;
-export const CategoryNavigatorTopBlock = ({ props }) => <CategoryNavigatorBase props={props} mode="top" />;
+export const CategoryNavigatorSideBlock = ({ props, runtimeContext }) => <CategoryNavigatorBase props={props} mode="side" runtimeContext={runtimeContext} />;
+export const CategoryNavigatorTopBlock = ({ props, runtimeContext }) => <CategoryNavigatorBase props={props} mode="top" runtimeContext={runtimeContext} />;
 
-export const AdvancedPhotoGalleryBlock = ({ props }) => {
-  const images = Array.isArray(props?.images) && props.images.length ? props.images : FALLBACK_IMAGES;
+export const AdvancedPhotoGalleryBlock = ({ props, runtimeContext }) => {
+  const { listing } = useRuntimeListingData(props, runtimeContext);
+  const listingImages = Array.isArray(listing?.media)
+    ? listing.media.map((item) => item?.url).filter(Boolean)
+    : [];
+  const images = Array.isArray(props?.images) && props.images.length
+    ? props.images.map((item) => resolveMediaUrl(item))
+    : (listingImages.length ? listingImages : FALLBACK_IMAGES);
   const [activeIndex, setActiveIndex] = useState(0);
   const enableZoom = props?.enable_zoom !== false;
 
@@ -140,8 +326,9 @@ export const AdvancedPhotoGalleryBlock = ({ props }) => {
   );
 };
 
-export const AutoPlayCarouselHeroBlock = ({ props }) => {
-  const slides = normalizeItems(props?.slides || [
+export const AutoPlayCarouselHeroBlock = ({ props, runtimeContext }) => {
+  const fallbackSlides = normalizeItems(runtimeContext?.showcaseItems || runtimeContext?.searchItems || [], 'hero-live').slice(0, 5);
+  const slides = normalizeItems(props?.slides || fallbackSlides || [
     { id: 's1', label: 'Vitrin İlanlarınız Daha Görünür', url: '/search?doping=showcase' },
     { id: 's2', label: 'Ücretsiz İlan Verin', url: '/ilan-ver' },
   ], 'hero').map((item, index) => ({ ...item, image: props?.images?.[index] || FALLBACK_IMAGES[index % FALLBACK_IMAGES.length] }));
@@ -205,18 +392,20 @@ export const AdPromoSlotBlock = ({ props }) => (
   </section>
 );
 
-export const PriceTitleBlock = ({ props }) => {
+export const PriceTitleBlock = ({ props, runtimeContext }) => {
+  const { listing } = useRuntimeListingData(props, runtimeContext);
   const [currency, setCurrency] = useState('TRY');
   const [favorite, setFavorite] = useState(false);
-  const basePrice = toNumber(props?.base_price, 1250000);
+  const basePrice = toNumber(listing?.price ?? props?.base_price, 1250000);
   const rates = { TRY: 1, EUR: 0.029, USD: 0.032 };
   const value = Math.round(basePrice * (rates[currency] || 1));
+  const resolvedCurrency = listing?.currency || props?.currency || currency;
 
   return (
     <section className="rounded-xl border bg-white p-4" data-testid="runtime-price-title-block">
-      <h2 className="text-base font-semibold" data-testid="runtime-price-title-heading">{props?.title || 'Modern 3+1 Daire'}</h2>
+      <h2 className="text-base font-semibold" data-testid="runtime-price-title-heading">{listing?.title || props?.title || 'Modern 3+1 Daire'}</h2>
       <div className="mt-2 flex items-center gap-2" data-testid="runtime-price-title-row">
-        <strong className="text-lg" data-testid="runtime-price-title-price">{new Intl.NumberFormat('tr-TR').format(value)} {currency}</strong>
+        <strong className="text-lg" data-testid="runtime-price-title-price">{new Intl.NumberFormat('tr-TR').format(value)} {resolvedCurrency}</strong>
         {props?.show_currency_switcher !== false ? (
           <select value={currency} onChange={(event) => setCurrency(event.target.value)} className="rounded border px-2 py-1 text-xs" data-testid="runtime-price-title-currency-select">
             <option value="TRY">TRY</option>
@@ -234,15 +423,24 @@ export const PriceTitleBlock = ({ props }) => {
   );
 };
 
-export const AttributeGridDynamicBlock = ({ props }) => {
+export const AttributeGridDynamicBlock = ({ props, runtimeContext }) => {
+  const { listing } = useRuntimeListingData(props, runtimeContext);
   const modules = Array.isArray(props?.include_modules) && props.include_modules.length
     ? props.include_modules
     : ['core_fields', 'parameter_fields', 'detail_groups', 'address', 'contact'];
+  const liveAttributes = listing?.attributes && typeof listing.attributes === 'object'
+    ? Object.entries(listing.attributes).slice(0, 8)
+    : [];
+
   return (
     <section className="rounded-xl border bg-white p-4" data-testid="runtime-attribute-grid-dynamic">
       <h3 className="text-sm font-semibold" data-testid="runtime-attribute-grid-title">Özellik Tablosu</h3>
       <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2" data-testid="runtime-attribute-grid-items">
-        {modules.map((moduleName) => (
+        {liveAttributes.length > 0 ? liveAttributes.map(([key, value]) => (
+          <div key={key} className="rounded border bg-slate-50 px-3 py-2 text-xs" data-testid={`runtime-attribute-grid-item-${key}`}>
+            <strong>{key}</strong>: {String(value)}
+          </div>
+        )) : modules.map((moduleName) => (
           <div key={moduleName} className="rounded border bg-slate-50 px-3 py-2 text-xs" data-testid={`runtime-attribute-grid-item-${moduleName}`}>
             {moduleName}
           </div>
@@ -252,34 +450,45 @@ export const AttributeGridDynamicBlock = ({ props }) => {
   );
 };
 
-export const DescriptionTextAreaBlock = ({ props }) => (
+export const DescriptionTextAreaBlock = ({ props, runtimeContext }) => {
+  const { listing } = useRuntimeListingData(props, runtimeContext);
+  return (
   <section className="rounded-xl border bg-white p-4" data-testid="runtime-description-text-area">
     <h3 className="text-sm font-semibold" data-testid="runtime-description-title">Açıklama</h3>
     <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700" data-testid="runtime-description-body">
-      {props?.body || 'İlan açıklaması burada gösterilir. Zengin metin formatı desteklenir.'}
+      {listing?.description || props?.body || 'İlan açıklaması burada gösterilir. Zengin metin formatı desteklenir.'}
     </p>
   </section>
-);
+  );
+};
 
-export const SellerCardBlock = ({ props }) => (
+export const SellerCardBlock = ({ props, runtimeContext }) => {
+  const { listing } = useRuntimeListingData(props, runtimeContext);
+  const seller = listing?.seller || {};
+  return (
   <section className="rounded-xl border bg-white p-4" data-testid="runtime-seller-card">
     <div className="flex items-center gap-3" data-testid="runtime-seller-card-header">
       <div className="h-12 w-12 rounded-full bg-slate-200" data-testid="runtime-seller-avatar" />
       <div>
-        <h3 className="text-sm font-semibold" data-testid="runtime-seller-name">{props?.seller_name || 'Güvenilir Satıcı'}</h3>
-        <p className="text-xs text-slate-500" data-testid="runtime-seller-meta">Puan: {props?.rating || '4.8'} • Üyelik: {props?.membership || 'Gold'}</p>
+        <h3 className="text-sm font-semibold" data-testid="runtime-seller-name">{seller?.name || props?.seller_name || 'Güvenilir Satıcı'}</h3>
+        <p className="text-xs text-slate-500" data-testid="runtime-seller-meta">
+          Profil: {seller?.profile_type || props?.membership || 'kurumsal'} • Aktif İlan: {seller?.total_listings ?? '-'}
+        </p>
       </div>
     </div>
     <a href={props?.all_listings_url || '#'} className="mt-3 inline-flex rounded border px-3 py-1 text-xs" data-testid="runtime-seller-all-listings-link">Tüm İlanları</a>
   </section>
-);
+  );
+};
 
-export const InteractiveMapBlock = ({ props }) => {
+export const InteractiveMapBlock = ({ props, runtimeContext }) => {
+  const { listing } = useRuntimeListingData(props, runtimeContext);
   const [showNearby, setShowNearby] = useState(props?.show_nearby_layers !== false);
-  const lat = toNumber(props?.lat, 35.1856);
-  const lng = toNumber(props?.lng, 33.3823);
+  const lat = parseCoordinate(props?.lat ?? listing?.location?.latitude) ?? 35.1856;
+  const lng = parseCoordinate(props?.lng ?? listing?.location?.longitude) ?? 33.3823;
   const zoom = Math.max(8, Math.min(18, toNumber(props?.default_zoom, 14)));
   const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.02}%2C${lat - 0.02}%2C${lng + 0.02}%2C${lat + 0.02}&layer=mapnik&marker=${lat}%2C${lng}`;
+  const nearbyLayers = ['Okul', 'Hastane', 'Toplu Taşıma'];
 
   return (
     <section className="rounded-xl border bg-white p-4" data-testid="runtime-interactive-map">
@@ -290,7 +499,16 @@ export const InteractiveMapBlock = ({ props }) => {
         </button>
       </div>
       <iframe src={mapUrl} title="listing-map" className="h-64 w-full rounded border" data-testid="runtime-interactive-map-iframe" />
-      <p className="mt-2 text-xs text-slate-500" data-testid="runtime-interactive-map-meta">Zoom: {zoom} • Yakındakiler: {String(showNearby)}</p>
+      <p className="mt-2 text-xs text-slate-500" data-testid="runtime-interactive-map-meta">Zoom: {zoom} • Şehir: {listing?.location?.city || '-'}</p>
+      {showNearby ? (
+        <div className="mt-2 flex flex-wrap gap-2" data-testid="runtime-interactive-map-nearby-layers">
+          {nearbyLayers.map((layer) => (
+            <span key={layer} className="rounded-full border bg-slate-50 px-2 py-1 text-[11px]" data-testid={`runtime-interactive-map-nearby-${layer}`}>
+              {layer}
+            </span>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 };
@@ -317,9 +535,16 @@ export const MortgageLoanCalculatorBlock = ({ props }) => {
   );
 };
 
-export const SimilarListingsSliderBlock = ({ props }) => {
+export const SimilarListingsSliderBlock = ({ props, runtimeContext }) => {
+  const { similarItems: liveSimilarItems } = useRuntimeListingData(props, runtimeContext);
   const sliderRef = useRef(null);
-  const items = normalizeItems(props?.items || ['Benzer İlan 1', 'Benzer İlan 2', 'Benzer İlan 3', 'Benzer İlan 4'], 'similar');
+  const items = normalizeItems(
+    props?.items
+      || (liveSimilarItems.length ? liveSimilarItems : null)
+      || runtimeContext?.searchItems
+      || ['Benzer İlan 1', 'Benzer İlan 2', 'Benzer İlan 3', 'Benzer İlan 4'],
+    'similar',
+  );
 
   const scrollByDirection = (direction) => {
     sliderRef.current?.scrollBy({ left: direction * 240, behavior: 'smooth' });
@@ -337,7 +562,8 @@ export const SimilarListingsSliderBlock = ({ props }) => {
       <div ref={sliderRef} className="flex gap-3 overflow-x-auto pb-2" data-testid="runtime-similar-slider-track">
         {items.map((item) => (
           <a key={item.id} href={item.url || '#'} className="min-w-[220px] rounded-lg border bg-slate-50 p-3 text-xs" data-testid={`runtime-similar-slider-item-${item.id}`}>
-            {item.label}
+            <div className="font-semibold">{item.label}</div>
+            <div className="mt-1 text-slate-500">{item.price ? `${new Intl.NumberFormat('tr-TR').format(item.price)} ${item.currency || 'EUR'}` : 'Detay'}</div>
           </a>
         ))}
       </div>
@@ -374,20 +600,20 @@ export const DopingSelectorBlock = ({ props }) => {
 };
 
 export const EXTENDED_RUNTIME_REGISTRY = {
-  'layout.breadcrumb-header': ({ props }) => <BreadcrumbHeaderBlock props={props} />,
-  'layout.sticky-action-bar': ({ props }) => <StickyActionBarBlock props={props} />,
-  'layout.category-navigator-side': ({ props }) => <CategoryNavigatorSideBlock props={props} />,
-  'layout.category-navigator-top': ({ props }) => <CategoryNavigatorTopBlock props={props} />,
-  'media.advanced-photo-gallery': ({ props }) => <AdvancedPhotoGalleryBlock props={props} />,
-  'media.auto-play-carousel-hero': ({ props }) => <AutoPlayCarouselHeroBlock props={props} />,
-  'media.video-3d-tour-player': ({ props }) => <Video3DTourPlayerBlock props={props} />,
-  'media.ad-promo-slot': ({ props }) => <AdPromoSlotBlock props={props} />,
-  'data.price-title-block': ({ props }) => <PriceTitleBlock props={props} />,
-  'data.attribute-grid-dynamic': ({ props }) => <AttributeGridDynamicBlock props={props} />,
-  'data.description-text-area': ({ props }) => <DescriptionTextAreaBlock props={props} />,
-  'data.seller-card': ({ props }) => <SellerCardBlock props={props} />,
-  'interactive.interactive-map': ({ props }) => <InteractiveMapBlock props={props} />,
-  'interactive.mortgage-loan-calculator': ({ props }) => <MortgageLoanCalculatorBlock props={props} />,
-  'interactive.similar-listings-slider': ({ props }) => <SimilarListingsSliderBlock props={props} />,
-  'interactive.doping-selector': ({ props }) => <DopingSelectorBlock props={props} />,
+  'layout.breadcrumb-header': ({ props, runtimeContext }) => <BreadcrumbHeaderBlock props={props} runtimeContext={runtimeContext} />,
+  'layout.sticky-action-bar': ({ props, runtimeContext }) => <StickyActionBarBlock props={props} runtimeContext={runtimeContext} />,
+  'layout.category-navigator-side': ({ props, runtimeContext }) => <CategoryNavigatorSideBlock props={props} runtimeContext={runtimeContext} />,
+  'layout.category-navigator-top': ({ props, runtimeContext }) => <CategoryNavigatorTopBlock props={props} runtimeContext={runtimeContext} />,
+  'media.advanced-photo-gallery': ({ props, runtimeContext }) => <AdvancedPhotoGalleryBlock props={props} runtimeContext={runtimeContext} />,
+  'media.auto-play-carousel-hero': ({ props, runtimeContext }) => <AutoPlayCarouselHeroBlock props={props} runtimeContext={runtimeContext} />,
+  'media.video-3d-tour-player': ({ props, runtimeContext }) => <Video3DTourPlayerBlock props={props} runtimeContext={runtimeContext} />,
+  'media.ad-promo-slot': ({ props, runtimeContext }) => <AdPromoSlotBlock props={props} runtimeContext={runtimeContext} />,
+  'data.price-title-block': ({ props, runtimeContext }) => <PriceTitleBlock props={props} runtimeContext={runtimeContext} />,
+  'data.attribute-grid-dynamic': ({ props, runtimeContext }) => <AttributeGridDynamicBlock props={props} runtimeContext={runtimeContext} />,
+  'data.description-text-area': ({ props, runtimeContext }) => <DescriptionTextAreaBlock props={props} runtimeContext={runtimeContext} />,
+  'data.seller-card': ({ props, runtimeContext }) => <SellerCardBlock props={props} runtimeContext={runtimeContext} />,
+  'interactive.interactive-map': ({ props, runtimeContext }) => <InteractiveMapBlock props={props} runtimeContext={runtimeContext} />,
+  'interactive.mortgage-loan-calculator': ({ props, runtimeContext }) => <MortgageLoanCalculatorBlock props={props} runtimeContext={runtimeContext} />,
+  'interactive.similar-listings-slider': ({ props, runtimeContext }) => <SimilarListingsSliderBlock props={props} runtimeContext={runtimeContext} />,
+  'interactive.doping-selector': ({ props, runtimeContext }) => <DopingSelectorBlock props={props} runtimeContext={runtimeContext} />,
 };

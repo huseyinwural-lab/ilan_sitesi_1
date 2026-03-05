@@ -52,6 +52,7 @@ export default function LayoutRenderer({
   payload,
   registry = {},
   dataTestIdPrefix = 'layout-renderer',
+  runtimeContext = null,
 }) {
   const rows = useMemo(() => normalizeRows(payload), [payload]);
 
@@ -94,6 +95,7 @@ export default function LayoutRenderer({
                         component,
                         row,
                         column,
+                        runtimeContext,
                         rowIndex,
                         columnIndex,
                         componentIndex,

@@ -131,7 +131,18 @@ const filterListingRuntimePayloadByStep = (payload, step) => {
 };
 
 const WizardContent = () => {
-  const { step, loading, editLoading, autosaveStatus, trackWizardEvent } = useWizard();
+  const {
+    step,
+    loading,
+    editLoading,
+    autosaveStatus,
+    trackWizardEvent,
+    draftId,
+    basicInfo,
+    coreFields,
+    moduleData,
+    media,
+  } = useWizard();
   const badgeEventRef = useRef("");
 
   const moduleKey = useMemo(() => localStorage.getItem('ilan_ver_module') || 'vehicle', []);
@@ -244,10 +255,30 @@ const WizardContent = () => {
         </div>
       </div>
     ),
-    'interactive.doping-selector': ({ props }) => (
-      <DopingSelectorBlock props={props} />
+    'interactive.doping-selector': ({ props, runtimeContext: rendererRuntimeContext }) => (
+      <DopingSelectorBlock props={props} runtimeContext={rendererRuntimeContext} />
     ),
   };
+
+  const runtimeContext = useMemo(() => ({
+    countryCode,
+    draftId,
+    moduleKey,
+    listing: {
+      id: draftId || null,
+      title: coreFields?.title || null,
+      description: coreFields?.description || null,
+      price: coreFields?.price_amount ? Number(coreFields.price_amount) : null,
+      currency: coreFields?.currency_primary || 'EUR',
+      location: {
+        city: moduleData?.address?.city || '',
+        country: basicInfo?.country || countryCode,
+        latitude: basicInfo?.latitude || null,
+        longitude: basicInfo?.longitude || null,
+      },
+      media: Array.isArray(media) ? media : [],
+    },
+  }), [countryCode, draftId, moduleKey, coreFields, moduleData, basicInfo, media]);
 
   const showAutosaveBadge = step !== 7 && autosaveStatus?.status && autosaveStatus.status !== 'idle';
 
@@ -331,6 +362,7 @@ const WizardContent = () => {
           <LayoutRenderer
             payload={safeListingRuntimePayload}
             registry={runtimeRegistry}
+          runtimeContext={runtimeContext}
             dataTestIdPrefix="wizard-runtime-layout"
           />
         </div>

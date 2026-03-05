@@ -463,12 +463,21 @@ export default function HomePageRefreshed() {
     ),
   };
 
+  const runtimeContext = useMemo(() => ({
+    countryCode,
+    showcaseItems,
+    recentItems,
+    featuredListing: showcaseItems[0] || recentItems[0] || null,
+    listingCandidates: [...showcaseItems, ...recentItems].filter(Boolean),
+  }), [countryCode, showcaseItems, recentItems]);
+
   return (
     <div className="home-kktc-page" data-testid="home-kktc-page">
       {hasRuntimeHomeLayout ? (
         <LayoutRenderer
           payload={resolvedHomeLayout?.revision?.payload_json}
           registry={runtimeRegistry}
+          runtimeContext={runtimeContext}
           dataTestIdPrefix="home-runtime-layout"
         />
       ) : renderHomeStaticSections()}

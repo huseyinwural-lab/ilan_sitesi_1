@@ -410,6 +410,142 @@ const normalizePayload = (rawPayload, pageType) => {
   return rawPayload;
 };
 
+const createPresetNodeId = (prefix) => `${prefix}-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+
+const createPresetComponent = (key, props = {}) => ({
+  id: createPresetNodeId('cmp'),
+  key,
+  props,
+  visibility: { desktop: true, tablet: true, mobile: true },
+});
+
+const createPresetColumn = (desktopWidth, components = []) => ({
+  id: createPresetNodeId('col'),
+  width: { desktop: desktopWidth, tablet: 12, mobile: 12 },
+  components,
+});
+
+const createPresetRow = (columns = []) => ({
+  id: createPresetNodeId('row'),
+  columns,
+});
+
+const PRESET_PACK_OPTIONS = [
+  {
+    id: 'home-default-pack',
+    label: 'Preset • Home Default',
+    targetPageType: 'home',
+    description: 'Ana sayfa için slider + kategori + ilan akışı başlangıç düzeni',
+    buildPayload: () => ({
+      rows: [
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('home.default-content'),
+          createPresetComponent('media.auto-play-carousel-hero'),
+        ])]),
+        createPresetRow([
+          createPresetColumn(4, [createPresetComponent('layout.category-navigator-side')]),
+          createPresetColumn(8, [
+            createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: 8 }),
+            createPresetComponent('media.ad-promo-slot', { placement: 'AD_HOME_TOP', campaign_label: 'Vitrin Kampanya' }),
+          ]),
+        ]),
+      ],
+    }),
+  },
+  {
+    id: 'search-l1-pack',
+    label: 'Preset • Search L1',
+    targetPageType: 'search_l1',
+    description: 'L1 kategori için breadcrumb + navigator + sonuç odaklı düzen',
+    buildPayload: () => ({
+      rows: [
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('search.l1.default-content'),
+          createPresetComponent('layout.breadcrumb-header'),
+          createPresetComponent('layout.category-navigator-top'),
+        ])]),
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: 10 }),
+          createPresetComponent('shared.ad-slot', { placement: 'AD_SEARCH_TOP' }),
+        ])]),
+      ],
+    }),
+  },
+  {
+    id: 'search-l2-pack',
+    label: 'Preset • Search L2',
+    targetPageType: 'search_l2',
+    description: 'L2 kırılımı için detay sonuç + benzer ilan kurgusu',
+    buildPayload: () => ({
+      rows: [
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('search.l2.default-content'),
+          createPresetComponent('layout.breadcrumb-header'),
+        ])]),
+        createPresetRow([
+          createPresetColumn(8, [
+            createPresetComponent('data.price-title-block'),
+            createPresetComponent('data.description-text-area'),
+          ]),
+          createPresetColumn(4, [
+            createPresetComponent('data.seller-card'),
+            createPresetComponent('interactive.interactive-map'),
+          ]),
+        ]),
+      ],
+    }),
+  },
+  {
+    id: 'listing-detail-pack',
+    label: 'Preset • Listing Detail',
+    targetPageType: null,
+    description: 'İlan detay görünümü için medya + fiyat + satıcı + harita + benzer ilan seti',
+    buildPayload: () => ({
+      rows: [
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('layout.breadcrumb-header'),
+          createPresetComponent('media.advanced-photo-gallery'),
+        ])]),
+        createPresetRow([
+          createPresetColumn(8, [
+            createPresetComponent('data.price-title-block'),
+            createPresetComponent('data.attribute-grid-dynamic'),
+            createPresetComponent('data.description-text-area'),
+            createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: 8 }),
+          ]),
+          createPresetColumn(4, [
+            createPresetComponent('data.seller-card'),
+            createPresetComponent('interactive.interactive-map'),
+            createPresetComponent('layout.sticky-action-bar'),
+          ]),
+        ]),
+      ],
+    }),
+  },
+  {
+    id: 'listing-create-stepx-pack',
+    label: 'Preset • Listing Create StepX',
+    targetPageType: 'listing_create_stepX',
+    description: 'İlan ver adımı için default blok + bilgilendirme + doping + reklam',
+    buildPayload: () => ({
+      rows: [
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('listing.create.default-content'),
+          createPresetComponent('shared.text-block', { title: 'İlan Ver Akışı', body: 'Adımları tamamlayarak ilanınızı güvenle yayınlayın.' }),
+        ])]),
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('interactive.doping-selector', {
+            available_dopings: ['Vitrin', 'Acil', 'Anasayfa'],
+            show_prices: true,
+            default_selected: 'Vitrin',
+          }),
+          createPresetComponent('shared.ad-slot', { placement: 'AD_LOGIN_1' }),
+        ])]),
+      ],
+    }),
+  },
+];
+
 const buildMenuComponentLibraryItems = (menuItems) => {
   const activeItems = Array.isArray(menuItems)
     ? menuItems.filter((item) => item && item.active_flag !== false && item.id)
@@ -782,6 +918,7 @@ export default function AdminContentBuilder() {
   const [libraryGroupFilter, setLibraryGroupFilter] = useState('all');
   const [libraryMenuCategoryFilterId, setLibraryMenuCategoryFilterId] = useState('');
   const [collapsedLibraryGroups, setCollapsedLibraryGroups] = useState({});
+  const [selectedPresetPackId, setSelectedPresetPackId] = useState('');
 
   const [policyReport, setPolicyReport] = useState(null);
   const [policyReportLoading, setPolicyReportLoading] = useState(false);
@@ -951,6 +1088,11 @@ export default function AdminContentBuilder() {
     return grouped;
   }, [filteredLibraryItems]);
 
+  const selectedPresetPack = useMemo(
+    () => PRESET_PACK_OPTIONS.find((item) => item.id === selectedPresetPackId) || null,
+    [selectedPresetPackId],
+  );
+
   const draggingLibraryComponentName = useMemo(() => {
     if (!draggingLibraryComponentKey) return '';
     return componentLibrary.find((item) => item.key === draggingLibraryComponentKey)?.name || '';
@@ -1059,6 +1201,28 @@ export default function AdminContentBuilder() {
     }, 120);
     return () => window.clearTimeout(timer);
   }, [pendingFocusComponentId]);
+
+  const applyPresetPack = () => {
+    if (!selectedPresetPack) {
+      toast.error('Önce bir preset seçin.');
+      return;
+    }
+
+    if (selectedPresetPack.targetPageType && selectedPresetPack.targetPageType !== pageType) {
+      setPageType(selectedPresetPack.targetPageType);
+      setStatus(`Preset hedef page_type (${selectedPresetPack.targetPageType}) otomatik seçildi. Sayfayı Yükle/Oluştur ile devam edin.`);
+    }
+
+    const nextPayload = selectedPresetPack.buildPayload();
+    setPayloadJson(normalizePayload(nextPayload, selectedPresetPack.targetPageType || pageType));
+    setSelectedRowId('');
+    setSelectedColumnId('');
+    setSelectedComponentId('');
+    setError('');
+    refreshPreviewAfterInteraction();
+    autoFocusPreviewIfVisible();
+    toast.success(`${selectedPresetPack.label} uygulandı.`);
+  };
 
   const updateComponentPropValue = (rowId, columnId, componentId, propKey, propValue) => {
     const next = deepClone(payloadJson);
@@ -1329,6 +1493,7 @@ export default function AdminContentBuilder() {
     if (!column.width || typeof column.width !== 'object') column.width = {};
     column.width[key] = Math.max(1, Math.min(12, Number(value) || 12));
     updatePayload(next);
+    refreshPreviewAfterInteraction();
   };
 
   const removeColumn = (rowId, columnId) => {
@@ -1689,6 +1854,28 @@ export default function AdminContentBuilder() {
             </SheetContent>
           </Sheet>
 
+          <div className="flex min-w-[280px] flex-wrap items-center gap-2" data-testid="admin-content-builder-preset-controls">
+            <select
+              className="h-10 min-w-[240px] rounded border px-2 text-xs"
+              value={selectedPresetPackId}
+              onChange={(event) => setSelectedPresetPackId(event.target.value)}
+              data-testid="admin-content-builder-preset-select"
+            >
+              <option value="">Preset Pack Seçin</option>
+              {PRESET_PACK_OPTIONS.map((preset) => (
+                <option key={preset.id} value={preset.id}>{preset.label}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="h-10 rounded border border-sky-300 bg-sky-50 px-3 text-xs font-semibold text-sky-700"
+              onClick={applyPresetPack}
+              data-testid="admin-content-builder-apply-preset-button"
+            >
+              Preset Uygula
+            </button>
+          </div>
+
           <button type="button" className="h-10 rounded border px-4 text-sm" onClick={saveDraft} disabled={saving || !activeDraftId} data-testid="admin-content-builder-save-draft-button">
             Draft Kaydet
           </button>
@@ -1724,6 +1911,12 @@ export default function AdminContentBuilder() {
           </a>
         </div>
 
+        {selectedPresetPack ? (
+          <div className="mt-2 rounded border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800" data-testid="admin-content-builder-preset-description">
+            <strong>{selectedPresetPack.label}</strong> — {selectedPresetPack.description}
+          </div>
+        ) : null}
+
         <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-600" data-testid="admin-content-builder-meta-row">
           <span data-testid="admin-content-builder-page-id">page_id: {pageId || '-'}</span>
           <span data-testid="admin-content-builder-draft-id">draft_id: {activeDraftId || '-'}</span>
@@ -1747,15 +1940,33 @@ export default function AdminContentBuilder() {
             </div>
             <div className="mt-2 space-y-1" data-testid="admin-content-builder-policy-report-list">
               {(policyReport.checks || []).map((check) => (
-                <div key={check.id} className="flex flex-wrap items-center gap-2" data-testid={`admin-content-builder-policy-check-${check.id}`}>
+                <div key={check.id} className="rounded border border-white/70 bg-white/60 p-2" data-testid={`admin-content-builder-policy-check-${check.id}`}>
+                  <div className="flex flex-wrap items-center gap-2">
                   <span className={`inline-flex rounded px-2 py-0.5 ${check.status === 'pass' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`} data-testid={`admin-content-builder-policy-check-status-${check.id}`}>
                     {String(check.status || '').toUpperCase()}
                   </span>
                   <span data-testid={`admin-content-builder-policy-check-label-${check.id}`}>{check.label}</span>
-                  <span className="text-slate-500" data-testid={`admin-content-builder-policy-check-detail-${check.id}`}>{check.detail}</span>
+                    <span className="text-slate-500" data-testid={`admin-content-builder-policy-check-detail-${check.id}`}>{check.detail}</span>
+                  </div>
+                  {check?.fix_suggestion ? (
+                    <div className="mt-1 text-[11px] text-slate-700" data-testid={`admin-content-builder-policy-check-fix-${check.id}`}>
+                      Öneri: {check.fix_suggestion}
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>
+
+            {Array.isArray(policyReport?.suggested_fixes) && policyReport.suggested_fixes.length > 0 ? (
+              <div className="mt-3 rounded border border-amber-200 bg-amber-50 p-2" data-testid="admin-content-builder-policy-suggestions-list">
+                <div className="font-semibold" data-testid="admin-content-builder-policy-suggestions-title">Önerilen Düzeltmeler</div>
+                <ul className="mt-1 list-disc space-y-1 pl-5" data-testid="admin-content-builder-policy-suggestions-items">
+                  {policyReport.suggested_fixes.map((suggestion, index) => (
+                    <li key={`${suggestion}-${index}`} data-testid={`admin-content-builder-policy-suggestion-${index}`}>{suggestion}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
