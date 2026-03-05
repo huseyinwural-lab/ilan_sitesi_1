@@ -1,0 +1,33 @@
+{
+  "summary": "Frontend testing for AdminRouteGuard 403 bug fix and listing flow settings features. CRITICAL BUG FIXED: Added missing RBAC route rule for /admin/site-design/listing-flow-settings. All requested features verified working.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_133.json"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ROOT CAUSE FOUND & FIXED: The 403 error was caused by missing RBAC route rule in adminRbac.js. The path /admin/site-design/listing-flow-settings was not in ADMIN_ROUTE_RULES array, so resolveAdminRouteRoles() returned null, which AdminLayout converted to ['__deny__'] role. Added the rule: { pattern: /^\\/admin\\/site-design\\/listing-flow-settings$/, roles: ['super_admin', 'country_admin'] }",
+    "AdminRouteGuard retry logic was working correctly - the issue was RBAC configuration, not timing",
+    "Route redirect from /admin/system-settings/listing-flow-settings to /admin/site-design/listing-flow-settings works correctly via full page navigation",
+    "TR/DE label switching for address preview working correctly (Sokak / Cadde <-> Straße, Kapı No <-> Hausnummer)",
+    "Sidebar menu 'İlan Ver Akış Ayarları' correctly visible under Site İç Tasarımı section",
+    "User address form on /ilan-ver/detaylar correctly shows disabled message when admin config is inactive - this is expected behavior"
+  ],
+  "updated_files": ["/app/frontend/src/shared/adminRbac.js"],
+  "success_rate": {
+    "backend": "N/A (skipped)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@platform.com / Admin123!, user@platform.com / User123!",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "AdminRouteGuard 403 bug is FIXED. The missing RBAC rule was the root cause. Verified: listing-flow-settings page loads correctly with İlan Ver Akış Ayarları card, route redirect works, sidebar menu visible, TR/DE labels switch correctly. User address form disabled message is expected until admin enables the address block.",
+  "rca_of_the_issue": "The 403 error was NOT a timing/race condition issue. The actual root cause was that the new route /admin/site-design/listing-flow-settings was added to BackofficePortalApp.jsx but NOT added to the ADMIN_ROUTE_RULES array in /app/frontend/src/shared/adminRbac.js. AdminLayout uses resolveAdminRouteRoles() which returned null for this path. When roles is null, AdminLayout sets enforcedRoles to ['__deny__'], causing AdminRouteGuard to always reject. FIX: Added { pattern: /^\\/admin\\/site-design\\/listing-flow-settings$/, roles: ['super_admin', 'country_admin'] } to ADMIN_ROUTE_RULES."
+}

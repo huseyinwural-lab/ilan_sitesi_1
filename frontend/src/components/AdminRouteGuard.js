@@ -1,10 +1,30 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function AdminRouteGuard({ roles = [], children }) {
-  const { user, loading } = useAuth();
+  const { user, loading, token, refreshUser } = useAuth();
+  const [revalidating, setRevalidating] = useState(false);
+  const [hasRetried, setHasRetried] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    let active = true;
+    if (loading || user || !token || hasRetried) return undefined;
+
+    setRevalidating(true);
+    refreshUser()
+      .catch(() => null)
+      .finally(() => {
+        if (!active) return;
+        setRevalidating(false);
+        setHasRetried(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [loading, user, token, hasRetried, refreshUser]);
+
+  if (loading || revalidating || (token && !user && !hasRetried)) {
     return (
       <div className="p-6" data-testid="admin-route-loading">
         Yükleniyor...
