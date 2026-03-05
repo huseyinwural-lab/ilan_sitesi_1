@@ -100,6 +100,222 @@ const DEFAULT_COMPONENT_LIBRARY = [
     },
   },
   {
+    key: 'category.navigator',
+    name: 'Category Navigator',
+    schema_json: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', title: 'Başlık' },
+        max_levels: { type: 'integer', title: 'Derinlik (Ln)', minimum: 1, maximum: 8 },
+        show_counts: { type: 'boolean', title: 'İlan Sayısı Göster' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      title: 'Kategoriler',
+      max_levels: 6,
+      show_counts: true,
+    },
+  },
+  {
+    key: 'cta.block',
+    name: 'CTA Block',
+    schema_json: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', title: 'Title' },
+        icon: { type: 'string', title: 'Icon' },
+        link: { type: 'string', title: 'Link' },
+        style: { type: 'string', title: 'Style', enum: ['solid', 'outline', 'ghost'] },
+        font_size: { type: 'integer', title: 'Font Size' },
+        font_weight: { type: 'string', title: 'Font Weight', enum: ['400', '500', '600', '700'] },
+        font_color: { type: 'string', title: 'Font Color' },
+        background_color: { type: 'string', title: 'Background Color' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      title: 'ACİL',
+      icon: 'bolt',
+      link: '/acil',
+      style: 'solid',
+      font_size: 14,
+      font_weight: '700',
+      font_color: '#ffffff',
+      background_color: '#dc2626',
+    },
+  },
+  {
+    key: 'listing.grid',
+    name: 'Listing Grid',
+    schema_json: {
+      type: 'object',
+      properties: {
+        source: { type: 'string', title: 'Source', enum: ['showcase', 'urgent', 'latest', 'category'] },
+        columns: { type: 'integer', title: 'Columns', minimum: 1, maximum: 6 },
+        rows: { type: 'integer', title: 'Rows', minimum: 1, maximum: 12 },
+        auto_refresh: { type: 'boolean', title: 'Auto Refresh' },
+        refresh_seconds: { type: 'integer', title: 'Refresh (sn)', minimum: 10, maximum: 300 },
+        order: { type: 'string', title: 'Order', enum: ['newest', 'price_asc', 'price_desc'] },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      source: 'showcase',
+      columns: 4,
+      rows: 2,
+      auto_refresh: true,
+      refresh_seconds: 30,
+      order: 'newest',
+    },
+  },
+  {
+    key: 'listing.list',
+    name: 'Listing List',
+    schema_json: {
+      type: 'object',
+      properties: {
+        source: { type: 'string', title: 'Source', enum: ['urgent', 'category', 'search'] },
+        pagination: { type: 'boolean', title: 'Pagination' },
+        per_page: { type: 'integer', title: 'Page Size', minimum: 5, maximum: 100 },
+        order: { type: 'string', title: 'Order', enum: ['newest', 'price_asc', 'price_desc'] },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      source: 'urgent',
+      pagination: true,
+      per_page: 20,
+      order: 'newest',
+    },
+  },
+  {
+    key: 'listing.card',
+    name: 'Listing Card',
+    schema_json: {
+      type: 'object',
+      properties: {
+        show_photo: { type: 'boolean', title: 'Foto' },
+        show_title: { type: 'boolean', title: 'Başlık' },
+        show_price: { type: 'boolean', title: 'Fiyat' },
+        show_location: { type: 'boolean', title: 'Lokasyon' },
+        show_badge: { type: 'boolean', title: 'Badge' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      show_photo: true,
+      show_title: true,
+      show_price: true,
+      show_location: true,
+      show_badge: true,
+    },
+  },
+  {
+    key: 'category.sub-category-block',
+    name: 'Sub Category Block',
+    schema_json: {
+      type: 'object',
+      properties: {
+        columns: { type: 'integer', title: 'Columns', minimum: 1, maximum: 6 },
+        show_count: { type: 'boolean', title: 'Show Count' },
+        depth: { type: 'integer', title: 'Depth', minimum: 1, maximum: 4 },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      columns: 3,
+      show_count: true,
+      depth: 2,
+    },
+  },
+  {
+    key: 'ad.slot',
+    name: 'Ad Slot',
+    schema_json: {
+      type: 'object',
+      properties: {
+        placement: { type: 'string', title: 'Placement', enum: ['home_top', 'home_bottom', 'category_top', 'category_bottom'] },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      placement: 'home_top',
+    },
+  },
+  {
+    key: 'media.hero-banner',
+    name: 'Hero Banner',
+    schema_json: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', title: 'Başlık' },
+        image_url: { type: 'string', title: 'Image URL' },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    key: 'media.carousel',
+    name: 'Carousel',
+    schema_json: {
+      type: 'object',
+      properties: {
+        auto_play_seconds: { type: 'integer', title: 'Auto Play (sn)' },
+        show_overlay_text: { type: 'boolean', title: 'Overlay Text' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      auto_play_seconds: 5,
+      show_overlay_text: true,
+    },
+  },
+  {
+    key: 'media.image',
+    name: 'Image',
+    schema_json: {
+      type: 'object',
+      properties: {
+        image_url: { type: 'string', title: 'Image URL' },
+        alt: { type: 'string', title: 'Alt' },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    key: 'media.video',
+    name: 'Video',
+    schema_json: {
+      type: 'object',
+      properties: {
+        provider: { type: 'string', title: 'Provider', enum: ['youtube', 'vimeo', 'custom_url'] },
+        source_url: { type: 'string', title: 'Source URL' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      provider: 'youtube',
+      source_url: '',
+    },
+  },
+  {
+    key: 'map.block',
+    name: 'Map Block',
+    schema_json: {
+      type: 'object',
+      properties: {
+        default_zoom: { type: 'integer', title: 'Zoom' },
+        show_nearby_layers: { type: 'boolean', title: 'Yakınlar' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      default_zoom: 14,
+      show_nearby_layers: true,
+    },
+  },
+  {
     key: 'layout.breadcrumb-header',
     name: 'Breadcrumb Header',
     schema_json: {
@@ -427,6 +643,157 @@ const isBlockedBuilderLibraryItem = (item) => {
   return BLOCKED_BUILDER_ITEM_NAME_KEYWORDS.some((keyword) => haystack.includes(keyword));
 };
 
+const COMPONENT_SOURCE_SPEC_RULES = [
+  {
+    id: 'category-navigator',
+    match: (key, name) => key.startsWith('layout.category-navigator') || name.includes('category navigator'),
+    spec: {
+      component: 'Category Navigator',
+      menu_path: 'Admin Panel → Katalog & İçerik → Kategoriler',
+      data_source: 'Kategori ağacı (L0 / L1 / Ln)',
+      api: 'GET /api/categories/tree',
+      source_options: '-',
+      usage: 'Ana sayfa sol menü, acil sayfası, kategori sayfaları',
+      click_behavior: '/kategori/{slug}',
+    },
+  },
+  {
+    id: 'cta-block',
+    match: (key, name) => key.includes('cta') || name.includes('cta block') || name.includes('cta'),
+    spec: {
+      component: 'CTA Block',
+      menu_path: 'Menü çağırmaz',
+      data_source: 'Manuel link ve stil ayarları',
+      api: '-',
+      source_options: '-',
+      usage: 'Acil / Vitrin / Kampanya yönlendirmesi',
+      click_behavior: 'Manuel linke yönlendirme',
+    },
+  },
+  {
+    id: 'listing-grid',
+    match: (key, name) => key.includes('listing.grid') || name.includes('listing grid'),
+    spec: {
+      component: 'Listing Grid',
+      menu_path: 'Admin Panel → İlan & Moderasyon → Onaylı Tüm İlanlar',
+      data_source: 'Onaylı ilan havuzu',
+      api: 'GET /api/public/listings',
+      source_options: 'showcase | urgent | latest | category',
+      usage: 'Ana sayfa vitrin ilanları, kategori vitrini',
+      click_behavior: 'İlan detayına yönlendirme',
+    },
+  },
+  {
+    id: 'listing-list',
+    match: (key, name) => key.includes('listing.list') || name.includes('listing list'),
+    spec: {
+      component: 'Listing List',
+      menu_path: 'Admin Panel → İlan & Moderasyon → Onaylı Tüm İlanlar',
+      data_source: 'İlan havuzu',
+      api: 'GET /api/public/listings',
+      source_options: 'urgent | category | search',
+      usage: 'Acil, kategori liste ve arama sonuç sayfaları',
+      click_behavior: 'İlan detayına yönlendirme',
+    },
+  },
+  {
+    id: 'listing-card',
+    match: (key, name) => key.includes('listing.card') || name.includes('listing card'),
+    spec: {
+      component: 'Listing Card',
+      menu_path: 'Menü çağırmaz',
+      data_source: 'Listing Grid/List çıktısı',
+      api: 'GET /api/public/listings (upstream)',
+      source_options: 'badge: acil | vitrin | ücretli',
+      usage: 'Grid/List görünümünde kart sunumu',
+      click_behavior: 'İlan detayına yönlendirme',
+    },
+  },
+  {
+    id: 'sub-category-block',
+    match: (key, name) => key.includes('sub-category') || name.includes('sub category block'),
+    spec: {
+      component: 'Sub Category Block',
+      menu_path: 'Admin Panel → Katalog & İçerik → Kategoriler',
+      data_source: 'Alt kategori listesi',
+      api: 'GET /api/categories/children',
+      source_options: 'columns | show_count | depth',
+      usage: 'Kategori sayfalarında alt kırılımlar',
+      click_behavior: '/kategori/{slug}',
+    },
+  },
+  {
+    id: 'ad-slot',
+    match: (key, name) => key.includes('ad-slot') || key.includes('ad.slot') || name.includes('reklam') || name.includes('ad slot'),
+    spec: {
+      component: 'Ad Slot',
+      menu_path: 'Admin Panel → Reklamlar → Reklam Yönetimi',
+      data_source: 'Aktif reklam bannerları',
+      api: 'GET /api/ads/resolve',
+      source_options: 'home_top | home_bottom | category_top | category_bottom',
+      usage: 'Sayfa içi banner yerleşimleri',
+      click_behavior: 'Reklam hedef URL yönlendirmesi',
+    },
+  },
+  {
+    id: 'media-components',
+    match: (key, name) => key.startsWith('media.') || ['hero banner', 'carousel', 'image', 'video'].some((token) => name.includes(token)),
+    spec: {
+      component: 'Hero Banner / Carousel / Image / Video',
+      menu_path: 'Statik: Builder manuel • Dinamik: Reklamlar / Vitrin Yönetimi',
+      data_source: 'Statik medya veya dinamik banner kaynağı',
+      api: 'GET /api/banners',
+      source_options: 'static | dynamic',
+      usage: 'Tanıtım ve vitrin medya alanları',
+      click_behavior: 'CTA / hedef medya linki',
+    },
+  },
+  {
+    id: 'map-block',
+    match: (key, name) => key.includes('interactive-map') || key.includes('map.block') || name.includes('map block'),
+    spec: {
+      component: 'Map Block',
+      menu_path: 'Admin Panel → Sistem Ayarları → Harita Ayarları',
+      data_source: 'İlan konum bilgileri (latitude/longitude)',
+      api: 'GET /api/public/listings',
+      source_options: '-',
+      usage: 'İlan detay ve konum odaklı sayfalar',
+      click_behavior: 'Harita etkileşimi / lokasyon odak',
+    },
+  },
+];
+
+const COMPONENT_DATA_SOURCE_MATRIX = [
+  {
+    id: 'layout-skeleton',
+    component: 'Container / Row / Column',
+    menu_path: 'Menü çağırmaz',
+    data_source: 'Yok',
+    api: '-',
+    usage: 'Sayfa yerleşim iskeleti',
+  },
+  ...COMPONENT_SOURCE_SPEC_RULES.map((rule) => ({
+    id: `matrix-${rule.id}`,
+    component: rule.spec.component,
+    menu_path: rule.spec.menu_path,
+    data_source: rule.spec.data_source,
+    api: rule.spec.api,
+    usage: rule.spec.usage,
+  })),
+];
+
+const resolveComponentSourceSpec = (item) => {
+  const key = String(item?.key || '').toLowerCase();
+  const name = String(item?.name || '').toLowerCase();
+  const matched = COMPONENT_SOURCE_SPEC_RULES.find((rule) => rule.match(key, name));
+  return matched ? matched.spec : null;
+};
+
+const attachComponentSourceSpec = (item) => ({
+  ...item,
+  data_source_spec: resolveComponentSourceSpec(item),
+});
+
 const resolveLibraryGroupByKey = (componentKey) => {
   const key = String(componentKey || '');
   if (key.startsWith('menu.snapshot.')) return 'menu';
@@ -434,6 +801,10 @@ const resolveLibraryGroupByKey = (componentKey) => {
   if (key.startsWith('media.')) return 'media';
   if (key.startsWith('data.')) return 'data';
   if (key.startsWith('interactive.')) return 'interactive';
+  if (key.startsWith('listing.')) return 'data';
+  if (key.startsWith('category.')) return 'navigation';
+  if (key.startsWith('cta.') || key.startsWith('ad.')) return 'core';
+  if (key.startsWith('map.')) return 'interactive';
   if (key.startsWith('home.') || key.startsWith('search.') || key.startsWith('listing.create.') || key.startsWith('shared.')) return 'core';
   return 'other';
 };
@@ -1075,7 +1446,7 @@ export default function AdminContentBuilder() {
   const [isSetupDrawerOpen, setIsSetupDrawerOpen] = useState(false);
   const [pendingFocusComponentId, setPendingFocusComponentId] = useState('');
 
-  const [componentLibrary, setComponentLibrary] = useState(DEFAULT_COMPONENT_LIBRARY);
+  const [componentLibrary, setComponentLibrary] = useState(() => DEFAULT_COMPONENT_LIBRARY.map(attachComponentSourceSpec));
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [categorySearch, setCategorySearch] = useState('');
   const [categoriesLoading, setCategoriesLoading] = useState(false);
@@ -1176,9 +1547,13 @@ export default function AdminContentBuilder() {
           merged.push(item);
         }
       });
-      setComponentLibrary(merged.filter((item) => !isBlockedBuilderLibraryItem(item)));
+      setComponentLibrary(
+        merged
+          .filter((item) => !isBlockedBuilderLibraryItem(item))
+          .map(attachComponentSourceSpec),
+      );
     } catch (_err) {
-      setComponentLibrary(DEFAULT_COMPONENT_LIBRARY);
+      setComponentLibrary(DEFAULT_COMPONENT_LIBRARY.map(attachComponentSourceSpec));
       setMenuManagementHealth(null);
     }
   }, [authHeaders, country]);
@@ -1263,6 +1638,10 @@ export default function AdminContentBuilder() {
         item?.default_props?.menu_label,
         item?.default_props?.menu_parent_label,
         item?.default_props?.menu_slug,
+        item?.data_source_spec?.menu_path,
+        item?.data_source_spec?.data_source,
+        item?.data_source_spec?.api,
+        item?.data_source_spec?.usage,
       ]
         .filter(Boolean)
         .join(' ')
@@ -2374,6 +2753,37 @@ export default function AdminContentBuilder() {
         {error ? <p className="mt-2 text-xs text-rose-700" data-testid="admin-content-builder-error-message">{error}</p> : null}
       </header>
 
+      <section className="rounded-xl border bg-white p-4" data-testid="admin-content-builder-data-source-matrix-panel">
+        <div className="flex flex-wrap items-center justify-between gap-2" data-testid="admin-content-builder-data-source-matrix-header">
+          <h2 className="text-sm font-semibold" data-testid="admin-content-builder-data-source-matrix-title">Component Veri Kaynağı Matrisi</h2>
+          <span className="text-[11px] text-slate-500" data-testid="admin-content-builder-data-source-matrix-note">Veri bağlantıları sabitlendi (menu + source + API)</span>
+        </div>
+        <div className="mt-3 overflow-x-auto" data-testid="admin-content-builder-data-source-matrix-table-wrap">
+          <table className="min-w-full text-left text-[11px]" data-testid="admin-content-builder-data-source-matrix-table">
+            <thead>
+              <tr className="border-b bg-slate-50" data-testid="admin-content-builder-data-source-matrix-head-row">
+                <th className="px-2 py-2">Component</th>
+                <th className="px-2 py-2">Çağırdığı Menü</th>
+                <th className="px-2 py-2">Veri Kaynağı</th>
+                <th className="px-2 py-2">API</th>
+                <th className="px-2 py-2">Kullanım</th>
+              </tr>
+            </thead>
+            <tbody>
+              {COMPONENT_DATA_SOURCE_MATRIX.map((row) => (
+                <tr key={row.id} className="border-b align-top" data-testid={`admin-content-builder-data-source-row-${row.id}`}>
+                  <td className="px-2 py-2 font-medium" data-testid={`admin-content-builder-data-source-component-${row.id}`}>{row.component}</td>
+                  <td className="px-2 py-2" data-testid={`admin-content-builder-data-source-menu-${row.id}`}>{row.menu_path}</td>
+                  <td className="px-2 py-2" data-testid={`admin-content-builder-data-source-source-${row.id}`}>{row.data_source}</td>
+                  <td className="px-2 py-2" data-testid={`admin-content-builder-data-source-api-${row.id}`}>{row.api}</td>
+                  <td className="px-2 py-2" data-testid={`admin-content-builder-data-source-usage-${row.id}`}>{row.usage}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <div className="grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)]" data-testid="admin-content-builder-main-grid">
         <aside className="rounded-xl border bg-white p-4" data-testid="admin-content-builder-library">
           <h2 className="text-sm font-semibold" data-testid="admin-content-builder-library-title">Component Library</h2>
@@ -2456,6 +2866,16 @@ export default function AdminContentBuilder() {
                         >
                           <div className="text-xs font-medium" data-testid={`admin-content-builder-library-item-name-${component.key}`}>{component.name}</div>
                           <div className="text-[11px] text-slate-500" data-testid={`admin-content-builder-library-item-key-${component.key}`}>{component.key}</div>
+                          {component.data_source_spec ? (
+                            <div className="mt-1 rounded border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-600" data-testid={`admin-content-builder-library-item-source-spec-${component.key}`}>
+                              <div data-testid={`admin-content-builder-library-item-source-menu-${component.key}`}><strong>Menü:</strong> {component.data_source_spec.menu_path}</div>
+                              <div data-testid={`admin-content-builder-library-item-source-data-${component.key}`}><strong>Kaynak:</strong> {component.data_source_spec.data_source}</div>
+                              <div data-testid={`admin-content-builder-library-item-source-api-${component.key}`}><strong>API:</strong> {component.data_source_spec.api}</div>
+                              {component.data_source_spec.source_options && component.data_source_spec.source_options !== '-' ? (
+                                <div data-testid={`admin-content-builder-library-item-source-options-${component.key}`}><strong>Source:</strong> {component.data_source_spec.source_options}</div>
+                              ) : null}
+                            </div>
+                          ) : null}
                           <div className="mt-1 text-[11px] text-slate-500" data-testid={`admin-content-builder-library-drag-hint-${component.key}`}>
                             Bu kartı doğrudan canvas sütununa sürükleyebilirsiniz.
                           </div>

@@ -28,6 +28,16 @@ const resolveMediaUrl = (url) => {
   return `${process.env.REACT_APP_BACKEND_URL}${url}`;
 };
 
+const resolveAdPlacementToken = (placement) => {
+  const normalized = String(placement || '').trim().toLowerCase();
+  if (['home_top', 'ad_home_top'].includes(normalized)) return 'AD_HOME_TOP';
+  if (['home_bottom', 'ad_home_bottom'].includes(normalized)) return 'AD_HOME_BOTTOM';
+  if (['category_top', 'ad_search_top', 'search_top'].includes(normalized)) return 'AD_SEARCH_TOP';
+  if (['category_bottom', 'ad_category_bottom'].includes(normalized)) return 'AD_CATEGORY_BOTTOM';
+  if (normalized.startsWith('ad_')) return String(placement);
+  return 'AD_HOME_TOP';
+};
+
 const normalizeItems = (items, fallbackPrefix = 'item') => {
   if (!Array.isArray(items)) return [];
   return items
@@ -532,7 +542,136 @@ export const Video3DTourPlayerBlock = ({ props }) => {
 export const AdPromoSlotBlock = ({ props }) => (
   <section className="rounded-xl border bg-white p-3" data-testid="runtime-ad-promo-slot">
     <div className="mb-2 text-xs text-slate-500" data-testid="runtime-ad-promo-label">{props?.campaign_label || 'Kampanya Alanı'}</div>
-    <AdSlot placement={props?.placement || 'AD_HOME_TOP'} className="rounded-lg border" />
+    <AdSlot placement={resolveAdPlacementToken(props?.placement || 'AD_HOME_TOP')} className="rounded-lg border" />
+  </section>
+);
+
+const SimpleListingCard = ({ item, dataTestId }) => (
+  <a href={item?.url || '#'} className="rounded-lg border bg-white p-3 text-xs" data-testid={dataTestId}>
+    <div className="font-semibold">{item?.label || 'İlan'}</div>
+    <div className="mt-1 text-slate-600">{item?.price ? `${new Intl.NumberFormat('tr-TR').format(item.price)} ${item?.currency || 'EUR'}` : 'Detay'}</div>
+  </a>
+);
+
+export const CTABlock = ({ props }) => {
+  const title = props?.title || 'ACİL';
+  const href = props?.link || '/acil';
+  const fontSize = Math.max(10, Math.min(24, Number(props?.font_size || 14)));
+  const fontWeight = String(props?.font_weight || '700');
+  const fontColor = props?.font_color || '#ffffff';
+  const backgroundColor = props?.background_color || '#dc2626';
+
+  return (
+    <section className="rounded-xl border bg-white p-4" data-testid="runtime-cta-block">
+      <a
+        href={href}
+        className="inline-flex items-center rounded-full px-4 py-2"
+        style={{ fontSize, fontWeight, color: fontColor, backgroundColor }}
+        data-testid="runtime-cta-block-button"
+      >
+        {props?.icon ? <span className="mr-2">{props.icon}</span> : null}
+        {title}
+      </a>
+    </section>
+  );
+};
+
+export const ListingGridBlock = ({ props, runtimeContext }) => {
+  const maxItems = Math.max(1, Math.min(48, Number(props?.columns || 4) * Number(props?.rows || 2)));
+  const items = normalizeItems(
+    props?.items
+      || runtimeContext?.showcaseItems
+      || runtimeContext?.searchItems
+      || runtimeContext?.recentItems
+      || ['Vitrin İlan 1', 'Vitrin İlan 2', 'Vitrin İlan 3', 'Vitrin İlan 4'],
+    'listing-grid',
+  ).slice(0, maxItems);
+
+  const columns = Math.max(1, Math.min(6, Number(props?.columns || 4)));
+
+  return (
+    <section className="rounded-xl border bg-white p-4" data-testid="runtime-listing-grid">
+      <h3 className="text-sm font-semibold" data-testid="runtime-listing-grid-title">Listing Grid</h3>
+      <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }} data-testid="runtime-listing-grid-items">
+        {items.map((item, index) => <SimpleListingCard key={`${item.id}-${index}`} item={item} dataTestId={`runtime-listing-grid-item-${index}`} />)}
+      </div>
+    </section>
+  );
+};
+
+export const ListingListBlock = ({ props, runtimeContext }) => {
+  const perPage = Math.max(5, Math.min(100, Number(props?.per_page || 20)));
+  const items = normalizeItems(
+    props?.items
+      || runtimeContext?.searchItems
+      || runtimeContext?.urgentItems
+      || runtimeContext?.recentItems
+      || ['Acil İlan 1', 'Acil İlan 2', 'Acil İlan 3'],
+    'listing-list',
+  ).slice(0, perPage);
+
+  return (
+    <section className="rounded-xl border bg-white p-4" data-testid="runtime-listing-list">
+      <h3 className="text-sm font-semibold" data-testid="runtime-listing-list-title">Listing List</h3>
+      <div className="mt-3 space-y-2" data-testid="runtime-listing-list-items">
+        {items.map((item, index) => <SimpleListingCard key={`${item.id}-${index}`} item={item} dataTestId={`runtime-listing-list-item-${index}`} />)}
+      </div>
+    </section>
+  );
+};
+
+export const ListingCardBlock = ({ props, runtimeContext }) => {
+  const first = normalizeItems(
+    props?.items || runtimeContext?.searchItems || runtimeContext?.recentItems || ['İlan Kartı'],
+    'listing-card',
+  )[0] || { id: 'listing-card-1', label: 'İlan Kartı' };
+
+  return (
+    <section className="rounded-xl border bg-white p-4" data-testid="runtime-listing-card-block">
+      <h3 className="text-sm font-semibold" data-testid="runtime-listing-card-title">Listing Card</h3>
+      <div className="mt-3" data-testid="runtime-listing-card-content">
+        <SimpleListingCard item={first} dataTestId="runtime-listing-card-item" />
+      </div>
+    </section>
+  );
+};
+
+export const SubCategoryBlock = ({ props, runtimeContext }) => {
+  const depth = Math.max(1, Math.min(4, Number(props?.depth || 2)));
+  const columns = Math.max(1, Math.min(6, Number(props?.columns || 3)));
+  const tree = buildL0L1Categories(Array.isArray(runtimeContext?.categories) ? runtimeContext.categories : []);
+  const items = tree.flatMap((root) => {
+    const base = [{ id: root.id, label: root.name, count: root.listing_count }];
+    if (depth > 1) {
+      base.push(...(root.children || []).map((child) => ({ id: child.id, label: child.name, count: child.listing_count })));
+    }
+    return base;
+  });
+
+  const normalizedItems = (items.length ? items : normalizeItems(['Alt Kategori 1', 'Alt Kategori 2', 'Alt Kategori 3'], 'sub-category'));
+
+  return (
+    <section className="rounded-xl border bg-white p-4" data-testid="runtime-sub-category-block">
+      <h3 className="text-sm font-semibold" data-testid="runtime-sub-category-title">Sub Category Block</h3>
+      <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }} data-testid="runtime-sub-category-items">
+        {normalizedItems.map((item, index) => (
+          <a key={`${item.id || index}`} href={item?.url || '#'} className="rounded border bg-slate-50 px-2 py-2 text-xs" data-testid={`runtime-sub-category-item-${index}`}>
+            {item.label}
+            {props?.show_count !== false ? <span className="ml-1 text-slate-500">({Number(item.count || 0)})</span> : null}
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+export const ImageBlock = ({ props }) => (
+  <section className="rounded-xl border bg-white p-4" data-testid="runtime-image-block">
+    {props?.image_url ? (
+      <img src={resolveMediaUrl(props.image_url)} alt={props?.alt || 'image'} className="w-full rounded border" data-testid="runtime-image-block-image" />
+    ) : (
+      <div className="rounded border border-dashed px-3 py-8 text-xs text-slate-500" data-testid="runtime-image-block-empty">Image URL tanımlanmadı.</div>
+    )}
   </section>
 );
 
@@ -791,6 +930,18 @@ export const DopingSelectorBlock = ({ props }) => {
 };
 
 export const EXTENDED_RUNTIME_REGISTRY = {
+  'category.navigator': ({ props, runtimeContext }) => <CategoryNavigatorSideBlock props={props} runtimeContext={runtimeContext} />,
+  'cta.block': ({ props, runtimeContext }) => <CTABlock props={props} runtimeContext={runtimeContext} />,
+  'listing.grid': ({ props, runtimeContext }) => <ListingGridBlock props={props} runtimeContext={runtimeContext} />,
+  'listing.list': ({ props, runtimeContext }) => <ListingListBlock props={props} runtimeContext={runtimeContext} />,
+  'listing.card': ({ props, runtimeContext }) => <ListingCardBlock props={props} runtimeContext={runtimeContext} />,
+  'category.sub-category-block': ({ props, runtimeContext }) => <SubCategoryBlock props={props} runtimeContext={runtimeContext} />,
+  'ad.slot': ({ props, runtimeContext }) => <AdPromoSlotBlock props={{ ...props, placement: resolveAdPlacementToken(props?.placement) }} runtimeContext={runtimeContext} />,
+  'media.hero-banner': ({ props, runtimeContext }) => <AutoPlayCarouselHeroBlock props={props} runtimeContext={runtimeContext} />,
+  'media.carousel': ({ props, runtimeContext }) => <AutoPlayCarouselHeroBlock props={props} runtimeContext={runtimeContext} />,
+  'media.image': ({ props, runtimeContext }) => <ImageBlock props={props} runtimeContext={runtimeContext} />,
+  'media.video': ({ props, runtimeContext }) => <Video3DTourPlayerBlock props={props} runtimeContext={runtimeContext} />,
+  'map.block': ({ props, runtimeContext }) => <InteractiveMapBlock props={props} runtimeContext={runtimeContext} />,
   'layout.breadcrumb-header': ({ props, runtimeContext }) => <BreadcrumbHeaderBlock props={props} runtimeContext={runtimeContext} />,
   'layout.sticky-action-bar': ({ props, runtimeContext }) => <StickyActionBarBlock props={props} runtimeContext={runtimeContext} />,
   'layout.category-navigator-side': ({ props, runtimeContext }) => <CategoryNavigatorSideBlock props={props} runtimeContext={runtimeContext} />,
