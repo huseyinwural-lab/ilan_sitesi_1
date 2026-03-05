@@ -1,0 +1,91 @@
+{
+  "summary": "Testing Content Builder features: grouped library, policy report, listing_create publish guard, runtime renderers on public pages",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_content_builder_policy.py",
+    "/app/test_reports/pytest/pytest_results_127.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_content_builder_policy.py"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9 tests passed)",
+    "frontend": "100% (all UI features working)"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "TEST_ prefixed pages created and cleaned up during testing",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All Content Builder features tested and working. Component Library has grouped view with 6 categories, quick search filter, and 129 component items. Policy Report shows PASS/FAIL checks for listing_create pages. Publish guard enforces policy rules correctly.",
+  "features_verified": {
+    "component_library": {
+      "grouped_view": "Working - 6 categories (Temel Builder, Navigasyon, Medya, Bilgi, Etkileşim, Menü Snapshot, Diğer)",
+      "quick_search": "Working - filters components by name",
+      "group_filter_dropdown": "Working - can filter by category",
+      "total_components": "129 library items visible"
+    },
+    "new_16_components": {
+      "status": "Registered in ExtendedRuntimeBlocks.jsx",
+      "components": [
+        "layout.breadcrumb-header",
+        "layout.sticky-action-bar",
+        "layout.category-navigator-side",
+        "layout.category-navigator-top",
+        "media.advanced-photo-gallery",
+        "media.auto-play-carousel-hero",
+        "media.video-3d-tour-player",
+        "media.ad-promo-slot",
+        "data.price-title-block",
+        "data.attribute-grid-dynamic",
+        "data.description-text-area",
+        "data.seller-card",
+        "interactive.interactive-map",
+        "interactive.mortgage-loan-calculator",
+        "interactive.similar-listings-slider",
+        "interactive.doping-selector"
+      ]
+    },
+    "policy_report": {
+      "status": "Working",
+      "checks_displayed": [
+        "Rows/Columns yapısı",
+        "Satır/Sütun/Bileşen limitleri",
+        "Tekil ID politikası",
+        "Breakpoint width doğrulaması",
+        "İzinli bileşen doğrulaması",
+        "Bileşen prop politikası",
+        "Tek default içerik bloğu",
+        "Reklam placement politikası",
+        "Doping selector politikası",
+        "Toplam bileşen kontrolü"
+      ]
+    },
+    "publish_guard": {
+      "listing_create_without_default": "Correctly returns 400 with 'listing_create_default_component_must_be_exactly_one'",
+      "listing_create_invalid_doping": "Correctly returns 400 with 'listing_create_doping_option_not_allowed'",
+      "listing_create_valid": "Successfully creates draft and publishes"
+    },
+    "runtime_renderer": {
+      "home_page": "No unknown components - renders correctly",
+      "search_page": "No unknown components - renders correctly"
+    }
+  },
+  "backend_tests_summary": {
+    "TestAuthentication": "1/1 passed",
+    "TestComponentLibrary": "2/2 passed",
+    "TestListingCreatePolicy": "3/3 passed",
+    "TestPolicyReport": "1/1 passed",
+    "TestPublishGuard": "1/1 passed",
+    "TestHealthCheck": "1/1 passed"
+  }
+}

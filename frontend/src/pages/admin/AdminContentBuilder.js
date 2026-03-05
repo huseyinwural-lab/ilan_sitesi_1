@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -349,6 +349,27 @@ const DEFAULT_COMPONENT_LIBRARY = [
     },
   },
 ];
+
+const LIBRARY_GROUP_DEFINITIONS = [
+  { id: 'core', label: 'Temel Builder Bileşenleri' },
+  { id: 'navigation', label: 'Navigasyon ve Yapı Bileşenleri' },
+  { id: 'media', label: 'Medya ve Tanıtım Bileşenleri' },
+  { id: 'data', label: 'Bilgi ve Veri Bileşenleri' },
+  { id: 'interactive', label: 'Etkileşim ve Fonksiyonel Bileşenler' },
+  { id: 'menu', label: 'Menü Snapshot Bileşenleri' },
+  { id: 'other', label: 'Diğer' },
+];
+
+const resolveLibraryGroupByKey = (componentKey) => {
+  const key = String(componentKey || '');
+  if (key.startsWith('menu.snapshot.')) return 'menu';
+  if (key.startsWith('layout.')) return 'navigation';
+  if (key.startsWith('media.')) return 'media';
+  if (key.startsWith('data.')) return 'data';
+  if (key.startsWith('interactive.')) return 'interactive';
+  if (key.startsWith('home.') || key.startsWith('search.') || key.startsWith('listing.create.') || key.startsWith('shared.')) return 'core';
+  return 'other';
+};
 
 const getDefaultComponentKey = (pageType) => {
   if (pageType === 'home') return 'home.default-content';
@@ -738,6 +759,7 @@ export default function AdminContentBuilder() {
   const [bindingActiveItem, setBindingActiveItem] = useState(null);
   const [bindingLoading, setBindingLoading] = useState(false);
   const [showPreviewComparison, setShowPreviewComparison] = useState(false);
+  const [previewRefreshToken, setPreviewRefreshToken] = useState(0);
   const [diffFilter, setDiffFilter] = useState('all');
   const [diffJumpCursor, setDiffJumpCursor] = useState({ row: -1, component: -1 });
 
@@ -750,11 +772,21 @@ export default function AdminContentBuilder() {
   const [dragOverRowId, setDragOverRowId] = useState('');
   const [dragOverColumnId, setDragOverColumnId] = useState('');
   const [isSetupDrawerOpen, setIsSetupDrawerOpen] = useState(false);
+  const [pendingFocusComponentId, setPendingFocusComponentId] = useState('');
 
   const [componentLibrary, setComponentLibrary] = useState(DEFAULT_COMPONENT_LIBRARY);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [categorySearch, setCategorySearch] = useState('');
   const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [librarySearchQuery, setLibrarySearchQuery] = useState('');
+  const [libraryGroupFilter, setLibraryGroupFilter] = useState('all');
+  const [libraryMenuCategoryFilterId, setLibraryMenuCategoryFilterId] = useState('');
+  const [collapsedLibraryGroups, setCollapsedLibraryGroups] = useState({});
+
+  const [policyReport, setPolicyReport] = useState(null);
+  const [policyReportLoading, setPolicyReportLoading] = useState(false);
+
+  const previewComparisonRef = useRef(null);
 
   const getLibrary = useCallback(async () => {
     try {
@@ -870,6 +902,55 @@ export default function AdminContentBuilder() {
     [componentLibrary],
   );
 
+  const libraryCategoryNameById = useMemo(() => {
+    const next = new Map();
+    categoryOptions.forEach((item) => {
+      next.set(item.id, item.name || item.slug || item.id);
+    });
+    return next;
+  }, [categoryOptions]);
+
+  const selectedLibraryCategoryLabel = useMemo(
+    () => (libraryMenuCategoryFilterId ? String(libraryCategoryNameById.get(libraryMenuCategoryFilterId) || '').toLowerCase() : ''),
+    [libraryCategoryNameById, libraryMenuCategoryFilterId],
+  );
+
+  const filteredLibraryItems = useMemo(() => {
+    const query = librarySearchQuery.trim().toLowerCase();
+    return componentLibrary.filter((item) => {
+      const groupId = resolveLibraryGroupByKey(item.key);
+      if (libraryGroupFilter !== 'all' && groupId !== libraryGroupFilter) return false;
+
+      const haystack = [
+        item.name,
+        item.key,
+        item?.default_props?.menu_label,
+        item?.default_props?.menu_parent_label,
+        item?.default_props?.menu_slug,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      if (query && !haystack.includes(query)) return false;
+
+      if (selectedLibraryCategoryLabel) {
+        if (!String(item.key || '').startsWith('menu.snapshot.')) return false;
+        if (!haystack.includes(selectedLibraryCategoryLabel)) return false;
+      }
+
+      return true;
+    });
+  }, [componentLibrary, librarySearchQuery, libraryGroupFilter, selectedLibraryCategoryLabel]);
+
+  const groupedLibraryItems = useMemo(() => {
+    const grouped = LIBRARY_GROUP_DEFINITIONS.map((group) => ({
+      ...group,
+      items: filteredLibraryItems.filter((item) => resolveLibraryGroupByKey(item.key) === group.id),
+    })).filter((group) => group.items.length > 0);
+    return grouped;
+  }, [filteredLibraryItems]);
+
   const draggingLibraryComponentName = useMemo(() => {
     if (!draggingLibraryComponentKey) return '';
     return componentLibrary.find((item) => item.key === draggingLibraryComponentKey)?.name || '';
@@ -908,14 +989,15 @@ export default function AdminContentBuilder() {
 
   const publishedPreviewUrl = useMemo(() => {
     if (typeof window === 'undefined') return previewBasePath;
-    return `${window.location.origin}${previewBasePath}`;
-  }, [previewBasePath]);
+    const separator = previewBasePath.includes('?') ? '&' : '?';
+    return `${window.location.origin}${previewBasePath}${separator}cb_preview_ts=${previewRefreshToken}`;
+  }, [previewBasePath, previewRefreshToken]);
 
   const draftPreviewUrl = useMemo(() => {
     if (typeof window === 'undefined') return previewBasePath;
     const separator = previewBasePath.includes('?') ? '&' : '?';
-    return `${window.location.origin}${previewBasePath}${separator}layout_preview=draft`;
-  }, [previewBasePath]);
+    return `${window.location.origin}${previewBasePath}${separator}layout_preview=draft&cb_preview_ts=${previewRefreshToken}`;
+  }, [previewBasePath, previewRefreshToken]);
 
   const publishedRevisionPayload = useMemo(() => {
     const published = revisionList.find((revision) => revision.status === 'published');
@@ -944,6 +1026,39 @@ export default function AdminContentBuilder() {
     }
     return {};
   };
+
+  const toggleLibraryGroupCollapsed = (groupId) => {
+    setCollapsedLibraryGroups((prev) => ({
+      ...prev,
+      [groupId]: !prev[groupId],
+    }));
+  };
+
+  const refreshPreviewAfterInteraction = () => {
+    setPreviewRefreshToken(Date.now());
+  };
+
+  const autoFocusPreviewIfVisible = () => {
+    if (!showPreviewComparison) return;
+    const target = previewComparisonRef.current;
+    if (!target) return;
+    window.requestAnimationFrame(() => {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
+  useEffect(() => {
+    if (!pendingFocusComponentId) return;
+    const timer = window.setTimeout(() => {
+      const target = document.querySelector(`[data-testid="admin-content-builder-component-${pendingFocusComponentId}"]`);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.focus?.();
+      }
+      setPendingFocusComponentId('');
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [pendingFocusComponentId]);
 
   const updateComponentPropValue = (rowId, columnId, componentId, propKey, propValue) => {
     const next = deepClone(payloadJson);
@@ -1023,6 +1138,7 @@ export default function AdminContentBuilder() {
       setPageId(page.id);
       setBindingCategoryId(normalizedCategoryId);
       await getRevisionsForPage(page.id, pageType);
+      setPolicyReport(null);
       setStatus('Sayfa yüklendi. Draft düzenleyebilirsiniz.');
       toast.success('Layout page başarıyla yüklendi.');
       setIsSetupDrawerOpen(false);
@@ -1037,7 +1153,7 @@ export default function AdminContentBuilder() {
   const saveDraft = async () => {
     if (!activeDraftId) {
       setError('Aktif draft bulunamadı. Önce “Sayfayı Yükle/Oluştur” yapın.');
-      return;
+      return false;
     }
     setSaving(true);
     setError('');
@@ -1050,13 +1166,52 @@ export default function AdminContentBuilder() {
       );
       setStatus('Draft kaydedildi.');
       toast.success('Draft kaydedildi.');
+      refreshPreviewAfterInteraction();
+      return true;
     } catch (err) {
       setError(err?.response?.data?.detail || 'Draft kaydedilemedi');
       toast.error('Draft kaydedilemedi.');
+      return false;
     } finally {
       setSaving(false);
     }
   };
+
+  const fetchPolicyReport = async ({ silent = false } = {}) => {
+    if (!activeDraftId) return null;
+    setPolicyReportLoading(true);
+    try {
+      const response = await axios.get(
+        `${API}/admin/site/content-layout/revisions/${activeDraftId}/policy-report`,
+        { headers: authHeaders },
+      );
+      const report = response.data?.report || null;
+      setPolicyReport(report);
+      if (!silent && report?.policy === 'listing_create') {
+        if (report?.passed) {
+          toast.success('Policy report başarılı.');
+        } else {
+          toast.error('Policy report bazı kurallardan geçemedi.');
+        }
+      }
+      return report;
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Policy report alınamadı');
+      if (!silent) toast.error('Policy report alınamadı.');
+      return null;
+    } finally {
+      setPolicyReportLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (pageType !== 'listing_create_stepX' || !activeDraftId) {
+      setPolicyReport(null);
+      return;
+    }
+    fetchPolicyReport({ silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageType, activeDraftId]);
 
   const publishDraft = async () => {
     if (!activeDraftId) {
@@ -1067,7 +1222,22 @@ export default function AdminContentBuilder() {
     setError('');
     setStatus('');
     try {
-      await saveDraft();
+      const saveOk = await saveDraft();
+      if (!saveOk) {
+        setStatus('Publish durduruldu: Draft kaydedilemedi.');
+        return;
+      }
+
+      if (pageType === 'listing_create_stepX') {
+        const report = await fetchPolicyReport({ silent: true });
+        if (report?.policy === 'listing_create' && report.passed === false) {
+          setError('Policy report başarısız. Publish öncesi kuralları düzeltin.');
+          setStatus('Publish durduruldu: Policy report başarısız.');
+          toast.error('Publish engellendi: listing_create policy kuralları sağlanmadı.');
+          return;
+        }
+      }
+
       await axios.post(`${API}/admin/site/content-layout/revisions/${activeDraftId}/publish`, {}, { headers: authHeaders });
       setStatus('Draft publish edildi. Yeni draft oluşturuluyor...');
       await getRevisionsForPage(pageId, pageType);
@@ -1097,6 +1267,7 @@ export default function AdminContentBuilder() {
       }],
     });
     updatePayload(next);
+    refreshPreviewAfterInteraction();
   };
 
   const moveRow = (rowId, direction) => {
@@ -1108,12 +1279,14 @@ export default function AdminContentBuilder() {
     if (target < 0 || target >= rows.length) return;
     [rows[index], rows[target]] = [rows[target], rows[index]];
     updatePayload(next);
+    refreshPreviewAfterInteraction();
   };
 
   const removeRow = (rowId) => {
     const next = deepClone(payloadJson);
     next.rows = (next.rows || []).filter((row) => row.id !== rowId);
     updatePayload(next);
+    refreshPreviewAfterInteraction();
     if (selectedRowId === rowId) {
       setSelectedRowId('');
       setSelectedColumnId('');
@@ -1132,6 +1305,7 @@ export default function AdminContentBuilder() {
       components: [],
     });
     updatePayload(next);
+    refreshPreviewAfterInteraction();
   };
 
   const moveColumn = (rowId, columnId, direction) => {
@@ -1144,6 +1318,7 @@ export default function AdminContentBuilder() {
     if (target < 0 || target >= columns.length) return;
     [columns[index], columns[target]] = [columns[target], columns[index]];
     updatePayload(next);
+    refreshPreviewAfterInteraction();
   };
 
   const updateColumnWidth = (rowId, columnId, key, value) => {
@@ -1162,6 +1337,7 @@ export default function AdminContentBuilder() {
     if (!row) return;
     row.columns = (row.columns || []).filter((column) => column.id !== columnId);
     updatePayload(next);
+    refreshPreviewAfterInteraction();
     if (selectedColumnId === columnId) {
       setSelectedColumnId('');
       setSelectedComponentId('');
@@ -1203,6 +1379,9 @@ export default function AdminContentBuilder() {
     setSelectedRowId(rowId);
     setSelectedColumnId(columnId);
     setSelectedComponentId(nextComponentId);
+    setPendingFocusComponentId(nextComponentId);
+    refreshPreviewAfterInteraction();
+    autoFocusPreviewIfVisible();
   };
 
   const updateComponentField = (rowId, columnId, componentId, field, value) => {
@@ -1232,6 +1411,7 @@ export default function AdminContentBuilder() {
       component[field] = value;
     }
     updatePayload(next);
+    refreshPreviewAfterInteraction();
   };
 
   const removeComponent = (rowId, columnId, componentId) => {
@@ -1241,6 +1421,7 @@ export default function AdminContentBuilder() {
     if (!column) return;
     column.components = (column.components || []).filter((component) => component.id !== componentId);
     updatePayload(next);
+    refreshPreviewAfterInteraction();
     if (selectedComponentId === componentId) {
       setSelectedComponentId('');
     }
@@ -1257,6 +1438,7 @@ export default function AdminContentBuilder() {
     if (target < 0 || target >= list.length) return;
     [list[index], list[target]] = [list[target], list[index]];
     updatePayload(next);
+    refreshPreviewAfterInteraction();
   };
 
   const handleRowDrop = (targetRowId) => {
@@ -1272,6 +1454,7 @@ export default function AdminContentBuilder() {
     const [moved] = rows.splice(fromIndex, 1);
     rows.splice(toIndex, 0, moved);
     updatePayload(next);
+    refreshPreviewAfterInteraction();
     setDraggingRowId('');
     setDragOverRowId('');
   };
@@ -1311,6 +1494,9 @@ export default function AdminContentBuilder() {
     setSelectedRowId(targetRowId);
     setSelectedColumnId(targetColumnId);
     setSelectedComponentId(movedComponent.id || '');
+    setPendingFocusComponentId(movedComponent.id || '');
+    refreshPreviewAfterInteraction();
+    autoFocusPreviewIfVisible();
     setDraggingComponentId('');
     setDragOverColumnId('');
   };
@@ -1514,6 +1700,16 @@ export default function AdminContentBuilder() {
           <button
             type="button"
             className="h-10 rounded border px-4 text-xs"
+            onClick={() => fetchPolicyReport()}
+            disabled={!activeDraftId || policyReportLoading}
+            data-testid="admin-content-builder-policy-report-button"
+          >
+            {policyReportLoading ? 'Policy Raporu...' : 'Policy Report'}
+          </button>
+
+          <button
+            type="button"
+            className="h-10 rounded border px-4 text-xs"
             onClick={() => setShowPreviewComparison((prev) => !prev)}
             data-testid="admin-content-builder-preview-toggle-button"
           >
@@ -1543,8 +1739,28 @@ export default function AdminContentBuilder() {
           </span>
         </div>
 
+        {policyReport?.policy === 'listing_create' ? (
+          <div className={`mt-3 rounded-lg border p-3 text-xs ${policyReport.passed ? 'border-emerald-200 bg-emerald-50' : 'border-rose-200 bg-rose-50'}`} data-testid="admin-content-builder-policy-report-panel">
+            <div className="flex items-center justify-between gap-3" data-testid="admin-content-builder-policy-report-header">
+              <strong data-testid="admin-content-builder-policy-report-title">Listing Create Policy Report</strong>
+              <span data-testid="admin-content-builder-policy-report-status">Durum: {policyReport.passed ? 'PASS' : 'FAIL'}</span>
+            </div>
+            <div className="mt-2 space-y-1" data-testid="admin-content-builder-policy-report-list">
+              {(policyReport.checks || []).map((check) => (
+                <div key={check.id} className="flex flex-wrap items-center gap-2" data-testid={`admin-content-builder-policy-check-${check.id}`}>
+                  <span className={`inline-flex rounded px-2 py-0.5 ${check.status === 'pass' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`} data-testid={`admin-content-builder-policy-check-status-${check.id}`}>
+                    {String(check.status || '').toUpperCase()}
+                  </span>
+                  <span data-testid={`admin-content-builder-policy-check-label-${check.id}`}>{check.label}</span>
+                  <span className="text-slate-500" data-testid={`admin-content-builder-policy-check-detail-${check.id}`}>{check.detail}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         {showPreviewComparison ? (
-          <div className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2" data-testid="admin-content-builder-preview-iframes">
+          <div ref={previewComparisonRef} className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2" data-testid="admin-content-builder-preview-iframes">
             <div className="rounded border bg-white p-2" data-testid="admin-content-builder-preview-published-wrap">
               <div className="mb-1 text-[11px] text-slate-600" data-testid="admin-content-builder-preview-published-label">Published</div>
               <iframe title="published-preview" src={publishedPreviewUrl} className="h-[380px] w-full rounded border" data-testid="admin-content-builder-preview-published-iframe" />
@@ -1566,40 +1782,103 @@ export default function AdminContentBuilder() {
           <p className="mt-1 text-xs text-slate-500" data-testid="admin-content-builder-library-note">
             Bir sütunu seçip bileşen ekleyin. Menü bileşenleri: <strong data-testid="admin-content-builder-library-menu-count">{menuComponentCount}</strong>
           </p>
+
+          <div className="mt-3 space-y-2" data-testid="admin-content-builder-library-filters">
+            <input
+              type="text"
+              className="h-9 w-full rounded border px-2 text-xs"
+              placeholder="Bileşen ara (hızlı arama)"
+              value={librarySearchQuery}
+              onChange={(event) => setLibrarySearchQuery(event.target.value)}
+              data-testid="admin-content-builder-library-search-input"
+            />
+
+            <select
+              className="h-9 w-full rounded border px-2 text-xs"
+              value={libraryGroupFilter}
+              onChange={(event) => setLibraryGroupFilter(event.target.value)}
+              data-testid="admin-content-builder-library-group-filter"
+            >
+              <option value="all">Tüm Gruplar</option>
+              {LIBRARY_GROUP_DEFINITIONS.map((group) => (
+                <option key={group.id} value={group.id}>{group.label}</option>
+              ))}
+            </select>
+
+            <select
+              className="h-9 w-full rounded border px-2 text-xs"
+              value={libraryMenuCategoryFilterId}
+              onChange={(event) => setLibraryMenuCategoryFilterId(event.target.value)}
+              data-testid="admin-content-builder-library-menu-category-filter"
+            >
+              <option value="">Menü için kategori ağacı filtresi (opsiyonel)</option>
+              {categoryOptions.map((item) => (
+                <option key={item.id} value={item.id}>{`${'— '.repeat(item.depth)}${item.name}`}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="mt-3 space-y-2" data-testid="admin-content-builder-library-list">
-            {componentLibrary.map((component) => (
-              <div
-                key={component.key}
-                className="rounded border p-2"
-                draggable
-                onDragStart={() => {
-                  setDraggingLibraryComponentKey(component.key);
-                  setDraggingComponentId('');
-                }}
-                onDragEnd={() => setDraggingLibraryComponentKey('')}
-                data-testid={`admin-content-builder-library-item-${component.key}`}
-              >
-                <div className="text-xs font-medium" data-testid={`admin-content-builder-library-item-name-${component.key}`}>{component.name}</div>
-                <div className="text-[11px] text-slate-500" data-testid={`admin-content-builder-library-item-key-${component.key}`}>{component.key}</div>
-                <div className="mt-1 text-[11px] text-slate-500" data-testid={`admin-content-builder-library-drag-hint-${component.key}`}>
-                  Bu kartı doğrudan canvas sütununa sürükleyebilirsiniz.
-                </div>
-                <button
-                  type="button"
-                  className="mt-2 h-8 rounded border px-2 text-xs"
-                  onClick={() => {
-                    if (!selectedRowId || !selectedColumnId) {
-                      setError('Önce canvas üzerinde bir sütun seçin.');
-                      return;
-                    }
-                    addComponent(selectedRowId, selectedColumnId, component.key);
-                  }}
-                  data-testid={`admin-content-builder-library-add-${component.key}`}
-                >
-                  Seçili Sütuna Ekle
-                </button>
+            {groupedLibraryItems.map((group) => {
+              const isCollapsed = Boolean(collapsedLibraryGroups[group.id]);
+              return (
+                <section key={group.id} className="rounded border bg-slate-50/60 p-2" data-testid={`admin-content-builder-library-group-${group.id}`}>
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between rounded px-2 py-1 text-left text-xs font-semibold"
+                    onClick={() => toggleLibraryGroupCollapsed(group.id)}
+                    data-testid={`admin-content-builder-library-group-toggle-${group.id}`}
+                  >
+                    <span>{group.label}</span>
+                    <span data-testid={`admin-content-builder-library-group-count-${group.id}`}>{group.items.length}</span>
+                  </button>
+
+                  {!isCollapsed ? (
+                    <div className="mt-2 space-y-2" data-testid={`admin-content-builder-library-group-list-${group.id}`}>
+                      {group.items.map((component) => (
+                        <div
+                          key={component.key}
+                          className="rounded border bg-white p-2"
+                          draggable
+                          onDragStart={() => {
+                            setDraggingLibraryComponentKey(component.key);
+                            setDraggingComponentId('');
+                          }}
+                          onDragEnd={() => setDraggingLibraryComponentKey('')}
+                          data-testid={`admin-content-builder-library-item-${component.key}`}
+                        >
+                          <div className="text-xs font-medium" data-testid={`admin-content-builder-library-item-name-${component.key}`}>{component.name}</div>
+                          <div className="text-[11px] text-slate-500" data-testid={`admin-content-builder-library-item-key-${component.key}`}>{component.key}</div>
+                          <div className="mt-1 text-[11px] text-slate-500" data-testid={`admin-content-builder-library-drag-hint-${component.key}`}>
+                            Bu kartı doğrudan canvas sütununa sürükleyebilirsiniz.
+                          </div>
+                          <button
+                            type="button"
+                            className="mt-2 h-8 rounded border px-2 text-xs"
+                            onClick={() => {
+                              if (!selectedRowId || !selectedColumnId) {
+                                setError('Önce canvas üzerinde bir sütun seçin.');
+                                return;
+                              }
+                              addComponent(selectedRowId, selectedColumnId, component.key);
+                            }}
+                            data-testid={`admin-content-builder-library-add-${component.key}`}
+                          >
+                            Seçili Sütuna Ekle
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </section>
+              );
+            })}
+
+            {!groupedLibraryItems.length ? (
+              <div className="rounded border border-dashed p-3 text-xs text-slate-500" data-testid="admin-content-builder-library-empty-state">
+                Filtreye uygun bileşen bulunamadı.
               </div>
-            ))}
+            ) : null}
           </div>
         </aside>
 
@@ -1720,6 +1999,7 @@ export default function AdminContentBuilder() {
                           <div
                             key={component.id}
                             className={`rounded border bg-slate-50 p-2 ${layoutDiff.changedComponentIds.has(component.id) ? 'border-amber-500 bg-amber-50' : ''} ${selectedComponentId === component.id ? 'border-sky-500 ring-2 ring-sky-300 bg-sky-50' : ''}`}
+                            tabIndex={0}
                             draggable
                             onDragStart={() => setDraggingComponentId(component.id)}
                             onDragEnd={() => {

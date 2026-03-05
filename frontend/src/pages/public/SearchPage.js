@@ -10,6 +10,7 @@ import { FacetRenderer } from '@/components/search/FacetRenderer';
 import { CategorySidebar } from '@/components/search/CategorySidebar';
 import LayoutRenderer from '@/components/layout-builder/LayoutRenderer';
 import { MenuSnapshotBlock } from '@/components/layout-builder/MenuSnapshotBlock';
+import { EXTENDED_RUNTIME_REGISTRY } from '@/components/layout-builder/ExtendedRuntimeBlocks';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -1040,6 +1041,7 @@ export default function SearchPage() {
   );
 
   const runtimeRegistry = {
+    ...EXTENDED_RUNTIME_REGISTRY,
     'search.l1.default-content': () => renderL1DefaultTemplate(),
     'search.l2.default-content': () => renderL2DefaultTemplate(),
     'shared.text-block': ({ props }) => (

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import AdSlot from '@/components/public/AdSlot';
 import LayoutRenderer from '@/components/layout-builder/LayoutRenderer';
 import { MenuSnapshotBlock } from '@/components/layout-builder/MenuSnapshotBlock';
+import { EXTENDED_RUNTIME_REGISTRY } from '@/components/layout-builder/ExtendedRuntimeBlocks';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useContentLayoutResolve } from '@/hooks/useContentLayoutResolve';
 import './HomePageRefreshed.css';
@@ -444,6 +445,7 @@ export default function HomePageRefreshed() {
   );
 
   const runtimeRegistry = {
+    ...EXTENDED_RUNTIME_REGISTRY,
     'home.default-content': () => <>{renderHomeStaticSections()}</>,
     'shared.text-block': ({ props }) => (
       <section className="rounded-xl border bg-white p-4" data-testid="home-runtime-text-block">

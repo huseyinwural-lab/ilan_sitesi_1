@@ -61,14 +61,24 @@ LISTING_CREATE_ALLOWED_COMPONENTS = {
     "listing.create.default-content": set(),
     "shared.text-block": {"title", "body"},
     "shared.ad-slot": {"placement"},
+    "interactive.doping-selector": {"available_dopings", "show_prices", "default_selected"},
 }
 
 LISTING_ALLOWED_AD_PLACEMENTS = {"AD_HOME_TOP", "AD_SEARCH_TOP", "AD_LOGIN_1"}
+LISTING_ALLOWED_DOPING_PACKAGES = {
+    "Vitrin",
+    "Acil",
+    "Anasayfa",
+    "Premium",
+    "Öne Çıkar",
+    "Featured",
+}
 LISTING_MAX_ROWS = 16
 LISTING_MAX_COLUMNS_PER_ROW = 4
 LISTING_MAX_COMPONENTS_PER_COLUMN = 12
 LISTING_TEXT_TITLE_MAX = 160
 LISTING_TEXT_BODY_MAX = 4000
+LISTING_MAX_DOPING_OPTIONS = 8
 
 
 class ComponentDefinitionPayload(BaseModel):
@@ -238,6 +248,265 @@ def _validate_listing_component_props_or_400(component_key: str, props: dict[str
         if placement_value not in LISTING_ALLOWED_AD_PLACEMENTS:
             raise HTTPException(status_code=400, detail="listing_create_ad_slot_placement_not_allowed")
 
+    if component_key == "interactive.doping-selector":
+        available_dopings = props.get("available_dopings") or []
+        show_prices = props.get("show_prices")
+        default_selected = props.get("default_selected")
+
+        if not isinstance(available_dopings, list) or not available_dopings:
+            raise HTTPException(status_code=400, detail="listing_create_doping_options_required")
+        if len(available_dopings) > LISTING_MAX_DOPING_OPTIONS:
+            raise HTTPException(status_code=400, detail="listing_create_doping_options_limit_exceeded")
+
+        normalized_options = []
+        for option in available_dopings:
+            option_value = str(option or "").strip()
+            if not option_value:
+                raise HTTPException(status_code=400, detail="listing_create_doping_option_empty")
+            normalized_options.append(option_value)
+            if option_value not in LISTING_ALLOWED_DOPING_PACKAGES:
+                raise HTTPException(status_code=400, detail="listing_create_doping_option_not_allowed")
+
+        if show_prices is not None and not isinstance(show_prices, bool):
+            raise HTTPException(status_code=400, detail="listing_create_doping_show_prices_must_be_boolean")
+
+        if default_selected is not None:
+            selected_value = str(default_selected).strip()
+            if selected_value and selected_value not in normalized_options:
+                raise HTTPException(status_code=400, detail="listing_create_doping_default_selected_invalid")
+
+
+def _build_listing_policy_report(payload_json: dict[str, Any]) -> dict[str, Any]:
+    rows = payload_json.get("rows") if isinstance(payload_json, dict) else None
+
+    stats = {
+        "row_count": 0,
+        "total_component_count": 0,
+        "default_component_count": 0,
+        "doping_selector_count": 0,
+        "limit_violations": 0,
+        "duplicate_id_violations": 0,
+        "width_violations": 0,
+        "allowed_component_violations": 0,
+        "props_violations": 0,
+        "ad_placement_violations": 0,
+        "doping_violations": 0,
+    }
+
+    row_ids: set[str] = set()
+    column_ids: set[str] = set()
+    component_ids: set[str] = set()
+
+    if isinstance(rows, list):
+        stats["row_count"] = len(rows)
+
+    if not isinstance(rows, list):
+        checks = [
+            {
+                "id": "rows_structure",
+                "label": "Rows yapısı",
+                "status": "fail",
+                "blocking": True,
+                "detail": "rows dizisi zorunlu",
+            }
+        ]
+        return {
+            "policy": "listing_create",
+            "passed": False,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "checks": checks,
+            "stats": stats,
+        }
+
+    for row in rows:
+        if not isinstance(row, dict):
+            stats["limit_violations"] += 1
+            continue
+
+        row_id = str(row.get("id") or "").strip()
+        if not row_id or row_id in row_ids:
+            stats["duplicate_id_violations"] += 1
+        if row_id:
+            row_ids.add(row_id)
+
+        columns = row.get("columns")
+        if not isinstance(columns, list):
+            stats["limit_violations"] += 1
+            continue
+
+        if len(columns) > LISTING_MAX_COLUMNS_PER_ROW:
+            stats["limit_violations"] += 1
+
+        for column in columns:
+            if not isinstance(column, dict):
+                stats["limit_violations"] += 1
+                continue
+
+            column_id = str(column.get("id") or "").strip()
+            if not column_id or column_id in column_ids:
+                stats["duplicate_id_violations"] += 1
+            if column_id:
+                column_ids.add(column_id)
+
+            width = column.get("width")
+            if not isinstance(width, dict):
+                stats["width_violations"] += 1
+            else:
+                for bp in ("desktop", "tablet", "mobile"):
+                    raw_width = width.get(bp)
+                    try:
+                        parsed = int(raw_width)
+                    except (TypeError, ValueError):
+                        stats["width_violations"] += 1
+                        continue
+                    if parsed < 1 or parsed > 12:
+                        stats["width_violations"] += 1
+
+            components = column.get("components")
+            if not isinstance(components, list):
+                stats["limit_violations"] += 1
+                continue
+
+            if len(components) > LISTING_MAX_COMPONENTS_PER_COLUMN:
+                stats["limit_violations"] += 1
+
+            for component in components:
+                stats["total_component_count"] += 1
+
+                if not isinstance(component, dict):
+                    stats["allowed_component_violations"] += 1
+                    continue
+
+                component_id = str(component.get("id") or "").strip()
+                if not component_id or component_id in component_ids:
+                    stats["duplicate_id_violations"] += 1
+                if component_id:
+                    component_ids.add(component_id)
+
+                component_key = component.get("key")
+                if component_key not in LISTING_CREATE_ALLOWED_COMPONENTS:
+                    stats["allowed_component_violations"] += 1
+                    continue
+
+                if component_key == "listing.create.default-content":
+                    stats["default_component_count"] += 1
+                if component_key == "interactive.doping-selector":
+                    stats["doping_selector_count"] += 1
+
+                props = component.get("props") or {}
+                if not isinstance(props, dict):
+                    stats["props_violations"] += 1
+                    continue
+
+                allowed_props = LISTING_CREATE_ALLOWED_COMPONENTS[component_key]
+                invalid_props = sorted(set(props.keys()) - allowed_props)
+                if invalid_props:
+                    stats["props_violations"] += 1
+
+                if component_key == "shared.ad-slot":
+                    placement = props.get("placement")
+                    if placement is not None and str(placement).strip() not in LISTING_ALLOWED_AD_PLACEMENTS:
+                        stats["ad_placement_violations"] += 1
+
+                if component_key == "interactive.doping-selector":
+                    doping_options = props.get("available_dopings")
+                    selected = props.get("default_selected")
+                    if not isinstance(doping_options, list) or not doping_options:
+                        stats["doping_violations"] += 1
+                    else:
+                        normalized_options = [str(option or "").strip() for option in doping_options]
+                        if len(normalized_options) > LISTING_MAX_DOPING_OPTIONS:
+                            stats["doping_violations"] += 1
+                        if any(not option for option in normalized_options):
+                            stats["doping_violations"] += 1
+                        if any(option not in LISTING_ALLOWED_DOPING_PACKAGES for option in normalized_options):
+                            stats["doping_violations"] += 1
+                        selected_value = str(selected or "").strip()
+                        if selected_value and selected_value not in normalized_options:
+                            stats["doping_violations"] += 1
+
+    checks = [
+        {
+            "id": "rows_structure",
+            "label": "Rows/Columns yapısı",
+            "status": "pass" if isinstance(rows, list) and stats["row_count"] > 0 else "fail",
+            "blocking": True,
+            "detail": f"Row sayısı: {stats['row_count']}",
+        },
+        {
+            "id": "layout_limits",
+            "label": "Satır/Sütun/Bileşen limitleri",
+            "status": "pass" if stats["row_count"] <= LISTING_MAX_ROWS and stats["limit_violations"] == 0 else "fail",
+            "blocking": True,
+            "detail": f"Limit ihlali: {stats['limit_violations']}",
+        },
+        {
+            "id": "unique_ids",
+            "label": "Tekil ID politikası",
+            "status": "pass" if stats["duplicate_id_violations"] == 0 else "fail",
+            "blocking": True,
+            "detail": f"Duplicate/eksik id ihlali: {stats['duplicate_id_violations']}",
+        },
+        {
+            "id": "width_breakpoints",
+            "label": "Breakpoint width doğrulaması",
+            "status": "pass" if stats["width_violations"] == 0 else "fail",
+            "blocking": True,
+            "detail": f"Width ihlali: {stats['width_violations']}",
+        },
+        {
+            "id": "allowed_components",
+            "label": "İzinli bileşen doğrulaması",
+            "status": "pass" if stats["allowed_component_violations"] == 0 else "fail",
+            "blocking": True,
+            "detail": f"İzinli olmayan bileşen ihlali: {stats['allowed_component_violations']}",
+        },
+        {
+            "id": "props_policy",
+            "label": "Bileşen prop politikası",
+            "status": "pass" if stats["props_violations"] == 0 else "fail",
+            "blocking": True,
+            "detail": f"Prop ihlali: {stats['props_violations']}",
+        },
+        {
+            "id": "default_component",
+            "label": "Tek default içerik bloğu",
+            "status": "pass" if stats["default_component_count"] == 1 else "fail",
+            "blocking": True,
+            "detail": f"Default component sayısı: {stats['default_component_count']}",
+        },
+        {
+            "id": "ad_placement",
+            "label": "Reklam placement politikası",
+            "status": "pass" if stats["ad_placement_violations"] == 0 else "fail",
+            "blocking": True,
+            "detail": f"Placement ihlali: {stats['ad_placement_violations']}",
+        },
+        {
+            "id": "doping_selector",
+            "label": "Doping selector politikası",
+            "status": "pass" if stats["doping_selector_count"] <= 1 and stats["doping_violations"] == 0 else "fail",
+            "blocking": True,
+            "detail": f"Selector sayısı: {stats['doping_selector_count']}, ihlal: {stats['doping_violations']}",
+        },
+        {
+            "id": "total_components",
+            "label": "Toplam bileşen kontrolü",
+            "status": "pass" if stats["total_component_count"] > 0 else "fail",
+            "blocking": True,
+            "detail": f"Toplam bileşen: {stats['total_component_count']}",
+        },
+    ]
+
+    passed = all(check["status"] == "pass" for check in checks if check.get("blocking"))
+    return {
+        "policy": "listing_create",
+        "passed": bool(passed),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "checks": checks,
+        "stats": stats,
+    }
+
 
 def _validate_listing_runtime_guard_or_400(payload_json: dict) -> None:
     rows = payload_json.get("rows") if isinstance(payload_json, dict) else None
@@ -252,6 +521,7 @@ def _validate_listing_runtime_guard_or_400(payload_json: dict) -> None:
     column_ids: set[str] = set()
     component_ids: set[str] = set()
     default_component_count = 0
+    doping_selector_count = 0
     total_component_count = 0
 
     for row_index, row in enumerate(rows, start=1):
@@ -333,11 +603,15 @@ def _validate_listing_runtime_guard_or_400(payload_json: dict) -> None:
 
                 if component_key == "listing.create.default-content":
                     default_component_count += 1
+                if component_key == "interactive.doping-selector":
+                    doping_selector_count += 1
 
     if total_component_count <= 0:
         raise HTTPException(status_code=400, detail="listing_create_payload_must_include_components")
     if default_component_count != 1:
         raise HTTPException(status_code=400, detail="listing_create_default_component_must_be_exactly_one")
+    if doping_selector_count > 1:
+        raise HTTPException(status_code=400, detail="listing_create_doping_selector_must_be_zero_or_one")
 
 
 @router.get("/admin/site/content-layout/components")
@@ -634,6 +908,13 @@ async def publish_revision_admin(
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
 ):
+    revision_uuid = _as_uuid_or_400(revision_id, field_name="revision_id")
+    target_revision = await session.get(LayoutRevision, revision_uuid)
+    if target_revision:
+        page_row = await session.get(LayoutPage, target_revision.layout_page_id)
+        if page_row and page_row.page_type == LayoutPageType.LISTING_CREATE_STEPX:
+            _validate_listing_runtime_guard_or_400(target_revision.payload_json or {})
+
     try:
         published = await publish_revision(
             session,
@@ -656,6 +937,45 @@ async def publish_revision_admin(
     _METRICS["publish_count"] += 1
     _invalidate_resolve_cache()
     return {"ok": True, "item": _serialize_layout_revision(published)}
+
+
+@router.get("/admin/site/content-layout/revisions/{revision_id}/policy-report")
+async def get_revision_policy_report_admin(
+    revision_id: str,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    revision_uuid = _as_uuid_or_400(revision_id, field_name="revision_id")
+    row = await session.get(LayoutRevision, revision_uuid)
+    if not row:
+        raise HTTPException(status_code=404, detail="Revision not found")
+
+    page_row = await session.get(LayoutPage, row.layout_page_id)
+    if not page_row:
+        raise HTTPException(status_code=404, detail="Layout page not found")
+
+    if page_row.page_type != LayoutPageType.LISTING_CREATE_STEPX:
+        return {
+            "ok": True,
+            "report": {
+                "policy": "not_applicable",
+                "passed": True,
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "checks": [
+                    {
+                        "id": "not_applicable",
+                        "label": "Policy report",
+                        "status": "pass",
+                        "blocking": False,
+                        "detail": "Bu page_type için listing_create policy report uygulanmaz.",
+                    }
+                ],
+                "stats": {},
+            },
+        }
+
+    report = _build_listing_policy_report(row.payload_json or {})
+    return {"ok": True, "report": report}
 
 
 @router.post("/admin/site/content-layout/revisions/{revision_id}/archive")

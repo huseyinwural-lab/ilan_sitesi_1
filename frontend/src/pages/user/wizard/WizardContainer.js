@@ -10,6 +10,7 @@ import Step6FeaturesMedia from './Step6FeaturesMedia';
 import Step7Review from './Step4Review';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import LayoutRenderer from '@/components/layout-builder/LayoutRenderer';
+import { DopingSelectorBlock } from '@/components/layout-builder/ExtendedRuntimeBlocks';
 import { useContentLayoutResolve } from '@/hooks/useContentLayoutResolve';
 
 const STEP_COMPONENT_RULES = {
@@ -19,10 +20,11 @@ const STEP_COMPONENT_RULES = {
   4: new Set(['listing.create.default-content', 'shared.text-block']),
   5: new Set(['listing.create.default-content', 'shared.text-block', 'shared.ad-slot']),
   6: new Set(['listing.create.default-content', 'shared.text-block', 'shared.ad-slot']),
-  7: new Set(['listing.create.default-content', 'shared.text-block', 'shared.ad-slot']),
+  7: new Set(['listing.create.default-content', 'shared.text-block', 'shared.ad-slot', 'interactive.doping-selector']),
 };
 
 const ALLOWED_AD_PLACEMENTS = new Set(['AD_HOME_TOP', 'AD_SEARCH_TOP', 'AD_LOGIN_1']);
+const ALLOWED_DOPING_OPTIONS = new Set(['Vitrin', 'Acil', 'Anasayfa', 'Premium', 'Öne Çıkar', 'Featured']);
 
 const sanitizeRuntimeComponent = (component) => {
   if (!component || typeof component !== 'object') return null;
@@ -54,6 +56,24 @@ const sanitizeRuntimeComponent = (component) => {
       ...component,
       props: {
         placement: ALLOWED_AD_PLACEMENTS.has(rawPlacement) ? rawPlacement : 'AD_LOGIN_1',
+      },
+    };
+  }
+
+  if (key === 'interactive.doping-selector') {
+    const options = Array.isArray(component?.props?.available_dopings)
+      ? component.props.available_dopings.map((item) => String(item || '').trim()).filter(Boolean)
+      : [];
+    const normalizedOptions = options.filter((item) => ALLOWED_DOPING_OPTIONS.has(item)).slice(0, 8);
+    const safeOptions = normalizedOptions.length ? normalizedOptions : ['Vitrin', 'Acil', 'Anasayfa'];
+    const defaultSelected = String(component?.props?.default_selected || '').trim();
+
+    return {
+      ...component,
+      props: {
+        available_dopings: safeOptions,
+        show_prices: component?.props?.show_prices !== false,
+        default_selected: safeOptions.includes(defaultSelected) ? defaultSelected : safeOptions[0],
       },
     };
   }
@@ -223,6 +243,9 @@ const WizardContent = () => {
           Reklam Alanı ({props?.placement || 'AD_LOGIN_1'})
         </div>
       </div>
+    ),
+    'interactive.doping-selector': ({ props }) => (
+      <DopingSelectorBlock props={props} />
     ),
   };
 
