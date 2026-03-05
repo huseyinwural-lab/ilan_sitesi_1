@@ -345,6 +345,31 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Bilinen Not
 - Ortamda aralıklı olarak `draft creation` sırasında düşük öncelikli transient `DB_ERROR 503` gözlenebiliyor (arka plan Meili worker timeout kaynaklı); işlevsel akışların tamamı tekrar denemede PASS.
 
+## 2026-03-05 (Persona + Auto-Fix + Live Runtime Depth Finalizasyonu)
+
+### Tamamlananlar
+- **Persona ayrımı netleştirildi (Individual/Corporate) + A/B preset varyantları:**
+  - Preset kontrolüne persona ve variant seçimleri eklendi.
+  - Preset payload üretimi persona/variant parametreli hale getirildi.
+  - Preset analytics paneli eklendi (apply/publish sayıları + publish rate), localStorage ile kalıcı takip.
+- **Policy report + tek tık güvenli auto-fix:**
+  - Backend endpoint: `POST /api/admin/site/content-layout/revisions/{id}/policy-autofix`
+  - Güvenli düzeltmeler: row/column/component id, width normalizasyonu, whitelist props temizliği, default-content tekilleştirme/ekleme, doping-selector sanitize.
+  - Policy report çıktısı zenginleştirildi: `checks[].fix_suggestion` + `suggested_fixes[]`.
+  - Frontend’e `Auto-Fix Uygula` butonu ve akış sonrası otomatik report/payload güncellemesi eklendi.
+- **Runtime canlı veri kapsamı daha da derinleştirildi:**
+  - Listing detail endpoint seller alanı genişletildi: `rating`, `reviews_count`, `response_rate`.
+  - Similar endpoint genişletildi: `score`, `score_explanation`, `score_breakdown`.
+  - Yeni public endpoint: `GET /api/public/geo/nearby-pois` (OSM + fallback).
+  - Runtime blokları bu verileri kullanacak şekilde güncellendi (SellerCard, InteractiveMap, Similar slider).
+- **DetailPage UI eşitlemesi:**
+  - Seller card’da rating/reviews/response rate metrikleri görünür hale getirildi.
+
+### Test Durumu
+- `/app/test_reports/iteration_129.json`: Backend/Frontend akışları PASS (önceki tur).
+- `/app/test_reports/iteration_130.json`: iteration_129’daki seller-card issue FIX doğrulandı, **Backend %100 / Frontend %100 PASS**.
+- Ek backend doğrulama: live endpointler (`detail`, `similar`, `nearby-pois`, `policy-report`, `policy-autofix`) PASS.
+
 ### P0 — Google Autocomplete Real Mode (manuel key destekli)
 - Backend eklendi:
   - `GET /api/places/config`
