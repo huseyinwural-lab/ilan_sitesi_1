@@ -17,6 +17,8 @@ class Advertisement(Base):
         nullable=True,
     )
     format: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    company_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    contact_info: Mapped[str | None] = mapped_column(Text, nullable=True)
     asset_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     target_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     start_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

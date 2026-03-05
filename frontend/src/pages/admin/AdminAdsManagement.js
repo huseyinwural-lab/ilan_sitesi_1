@@ -7,6 +7,8 @@ const API = `${BACKEND_URL}/api`;
 const emptyForm = {
   placement: '',
   format: '',
+  company_name: '',
+  contact_info: '',
   start_at: '',
   end_at: '',
   priority: 0,
@@ -118,6 +120,8 @@ export default function AdminAdsManagement() {
     const payload = {
       placement: form.placement,
       format: form.format || null,
+      company_name: form.company_name || null,
+      contact_info: form.contact_info || null,
       start_at: form.start_at || null,
       end_at: form.end_at || null,
       priority: Number(form.priority) || 0,
@@ -146,6 +150,8 @@ export default function AdminAdsManagement() {
         priority: Number(item.priority) || 0,
         is_active: Boolean(item.is_active),
         target_url: item.target_url || null,
+        company_name: item.company_name || null,
+        contact_info: item.contact_info || null,
         format: item.format || null,
       },
       { headers: authHeader }
@@ -281,6 +287,24 @@ export default function AdminAdsManagement() {
               data-testid="admin-ads-target"
             />
           </div>
+          <div>
+            <label className="text-xs">Firma Adı</label>
+            <input
+              className="mt-1 h-9 w-full rounded-md border px-2"
+              value={form.company_name}
+              onChange={(e) => setForm((prev) => ({ ...prev, company_name: e.target.value }))}
+              data-testid="admin-ads-company-name"
+            />
+          </div>
+          <div>
+            <label className="text-xs">İletişim</label>
+            <input
+              className="mt-1 h-9 w-full rounded-md border px-2"
+              value={form.contact_info}
+              onChange={(e) => setForm((prev) => ({ ...prev, contact_info: e.target.value }))}
+              data-testid="admin-ads-contact-info"
+            />
+          </div>
           <div className="flex items-center gap-2 mt-5">
             <input
               type="checkbox"
@@ -374,6 +398,26 @@ export default function AdminAdsManagement() {
                     setAds((prev) => prev.map((item) => (item.id === ad.id ? { ...item, target_url: value } : item)));
                   }}
                   data-testid={`admin-ads-item-target-${ad.id}`}
+                />
+                <input
+                  className="h-9 rounded-md border px-2"
+                  placeholder="Firma Adı"
+                  value={ad.company_name || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setAds((prev) => prev.map((item) => (item.id === ad.id ? { ...item, company_name: value } : item)));
+                  }}
+                  data-testid={`admin-ads-item-company-name-${ad.id}`}
+                />
+                <input
+                  className="h-9 rounded-md border px-2"
+                  placeholder="İletişim"
+                  value={ad.contact_info || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setAds((prev) => prev.map((item) => (item.id === ad.id ? { ...item, contact_info: value } : item)));
+                  }}
+                  data-testid={`admin-ads-item-contact-info-${ad.id}`}
                 />
                 <input
                   type="number"

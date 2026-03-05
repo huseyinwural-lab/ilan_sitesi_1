@@ -1813,6 +1813,7 @@ async def lifespan(app: FastAPI):
                 await conn.run_sync(Base.metadata.create_all)
                 await _ensure_wizard_progress_column(conn)
                 await _ensure_listing_doping_columns(conn)
+                await _ensure_advertisement_contact_columns(conn)
                 await _ensure_pricing_campaign_item_columns(conn)
                 await _ensure_finance_v2_columns(conn)
                 await _ensure_i18n_jsonb_columns(conn)
@@ -2351,6 +2352,14 @@ async def _ensure_listing_doping_columns(conn) -> None:
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_listings_paid_until ON listings (paid_until)"))
     except Exception as exc:
         logging.getLogger("sql_config").warning("Listing doping columns check failed: %s", exc)
+
+
+async def _ensure_advertisement_contact_columns(conn) -> None:
+    try:
+        await conn.execute(text("ALTER TABLE advertisements ADD COLUMN IF NOT EXISTS company_name VARCHAR(200)"))
+        await conn.execute(text("ALTER TABLE advertisements ADD COLUMN IF NOT EXISTS contact_info TEXT"))
+    except Exception as exc:
+        logging.getLogger("sql_config").warning("Advertisement contact columns check failed: %s", exc)
 
 
 async def _ensure_pricing_campaign_item_columns(conn) -> None:
@@ -37881,6 +37890,8 @@ class AdCreatePayload(BaseModel):
     placement: str
     campaign_id: Optional[str] = None
     format: Optional[str] = None
+    company_name: Optional[str] = None
+    contact_info: Optional[str] = None
     start_at: Optional[datetime] = None
     end_at: Optional[datetime] = None
     is_active: Optional[bool] = True
@@ -37891,6 +37902,8 @@ class AdCreatePayload(BaseModel):
 class AdUpdatePayload(BaseModel):
     campaign_id: Optional[str] = None
     format: Optional[str] = None
+    company_name: Optional[str] = None
+    contact_info: Optional[str] = None
     start_at: Optional[datetime] = None
     end_at: Optional[datetime] = None
     is_active: Optional[bool] = None
@@ -39274,6 +39287,8 @@ async def list_ads_admin(
                 "campaign_name": campaign.name if campaign else "Standalone",
                 "campaign_status": campaign.status if campaign else None,
                 "format": ad.format,
+                "company_name": ad.company_name,
+                "contact_info": ad.contact_info,
                 "asset_url": ad.asset_url,
                 "target_url": ad.target_url,
                 "start_at": ad.start_at.isoformat() if ad.start_at else None,
@@ -39328,6 +39343,8 @@ async def create_ad(
         placement=payload.placement,
         campaign_id=campaign_id,
         format=format_value,
+        company_name=(payload.company_name.strip() if payload.company_name else None),
+        contact_info=(payload.contact_info.strip() if payload.contact_info else None),
         start_at=start_at,
         end_at=end_at,
         is_active=bool(payload.is_active),
@@ -39385,6 +39402,10 @@ async def update_ad(
         ad.priority = payload.priority
     if payload.target_url is not None:
         ad.target_url = payload.target_url
+    if payload.company_name is not None:
+        ad.company_name = payload.company_name.strip() or None
+    if payload.contact_info is not None:
+        ad.contact_info = payload.contact_info.strip() or None
     if payload.format is not None:
         ad.format = _resolve_ad_format(ad.placement, payload.format)
     if payload.campaign_id is not None:
