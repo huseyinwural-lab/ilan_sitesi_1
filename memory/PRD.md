@@ -370,6 +370,37 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - `/app/test_reports/iteration_130.json`: iteration_129’daki seller-card issue FIX doğrulandı, **Backend %100 / Frontend %100 PASS**.
 - Ek backend doğrulama: live endpointler (`detail`, `similar`, `nearby-pois`, `policy-report`, `policy-autofix`) PASS.
 
+## 2026-03-05 (Tek İş Emri — P0/P1 + P2 Toplu Tamamlama)
+
+### Uygulananlar
+- **P0/P1 — Preset analytics kalıcılığı (PostgreSQL):**
+  - Yeni model/tablo: `layout_preset_events` (persona, variant, apply/publish eventleri)
+  - Yeni endpointler:
+    - `POST /api/admin/site/content-layout/preset-events`
+    - `GET /api/admin/site/content-layout/preset-events/summary`
+  - Admin UI artık preset analytics’i backend’den okuyor (localStorage yerine kalıcı).
+- **P0/P1 — DB_ERROR 503 stabilizasyonu:**
+  - Layout builder kritik write akışlarına transient DB retry/backoff eklendi.
+  - Meili settings sync çağrılarına timeout sarımı eklendi (`asyncio.wait_for`) ve dalgalanmalara daha dayanıklı hale getirildi.
+- **P0/P1 — Menu endpoint tutarlılığı:**
+  - Yeni health endpoint: `GET /api/admin/menu-items/health`
+  - Content Builder’da `menu-health-badge` ile feature-disabled/fallback durumu görünür hale getirildi.
+
+- **P2 — Auto-fix görsel diff ekranı:**
+  - Auto-fix sonrası Before/After policy istatistikleri + uygulanan aksiyon listesi panelde gösteriliyor.
+- **P2 — Similar scoring iyileştirme:**
+  - Score hesaplaması genişletildi: fiyat, şehir, recency, make/model, model yılı ağırlıkları.
+  - API item çıktısı: `score`, `score_explanation[]`, `score_breakdown`.
+- **P2 — Persona preset öneri altyapısı:**
+  - Preset’lerde `Individual/Corporate` persona + `A/B` variant aktif.
+  - Apply/publish eventleri backend’e yazılıyor; panelde publish rate özetleniyor.
+
+### Test Durumu
+- Testing agent raporu: `/app/test_reports/iteration_131.json`
+  - Backend endpointler: **PASS**
+  - Frontend akışlar: **PASS**
+  - Not: hydration warning için select alanlarında `suppressHydrationWarning` uygulandı.
+
 ### P0 — Google Autocomplete Real Mode (manuel key destekli)
 - Backend eklendi:
   - `GET /api/places/config`

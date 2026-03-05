@@ -2038,6 +2038,7 @@ export default function AdminContentBuilder() {
               className="h-10 rounded border px-2 text-xs"
               value={presetPersona}
               onChange={(event) => setPresetPersona(event.target.value)}
+              suppressHydrationWarning
               data-testid="admin-content-builder-preset-persona-select"
             >
               <option value="individual">Persona: Individual</option>
@@ -2048,6 +2049,7 @@ export default function AdminContentBuilder() {
               className="h-10 rounded border px-2 text-xs"
               value={presetVariant}
               onChange={(event) => setPresetVariant(event.target.value)}
+              suppressHydrationWarning
               data-testid="admin-content-builder-preset-variant-select"
             >
               <option value="A">A Variant</option>
@@ -2058,6 +2060,7 @@ export default function AdminContentBuilder() {
               className="h-10 min-w-[240px] rounded border px-2 text-xs"
               value={selectedPresetPackId}
               onChange={(event) => setSelectedPresetPackId(event.target.value)}
+              suppressHydrationWarning
               data-testid="admin-content-builder-preset-select"
             >
               <option value="">Preset Pack Seçin</option>
