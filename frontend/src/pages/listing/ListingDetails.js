@@ -136,6 +136,8 @@ export default function ListingDetails() {
       latitude: raw.latitude || '',
       longitude: raw.longitude || '',
       address_line: raw.address_line || '',
+      house_number: raw.house_number || '',
+      address_extra: raw.address_extra || '',
       google_autocomplete_query: raw.google_autocomplete_query || '',
       contact_name: raw.contact_name || '',
       contact_phone: raw.contact_phone || '',
@@ -234,6 +236,30 @@ export default function ListingDetails() {
       require_address_line: raw.require_address_line !== false,
     };
   }, [placesConfig.listing_create_config]);
+
+  const addressFormLabels = useMemo(() => {
+    const country = (form.address_country || '').toUpperCase();
+    if (country === 'DE' || country === 'AT' || country === 'CH') {
+      return {
+        street: 'Straße',
+        houseNumber: 'Hausnummer',
+        addressExtra: 'Adresszusatz',
+        postalCode: 'Postleitzahl',
+        city: 'Stadt',
+        district: 'Bezirk',
+        neighborhood: 'Nachbarschaft',
+      };
+    }
+    return {
+      street: 'Sokak / Cadde',
+      houseNumber: 'Kapı No',
+      addressExtra: 'Adres Ek Bilgisi',
+      postalCode: 'Posta Kodu',
+      city: 'İl',
+      district: 'İlçe',
+      neighborhood: 'Mahalle',
+    };
+  }, [form.address_country]);
   const activeModuleKey = useMemo(
     () => (selectedCategory?.module || localStorage.getItem('ilan_ver_module') || 'vehicle').toLowerCase(),
     [selectedCategory?.module]
@@ -422,6 +448,8 @@ export default function ListingDetails() {
         latitude: form.latitude === '' ? null : Number(form.latitude),
         longitude: form.longitude === '' ? null : Number(form.longitude),
         address_line: form.address_line,
+        house_number: form.house_number,
+        address_extra: form.address_extra,
       },
       selected_category_path: selectedPath,
     }, { silent: true });
@@ -430,11 +458,13 @@ export default function ListingDetails() {
     form.address_line,
     form.address_country,
     form.city,
+    form.house_number,
     form.district,
     form.latitude,
     form.longitude,
     form.neighborhood,
     form.postal_code,
+    form.address_extra,
     patchDraft,
     selectedPath,
   ]);
@@ -738,6 +768,8 @@ export default function ListingDetails() {
           latitude: item?.location?.latitude ?? '',
           longitude: item?.location?.longitude ?? '',
           address_line: item?.location?.address_line || '',
+          house_number: item?.location?.house_number || '',
+          address_extra: item?.location?.address_extra || '',
           google_autocomplete_query: form.google_autocomplete_query || '',
           contact_name: item?.contact?.contact_name || '',
           contact_phone: item?.contact?.contact_phone || '',
@@ -1564,17 +1596,7 @@ export default function ListingDetails() {
               )}
             </div>
 
-            <div className="grid gap-3 md:grid-cols-[1fr_auto]" data-testid="ilan-ver-postal-lookup-row">
-              <label className="space-y-1 text-xs" data-testid="ilan-ver-field-postal-code-wrap">
-                <span>Posta Kodu {listingCreateConfig.postal_code_required ? '*' : ''}</span>
-                <input
-                  value={form.postal_code}
-                  onChange={(e) => saveFormLocal({ postal_code: e.target.value })}
-                  className="h-10 w-full rounded-md border px-3"
-                  data-testid="ilan-ver-field-postal-code"
-                />
-              </label>
-              <div className="flex items-end" data-testid="ilan-ver-postal-lookup-action-wrap">
+            <div className="flex justify-end" data-testid="ilan-ver-postal-lookup-action-wrap">
                 <button
                   type="button"
                   onClick={() => {
@@ -1586,7 +1608,6 @@ export default function ListingDetails() {
                 >
                   Haritada Aç
                 </button>
-              </div>
             </div>
 
             {placesLoading ? (
@@ -1648,9 +1669,55 @@ export default function ListingDetails() {
               </div>
             ) : null}
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2" data-testid="ilan-ver-address-street-house-row">
+              <label className="space-y-1 text-xs" data-testid="ilan-ver-field-address-line-wrap">
+                <span>{addressFormLabels.street} {listingCreateConfig.require_address_line ? '*' : ''}</span>
+                <input
+                  value={form.address_line}
+                  onChange={(e) => saveFormLocal({ address_line: e.target.value })}
+                  onBlur={saveAddressBlock}
+                  className="h-10 w-full rounded-md border px-3"
+                  data-testid="ilan-ver-field-address-line"
+                />
+              </label>
+              <label className="space-y-1 text-xs" data-testid="ilan-ver-field-house-number-wrap">
+                <span>{addressFormLabels.houseNumber}</span>
+                <input
+                  value={form.house_number}
+                  onChange={(e) => saveFormLocal({ house_number: e.target.value })}
+                  onBlur={saveAddressBlock}
+                  className="h-10 w-full rounded-md border px-3"
+                  data-testid="ilan-ver-field-house-number"
+                />
+              </label>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-[1fr_240px]" data-testid="ilan-ver-address-extra-postal-row">
+              <label className="space-y-1 text-xs" data-testid="ilan-ver-field-address-extra-wrap">
+                <span>{addressFormLabels.addressExtra}</span>
+                <input
+                  value={form.address_extra}
+                  onChange={(e) => saveFormLocal({ address_extra: e.target.value })}
+                  onBlur={saveAddressBlock}
+                  className="h-10 w-full rounded-md border px-3"
+                  data-testid="ilan-ver-field-address-extra"
+                />
+              </label>
+              <label className="space-y-1 text-xs" data-testid="ilan-ver-field-postal-code-wrap">
+                <span>{addressFormLabels.postalCode} {listingCreateConfig.postal_code_required ? '*' : ''}</span>
+                <input
+                  value={form.postal_code}
+                  onChange={(e) => saveFormLocal({ postal_code: e.target.value })}
+                  onBlur={saveAddressBlock}
+                  className="h-10 w-full rounded-md border px-3"
+                  data-testid="ilan-ver-field-postal-code"
+                />
+              </label>
+            </div>
+
+            <div className="grid gap-4" data-testid="ilan-ver-address-city-row">
               <label className="space-y-1 text-xs" data-testid="ilan-ver-field-city-wrap">
-                <span>Il {listingCreateConfig.require_city ? '*' : ''}</span>
+                <span>{addressFormLabels.city} {listingCreateConfig.require_city ? '*' : ''}</span>
                 <input
                   value={form.city}
                   onChange={(e) => saveFormLocal({ city: e.target.value })}
@@ -1659,8 +1726,11 @@ export default function ListingDetails() {
                   data-testid="ilan-ver-field-city"
                 />
               </label>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2" data-testid="ilan-ver-address-secondary-row">
               <label className="space-y-1 text-xs" data-testid="ilan-ver-field-district-wrap">
-                <span>Ilce {listingCreateConfig.require_district ? '*' : ''}</span>
+                <span>{addressFormLabels.district} {listingCreateConfig.require_district ? '*' : ''}</span>
                 <input
                   value={form.district}
                   onChange={(e) => saveFormLocal({ district: e.target.value })}
@@ -1670,7 +1740,7 @@ export default function ListingDetails() {
                 />
               </label>
               <label className="space-y-1 text-xs" data-testid="ilan-ver-field-neighborhood-wrap">
-                <span>Mahalle {listingCreateConfig.require_neighborhood ? '*' : ''}</span>
+                <span>{addressFormLabels.neighborhood} {listingCreateConfig.require_neighborhood ? '*' : ''}</span>
                 <input
                   value={form.neighborhood}
                   onChange={(e) => saveFormLocal({ neighborhood: e.target.value })}
@@ -1704,16 +1774,6 @@ export default function ListingDetails() {
               </label>
             </div>
 
-            <label className="space-y-1 text-xs" data-testid="ilan-ver-field-address-line-wrap">
-              <span>Acik Adres {listingCreateConfig.require_address_line ? '*' : ''}</span>
-              <input
-                value={form.address_line}
-                onChange={(e) => saveFormLocal({ address_line: e.target.value })}
-                onBlur={saveAddressBlock}
-                className="h-10 w-full rounded-md border px-3"
-                data-testid="ilan-ver-field-address-line"
-              />
-            </label>
           </div>
         )}
       </section>

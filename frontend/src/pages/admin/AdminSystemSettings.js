@@ -147,6 +147,7 @@ export default function AdminSystemSettingsPage() {
   const [listingCreateSaving, setListingCreateSaving] = useState(false);
   const [listingCreateError, setListingCreateError] = useState('');
   const [listingCreateNotice, setListingCreateNotice] = useState('');
+  const [listingCreatePreviewLocale, setListingCreatePreviewLocale] = useState('tr');
   const [listingCreateConfig, setListingCreateConfig] = useState({
     apply_modules: ['vehicle', 'real_estate', 'other'],
     country_selector_mode: 'radio',
@@ -162,10 +163,35 @@ export default function AdminSystemSettingsPage() {
   });
   const googleMapsCardRef = useRef(null);
   const appleSigninCardRef = useRef(null);
+  const listingCreateCardRef = useRef(null);
 
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
   }), []);
+
+  const listingCreateAddressLabels = useMemo(() => {
+    if (listingCreatePreviewLocale === 'de') {
+      return {
+        street: 'Straße',
+        houseNumber: 'Hausnummer',
+        extra: 'Adresszusatz',
+        postalCode: 'Postleitzahl',
+        city: 'Stadt',
+      };
+    }
+    return {
+      street: 'Sokak / Cadde',
+      houseNumber: 'Kapı No',
+      extra: 'Adres Ek Bilgisi',
+      postalCode: 'Posta Kodu',
+      city: 'İl',
+    };
+  }, [listingCreatePreviewLocale]);
+
+  const isListingFlowSettingsRoute = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return window.location.pathname.includes('/site-design/listing-flow-settings');
+  }, []);
 
 
 
@@ -845,6 +871,18 @@ export default function AdminSystemSettingsPage() {
   }, []);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search || '');
+    if (params.get('focus') !== 'listing-create') return;
+    if (!isListingFlowSettingsRoute) {
+      window.location.replace('/admin/site-design/listing-flow-settings?focus=listing-create');
+      return;
+    }
+    setTimeout(() => {
+      listingCreateCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 250);
+  }, [isListingFlowSettingsRoute]);
+
+  useEffect(() => {
     return () => {
       if (watermarkPreviewUrl) {
         URL.revokeObjectURL(watermarkPreviewUrl);
@@ -1280,7 +1318,8 @@ export default function AdminSystemSettingsPage() {
         )}
       </div>
 
-      <div className="rounded-lg border bg-white p-4 space-y-4" data-testid="system-settings-listing-create-card">
+      {isListingFlowSettingsRoute ? (
+      <div ref={listingCreateCardRef} className="rounded-lg border bg-white p-4 space-y-4" data-testid="system-settings-listing-create-card">
         <div>
           <h2 className="text-lg font-semibold" data-testid="system-settings-listing-create-title">İlan Ver Akış Ayarları</h2>
           <div className="text-xs text-muted-foreground" data-testid="system-settings-listing-create-subtitle">
@@ -1352,6 +1391,35 @@ export default function AdminSystemSettingsPage() {
               ))}
             </div>
 
+            <div className="rounded-md border bg-slate-50 p-3" data-testid="system-settings-listing-create-address-preview">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <div className="text-xs font-medium text-slate-700" data-testid="system-settings-listing-create-address-preview-title">
+                  Adres Formu Önizleme
+                </div>
+                <select
+                  className="h-8 rounded border px-2 text-xs"
+                  value={listingCreatePreviewLocale}
+                  onChange={(e) => setListingCreatePreviewLocale(e.target.value)}
+                  data-testid="system-settings-listing-create-address-preview-locale"
+                >
+                  <option value="tr">TR</option>
+                  <option value="de">DE</option>
+                </select>
+              </div>
+
+              <div className="grid gap-2 md:grid-cols-2" data-testid="system-settings-listing-create-address-preview-row-1">
+                <input className="h-9 rounded border px-2 text-xs" readOnly value={listingCreateAddressLabels.street} data-testid="system-settings-listing-create-address-preview-street" />
+                <input className="h-9 rounded border px-2 text-xs" readOnly value={listingCreateAddressLabels.houseNumber} data-testid="system-settings-listing-create-address-preview-house-number" />
+              </div>
+              <div className="mt-2 grid gap-2 md:grid-cols-[1fr_220px]" data-testid="system-settings-listing-create-address-preview-row-2">
+                <input className="h-9 rounded border px-2 text-xs" readOnly value={listingCreateAddressLabels.extra} data-testid="system-settings-listing-create-address-preview-extra" />
+                <input className="h-9 rounded border px-2 text-xs" readOnly value={listingCreateAddressLabels.postalCode} data-testid="system-settings-listing-create-address-preview-postal" />
+              </div>
+              <div className="mt-2" data-testid="system-settings-listing-create-address-preview-row-3">
+                <input className="h-9 w-full rounded border px-2 text-xs" readOnly value={listingCreateAddressLabels.city} data-testid="system-settings-listing-create-address-preview-city" />
+              </div>
+            </div>
+
             <div className="flex flex-wrap items-center gap-2" data-testid="system-settings-listing-create-actions">
               <button
                 type="button"
@@ -1381,6 +1449,7 @@ export default function AdminSystemSettingsPage() {
           </>
         )}
       </div>
+      ) : null}
 
       {isSystemAdmin && (
         <div className="rounded-lg border bg-white p-4 space-y-4" data-testid="system-settings-meili-card">

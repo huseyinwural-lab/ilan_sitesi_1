@@ -199,6 +199,16 @@ export default function BackofficePortalApp() {
         }
       />
       <Route
+        path="/site-design/listing-flow-settings"
+        element={
+          <AdminLayout>
+            <AdminRouteGuard roles={["super_admin", "country_admin"]}>
+              <AdminSystemSettingsPage />
+            </AdminRouteGuard>
+          </AdminLayout>
+        }
+      />
+      <Route
         path="/site-design/content-builder"
         element={
           <AdminLayout>
@@ -248,6 +258,7 @@ export default function BackofficePortalApp() {
         </AdminLayout>
       } />
       <Route path="/system-settings" element={<AdminLayout><AdminSystemSettingsPage /></AdminLayout>} />
+      <Route path="/system-settings/listing-flow-settings" element={<Navigate to="/admin/site-design/listing-flow-settings?focus=listing-create" replace />} />
       <Route path="/listings" element={<AdminLayout><AdminListingsPage /></AdminLayout>} />
       <Route path="/invoices" element={<AdminLayout><AdminInvoicesPage /></AdminLayout>} />
       <Route path="/payments" element={<AdminLayout><AdminPaymentsPage /></AdminLayout>} />

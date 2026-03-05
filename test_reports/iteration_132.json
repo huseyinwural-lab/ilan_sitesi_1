@@ -1,0 +1,48 @@
+{
+  "summary": "Frontend testing for address form updates and admin listing flow settings route migration. Code implementation verified correct. Route redirect working. Found critical 403 bug on new listing-flow-settings route due to AdminRouteGuard timing issue.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "AdminRouteGuard",
+        "issue": "403 error when navigating to /admin/site-design/listing-flow-settings - AdminRouteGuard shows 403 because user object is null when guard renders even though token is present",
+        "selector": "[data-testid='admin-route-forbidden']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Admin listing flow settings access",
+        "issue": "Direct navigation to /admin/site-design/listing-flow-settings shows 403 due to race condition in AuthContext user loading vs AdminRouteGuard check",
+        "affected_selectors": ["[data-testid='admin-route-forbidden']"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_132.json"],
+  "action_items": [
+    "Fix AdminRouteGuard timing issue - wait for AuthContext loading=false before checking user, or show loading state while user is being fetched",
+    "Enable address block in admin config to allow testing of user address form UI"
+  ],
+  "critical_code_review_comments": [
+    "Address form implementation is correct - new fields house_number, address_extra added with proper data-testid attributes",
+    "Route redirect from /admin/system-settings/listing-flow-settings to /admin/site-design/listing-flow-settings works correctly",
+    "Sidebar link for 'İlan Ver Akış Ayarları' correctly configured under Site İç Tasarımı section",
+    "System settings page correctly hides listing-create card when not on listing-flow-settings route",
+    "TR/DE label switching for address form fields correctly implemented (DE: Hausnummer/Adresszusatz/Postleitzahl, TR: Kapı No/Adres Ek Bilgisi/Posta Kodu)"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "N/A (skipped)",
+    "frontend": "60%"
+  },
+  "test_credentials": "admin@platform.com / Admin123!, user@platform.com / User123!",
+  "seed_data_creation": "",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Address form fields (house_number, address_extra) code implementation is correct but cannot be UI tested because admin config disables address block. The 403 error on /admin/site-design/listing-flow-settings is a critical bug - AdminRouteGuard checks user before AuthContext finishes loading.",
+  "rca_of_the_issue": "The AdminRouteGuard at /app/frontend/src/components/AdminRouteGuard.js checks for user at line 15: 'if (!user)' and returns 403. However, when navigating directly to the protected route, AuthContext is still in loading state fetching user from /api/auth/me. The loading state is handled correctly at line 7-13, but if loading=false and user=null (race condition), the guard shows 403. Fix: Add check for token in localStorage when user is null and loading is false, or ensure AuthProvider properly awaits user fetch before setting loading=false."
+}
