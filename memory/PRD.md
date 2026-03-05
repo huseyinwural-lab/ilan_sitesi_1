@@ -20,6 +20,31 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ## 2026-03-05 (P1 — Reklam Yönetimi Formu: Firma Adı + İletişim)
 
+## 2026-03-05 (P0 — Content Builder Temizliği: Test/Dealer/Developer Araçları Kaldırıldı)
+
+### Kullanıcı Talebi (Uygulandı)
+- Content Builder içinden test componentleri, dealer menü/nav/quick componentleri ve developer araçları kaldırıldı.
+
+### Uygulananlar
+- **Component Library filtreleme** (`AdminContentBuilder.js`):
+  - `Test Component`, `Valid Test Component`, `Test Valid Component` (ve test key pattern'leri) builder listesinde gizlendi.
+  - `Dealer Header/Sidebar/Modül` menü componentleri gizlendi.
+  - `dealer.quick.*` ve `dealer.nav.*` alt menü öğeleri builder listesinde gizlendi.
+- **Dealer portal menü component üretimi** builder tarafında devre dışı bırakıldı.
+- **Developer araçları kaldırıldı**:
+  - `15 Sayfa Tipi Seed (API)`
+  - `Mevcut draft'leri güncelle` checkbox
+  - `Policy Report` butonu
+  - `Auto-Fix Uygula` butonu
+  - `Payload Preview (JSON)` editörü
+
+### Test Durumu
+- Frontend smoke (`screenshot_tool`) PASS: kaldırılan araç/öğeler görünmüyor.
+- `auto_frontend_testing_agent` PASS:
+  - 5/5 developer tool kaldırma kontrolü geçti
+  - 17/17 kaldırılması istenen component/metin görünmez
+  - Negatif kontrol PASS: standart üretim componentleri görünür.
+
 ### Kullanıcı Talebi (Uygulandı)
 - Admin > Reklam Yönetimi > Yeni Reklam formuna `Firma Adı` ve `İletişim` alanları eklendi.
 
