@@ -88,6 +88,30 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Frontend: %100
   - LOW notlar: transient 502 (yük altında), draft preview auth gereksinimi (beklenen davranış)
 
+## 2026-03-05 (P0 Follow-up — L0>L1 Kategori Ağacı + HTML Uyum)
+
+### Uygulananlar
+- **Admin Content Builder / Binding panel** güncellendi:
+  - Düz `<select>` yerine **L0 > L1 kategori ağacı** render edildi.
+  - Her kategori için **dinamik `listing_count`** gösterimi eklendi.
+  - Yönetim panelinden ağaç davranışı seçimi eklendi: `expanded` / `accordion`.
+- **Search sidebar HTML yapısı** yeni tasarıma uyarlandı:
+  - `CategorySidebar` artık L0 başlık + girintili L1 children yapısında çalışıyor.
+  - Seçili durum stilleri (L0/L1) belirgin hale getirildi.
+- **Runtime Content Builder blokları** (layout navigator) güçlendirildi:
+  - `layout.category-navigator-side` için L0>L1 ağaç render + `tree_behavior` desteği.
+  - `layout.category-navigator-top` için kategori chip yapısı ve dinamik sayaç.
+  - Runtime context’e kategori datası + aktif kategori geçirildi; sayfa akışı builder’dan besleniyor.
+- **Schema / preset güncellemesi**:
+  - Category navigator bileşenlerine `tree_behavior` schema alanı eklendi.
+  - Seed/preset payload’lara `tree_behavior: expanded` varsayılanı eklendi.
+
+### Test Durumu
+- Testing agent raporu: `/app/test_reports/iteration_136.json`
+  - Backend: %100 (10 passed, 1 skipped)
+  - Frontend: %100
+  - Notlar: preview ortamında geçici 502 timeout görülebiliyor (transient); kritik blokaj yok.
+
 ## 2026-03-01 Tamamlananlar
 
 ## 2026-03-04 (P0 — Search Kategori Landing L1/L2 Tasarım Uygulaması)
