@@ -9,6 +9,7 @@ import { useContentLayoutResolve } from '@/hooks/useContentLayoutResolve';
 import { FacetRenderer } from '@/components/search/FacetRenderer';
 import { CategorySidebar } from '@/components/search/CategorySidebar';
 import LayoutRenderer from '@/components/layout-builder/LayoutRenderer';
+import { MenuSnapshotBlock } from '@/components/layout-builder/MenuSnapshotBlock';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -1051,6 +1052,9 @@ export default function SearchPage() {
       <section data-testid="search-runtime-ad-slot">
         <AdSlot placement={props?.placement || 'AD_SEARCH_TOP'} />
       </section>
+    ),
+    'menu.snapshot.*': ({ props, component }) => (
+      <MenuSnapshotBlock props={props} componentKey={component?.key} />
     ),
   };
 

@@ -33,6 +33,21 @@ const normalizeRows = (payload) => {
   });
 };
 
+const resolveRenderer = (registry, componentKey) => {
+  if (!registry || typeof registry !== 'object') return null;
+  if (registry[componentKey]) return registry[componentKey];
+
+  const entries = Object.entries(registry);
+  for (const [pattern, renderer] of entries) {
+    if (!pattern.endsWith('*')) continue;
+    const prefix = pattern.slice(0, -1);
+    if (prefix && String(componentKey || '').startsWith(prefix)) {
+      return renderer;
+    }
+  }
+  return null;
+};
+
 export default function LayoutRenderer({
   payload,
   registry = {},
@@ -59,7 +74,7 @@ export default function LayoutRenderer({
             >
               <div className="space-y-3" data-testid={`${dataTestIdPrefix}-column-components-${rowIndex}-${columnIndex}`}>
                 {column.components.map((component, componentIndex) => {
-                  const renderer = registry[component.key];
+                  const renderer = resolveRenderer(registry, component.key);
                   if (!renderer) {
                     return (
                       <div

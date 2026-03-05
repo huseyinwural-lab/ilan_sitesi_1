@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdSlot from '@/components/public/AdSlot';
 import LayoutRenderer from '@/components/layout-builder/LayoutRenderer';
+import { MenuSnapshotBlock } from '@/components/layout-builder/MenuSnapshotBlock';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useContentLayoutResolve } from '@/hooks/useContentLayoutResolve';
 import './HomePageRefreshed.css';
@@ -454,6 +455,9 @@ export default function HomePageRefreshed() {
       <section data-testid="home-runtime-ad-slot">
         <AdSlot placement={props?.placement || 'AD_HOME_TOP'} className="rounded-xl border" />
       </section>
+    ),
+    'menu.snapshot.*': ({ props, component }) => (
+      <MenuSnapshotBlock props={props} componentKey={component?.key} />
     ),
   };
 

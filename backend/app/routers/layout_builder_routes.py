@@ -63,6 +63,13 @@ LISTING_CREATE_ALLOWED_COMPONENTS = {
     "shared.ad-slot": {"placement"},
 }
 
+LISTING_ALLOWED_AD_PLACEMENTS = {"AD_HOME_TOP", "AD_SEARCH_TOP", "AD_LOGIN_1"}
+LISTING_MAX_ROWS = 16
+LISTING_MAX_COLUMNS_PER_ROW = 4
+LISTING_MAX_COMPONENTS_PER_COLUMN = 12
+LISTING_TEXT_TITLE_MAX = 160
+LISTING_TEXT_BODY_MAX = 4000
+
 
 class ComponentDefinitionPayload(BaseModel):
     key: str = Field(min_length=2, max_length=128)
@@ -183,31 +190,137 @@ def _serialize_binding(row: LayoutBinding) -> dict[str, Any]:
     }
 
 
+def _validate_listing_column_width_or_400(width_payload: Any, *, row_index: int, column_index: int) -> None:
+    if not isinstance(width_payload, dict):
+        raise HTTPException(status_code=400, detail=f"listing_create_column_width_invalid:r{row_index}:c{column_index}")
+
+    for bp in ("desktop", "tablet", "mobile"):
+        raw_value = width_payload.get(bp)
+        if raw_value is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"listing_create_column_width_missing_breakpoint:r{row_index}:c{column_index}:{bp}",
+            )
+        try:
+            parsed_value = int(raw_value)
+        except (TypeError, ValueError) as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=f"listing_create_column_width_not_numeric:r{row_index}:c{column_index}:{bp}",
+            ) from exc
+        if parsed_value < 1 or parsed_value > 12:
+            raise HTTPException(
+                status_code=400,
+                detail=f"listing_create_column_width_out_of_range:r{row_index}:c{column_index}:{bp}",
+            )
+
+
+def _validate_listing_component_props_or_400(component_key: str, props: dict[str, Any]) -> None:
+    if component_key == "shared.text-block":
+        title = props.get("title")
+        body = props.get("body")
+        if title is not None:
+            if not isinstance(title, str):
+                raise HTTPException(status_code=400, detail="listing_create_text_block_title_must_be_string")
+            if len(title.strip()) > LISTING_TEXT_TITLE_MAX:
+                raise HTTPException(status_code=400, detail="listing_create_text_block_title_too_long")
+        if body is not None:
+            if not isinstance(body, str):
+                raise HTTPException(status_code=400, detail="listing_create_text_block_body_must_be_string")
+            if len(body.strip()) > LISTING_TEXT_BODY_MAX:
+                raise HTTPException(status_code=400, detail="listing_create_text_block_body_too_long")
+
+    if component_key == "shared.ad-slot":
+        placement = props.get("placement")
+        if placement is None:
+            return
+        placement_value = str(placement).strip()
+        if placement_value not in LISTING_ALLOWED_AD_PLACEMENTS:
+            raise HTTPException(status_code=400, detail="listing_create_ad_slot_placement_not_allowed")
+
+
 def _validate_listing_runtime_guard_or_400(payload_json: dict) -> None:
     rows = payload_json.get("rows") if isinstance(payload_json, dict) else None
     if not isinstance(rows, list):
         raise HTTPException(status_code=400, detail="listing_create_payload_rows_must_be_array")
+    if not rows:
+        raise HTTPException(status_code=400, detail="listing_create_payload_rows_required")
+    if len(rows) > LISTING_MAX_ROWS:
+        raise HTTPException(status_code=400, detail="listing_create_payload_rows_limit_exceeded")
 
-    for row in rows:
-        columns = row.get("columns") if isinstance(row, dict) else None
+    row_ids: set[str] = set()
+    column_ids: set[str] = set()
+    component_ids: set[str] = set()
+    default_component_count = 0
+    total_component_count = 0
+
+    for row_index, row in enumerate(rows, start=1):
+        if not isinstance(row, dict):
+            raise HTTPException(status_code=400, detail=f"listing_create_row_invalid:r{row_index}")
+
+        row_id = str(row.get("id") or "").strip()
+        if not row_id:
+            raise HTTPException(status_code=400, detail=f"listing_create_row_id_required:r{row_index}")
+        if row_id in row_ids:
+            raise HTTPException(status_code=400, detail=f"listing_create_row_id_duplicate:{row_id}")
+        row_ids.add(row_id)
+
+        columns = row.get("columns")
         if not isinstance(columns, list):
             raise HTTPException(status_code=400, detail="listing_create_payload_columns_must_be_array")
-        for column in columns:
+        if not columns:
+            raise HTTPException(status_code=400, detail=f"listing_create_row_columns_required:r{row_index}")
+        if len(columns) > LISTING_MAX_COLUMNS_PER_ROW:
+            raise HTTPException(status_code=400, detail=f"listing_create_row_columns_limit_exceeded:r{row_index}")
+
+        for column_index, column in enumerate(columns, start=1):
+            if not isinstance(column, dict):
+                raise HTTPException(status_code=400, detail=f"listing_create_column_invalid:r{row_index}:c{column_index}")
+
+            column_id = str(column.get("id") or "").strip()
+            if not column_id:
+                raise HTTPException(status_code=400, detail=f"listing_create_column_id_required:r{row_index}:c{column_index}")
+            if column_id in column_ids:
+                raise HTTPException(status_code=400, detail=f"listing_create_column_id_duplicate:{column_id}")
+            column_ids.add(column_id)
+
+            _validate_listing_column_width_or_400(column.get("width"), row_index=row_index, column_index=column_index)
+
             components = column.get("components") if isinstance(column, dict) else None
             if not isinstance(components, list):
                 raise HTTPException(status_code=400, detail="listing_create_payload_components_must_be_array")
-            for component in components:
+            if len(components) > LISTING_MAX_COMPONENTS_PER_COLUMN:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"listing_create_column_components_limit_exceeded:r{row_index}:c{column_index}",
+                )
+
+            for component_index, component in enumerate(components, start=1):
+                total_component_count += 1
                 if not isinstance(component, dict):
                     raise HTTPException(status_code=400, detail="listing_create_component_invalid")
+
+                component_id = str(component.get("id") or "").strip()
+                if not component_id:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"listing_create_component_id_required:r{row_index}:c{column_index}:i{component_index}",
+                    )
+                if component_id in component_ids:
+                    raise HTTPException(status_code=400, detail=f"listing_create_component_id_duplicate:{component_id}")
+                component_ids.add(component_id)
+
                 component_key = component.get("key")
                 if component_key not in LISTING_CREATE_ALLOWED_COMPONENTS:
                     raise HTTPException(
                         status_code=400,
                         detail=f"listing_create_component_not_allowed:{component_key}",
                     )
+
                 props = component.get("props") or {}
                 if not isinstance(props, dict):
                     raise HTTPException(status_code=400, detail="listing_create_component_props_must_be_object")
+
                 allowed_props = LISTING_CREATE_ALLOWED_COMPONENTS[component_key]
                 invalid_props = sorted(set(props.keys()) - allowed_props)
                 if invalid_props:
@@ -215,6 +328,16 @@ def _validate_listing_runtime_guard_or_400(payload_json: dict) -> None:
                         status_code=400,
                         detail=f"listing_create_component_props_not_allowed:{component_key}:{','.join(invalid_props)}",
                     )
+
+                _validate_listing_component_props_or_400(component_key, props)
+
+                if component_key == "listing.create.default-content":
+                    default_component_count += 1
+
+    if total_component_count <= 0:
+        raise HTTPException(status_code=400, detail="listing_create_payload_must_include_components")
+    if default_component_count != 1:
+        raise HTTPException(status_code=400, detail="listing_create_default_component_must_be_exactly_one")
 
 
 @router.get("/admin/site/content-layout/components")

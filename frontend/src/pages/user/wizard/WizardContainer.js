@@ -22,9 +22,49 @@ const STEP_COMPONENT_RULES = {
   7: new Set(['listing.create.default-content', 'shared.text-block', 'shared.ad-slot']),
 };
 
-const filterListingRuntimePayloadByStep = (payload, step) => {
-  const allowedKeys = STEP_COMPONENT_RULES[step] || STEP_COMPONENT_RULES[7];
+const ALLOWED_AD_PLACEMENTS = new Set(['AD_HOME_TOP', 'AD_SEARCH_TOP', 'AD_LOGIN_1']);
+
+const sanitizeRuntimeComponent = (component) => {
+  if (!component || typeof component !== 'object') return null;
+  const key = component.key;
+  if (!key) return null;
+
+  if (key === 'listing.create.default-content') {
+    return {
+      ...component,
+      props: {},
+    };
+  }
+
+  if (key === 'shared.text-block') {
+    const rawTitle = component?.props?.title;
+    const rawBody = component?.props?.body;
+    return {
+      ...component,
+      props: {
+        title: typeof rawTitle === 'string' ? rawTitle.slice(0, 160) : 'Bilgilendirme',
+        body: typeof rawBody === 'string' ? rawBody.slice(0, 4000) : '',
+      },
+    };
+  }
+
+  if (key === 'shared.ad-slot') {
+    const rawPlacement = String(component?.props?.placement || '').trim();
+    return {
+      ...component,
+      props: {
+        placement: ALLOWED_AD_PLACEMENTS.has(rawPlacement) ? rawPlacement : 'AD_LOGIN_1',
+      },
+    };
+  }
+
+  return null;
+};
+
+const enforceSingleListingDefaultComponent = (payload) => {
+  let hasDefaultComponent = false;
   const rows = Array.isArray(payload?.rows) ? payload.rows : [];
+
   return {
     rows: rows.map((row) => ({
       ...row,
@@ -32,12 +72,42 @@ const filterListingRuntimePayloadByStep = (payload, step) => {
         ? row.columns.map((column) => ({
             ...column,
             components: Array.isArray(column?.components)
-              ? column.components.filter((component) => allowedKeys.has(component?.key))
+              ? column.components.filter((component) => {
+                  if (component?.key !== 'listing.create.default-content') return true;
+                  if (hasDefaultComponent) return false;
+                  hasDefaultComponent = true;
+                  return true;
+                })
+              : [],
+          }))
+        : [],
+    })),
+    hasDefaultComponent,
+  };
+};
+
+const filterListingRuntimePayloadByStep = (payload, step) => {
+  const allowedKeys = STEP_COMPONENT_RULES[step] || STEP_COMPONENT_RULES[7];
+  const rows = Array.isArray(payload?.rows) ? payload.rows : [];
+
+  const filteredPayload = {
+    rows: rows.map((row) => ({
+      ...row,
+      columns: Array.isArray(row?.columns)
+        ? row.columns.map((column) => ({
+            ...column,
+            components: Array.isArray(column?.components)
+              ? column.components
+                .filter((component) => allowedKeys.has(component?.key))
+                .map((component) => sanitizeRuntimeComponent(component))
+                .filter(Boolean)
               : [],
           }))
         : [],
     })),
   };
+
+  return enforceSingleListingDefaultComponent(filteredPayload);
 };
 
 const WizardContent = () => {
@@ -105,17 +175,14 @@ const WizardContent = () => {
 
   const safeListingRuntimePayload = useMemo(() => {
     if (!hasListingRuntimeRows) return null;
-    const filteredPayload = filterListingRuntimePayloadByStep(
+    const filteredPayloadResult = filterListingRuntimePayloadByStep(
       listingRuntimeLayout?.revision?.payload_json || { rows: [] },
       step,
     );
+    const filteredPayload = filteredPayloadResult;
     const rawRows = Array.isArray(filteredPayload?.rows) ? filteredPayload.rows : [];
 
-    const hasDefaultComponent = rawRows.some((row) =>
-      (row?.columns || []).some((column) =>
-        (column?.components || []).some((component) => component?.key === 'listing.create.default-content'),
-      ),
-    );
+    const hasDefaultComponent = Boolean(filteredPayloadResult?.hasDefaultComponent);
     if (hasDefaultComponent) {
       return filteredPayload;
     }

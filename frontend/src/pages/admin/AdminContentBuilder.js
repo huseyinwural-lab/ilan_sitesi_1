@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -82,7 +82,7 @@ const createEmptyPayload = (pageType) => ({
             {
               id: `cmp-${Date.now()}`,
               key: getDefaultComponentKey(pageType),
-              props: pageType === 'home' ? {} : { note: 'Varsayılan içerik bloğu' },
+              props: pageType === 'home' || pageType === 'listing_create_stepX' ? {} : { note: 'Varsayılan içerik bloğu' },
               visibility: { desktop: true, tablet: true, mobile: true },
             },
           ],
@@ -99,6 +99,220 @@ const normalizePayload = (rawPayload, pageType) => {
     return createEmptyPayload(pageType);
   }
   return rawPayload;
+};
+
+const buildMenuComponentLibraryItems = (menuItems) => {
+  const activeItems = Array.isArray(menuItems)
+    ? menuItems.filter((item) => item && item.active_flag !== false && item.id)
+    : [];
+
+  if (!activeItems.length) return [];
+
+  const byParent = new Map();
+  const byId = new Map(activeItems.map((item) => [item.id, item]));
+
+  activeItems.forEach((item) => {
+    const parentKey = item.parent_id || '__root__';
+    if (!byParent.has(parentKey)) byParent.set(parentKey, []);
+    byParent.get(parentKey).push(item);
+  });
+
+  const sortItems = (items) => [...items].sort((a, b) => {
+    const aOrder = Number(a.sort_order || 0);
+    const bOrder = Number(b.sort_order || 0);
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return String(a.label || '').localeCompare(String(b.label || ''), 'tr');
+  });
+
+  return sortItems(activeItems).map((item) => {
+    const parentItem = item.parent_id ? byId.get(item.parent_id) : null;
+    const submenuItems = sortItems(byParent.get(item.id) || []).map((child) => ({
+      id: child.id,
+      label: child.label,
+      slug: child.slug || '',
+      url: child.url || '',
+    }));
+
+    return {
+      key: `menu.snapshot.${item.id}`,
+      name: `${item.parent_id ? 'Alt Menü' : 'Menü'} • ${item.label}`,
+      schema_json: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', title: 'Başlık' },
+          show_children: { type: 'boolean', title: 'Alt menüleri göster' },
+          style: { type: 'string', title: 'Görünüm', enum: ['list', 'chips'] },
+          max_children: { type: 'integer', title: 'Maks. alt menü', minimum: 1, maximum: 20 },
+        },
+        additionalProperties: true,
+      },
+      default_props: {
+        title: item.label,
+        menu_label: item.label,
+        menu_url: item.url || '',
+        menu_slug: item.slug || '',
+        menu_item_id: item.id,
+        menu_parent_label: parentItem?.label || '',
+        show_children: true,
+        style: 'list',
+        max_children: 8,
+        menu_snapshot: {
+          id: item.id,
+          label: item.label,
+          slug: item.slug || '',
+          url: item.url || '',
+          children: submenuItems,
+        },
+      },
+    };
+  });
+};
+
+const buildDealerPortalMenuLibraryItems = (configPayload) => {
+  const navItems = Array.isArray(configPayload?.nav_items)
+    ? configPayload.nav_items.filter((item) => item && item.visible !== false && item.id)
+    : [];
+  const moduleItems = Array.isArray(configPayload?.modules)
+    ? configPayload.modules.filter((item) => item && item.visible !== false && item.id)
+    : [];
+
+  if (!navItems.length && !moduleItems.length) return [];
+
+  const normalizeChild = (item, fallbackPrefix = 'item') => ({
+    id: item.id || `${fallbackPrefix}-${item.key || item.label || 'x'}`,
+    label: item.label || item.label_i18n_key || item.title_i18n_key || item.key || 'Menu',
+    slug: item.slug || item.key || '',
+    url: item.url || item.route || '',
+  });
+
+  const headerChildren = navItems.filter((item) => item.location === 'header').map((item) => normalizeChild(item, 'header'));
+  const sidebarChildren = navItems.filter((item) => item.location === 'sidebar').map((item) => normalizeChild(item, 'sidebar'));
+  const moduleChildren = moduleItems.map((item) => normalizeChild(item, 'module'));
+
+  const rootBlocks = [
+    {
+      key: 'menu.snapshot.dealer.header',
+      label: 'Dealer Header Menüsü',
+      children: headerChildren,
+    },
+    {
+      key: 'menu.snapshot.dealer.sidebar',
+      label: 'Dealer Sidebar Menüsü',
+      children: sidebarChildren,
+    },
+    {
+      key: 'menu.snapshot.dealer.modules',
+      label: 'Dealer Modül Menüsü',
+      children: moduleChildren,
+    },
+  ].filter((item) => item.children.length > 0);
+
+  const rootComponents = rootBlocks.map((block) => ({
+    key: block.key,
+    name: `Menü • ${block.label}`,
+    schema_json: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', title: 'Başlık' },
+        show_children: { type: 'boolean', title: 'Alt menüleri göster' },
+        style: { type: 'string', title: 'Görünüm', enum: ['list', 'chips'] },
+        max_children: { type: 'integer', title: 'Maks. alt menü', minimum: 1, maximum: 20 },
+      },
+      additionalProperties: true,
+    },
+    default_props: {
+      title: block.label,
+      menu_label: block.label,
+      menu_url: '',
+      menu_slug: block.key,
+      menu_item_id: block.key,
+      show_children: true,
+      style: 'list',
+      max_children: 10,
+      menu_snapshot: {
+        id: block.key,
+        label: block.label,
+        slug: block.key,
+        url: '',
+        children: block.children,
+      },
+    },
+  }));
+
+  const rowComponents = navItems.map((item) => {
+    const label = item.label || item.label_i18n_key || item.key || 'Menu';
+    return {
+      key: `menu.snapshot.dealer.nav.${item.id}`,
+      name: `Alt Menü • ${label}`,
+      schema_json: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', title: 'Başlık' },
+          show_children: { type: 'boolean', title: 'Alt menüleri göster' },
+          style: { type: 'string', title: 'Görünüm', enum: ['list', 'chips'] },
+          max_children: { type: 'integer', title: 'Maks. alt menü', minimum: 1, maximum: 20 },
+        },
+        additionalProperties: true,
+      },
+      default_props: {
+        title: label,
+        menu_label: label,
+        menu_url: item.route || '',
+        menu_slug: item.key || '',
+        menu_item_id: item.id,
+        menu_parent_label: item.location || '',
+        show_children: true,
+        style: 'list',
+        max_children: 8,
+        menu_snapshot: {
+          id: item.id,
+          label,
+          slug: item.key || '',
+          url: item.route || '',
+          children: [],
+        },
+      },
+    };
+  });
+
+  return [...rootComponents, ...rowComponents];
+};
+
+const buildTopMenuLibraryItems = (topItems) => {
+  const items = Array.isArray(topItems) ? topItems.filter((item) => item && item.id) : [];
+  if (!items.length) return [];
+
+  return items.map((item) => ({
+    key: `menu.snapshot.top.${item.id}`,
+    name: `Üst Menü • ${item.name || item.key || 'Menu'}`,
+    schema_json: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', title: 'Başlık' },
+        show_children: { type: 'boolean', title: 'Alt menüleri göster' },
+        style: { type: 'string', title: 'Görünüm', enum: ['list', 'chips'] },
+        max_children: { type: 'integer', title: 'Maks. alt menü', minimum: 1, maximum: 20 },
+      },
+      additionalProperties: true,
+    },
+    default_props: {
+      title: item.name || item.key || 'Menü',
+      menu_label: item.name || item.key || 'Menü',
+      menu_url: '',
+      menu_slug: item.key || '',
+      menu_item_id: item.id,
+      show_children: false,
+      style: 'chips',
+      max_children: 6,
+      menu_snapshot: {
+        id: item.id,
+        label: item.name || item.key || 'Menü',
+        slug: item.key || '',
+        url: '',
+        children: [],
+      },
+    },
+  }));
 };
 
 const buildCategoryTreeOptions = (items) => {
@@ -241,6 +455,7 @@ export default function AdminContentBuilder() {
 
   const [selectedRowId, setSelectedRowId] = useState('');
   const [selectedColumnId, setSelectedColumnId] = useState('');
+  const [selectedComponentId, setSelectedComponentId] = useState('');
   const [draggingRowId, setDraggingRowId] = useState('');
   const [draggingComponentId, setDraggingComponentId] = useState('');
   const [draggingLibraryComponentKey, setDraggingLibraryComponentKey] = useState('');
@@ -253,17 +468,46 @@ export default function AdminContentBuilder() {
   const [categorySearch, setCategorySearch] = useState('');
   const [categoriesLoading, setCategoriesLoading] = useState(false);
 
-  const getLibrary = async () => {
+  const getLibrary = useCallback(async () => {
     try {
-      const res = await axios.get(`${API}/admin/site/content-layout/components`, {
-        headers: authHeaders,
-        params: { page: 1, limit: 100, is_active: true },
-      });
-      const fetchedItems = Array.isArray(res.data?.items) ? res.data.items : [];
-      if (!fetchedItems.length) {
-        setComponentLibrary(DEFAULT_COMPONENT_LIBRARY);
-        return;
-      }
+      const [componentDefsResponse, menuItemsResponse, dealerConfigResponse, topMenuResponse] = await Promise.allSettled([
+        axios.get(`${API}/admin/site/content-layout/components`, {
+          headers: authHeaders,
+          params: { page: 1, limit: 100, is_active: true },
+        }),
+        axios.get(`${API}/admin/menu-items`, {
+          headers: authHeaders,
+          params: { country: country.toUpperCase() },
+        }),
+        axios.get(`${API}/admin/dealer-portal/config`, {
+          headers: authHeaders,
+          params: { mode: 'draft' },
+        }),
+        axios.get(`${API}/menu/top-items`),
+      ]);
+
+      const fetchedItems = componentDefsResponse.status === 'fulfilled' && Array.isArray(componentDefsResponse.value.data?.items)
+        ? componentDefsResponse.value.data.items
+        : [];
+
+      const menuItems = menuItemsResponse.status === 'fulfilled' && Array.isArray(menuItemsResponse.value.data?.items)
+        ? menuItemsResponse.value.data.items
+        : [];
+
+      const dealerConfigPayload = dealerConfigResponse.status === 'fulfilled' && dealerConfigResponse.value?.data
+        ? dealerConfigResponse.value.data
+        : null;
+
+      const topMenuItems = topMenuResponse.status === 'fulfilled' && Array.isArray(topMenuResponse.value?.data)
+        ? topMenuResponse.value.data
+        : [];
+
+      const menuLibraryItems = [
+        ...buildMenuComponentLibraryItems(menuItems),
+        ...buildDealerPortalMenuLibraryItems(dealerConfigPayload),
+        ...buildTopMenuLibraryItems(topMenuItems),
+      ];
+
       const normalized = fetchedItems.map((item) => ({
         key: item.key,
         name: item.name || item.key,
@@ -271,8 +515,9 @@ export default function AdminContentBuilder() {
           ? item.schema_json
           : { type: 'object', properties: {}, additionalProperties: true },
       }));
+
       const merged = [...DEFAULT_COMPONENT_LIBRARY];
-      normalized.forEach((item) => {
+      [...normalized, ...menuLibraryItems].forEach((item) => {
         const index = merged.findIndex((existing) => existing.key === item.key);
         if (index >= 0) {
           merged[index] = { ...merged[index], ...item };
@@ -284,7 +529,11 @@ export default function AdminContentBuilder() {
     } catch (_err) {
       setComponentLibrary(DEFAULT_COMPONENT_LIBRARY);
     }
-  };
+  }, [authHeaders, country]);
+
+  useEffect(() => {
+    getLibrary();
+  }, [getLibrary]);
 
   useEffect(() => {
     let active = true;
@@ -328,6 +577,38 @@ export default function AdminContentBuilder() {
     });
   }, [categoryOptions, categorySearch]);
 
+  const menuComponentCount = useMemo(
+    () => componentLibrary.filter((item) => String(item?.key || '').startsWith('menu.snapshot.')).length,
+    [componentLibrary],
+  );
+
+  const draggingLibraryComponentName = useMemo(() => {
+    if (!draggingLibraryComponentKey) return '';
+    return componentLibrary.find((item) => item.key === draggingLibraryComponentKey)?.name || '';
+  }, [componentLibrary, draggingLibraryComponentKey]);
+
+  const selectedCanvasContext = useMemo(() => {
+    const rows = Array.isArray(payloadJson?.rows) ? payloadJson.rows : [];
+    const row = rows.find((item) => item.id === selectedRowId);
+    if (!row) return 'Henüz seçim yok';
+
+    const rowIndex = rows.findIndex((item) => item.id === selectedRowId) + 1;
+    const columns = Array.isArray(row.columns) ? row.columns : [];
+    const column = columns.find((item) => item.id === selectedColumnId);
+    const columnIndex = column ? (columns.findIndex((item) => item.id === selectedColumnId) + 1) : null;
+
+    let componentLabel = '';
+    if (column && selectedComponentId) {
+      const components = Array.isArray(column.components) ? column.components : [];
+      const component = components.find((item) => item.id === selectedComponentId);
+      if (component) componentLabel = component.key;
+    }
+
+    if (componentLabel) return `Seçili: Row ${rowIndex} • Column ${columnIndex} • ${componentLabel}`;
+    if (columnIndex) return `Seçili: Row ${rowIndex} • Column ${columnIndex}`;
+    return `Seçili: Row ${rowIndex}`;
+  }, [payloadJson, selectedRowId, selectedColumnId, selectedComponentId]);
+
   const previewBasePath = useMemo(() => {
     const selectedCategory = (bindingCategoryId || categoryId).trim();
     if (pageType === 'home') return '/';
@@ -363,6 +644,17 @@ export default function AdminContentBuilder() {
     return componentDef?.schema_json && typeof componentDef.schema_json === 'object'
       ? componentDef.schema_json
       : { type: 'object', properties: {}, additionalProperties: true };
+  };
+
+  const getComponentDefaultProps = (componentKey) => {
+    const componentDef = componentLibrary.find((item) => item.key === componentKey);
+    if (componentDef?.default_props && typeof componentDef.default_props === 'object') {
+      return deepClone(componentDef.default_props);
+    }
+    if (componentKey === 'shared.text-block') {
+      return { title: 'Başlık', body: 'Metin içeriği' };
+    }
+    return {};
   };
 
   const updateComponentPropValue = (rowId, columnId, componentId, propKey, propValue) => {
@@ -534,6 +826,11 @@ export default function AdminContentBuilder() {
     const next = deepClone(payloadJson);
     next.rows = (next.rows || []).filter((row) => row.id !== rowId);
     updatePayload(next);
+    if (selectedRowId === rowId) {
+      setSelectedRowId('');
+      setSelectedColumnId('');
+      setSelectedComponentId('');
+    }
   };
 
   const addColumn = (rowId) => {
@@ -577,6 +874,10 @@ export default function AdminContentBuilder() {
     if (!row) return;
     row.columns = (row.columns || []).filter((column) => column.id !== columnId);
     updatePayload(next);
+    if (selectedColumnId === columnId) {
+      setSelectedColumnId('');
+      setSelectedComponentId('');
+    }
   };
 
   const addComponent = (rowId, columnId, key) => {
@@ -585,14 +886,35 @@ export default function AdminContentBuilder() {
     const row = (next.rows || []).find((item) => item.id === rowId);
     const column = (row?.columns || []).find((item) => item.id === columnId);
     if (!column) return;
+
+    if (pageType === 'listing_create_stepX' && key === 'listing.create.default-content') {
+      const rows = Array.isArray(next.rows) ? next.rows : [];
+      const existingDefaultCount = rows.reduce((sum, currentRow) => {
+        const columns = Array.isArray(currentRow?.columns) ? currentRow.columns : [];
+        return sum + columns.reduce((innerSum, currentColumn) => {
+          const components = Array.isArray(currentColumn?.components) ? currentColumn.components : [];
+          return innerSum + components.filter((component) => component?.key === 'listing.create.default-content').length;
+        }, 0);
+      }, 0);
+      if (existingDefaultCount >= 1) {
+        setError('İlan Ver akışında yalnızca bir adet varsayılan içerik bileşeni kullanılabilir.');
+        toast.error('İlan Ver için ikinci varsayılan bileşen eklenemez.');
+        return;
+      }
+    }
+
     if (!Array.isArray(column.components)) column.components = [];
+    const nextComponentId = `cmp-${Date.now()}-${Math.round(Math.random() * 100)}`;
     column.components.push({
-      id: `cmp-${Date.now()}-${Math.round(Math.random() * 100)}`,
+      id: nextComponentId,
       key,
-      props: key === 'shared.text-block' ? { title: 'Başlık', body: 'Metin içeriği' } : {},
+      props: getComponentDefaultProps(key),
       visibility: { desktop: true, tablet: true, mobile: true },
     });
     updatePayload(next);
+    setSelectedRowId(rowId);
+    setSelectedColumnId(columnId);
+    setSelectedComponentId(nextComponentId);
   };
 
   const updateComponentField = (rowId, columnId, componentId, field, value) => {
@@ -601,7 +923,26 @@ export default function AdminContentBuilder() {
     const column = (row?.columns || []).find((item) => item.id === columnId);
     const component = (column?.components || []).find((item) => item.id === componentId);
     if (!component) return;
-    component[field] = value;
+    if (field === 'key') {
+      if (pageType === 'listing_create_stepX' && value === 'listing.create.default-content') {
+        const existingDefaultCount = (next.rows || []).reduce((sum, currentRow) => {
+          const columns = Array.isArray(currentRow?.columns) ? currentRow.columns : [];
+          return sum + columns.reduce((innerSum, currentColumn) => {
+            const components = Array.isArray(currentColumn?.components) ? currentColumn.components : [];
+            return innerSum + components.filter((item) => item?.key === 'listing.create.default-content' && item?.id !== componentId).length;
+          }, 0);
+        }, 0);
+        if (existingDefaultCount >= 1) {
+          setError('İlan Ver akışında yalnızca bir adet varsayılan içerik bileşeni kullanılabilir.');
+          toast.error('İkinci varsayılan bileşen seçilemez.');
+          return;
+        }
+      }
+      component.key = value;
+      component.props = getComponentDefaultProps(value);
+    } else {
+      component[field] = value;
+    }
     updatePayload(next);
   };
 
@@ -612,6 +953,9 @@ export default function AdminContentBuilder() {
     if (!column) return;
     column.components = (column.components || []).filter((component) => component.id !== componentId);
     updatePayload(next);
+    if (selectedComponentId === componentId) {
+      setSelectedComponentId('');
+    }
   };
 
   const moveComponent = (rowId, columnId, componentId, direction) => {
@@ -676,6 +1020,9 @@ export default function AdminContentBuilder() {
     if (!Array.isArray(targetColumn.components)) targetColumn.components = [];
     targetColumn.components.push(movedComponent);
     updatePayload(next);
+    setSelectedRowId(targetRowId);
+    setSelectedColumnId(targetColumnId);
+    setSelectedComponentId(movedComponent.id || '');
     setDraggingComponentId('');
     setDragOverColumnId('');
   };
@@ -929,7 +1276,7 @@ export default function AdminContentBuilder() {
         <aside className="rounded-xl border bg-white p-4" data-testid="admin-content-builder-library">
           <h2 className="text-sm font-semibold" data-testid="admin-content-builder-library-title">Component Library</h2>
           <p className="mt-1 text-xs text-slate-500" data-testid="admin-content-builder-library-note">
-            Bir sütunu seçip aşağıdan bileşen ekleyin.
+            Bir sütunu seçip bileşen ekleyin. Menü bileşenleri: <strong data-testid="admin-content-builder-library-menu-count">{menuComponentCount}</strong>
           </p>
           <div className="mt-3 space-y-2" data-testid="admin-content-builder-library-list">
             {componentLibrary.map((component) => (
@@ -974,6 +1321,10 @@ export default function AdminContentBuilder() {
             <button type="button" className="h-9 rounded border px-3 text-xs" onClick={addRow} data-testid="admin-content-builder-add-row-button">Satır Ekle</button>
           </div>
 
+          <div className="mb-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800" data-testid="admin-content-builder-selection-summary">
+            {selectedCanvasContext}
+          </div>
+
           <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs" data-testid="admin-content-builder-diff-summary">
             <span data-testid="admin-content-builder-diff-rows">Row değişimi: <strong>{layoutDiff.summary.rows}</strong></span>
             <span className="mx-2">•</span>
@@ -986,12 +1337,15 @@ export default function AdminContentBuilder() {
             {(payloadJson.rows || []).map((row, rowIndex) => (
               <article
                 key={row.id}
-                className={`rounded-lg border p-3 transition ${dragOverRowId === row.id ? 'border-slate-900 bg-slate-50' : 'border-slate-200'} ${layoutDiff.changedRowIds.has(row.id) ? 'ring-1 ring-amber-500' : ''}`}
+                className={`rounded-lg border p-3 transition ${dragOverRowId === row.id ? 'border-slate-900 bg-slate-50' : 'border-slate-200'} ${layoutDiff.changedRowIds.has(row.id) ? 'ring-1 ring-amber-500' : ''} ${selectedRowId === row.id ? 'ring-2 ring-sky-400 bg-sky-50/40' : ''}`}
                 draggable
                 onDragStart={() => setDraggingRowId(row.id)}
                 onDragEnd={() => {
                   setDraggingRowId('');
                   setDragOverRowId('');
+                }}
+                onClick={() => {
+                  setSelectedRowId(row.id);
                 }}
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -1021,10 +1375,11 @@ export default function AdminContentBuilder() {
                   {(row.columns || []).map((column) => (
                     <div
                       key={column.id}
-                      className={`rounded-md border p-3 transition ${selectedColumnId === column.id ? 'border-slate-900' : 'border-slate-200'} ${dragOverColumnId === column.id ? 'bg-amber-50 border-amber-400' : ''} ${layoutDiff.changedColumnIds.has(column.id) ? 'ring-1 ring-amber-500' : ''}`}
+                      className={`rounded-md border p-3 transition ${selectedColumnId === column.id ? 'border-sky-600 ring-2 ring-sky-300 bg-sky-50/40' : 'border-slate-200'} ${dragOverColumnId === column.id ? 'bg-amber-50 border-amber-400' : ''} ${layoutDiff.changedColumnIds.has(column.id) ? 'ring-1 ring-amber-500' : ''}`}
                       onClick={() => {
                         setSelectedRowId(row.id);
                         setSelectedColumnId(column.id);
+                        setSelectedComponentId('');
                       }}
                       onDragOver={(e) => {
                         e.preventDefault();
@@ -1066,7 +1421,9 @@ export default function AdminContentBuilder() {
 
                       {dragOverColumnId === column.id ? (
                         <div className="mb-2 rounded border border-dashed border-amber-500 bg-amber-100 px-2 py-1 text-[11px] text-amber-700" data-testid={`admin-content-builder-column-drop-indicator-${column.id}`}>
-                          Bileşeni bu sütuna bırak
+                          {draggingLibraryComponentKey
+                            ? `${draggingLibraryComponentName || 'Seçili bileşen'} bu sütuna eklenecek`
+                            : 'Bileşeni bu sütuna bırak'}
                         </div>
                       ) : null}
 
@@ -1074,12 +1431,18 @@ export default function AdminContentBuilder() {
                         {(column.components || []).map((component, componentIndex) => (
                           <div
                             key={component.id}
-                            className={`rounded border bg-slate-50 p-2 ${layoutDiff.changedComponentIds.has(component.id) ? 'border-amber-500 bg-amber-50' : ''}`}
+                            className={`rounded border bg-slate-50 p-2 ${layoutDiff.changedComponentIds.has(component.id) ? 'border-amber-500 bg-amber-50' : ''} ${selectedComponentId === component.id ? 'border-sky-500 ring-2 ring-sky-300 bg-sky-50' : ''}`}
                             draggable
                             onDragStart={() => setDraggingComponentId(component.id)}
                             onDragEnd={() => {
                               setDraggingComponentId('');
                               setDragOverColumnId('');
+                            }}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setSelectedRowId(row.id);
+                              setSelectedColumnId(column.id);
+                              setSelectedComponentId(component.id);
                             }}
                             data-testid={`admin-content-builder-component-${component.id}`}
                           >
