@@ -7,7 +7,7 @@ import requests
 import os
 import json
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://content-canvas-16.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://content-canvas-17.preview.emergentagent.com')
 
 # Test credentials
 USER_EMAIL = "user@platform.com"

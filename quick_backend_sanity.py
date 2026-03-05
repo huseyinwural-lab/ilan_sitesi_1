@@ -6,7 +6,7 @@ import sys
 from datetime import datetime
 
 # Configuration from the review request
-BASE_URL = "https://content-canvas-16.preview.emergentagent.com"
+BASE_URL = "https://content-canvas-17.preview.emergentagent.com"
 API_BASE = f"{BASE_URL}/api"
 ADMIN_EMAIL = "admin@platform.com"
 ADMIN_PASSWORD = "Admin123!"
@@ -60,7 +60,7 @@ class QuickBackendSanity:
 
 def main():
     print("🚀 Quick Backend Sanity - P1.1/P1.2/P2 Continuation")
-    print("Target: https://content-canvas-16.preview.emergentagent.com")
+    print("Target: https://content-canvas-17.preview.emergentagent.com")
     print("Credentials: admin@platform.com / Admin123!")
     print("=" * 60)
     

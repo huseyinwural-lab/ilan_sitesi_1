@@ -7,8 +7,24 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const PAGE_TYPE_OPTIONS = [
   { value: 'home', label: 'Ana Sayfa (home)' },
-  { value: 'search_l1', label: 'Kategori L1 (search_l1)' },
-  { value: 'search_l2', label: 'Kategori L2 (search_l2)' },
+  { value: 'category_l0_l1', label: 'L0/L1 Kategori Sayfası (category_l0_l1)' },
+  { value: 'search_ln', label: 'Kategori İlan Listesi (search_ln)' },
+  { value: 'urgent_listings', label: 'Acil İlanlar (urgent_listings)' },
+  { value: 'category_showcase', label: 'Kategori Vitrin (category_showcase)' },
+  { value: 'listing_detail', label: 'İlan Detay (listing_detail)' },
+  { value: 'listing_detail_parameters', label: 'İlan Detay Parametreleri (listing_detail_parameters)' },
+  { value: 'storefront_profile', label: 'Mağaza/Kurumsal Profil (storefront_profile)' },
+  { value: 'wizard_step_l0', label: 'İlan Ver Adım 1 - L0 (wizard_step_l0)' },
+  { value: 'wizard_step_ln', label: 'İlan Ver Adım 2 - L1>Ln (wizard_step_ln)' },
+  { value: 'wizard_step_form', label: 'İlan Ver Adım 3 - Form (wizard_step_form)' },
+  { value: 'wizard_preview', label: 'Ön İzleme (wizard_preview)' },
+  { value: 'wizard_doping_payment', label: 'Doping ve Ödeme (wizard_doping_payment)' },
+  { value: 'wizard_result', label: 'Başarı/Sonuç (wizard_result)' },
+  { value: 'user_dashboard', label: 'Kullanıcı Paneli (user_dashboard)' },
+
+  // Legacy page_type values kept for backward compatibility
+  { value: 'search_l1', label: 'Legacy Search L1 (search_l1)' },
+  { value: 'search_l2', label: 'Legacy Search L2 (search_l2)' },
   { value: 'listing_create_stepX', label: 'İlan Ver (listing_create_stepX)' },
 ];
 

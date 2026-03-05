@@ -24,6 +24,22 @@ from app.models.base import Base
 
 class LayoutPageType(str, enum.Enum):
     HOME = "home"
+    CATEGORY_L0_L1 = "category_l0_l1"
+    SEARCH_LN = "search_ln"
+    URGENT_LISTINGS = "urgent_listings"
+    CATEGORY_SHOWCASE = "category_showcase"
+    LISTING_DETAIL = "listing_detail"
+    LISTING_DETAIL_PARAMETERS = "listing_detail_parameters"
+    STOREFRONT_PROFILE = "storefront_profile"
+    WIZARD_STEP_L0 = "wizard_step_l0"
+    WIZARD_STEP_LN = "wizard_step_ln"
+    WIZARD_STEP_FORM = "wizard_step_form"
+    WIZARD_PREVIEW = "wizard_preview"
+    WIZARD_DOPING_PAYMENT = "wizard_doping_payment"
+    WIZARD_RESULT = "wizard_result"
+    USER_DASHBOARD = "user_dashboard"
+
+    # Legacy/compat page types kept for backward compatibility
     SEARCH_L1 = "search_l1"
     SEARCH_L2 = "search_l2"
     LISTING_CREATE_STEPX = "listing_create_stepX"

@@ -1,6 +1,6 @@
 {
   "task": "P1-Next-02 Admin UI Standardizasyonu Smoke",
-  "base_url": "https://content-canvas-16.preview.emergentagent.com",
+  "base_url": "https://content-canvas-17.preview.emergentagent.com",
   "backend_enforcement": [
     {
       "name": "super_admin_permissions_snapshot",

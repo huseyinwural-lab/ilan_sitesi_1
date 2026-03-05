@@ -3,7 +3,7 @@ import uuid
 import requests
 
 
-BASE_URL = "https://content-canvas-16.preview.emergentagent.com"
+BASE_URL = "https://content-canvas-17.preview.emergentagent.com"
 
 CREDS = {
     "super_admin": {"email": "admin@platform.com", "password": "Admin123!"},

@@ -75,7 +75,7 @@
       "Hot reload issue where the code change wasn't deployed correctly"
     ],
     "reproduction_steps": [
-      "Navigate to https://content-canvas-16.preview.emergentagent.com as guest (not logged in)",
+      "Navigate to https://content-canvas-17.preview.emergentagent.com as guest (not logged in)",
       "Inspect header area for language selector buttons (TR/DE/FR)",
       "Check DOM for [data-testid='site-header-language-selector']",
       "Observe: Selector not found, only dynamic list items present"

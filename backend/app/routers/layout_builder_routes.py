@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import SchemaError
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, desc, func, select
+from sqlalchemy import and_, desc, func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -59,6 +59,7 @@ _METRICS = {
     "binding_changes": 0,
     "resolve_total_latency_ms": 0.0,
 }
+_LAYOUT_ENUM_SYNCED = False
 
 TRANSIENT_DB_ERROR_MARKERS = (
     "timeout",
@@ -94,6 +95,9 @@ LISTING_MAX_COMPONENTS_PER_COLUMN = 12
 LISTING_TEXT_TITLE_MAX = 160
 LISTING_TEXT_BODY_MAX = 4000
 LISTING_MAX_DOPING_OPTIONS = 8
+GENERIC_MAX_ROWS = 20
+GENERIC_MAX_COLUMNS_PER_ROW = 4
+GENERIC_MAX_COMPONENTS_PER_COLUMN = 16
 
 
 def _is_transient_db_error(exc: Exception) -> bool:
@@ -121,6 +125,275 @@ async def _run_with_db_retry(session: AsyncSession, operation, *, retries: int =
     if last_exc:
         raise last_exc
     raise RuntimeError("db_retry_operation_failed")
+
+
+def _build_generic_layout_policy_report(payload_json: dict[str, Any], *, page_type: Optional[str] = None) -> dict[str, Any]:
+    rows = payload_json.get("rows") if isinstance(payload_json, dict) else None
+    stats = {
+        "row_count": 0,
+        "total_component_count": 0,
+        "limit_violations": 0,
+        "duplicate_id_violations": 0,
+        "width_violations": 0,
+    }
+
+    if not isinstance(rows, list):
+        checks = [
+            {
+                "id": "rows_structure",
+                "label": "Rows yapısı",
+                "status": "fail",
+                "blocking": True,
+                "detail": "rows dizisi zorunlu",
+                "fix_suggestion": "Payload içinde rows dizisi oluşturun ve en az bir row ekleyin.",
+            }
+        ]
+        return {
+            "policy": "generic_layout",
+            "page_type": page_type,
+            "passed": False,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "checks": checks,
+            "suggested_fixes": [checks[0]["fix_suggestion"]],
+            "stats": stats,
+        }
+
+    stats["row_count"] = len(rows)
+    row_ids: set[str] = set()
+    col_ids: set[str] = set()
+    comp_ids: set[str] = set()
+
+    for row in rows:
+        if not isinstance(row, dict):
+            stats["limit_violations"] += 1
+            continue
+        row_id = str(row.get("id") or "").strip()
+        if not row_id or row_id in row_ids:
+            stats["duplicate_id_violations"] += 1
+        if row_id:
+            row_ids.add(row_id)
+
+        columns = row.get("columns")
+        if not isinstance(columns, list):
+            stats["limit_violations"] += 1
+            continue
+        if len(columns) > GENERIC_MAX_COLUMNS_PER_ROW:
+            stats["limit_violations"] += 1
+
+        for col in columns:
+            if not isinstance(col, dict):
+                stats["limit_violations"] += 1
+                continue
+            col_id = str(col.get("id") or "").strip()
+            if not col_id or col_id in col_ids:
+                stats["duplicate_id_violations"] += 1
+            if col_id:
+                col_ids.add(col_id)
+
+            width = col.get("width") if isinstance(col.get("width"), dict) else {}
+            for bp in ("desktop", "tablet", "mobile"):
+                raw_width = width.get(bp)
+                try:
+                    parsed = int(raw_width)
+                except (TypeError, ValueError):
+                    stats["width_violations"] += 1
+                    continue
+                if parsed < 1 or parsed > 12:
+                    stats["width_violations"] += 1
+
+            components = col.get("components")
+            if not isinstance(components, list):
+                stats["limit_violations"] += 1
+                continue
+            if len(components) > GENERIC_MAX_COMPONENTS_PER_COLUMN:
+                stats["limit_violations"] += 1
+
+            for comp in components:
+                stats["total_component_count"] += 1
+                if not isinstance(comp, dict):
+                    stats["limit_violations"] += 1
+                    continue
+                comp_id = str(comp.get("id") or "").strip()
+                if not comp_id or comp_id in comp_ids:
+                    stats["duplicate_id_violations"] += 1
+                if comp_id:
+                    comp_ids.add(comp_id)
+
+    checks = [
+        {
+            "id": "rows_structure",
+            "label": "Rows/Columns yapısı",
+            "status": "pass" if stats["row_count"] > 0 else "fail",
+            "blocking": True,
+            "detail": f"Row sayısı: {stats['row_count']}",
+            "fix_suggestion": "En az bir row ve her row içinde en az bir column tanımlayın.",
+        },
+        {
+            "id": "layout_limits",
+            "label": "Satır/Sütun/Bileşen limitleri",
+            "status": "pass" if stats["row_count"] <= GENERIC_MAX_ROWS and stats["limit_violations"] == 0 else "fail",
+            "blocking": True,
+            "detail": f"Limit ihlali: {stats['limit_violations']}",
+            "fix_suggestion": f"Row <= {GENERIC_MAX_ROWS}, column/row <= {GENERIC_MAX_COLUMNS_PER_ROW}, component/column <= {GENERIC_MAX_COMPONENTS_PER_COLUMN} olacak şekilde düzenleyin.",
+        },
+        {
+            "id": "unique_ids",
+            "label": "Tekil ID politikası",
+            "status": "pass" if stats["duplicate_id_violations"] == 0 else "fail",
+            "blocking": True,
+            "detail": f"Duplicate/eksik id ihlali: {stats['duplicate_id_violations']}",
+            "fix_suggestion": "Her row/column/component için benzersiz ve boş olmayan id kullanın.",
+        },
+        {
+            "id": "width_breakpoints",
+            "label": "Breakpoint width doğrulaması",
+            "status": "pass" if stats["width_violations"] == 0 else "fail",
+            "blocking": True,
+            "detail": f"Width ihlali: {stats['width_violations']}",
+            "fix_suggestion": "Tüm column width değerlerini desktop/tablet/mobile için 1..12 aralığında tanımlayın.",
+        },
+        {
+            "id": "total_components",
+            "label": "Toplam bileşen kontrolü",
+            "status": "pass" if stats["total_component_count"] > 0 else "fail",
+            "blocking": True,
+            "detail": f"Toplam bileşen: {stats['total_component_count']}",
+            "fix_suggestion": "Canvas üzerinde en az bir bileşen bulundurun.",
+        },
+    ]
+
+    suggested_fixes = [
+        check["fix_suggestion"]
+        for check in checks
+        if check.get("status") == "fail" and check.get("fix_suggestion")
+    ]
+    passed = all(check["status"] == "pass" for check in checks if check.get("blocking"))
+    return {
+        "policy": "generic_layout",
+        "page_type": page_type,
+        "passed": bool(passed),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "checks": checks,
+        "suggested_fixes": suggested_fixes,
+        "stats": stats,
+    }
+
+
+def _autofix_generic_layout_payload(payload_json: dict[str, Any], *, default_component_key: str = "shared.text-block") -> tuple[dict[str, Any], list[str]]:
+    actions: list[str] = []
+    rows = payload_json.get("rows") if isinstance(payload_json, dict) else None
+    if not isinstance(rows, list):
+        rows = []
+        actions.append("rows yapısı yoktu; boş layout iskeleti oluşturuldu.")
+
+    row_ids: set[str] = set()
+    col_ids: set[str] = set()
+    comp_ids: set[str] = set()
+    fixed_rows: list[dict[str, Any]] = []
+
+    for row_index, row in enumerate(rows[:GENERIC_MAX_ROWS], start=1):
+        if not isinstance(row, dict):
+            actions.append(f"Geçersiz row atlandı (index: {row_index}).")
+            continue
+
+        row_id = str(row.get("id") or "").strip() or f"row-autofix-{row_index}"
+        if row_id in row_ids:
+            row_id = f"{row_id}-{row_index}"
+        row_ids.add(row_id)
+
+        raw_columns = row.get("columns") if isinstance(row.get("columns"), list) else []
+        fixed_columns: list[dict[str, Any]] = []
+        for col_index, column in enumerate(raw_columns[:GENERIC_MAX_COLUMNS_PER_ROW], start=1):
+            if not isinstance(column, dict):
+                continue
+            col_id = str(column.get("id") or "").strip() or f"col-autofix-{row_index}-{col_index}"
+            if col_id in col_ids:
+                col_id = f"{col_id}-{col_index}"
+            col_ids.add(col_id)
+
+            width_payload = column.get("width") if isinstance(column.get("width"), dict) else {}
+            fixed_width = {
+                "desktop": max(1, min(12, _safe_int(width_payload.get("desktop"), fallback=12))),
+                "tablet": max(1, min(12, _safe_int(width_payload.get("tablet"), fallback=12))),
+                "mobile": max(1, min(12, _safe_int(width_payload.get("mobile"), fallback=12))),
+            }
+
+            raw_components = column.get("components") if isinstance(column.get("components"), list) else []
+            fixed_components: list[dict[str, Any]] = []
+            for cmp_index, component in enumerate(raw_components[:GENERIC_MAX_COMPONENTS_PER_COLUMN], start=1):
+                if not isinstance(component, dict):
+                    continue
+                comp_id = str(component.get("id") or "").strip() or f"cmp-autofix-{row_index}-{col_index}-{cmp_index}"
+                if comp_id in comp_ids:
+                    comp_id = f"{comp_id}-{cmp_index}"
+                comp_ids.add(comp_id)
+
+                component_key = str(component.get("key") or "").strip() or default_component_key
+                props = component.get("props") if isinstance(component.get("props"), dict) else {}
+                visibility = component.get("visibility") if isinstance(component.get("visibility"), dict) else {
+                    "desktop": True,
+                    "tablet": True,
+                    "mobile": True,
+                }
+                fixed_components.append(
+                    {
+                        "id": comp_id,
+                        "key": component_key,
+                        "props": props,
+                        "visibility": visibility,
+                    }
+                )
+
+            fixed_columns.append(
+                {
+                    "id": col_id,
+                    "width": fixed_width,
+                    "components": fixed_components,
+                }
+            )
+
+        if not fixed_columns:
+            fixed_columns.append(
+                {
+                    "id": f"col-autofix-{row_index}",
+                    "width": {"desktop": 12, "tablet": 12, "mobile": 12},
+                    "components": [],
+                }
+            )
+            actions.append(f"Row {row_id} için varsayılan column üretildi.")
+
+        fixed_rows.append({"id": row_id, "columns": fixed_columns})
+
+    if not fixed_rows:
+        fixed_rows = [{"id": "row-autofix-1", "columns": [{"id": "col-autofix-1", "width": {"desktop": 12, "tablet": 12, "mobile": 12}, "components": []}]}]
+        actions.append("Boş payload için varsayılan row/column üretildi.")
+
+    total_components = sum(len(col.get("components") or []) for row in fixed_rows for col in (row.get("columns") or []))
+    if total_components == 0:
+        fixed_rows[0]["columns"][0]["components"].append(
+            {
+                "id": "cmp-autofix-default",
+                "key": default_component_key,
+                "props": {} if default_component_key != "shared.text-block" else {"title": "Varsayılan", "body": "Auto-fix ile eklendi"},
+                "visibility": {"desktop": True, "tablet": True, "mobile": True},
+            }
+        )
+        actions.append("Boş component listesine varsayılan bileşen eklendi.")
+
+    return {"rows": fixed_rows}, actions
+
+
+async def _ensure_layout_page_type_enum_values(session: AsyncSession) -> None:
+    global _LAYOUT_ENUM_SYNCED
+    if _LAYOUT_ENUM_SYNCED:
+        return
+
+    enum_values = [item.value for item in LayoutPageType]
+    for value in enum_values:
+        safe_value = str(value).replace("'", "''")
+        await session.execute(text(f"ALTER TYPE layout_page_type ADD VALUE IF NOT EXISTS '{safe_value}'"))
+    await session.commit()
+    _LAYOUT_ENUM_SYNCED = True
 
 
 class ComponentDefinitionPayload(BaseModel):
@@ -271,6 +544,23 @@ def _serialize_preset_event(row: LayoutPresetEvent) -> dict[str, Any]:
         "metadata_json": row.metadata_json or {},
         "created_at": row.created_at.isoformat() if row.created_at else None,
     }
+
+
+def get_default_component_key(page_type: Optional[LayoutPageType]) -> str:
+    if page_type == LayoutPageType.HOME:
+        return "home.default-content"
+    if page_type in {LayoutPageType.SEARCH_L1, LayoutPageType.SEARCH_L2, LayoutPageType.SEARCH_LN, LayoutPageType.CATEGORY_L0_L1, LayoutPageType.CATEGORY_SHOWCASE, LayoutPageType.URGENT_LISTINGS}:
+        return "search.l1.default-content"
+    if page_type in {
+        LayoutPageType.WIZARD_STEP_L0,
+        LayoutPageType.WIZARD_STEP_LN,
+        LayoutPageType.WIZARD_STEP_FORM,
+        LayoutPageType.WIZARD_DOPING_PAYMENT,
+        LayoutPageType.WIZARD_RESULT,
+        LayoutPageType.LISTING_CREATE_STEPX,
+    }:
+        return "listing.create.default-content"
+    return "shared.text-block"
 
 
 def _validate_listing_column_width_or_400(width_payload: Any, *, row_index: int, column_index: int) -> None:
@@ -1092,6 +1382,7 @@ async def create_layout_page_admin(
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
 ):
+    await _ensure_layout_page_type_enum_values(session)
     try:
         async def _op():
             created_row = await create_layout_page(
@@ -1296,29 +1587,10 @@ async def get_revision_policy_report_admin(
     if not page_row:
         raise HTTPException(status_code=404, detail="Layout page not found")
 
-    if page_row.page_type != LayoutPageType.LISTING_CREATE_STEPX:
-        return {
-            "ok": True,
-            "report": {
-                "policy": "not_applicable",
-                "passed": True,
-                "generated_at": datetime.now(timezone.utc).isoformat(),
-                "checks": [
-                    {
-                        "id": "not_applicable",
-                        "label": "Policy report",
-                        "status": "pass",
-                        "blocking": False,
-                        "detail": "Bu page_type için listing_create policy report uygulanmaz.",
-                        "fix_suggestion": None,
-                    }
-                ],
-                "suggested_fixes": [],
-                "stats": {},
-            },
-        }
-
-    report = _build_listing_policy_report(row.payload_json or {})
+    if page_row.page_type == LayoutPageType.LISTING_CREATE_STEPX:
+        report = _build_listing_policy_report(row.payload_json or {})
+    else:
+        report = _build_generic_layout_policy_report(row.payload_json or {}, page_type=page_row.page_type.value if page_row.page_type else None)
     return {"ok": True, "report": report}
 
 
@@ -1337,13 +1609,21 @@ async def auto_fix_revision_policy_admin(
     if not page_row:
         raise HTTPException(status_code=404, detail="Layout page not found")
 
-    if page_row.page_type != LayoutPageType.LISTING_CREATE_STEPX:
-        raise HTTPException(status_code=400, detail="policy_autofix_not_applicable")
-
     before_payload = row.payload_json or {}
-    report_before = _build_listing_policy_report(before_payload)
-    fixed_payload, auto_fix_actions = _autofix_listing_payload(before_payload)
-    report_after = _build_listing_policy_report(fixed_payload)
+    if page_row.page_type == LayoutPageType.LISTING_CREATE_STEPX:
+        report_before = _build_listing_policy_report(before_payload)
+        fixed_payload, auto_fix_actions = _autofix_listing_payload(before_payload)
+        report_after = _build_listing_policy_report(fixed_payload)
+    else:
+        report_before = _build_generic_layout_policy_report(before_payload, page_type=page_row.page_type.value if page_row.page_type else None)
+        fixed_payload, auto_fix_actions = _autofix_generic_layout_payload(
+            before_payload,
+            default_component_key=get_default_component_key(page_row.page_type),
+        )
+        report_after = _build_generic_layout_policy_report(
+            fixed_payload,
+            page_type=page_row.page_type.value if page_row.page_type else None,
+        )
 
     row.payload_json = fixed_payload
 
