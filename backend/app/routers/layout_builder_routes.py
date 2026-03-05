@@ -15,7 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.dependencies import check_permissions
+from app.dependencies import ADMIN_ROLES, check_permissions, get_current_user_optional
 from app.domains.layout_builder.service import (
     archive_revision,
     bind_category_to_page,
@@ -55,6 +55,12 @@ _METRICS = {
     "publish_count": 0,
     "binding_changes": 0,
     "resolve_total_latency_ms": 0.0,
+}
+
+LISTING_CREATE_ALLOWED_COMPONENTS = {
+    "listing.create.default-content": set(),
+    "shared.text-block": {"title", "body"},
+    "shared.ad-slot": {"placement"},
 }
 
 
@@ -175,6 +181,40 @@ def _serialize_binding(row: LayoutBinding) -> dict[str, Any]:
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
     }
+
+
+def _validate_listing_runtime_guard_or_400(payload_json: dict) -> None:
+    rows = payload_json.get("rows") if isinstance(payload_json, dict) else None
+    if not isinstance(rows, list):
+        raise HTTPException(status_code=400, detail="listing_create_payload_rows_must_be_array")
+
+    for row in rows:
+        columns = row.get("columns") if isinstance(row, dict) else None
+        if not isinstance(columns, list):
+            raise HTTPException(status_code=400, detail="listing_create_payload_columns_must_be_array")
+        for column in columns:
+            components = column.get("components") if isinstance(column, dict) else None
+            if not isinstance(components, list):
+                raise HTTPException(status_code=400, detail="listing_create_payload_components_must_be_array")
+            for component in components:
+                if not isinstance(component, dict):
+                    raise HTTPException(status_code=400, detail="listing_create_component_invalid")
+                component_key = component.get("key")
+                if component_key not in LISTING_CREATE_ALLOWED_COMPONENTS:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"listing_create_component_not_allowed:{component_key}",
+                    )
+                props = component.get("props") or {}
+                if not isinstance(props, dict):
+                    raise HTTPException(status_code=400, detail="listing_create_component_props_must_be_object")
+                allowed_props = LISTING_CREATE_ALLOWED_COMPONENTS[component_key]
+                invalid_props = sorted(set(props.keys()) - allowed_props)
+                if invalid_props:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"listing_create_component_props_not_allowed:{component_key}:{','.join(invalid_props)}",
+                    )
 
 
 @router.get("/admin/site/content-layout/components")
@@ -401,6 +441,13 @@ async def create_draft_revision_admin(
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
 ):
+    page_uuid = _as_uuid_or_400(page_id, field_name="page_id")
+    page_row = await session.get(LayoutPage, page_uuid)
+    if not page_row:
+        raise HTTPException(status_code=404, detail="Layout page not found")
+    if page_row.page_type == LayoutPageType.LISTING_CREATE_STEPX:
+        _validate_listing_runtime_guard_or_400(payload.payload_json)
+
     try:
         row = await create_draft_revision(
             session,
@@ -435,6 +482,10 @@ async def patch_draft_revision_admin(
         raise HTTPException(status_code=404, detail="Revision not found")
     if row.status != LayoutRevisionStatus.DRAFT:
         raise HTTPException(status_code=400, detail="Only draft revisions can be updated")
+
+    page_row = await session.get(LayoutPage, row.layout_page_id)
+    if page_row and page_row.page_type == LayoutPageType.LISTING_CREATE_STEPX:
+        _validate_listing_runtime_guard_or_400(payload.payload_json)
 
     before = _serialize_layout_revision(row)
     row.payload_json = payload.payload_json or {}
@@ -671,7 +722,22 @@ async def _resolve_effective_layout(
     module: str,
     page_type: LayoutPageType,
     category_id: Optional[str],
+    preview_mode: str = "published",
 ) -> dict[str, Any]:
+    async def _latest_by_status(layout_page_id: uuid.UUID, status: LayoutRevisionStatus) -> LayoutRevision | None:
+        result = await session.execute(
+            select(LayoutRevision)
+            .where(
+                and_(
+                    LayoutRevision.layout_page_id == layout_page_id,
+                    LayoutRevision.status == status,
+                )
+            )
+            .order_by(desc(LayoutRevision.version), desc(LayoutRevision.created_at))
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
     category_uuid = _as_uuid_or_400(category_id, field_name="category_id") if category_id else None
 
     if category_uuid:
@@ -693,6 +759,21 @@ async def _resolve_effective_layout(
         bound_page = bound_page_result.scalar_one_or_none()
         if bound_page:
             published = await get_latest_published_revision_for_page(session, layout_page_id=bound_page.id)
+            if preview_mode == "draft":
+                draft = await _latest_by_status(bound_page.id, LayoutRevisionStatus.DRAFT)
+                if not draft:
+                    raise HTTPException(status_code=409, detail="bound_layout_has_no_draft_revision")
+                _METRICS["resolve_binding_hits"] += 1
+                return {
+                    "source": "binding_draft",
+                    "preview_mode": "draft",
+                    "layout_page": _serialize_layout_page(bound_page),
+                    "revision": _serialize_layout_revision(draft),
+                    "comparison": {
+                        "published_revision": _serialize_layout_revision(published) if published else None,
+                    },
+                }
+
             if not published:
                 raise HTTPException(status_code=409, detail="bound_layout_has_no_published_revision")
             _METRICS["resolve_binding_hits"] += 1
@@ -720,6 +801,21 @@ async def _resolve_effective_layout(
         raise HTTPException(status_code=404, detail="layout_page_not_found")
 
     published = await get_latest_published_revision_for_page(session, layout_page_id=default_page.id)
+    if preview_mode == "draft":
+        draft = await _latest_by_status(default_page.id, LayoutRevisionStatus.DRAFT)
+        if not draft:
+            raise HTTPException(status_code=409, detail="default_layout_has_no_draft_revision")
+        _METRICS["resolve_default_hits"] += 1
+        return {
+            "source": "default_draft",
+            "preview_mode": "draft",
+            "layout_page": _serialize_layout_page(default_page),
+            "revision": _serialize_layout_revision(draft),
+            "comparison": {
+                "published_revision": _serialize_layout_revision(published) if published else None,
+            },
+        }
+
     if not published:
         raise HTTPException(status_code=409, detail="default_layout_has_no_published_revision")
 
@@ -737,16 +833,23 @@ async def resolve_content_layout(
     module: str,
     page_type: LayoutPageType,
     category_id: Optional[str] = None,
+    layout_preview: str = Query(default="published"),
+    current_user=Depends(get_current_user_optional),
     session: AsyncSession = Depends(get_db),
 ):
     started_at = time.perf_counter()
     normalized_country = country.upper()
     normalized_module = module.strip()
+    preview_mode = "draft" if str(layout_preview).strip().lower() == "draft" else "published"
+
+    if preview_mode == "draft":
+        if not current_user or current_user.get("role") not in ADMIN_ROLES:
+            raise HTTPException(status_code=403, detail="Draft preview requires admin role")
 
     _METRICS["resolve_requests"] += 1
     key = _cache_key(normalized_country, normalized_module, page_type, category_id)
     now_ts = time.time()
-    cached = _RESOLVE_CACHE.get(key)
+    cached = _RESOLVE_CACHE.get(key) if preview_mode == "published" else None
     if cached and cached[0] > now_ts:
         _METRICS["resolve_cache_hits"] += 1
         elapsed_ms = (time.perf_counter() - started_at) * 1000
@@ -761,11 +864,19 @@ async def resolve_content_layout(
         module=normalized_module,
         page_type=page_type,
         category_id=category_id,
+        preview_mode=preview_mode,
     )
-    _RESOLVE_CACHE[key] = (now_ts + RESOLVE_CACHE_TTL_SECONDS, payload)
+    if preview_mode == "published":
+        _RESOLVE_CACHE[key] = (now_ts + RESOLVE_CACHE_TTL_SECONDS, payload)
     elapsed_ms = (time.perf_counter() - started_at) * 1000
     _METRICS["resolve_total_latency_ms"] += elapsed_ms
-    logger.info("layout_resolve source=db key=%s strategy=%s latency_ms=%.2f", key, payload.get("source"), elapsed_ms)
+    logger.info(
+        "layout_resolve source=db key=%s strategy=%s preview=%s latency_ms=%.2f",
+        key,
+        payload.get("source"),
+        preview_mode,
+        elapsed_ms,
+    )
     return payload
 
 

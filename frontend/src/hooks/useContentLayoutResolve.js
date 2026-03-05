@@ -20,6 +20,12 @@ export const useContentLayoutResolve = ({
     params.set('module', String(module));
     params.set('page_type', String(pageType));
     if (categoryId) params.set('category_id', String(categoryId));
+    if (typeof window !== 'undefined') {
+      const mode = new URLSearchParams(window.location.search).get('layout_preview');
+      if (mode && mode.toLowerCase() === 'draft') {
+        params.set('layout_preview', 'draft');
+      }
+    }
     return params.toString();
   }, [enabled, country, module, pageType, categoryId]);
 
@@ -37,9 +43,16 @@ export const useContentLayoutResolve = ({
       setLoading(true);
       setError('');
       try {
+        const shouldUseDraftPreview = queryString.includes('layout_preview=draft');
+        const headers = {};
+        if (shouldUseDraftPreview) {
+          const accessToken = localStorage.getItem('access_token') || localStorage.getItem('token');
+          if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+        }
         const res = await fetch(`${API}/site/content-layout/resolve?${queryString}`, {
           cache: 'no-store',
           signal: controller.signal,
+          headers,
         });
         if (!active) return;
         if (!res.ok) {

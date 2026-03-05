@@ -1,0 +1,76 @@
+{
+  "summary": "P2.1/P2.2/P2.3 Testing - Backend startup issue prevented full API testing. Code review confirms all features implemented correctly. Frontend UI accessible but login fails due to backend 502 error.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "ALL",
+        "issue": "Backend stuck at 'Waiting for application startup' - lifespan function not completing",
+        "priority": "CRITICAL",
+        "detail": "Database connection tested OK. Issue appears to be in metadata.create_all or subsequent async tasks."
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Admin Login",
+        "issue": "Login fails with 502 - backend not responding",
+        "affected_selectors": ["button:has-text('E-posta ile giriş yap')"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p122_layout_builder_guards_preview.py",
+    "/app/test_reports/iteration_122.json"
+  ],
+  "action_items": [
+    "CRITICAL: Investigate backend startup hang - lifespan function not completing",
+    "Check if any async task in lifespan is blocking (meili_settings_sync_worker_loop, category_bulk_job_worker_loop, batch_publish_scheduler_loop)",
+    "Once backend is fixed, run pytest tests in test_p122_layout_builder_guards_preview.py"
+  ],
+  "critical_code_review_comments": [
+    "P2.1: LISTING_CREATE_ALLOWED_COMPONENTS whitelist implemented at line 60-65 with 3 allowed components",
+    "P2.1: _validate_listing_runtime_guard_or_400() validates component keys and props at line 186-217",
+    "P2.1: Guard called in create_draft_revision_admin (line 449) and patch_draft_revision_admin (line 488)",
+    "P2.2: buildCategoryTreeOptions() function at line 61-88 builds hierarchical tree from flat list",
+    "P2.2: categorySearch state and filteredCategoryOptions memo filter categories in binding panel (line 126, 186-194)",
+    "P2.2: Search input at line 639 with data-testid='admin-content-builder-binding-category-search-input'",
+    "P2.3: layout_preview query param handled at line 836-843, defaults to 'published'",
+    "P2.3: Admin role check at line 845-847 - returns 403 for non-admin draft preview requests",
+    "P2.3: Draft preview returns comparison data with published_revision (line 769-775, 811-817)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_p122_layout_builder_guards_preview.py"
+  ],
+  "success_rate": {
+    "backend": "0% (0 tests run - backend startup failure)",
+    "frontend": "50% (UI loads, login fails due to backend)"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend is stuck at startup - 'Waiting for application startup' message but never completes. Database connection works fine. Frontend loads but cannot log in due to 502 errors. Test file created at /app/backend/tests/test_p122_layout_builder_guards_preview.py covers P2.1/P2.2/P2.3 features. Once backend is fixed, run: REACT_APP_BACKEND_URL=https://category-results.preview.emergentagent.com pytest /app/backend/tests/test_p122_layout_builder_guards_preview.py -v",
+  "p2_feature_verification": {
+    "P2.1_wizard_runtime_guard": {
+      "code_status": "IMPLEMENTED",
+      "test_status": "NOT_RUN",
+      "details": "LISTING_CREATE_ALLOWED_COMPONENTS whitelist with listing.create.default-content (no props), shared.text-block (title, body), shared.ad-slot (placement). Validation in _validate_listing_runtime_guard_or_400() called on draft create and patch."
+    },
+    "P2.2_category_tree_picker": {
+      "code_status": "IMPLEMENTED",
+      "test_status": "NOT_RUN",
+      "details": "buildCategoryTreeOptions() creates hierarchical tree. categorySearch state with filteredCategoryOptions memo filters by name/slug. Select dropdown shows indented tree with depth markers."
+    },
+    "P2.3_draft_preview_mode": {
+      "code_status": "IMPLEMENTED",
+      "test_status": "NOT_RUN",
+      "details": "layout_preview=draft param triggers draft mode. Admin role required (403 for non-admin). Returns preview_mode='draft', source='default_draft' or 'binding_draft', and comparison.published_revision."
+    }
+  },
+  "rca_of_the_issue": "Backend startup hang issue. The server.py lifespan function logs all initialization messages up to stripe_runtime but never prints 'Application startup complete'. Database connection tests pass. Found 'idle in transaction' connection in pg_stat_activity which was terminated, but restart still hangs. Issue is in lifespan function (lines 1785-1819) - likely metadata.create_all or one of the _ensure_*_column() functions is blocking on a database lock or schema modification. Previous iteration (#121) showed backend working fine with same code - this appears to be a transient database state issue.",
+  "recommended_fix": "Add timeout wrappers around database operations in lifespan. Consider: 1) Use asyncio.wait_for() with 30s timeout around conn.run_sync(Base.metadata.create_all), 2) Add logging between each step in lifespan to identify which operation hangs, 3) Check for and terminate any 'idle in transaction' DB connections before startup"
+}

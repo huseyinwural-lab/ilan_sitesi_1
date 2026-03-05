@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -58,6 +58,36 @@ const normalizePayload = (rawPayload, pageType) => {
   return rawPayload;
 };
 
+const buildCategoryTreeOptions = (items) => {
+  const byParent = new Map();
+  items.forEach((item) => {
+    const parentKey = item.parent_id || '__root__';
+    if (!byParent.has(parentKey)) byParent.set(parentKey, []);
+    byParent.get(parentKey).push(item);
+  });
+
+  const sortNodes = (nodes) => {
+    return [...nodes].sort((a, b) => {
+      const aOrder = Number(a.sort_order || 0);
+      const bOrder = Number(b.sort_order || 0);
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return String(a.name || '').localeCompare(String(b.name || ''), 'tr');
+    });
+  };
+
+  const flattened = [];
+  const walk = (parentId, depth) => {
+    const children = sortNodes(byParent.get(parentId) || []);
+    children.forEach((child) => {
+      flattened.push({ ...child, depth });
+      walk(child.id, depth + 1);
+    });
+  };
+
+  walk('__root__', 0);
+  return flattened;
+};
+
 export default function AdminContentBuilder() {
   const authHeaders = useMemo(
     () => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` }),
@@ -82,6 +112,7 @@ export default function AdminContentBuilder() {
   const [bindingCategoryId, setBindingCategoryId] = useState('');
   const [bindingActiveItem, setBindingActiveItem] = useState(null);
   const [bindingLoading, setBindingLoading] = useState(false);
+  const [showPreviewComparison, setShowPreviewComparison] = useState(false);
 
   const [selectedRowId, setSelectedRowId] = useState('');
   const [selectedColumnId, setSelectedColumnId] = useState('');
@@ -91,6 +122,9 @@ export default function AdminContentBuilder() {
   const [dragOverColumnId, setDragOverColumnId] = useState('');
 
   const [componentLibrary, setComponentLibrary] = useState(DEFAULT_COMPONENT_LIBRARY);
+  const [categoryOptions, setCategoryOptions] = useState([]);
+  const [categorySearch, setCategorySearch] = useState('');
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
 
   const getLibrary = async () => {
     try {
@@ -116,6 +150,68 @@ export default function AdminContentBuilder() {
       setComponentLibrary(DEFAULT_COMPONENT_LIBRARY);
     }
   };
+
+  useEffect(() => {
+    let active = true;
+    const fetchCategories = async () => {
+      setCategoriesLoading(true);
+      try {
+        const res = await axios.get(`${API}/categories`, {
+          params: {
+            module: moduleName.trim(),
+            country: country.toUpperCase(),
+          },
+        });
+        if (!active) return;
+        const list = Array.isArray(res.data) ? res.data : [];
+        setCategoryOptions(buildCategoryTreeOptions(list));
+      } catch (_err) {
+        if (active) setCategoryOptions([]);
+      } finally {
+        if (active) setCategoriesLoading(false);
+      }
+    };
+
+    if (moduleName.trim()) {
+      fetchCategories();
+    } else {
+      setCategoryOptions([]);
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [moduleName, country]);
+
+  const filteredCategoryOptions = useMemo(() => {
+    const query = categorySearch.trim().toLowerCase();
+    if (!query) return categoryOptions;
+    return categoryOptions.filter((item) => {
+      const name = String(item.name || '').toLowerCase();
+      const slug = String(item.slug || '').toLowerCase();
+      return name.includes(query) || slug.includes(query);
+    });
+  }, [categoryOptions, categorySearch]);
+
+  const previewBasePath = useMemo(() => {
+    const selectedCategory = (bindingCategoryId || categoryId).trim();
+    if (pageType === 'home') return '/';
+    if (pageType === 'search_l1' || pageType === 'search_l2') {
+      return `/search${selectedCategory ? `?category=${encodeURIComponent(selectedCategory)}` : ''}`;
+    }
+    return '/ilan-ver/detaylar';
+  }, [pageType, bindingCategoryId, categoryId]);
+
+  const publishedPreviewUrl = useMemo(() => {
+    if (typeof window === 'undefined') return previewBasePath;
+    return `${window.location.origin}${previewBasePath}`;
+  }, [previewBasePath]);
+
+  const draftPreviewUrl = useMemo(() => {
+    if (typeof window === 'undefined') return previewBasePath;
+    const separator = previewBasePath.includes('?') ? '&' : '?';
+    return `${window.location.origin}${previewBasePath}${separator}layout_preview=draft`;
+  }, [previewBasePath]);
 
   const getRevisionsForPage = async (targetPageId, targetPageType) => {
     const res = await axios.get(`${API}/admin/site/content-layout/pages/${targetPageId}/revisions`, {
@@ -536,15 +632,32 @@ export default function AdminContentBuilder() {
 
         <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3" data-testid="admin-content-builder-binding-panel">
           <div className="flex flex-wrap items-end gap-2" data-testid="admin-content-builder-binding-controls">
-            <label className="text-xs min-w-[280px]" data-testid="admin-content-builder-binding-category-wrap">
-              Binding Category ID
+            <label className="text-xs min-w-[220px]" data-testid="admin-content-builder-binding-category-search-wrap">
+              Kategori Ara
               <input
+                className="mt-1 h-9 w-full rounded border px-2"
+                value={categorySearch}
+                onChange={(e) => setCategorySearch(e.target.value)}
+                placeholder="Kategori adı / slug"
+                data-testid="admin-content-builder-binding-category-search-input"
+              />
+            </label>
+
+            <label className="text-xs min-w-[340px]" data-testid="admin-content-builder-binding-category-wrap">
+              Kategori Ağacı Seçimi
+              <select
                 className="mt-1 h-9 w-full rounded border px-2"
                 value={bindingCategoryId}
                 onChange={(e) => setBindingCategoryId(e.target.value)}
-                placeholder="Kategori UUID"
                 data-testid="admin-content-builder-binding-category-input"
-              />
+              >
+                <option value="">{categoriesLoading ? 'Kategoriler yükleniyor...' : 'Kategori seçin'}</option>
+                {filteredCategoryOptions.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {`${'— '.repeat(item.depth)}${item.name}`}
+                  </option>
+                ))}
+              </select>
             </label>
             <button type="button" className="h-9 rounded border px-3 text-xs" onClick={fetchActiveBinding} disabled={bindingLoading} data-testid="admin-content-builder-binding-fetch-button">Aktifi Getir</button>
             <button type="button" className="h-9 rounded bg-blue-600 px-3 text-xs text-white" onClick={bindCurrentPage} disabled={bindingLoading} data-testid="admin-content-builder-binding-bind-button">Bu Page'i Bağla</button>
@@ -560,6 +673,38 @@ export default function AdminContentBuilder() {
               <span data-testid="admin-content-builder-binding-active-empty">Aktif binding bulunamadı.</span>
             )}
           </div>
+        </div>
+
+        <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3" data-testid="admin-content-builder-preview-panel">
+          <div className="flex flex-wrap items-center gap-2" data-testid="admin-content-builder-preview-controls">
+            <button
+              type="button"
+              className="h-9 rounded border px-3 text-xs"
+              onClick={() => setShowPreviewComparison((prev) => !prev)}
+              data-testid="admin-content-builder-preview-toggle-button"
+            >
+              {showPreviewComparison ? 'Preview Karşılaştırmayı Gizle' : 'Preview Karşılaştırmayı Aç'}
+            </button>
+            <a href={publishedPreviewUrl} target="_blank" rel="noreferrer" className="text-xs font-medium underline" data-testid="admin-content-builder-preview-published-link">
+              Published Aç
+            </a>
+            <a href={draftPreviewUrl} target="_blank" rel="noreferrer" className="text-xs font-medium underline" data-testid="admin-content-builder-preview-draft-link">
+              Draft Preview Aç (layout_preview=draft)
+            </a>
+          </div>
+
+          {showPreviewComparison ? (
+            <div className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2" data-testid="admin-content-builder-preview-iframes">
+              <div className="rounded border bg-white p-2" data-testid="admin-content-builder-preview-published-wrap">
+                <div className="mb-1 text-[11px] text-slate-600" data-testid="admin-content-builder-preview-published-label">Published</div>
+                <iframe title="published-preview" src={publishedPreviewUrl} className="h-[380px] w-full rounded border" data-testid="admin-content-builder-preview-published-iframe" />
+              </div>
+              <div className="rounded border bg-white p-2" data-testid="admin-content-builder-preview-draft-wrap">
+                <div className="mb-1 text-[11px] text-slate-600" data-testid="admin-content-builder-preview-draft-label">Draft Preview</div>
+                <iframe title="draft-preview" src={draftPreviewUrl} className="h-[380px] w-full rounded border" data-testid="admin-content-builder-preview-draft-iframe" />
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {status ? <p className="mt-2 text-xs text-emerald-700" data-testid="admin-content-builder-status-message">{status}</p> : null}
