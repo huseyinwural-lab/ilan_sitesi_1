@@ -15,30 +15,30 @@
     {
       "ok": true,
       "initial_url": "http://marketplace-finance-3.preview.emergentagent.com/",
-      "final_url": "https://content-canvas-17.preview.emergentagent.com:443/",
+      "final_url": "https://dynamic-layout-io.preview.emergentagent.com:443/",
       "hop_count": 1,
       "chain": [
         {
           "status": 301,
           "url": "http://marketplace-finance-3.preview.emergentagent.com/",
-          "location": "https://content-canvas-17.preview.emergentagent.com:443/"
+          "location": "https://dynamic-layout-io.preview.emergentagent.com:443/"
         },
         {
           "status": 200,
-          "url": "https://content-canvas-17.preview.emergentagent.com:443/",
+          "url": "https://dynamic-layout-io.preview.emergentagent.com:443/",
           "location": null
         }
       ]
     },
     {
       "ok": true,
-      "initial_url": "https://content-canvas-17.preview.emergentagent.com/",
-      "final_url": "https://content-canvas-17.preview.emergentagent.com/",
+      "initial_url": "https://dynamic-layout-io.preview.emergentagent.com/",
+      "final_url": "https://dynamic-layout-io.preview.emergentagent.com/",
       "hop_count": 0,
       "chain": [
         {
           "status": 200,
-          "url": "https://content-canvas-17.preview.emergentagent.com/",
+          "url": "https://dynamic-layout-io.preview.emergentagent.com/",
           "location": null
         }
       ]
@@ -48,28 +48,28 @@
   "canonical_checks": {
     "rows": [
       {
-        "url": "https://content-canvas-17.preview.emergentagent.com/",
-        "canonical": "https://content-canvas-17.preview.emergentagent.com/"
+        "url": "https://dynamic-layout-io.preview.emergentagent.com/",
+        "canonical": "https://dynamic-layout-io.preview.emergentagent.com/"
       },
       {
-        "url": "https://content-canvas-17.preview.emergentagent.com/trust",
-        "canonical": "https://content-canvas-17.preview.emergentagent.com/trust"
+        "url": "https://dynamic-layout-io.preview.emergentagent.com/trust",
+        "canonical": "https://dynamic-layout-io.preview.emergentagent.com/trust"
       },
       {
-        "url": "https://content-canvas-17.preview.emergentagent.com/kurumsal",
-        "canonical": "https://content-canvas-17.preview.emergentagent.com/kurumsal"
+        "url": "https://dynamic-layout-io.preview.emergentagent.com/kurumsal",
+        "canonical": "https://dynamic-layout-io.preview.emergentagent.com/kurumsal"
       },
       {
-        "url": "https://content-canvas-17.preview.emergentagent.com/seo",
-        "canonical": "https://content-canvas-17.preview.emergentagent.com/seo"
+        "url": "https://dynamic-layout-io.preview.emergentagent.com/seo",
+        "canonical": "https://dynamic-layout-io.preview.emergentagent.com/seo"
       },
       {
-        "url": "https://content-canvas-17.preview.emergentagent.com/bilgi/gizlilik-politikasi",
-        "canonical": "https://content-canvas-17.preview.emergentagent.com/bilgi/gizlilik-politikasi"
+        "url": "https://dynamic-layout-io.preview.emergentagent.com/bilgi/gizlilik-politikasi",
+        "canonical": "https://dynamic-layout-io.preview.emergentagent.com/bilgi/gizlilik-politikasi"
       },
       {
-        "url": "https://content-canvas-17.preview.emergentagent.com/kategori/tarla",
-        "canonical": "https://content-canvas-17.preview.emergentagent.com/kategori/tarla"
+        "url": "https://dynamic-layout-io.preview.emergentagent.com/kategori/tarla",
+        "canonical": "https://dynamic-layout-io.preview.emergentagent.com/kategori/tarla"
       }
     ],
     "mismatch_count": 0,
@@ -80,26 +80,26 @@
       "url_count": 1219,
       "wrong_host_count": 0,
       "sample_20": [
-        "https://content-canvas-17.preview.emergentagent.com/",
-        "https://content-canvas-17.preview.emergentagent.com/search",
-        "https://content-canvas-17.preview.emergentagent.com/trust",
-        "https://content-canvas-17.preview.emergentagent.com/kurumsal",
-        "https://content-canvas-17.preview.emergentagent.com/seo",
-        "https://content-canvas-17.preview.emergentagent.com/maintenance",
-        "https://content-canvas-17.preview.emergentagent.com/500",
-        "https://content-canvas-17.preview.emergentagent.com/DE/vasita",
-        "https://content-canvas-17.preview.emergentagent.com/DE/vasita/otomobil",
-        "https://content-canvas-17.preview.emergentagent.com/kategori/maps-acceptance-fr",
-        "https://content-canvas-17.preview.emergentagent.com/kategori/maps-acceptance-tr",
-        "https://content-canvas-17.preview.emergentagent.com/kategori/maps-acceptance-de",
-        "https://content-canvas-17.preview.emergentagent.com/kategori/tarla",
-        "https://content-canvas-17.preview.emergentagent.com/kategori/imara-acik",
-        "https://content-canvas-17.preview.emergentagent.com/kategori/arsa",
-        "https://content-canvas-17.preview.emergentagent.com/kategori/kiralik-ofis",
-        "https://content-canvas-17.preview.emergentagent.com/kategori/satilik-dukkan",
-        "https://content-canvas-17.preview.emergentagent.com/kategori/ticari",
-        "https://content-canvas-17.preview.emergentagent.com/kategori/kiralik-daire",
-        "https://content-canvas-17.preview.emergentagent.com/kategori/satilik-daire"
+        "https://dynamic-layout-io.preview.emergentagent.com/",
+        "https://dynamic-layout-io.preview.emergentagent.com/search",
+        "https://dynamic-layout-io.preview.emergentagent.com/trust",
+        "https://dynamic-layout-io.preview.emergentagent.com/kurumsal",
+        "https://dynamic-layout-io.preview.emergentagent.com/seo",
+        "https://dynamic-layout-io.preview.emergentagent.com/maintenance",
+        "https://dynamic-layout-io.preview.emergentagent.com/500",
+        "https://dynamic-layout-io.preview.emergentagent.com/DE/vasita",
+        "https://dynamic-layout-io.preview.emergentagent.com/DE/vasita/otomobil",
+        "https://dynamic-layout-io.preview.emergentagent.com/kategori/maps-acceptance-fr",
+        "https://dynamic-layout-io.preview.emergentagent.com/kategori/maps-acceptance-tr",
+        "https://dynamic-layout-io.preview.emergentagent.com/kategori/maps-acceptance-de",
+        "https://dynamic-layout-io.preview.emergentagent.com/kategori/tarla",
+        "https://dynamic-layout-io.preview.emergentagent.com/kategori/imara-acik",
+        "https://dynamic-layout-io.preview.emergentagent.com/kategori/arsa",
+        "https://dynamic-layout-io.preview.emergentagent.com/kategori/kiralik-ofis",
+        "https://dynamic-layout-io.preview.emergentagent.com/kategori/satilik-dukkan",
+        "https://dynamic-layout-io.preview.emergentagent.com/kategori/ticari",
+        "https://dynamic-layout-io.preview.emergentagent.com/kategori/kiralik-daire",
+        "https://dynamic-layout-io.preview.emergentagent.com/kategori/satilik-daire"
       ]
     },
     "simulated_hosts": [

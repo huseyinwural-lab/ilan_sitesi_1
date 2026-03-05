@@ -6,7 +6,7 @@ import sys
 import time
 
 # Configuration
-BASE_URL = "https://content-canvas-17.preview.emergentagent.com/api"
+BASE_URL = "https://dynamic-layout-io.preview.emergentagent.com/api"
 
 class FAZ2RegressionTester:
     def __init__(self):

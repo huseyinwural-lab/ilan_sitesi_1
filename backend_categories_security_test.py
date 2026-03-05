@@ -7,7 +7,7 @@ import uuid
 from typing import Dict, List, Any
 
 # Configuration from review request
-BASE_URL = "https://content-canvas-17.preview.emergentagent.com/api"
+BASE_URL = "https://dynamic-layout-io.preview.emergentagent.com/api"
 ADMIN_CREDENTIALS = {
     "email": "admin@platform.com", 
     "password": "Admin123!"

@@ -2,7 +2,7 @@
 
 **Status:** CLOSED ✅
 **Commit:** c906a8ec
-**Environment:** https://content-canvas-17.preview.emergentagent.com
+**Environment:** https://dynamic-layout-io.preview.emergentagent.com
 **Evidence File:** /app/memory/MODERATION_FREEZE_EVIDENCE.md
 
 ## Verification Summary

@@ -25,7 +25,7 @@ sys.path.append('/app/backend')
 def load_backend_url() -> str:
     """Load backend URL from frontend .env file"""
     frontend_env_path = "/app/frontend/.env"
-    backend_url = "https://content-canvas-17.preview.emergentagent.com"  # fallback
+    backend_url = "https://dynamic-layout-io.preview.emergentagent.com"  # fallback
     
     try:
         with open(frontend_env_path, 'r') as f:

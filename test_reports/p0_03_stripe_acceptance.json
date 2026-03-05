@@ -1,6 +1,6 @@
 {
   "context": {
-    "base": "https://content-canvas-17.preview.emergentagent.com",
+    "base": "https://dynamic-layout-io.preview.emergentagent.com",
     "invoice_id": "41324cc6-49cb-4869-9e7b-c1f51bb3e7bc",
     "invoice_no": "INV-20260302-B6D594",
     "amount_minor": 8888,
@@ -114,7 +114,7 @@
           "dealer_id": "cf049c3f-12c7-43fc-96f5-5f71902c6dc9",
           "invoice_id": "41324cc6-49cb-4869-9e7b-c1f51bb3e7bc",
           "invoice_no": "INV-20260302-B6D594",
-          "webhook_url": "https://content-canvas-17.preview.emergentagent.com/api/webhook/stripe"
+          "webhook_url": "https://dynamic-layout-io.preview.emergentagent.com/api/webhook/stripe"
         }
       }
     ],

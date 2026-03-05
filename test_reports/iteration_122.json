@@ -53,7 +53,7 @@
   "seed_data_creation": "",
   "retest_needed": true,
   "should_main_agent_self_test": false,
-  "context_for_next_testing_agent": "Backend is stuck at startup - 'Waiting for application startup' message but never completes. Database connection works fine. Frontend loads but cannot log in due to 502 errors. Test file created at /app/backend/tests/test_p122_layout_builder_guards_preview.py covers P2.1/P2.2/P2.3 features. Once backend is fixed, run: REACT_APP_BACKEND_URL=https://content-canvas-17.preview.emergentagent.com pytest /app/backend/tests/test_p122_layout_builder_guards_preview.py -v",
+  "context_for_next_testing_agent": "Backend is stuck at startup - 'Waiting for application startup' message but never completes. Database connection works fine. Frontend loads but cannot log in due to 502 errors. Test file created at /app/backend/tests/test_p122_layout_builder_guards_preview.py covers P2.1/P2.2/P2.3 features. Once backend is fixed, run: REACT_APP_BACKEND_URL=https://dynamic-layout-io.preview.emergentagent.com pytest /app/backend/tests/test_p122_layout_builder_guards_preview.py -v",
   "p2_feature_verification": {
     "P2.1_wizard_runtime_guard": {
       "code_status": "IMPLEMENTED",

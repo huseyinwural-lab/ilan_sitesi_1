@@ -1,7 +1,7 @@
 # LOGIN_RATE_LIMIT_EVIDENCE
 
 **Tarih:** 2026-02-24 12:20:00 UTC
-**Ortam URL:** https://content-canvas-17.preview.emergentagent.com
+**Ortam URL:** https://dynamic-layout-io.preview.emergentagent.com
 
 ## Senaryo
 - Aynı IP + aynı kullanıcı için 5 başarısız login denemesi
