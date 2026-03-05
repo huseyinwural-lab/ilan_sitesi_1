@@ -1,14 +1,14 @@
 # ROADMAP
-**Son güncelleme:** 2026-03-03 18:55:00 UTC
+**Son güncelleme:** 2026-03-05 14:35:00 UTC
 
 ## P0 (Aktif)
-- Kurumsal portal row2/row4 yeni menü davranışı için son kullanıcı UAT (piksel + içerik tamlık onayı)
+- 15 standart sayfa tipi için UAT (admin içerik ekibiyle gerçek içerik doldurma + publish)
+- Wizard sayfalarında policy-report + auto-fix akışının gerçek edit senaryolarında doğrulanması
 
 ## P1 (Sıradaki)
-- Permission **What-if Simulator** (save öncesi etki önizleme)
-- Permission değişikliklerinde **4-eyes approval** (ikinci admin onayı)
-- User/Dealer flow formal validation turu (permission + yeni kurumsal layout sonrası)
-- Audit/Permissions preset filtre setleri (Ops/Fraud/Compliance)
+- Adres formu redesign (kullanıcının ertelediği task) tamamlanması
+- Auto-fix sonrası görsel diff ekranının güçlendirilmesi
+- Varsayılan 15 tip için içerik editörüne rol bazlı öneri/şablon iyileştirmeleri
 
 ## P2 (Backlog)
 - Gelişmiş finans analitikleri + conversion funnel + A/B test altyapısı
@@ -18,8 +18,6 @@
 - SRE pack (SLO/SLA dashboard), DR/backup drill, security/cost audit paketleri
 
 ## Next Action Items
-- FAZ 2 sonrası 24 saatlik stabilite gözlemi (middleware guard + meili circuit metrikleri)
-- Kurumsal portalın yeni 11 modüllü row2 yapısı için kullanıcıdan final onayı al
-- Hesabım alt modüllerinde kullanıcıdan istenen ekstra metin/alan düzeltmelerini kapat
-- What-if simulator için veri modeli/endpoint kontratını netleştir
-- 4-eyes approval akışı için approval queue + audit event şemasını planla
+- Address form UI referans görsele göre finalize et (P1)
+- Auto-fix diff panelini before/after component-level değişimlerle zenginleştir
+- 15 standart page type için publish-ready içerik checklist'i ve toplu kalite kontrol turu yap

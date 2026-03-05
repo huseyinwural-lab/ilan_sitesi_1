@@ -1,6 +1,13 @@
 # CHANGELOG
 
 ## Uygulanan Özellikler
+- **P0 15 Standart Sayfa Tipi Entegrasyonu (2026-03-05):**
+  - `AdminContentBuilder` 15 standart page type setiyle hizalandı; kapsamlı preset payload üretimi eklendi.
+  - UI aksiyonları eklendi: `Bu Sayfaya Standart Şablon`, `15 Sayfa Tipi Seed (API)`, draft overwrite toggle.
+  - Yeni backend endpoint: `POST /api/admin/site/content-layout/pages/seed-defaults` (15 tip için seed/create-update draft).
+  - Wizard policy guard kapsamı genişletildi (`wizard_step_*`, `wizard_preview`, `wizard_doping_payment`, `wizard_result`).
+  - Runtime mapping standardizasyonu: Search (`category_l0_l1/search_ln`) ve Wizard step bazlı resolve.
+  - Doğrulama: `/app/test_reports/iteration_134.json` (backend %100, frontend %100 PASS).
 - **FAZ 2 P0-3/P0-4 Stabilite Kapatmaları (2026-03-03):**
   - `rbac_hard_lock` middleware deterministic response contract’e alındı (tüm path’lerde response, exception branch JSON 500).
   - Global fail-safe middleware eklendi: response `None` veya middleware exception durumunda JSON 500 döner.

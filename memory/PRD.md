@@ -18,6 +18,40 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ---
 
+## 2026-03-05 (P0 — 15 Standart Sayfa Tipi Entegrasyonu Tamamlandı)
+
+### Uygulananlar
+- **Admin Content Builder** 15 standart page type odaklı güncellendi:
+  - `PAGE_TYPE_OPTIONS` standard set + legacy uyumlulukla güncellendi.
+  - Preset/Pack akışı 15 standart tip için **kapsamlı payload** üretecek şekilde genişletildi.
+  - Yeni UI aksiyonları eklendi: `Bu Sayfaya Standart Şablon`, `15 Sayfa Tipi Seed (API)`, `Mevcut draft'leri güncelle`.
+- **Backend seed mekanizması** eklendi:
+  - Yeni endpoint: `POST /api/admin/site/content-layout/pages/seed-defaults`
+  - 15 standart page type için default page + draft revision seed/update desteği
+  - Persona/variant (`individual|corporate`, `A|B`) validasyonları eklendi.
+- **Policy Guard kapsamı genişletildi:**
+  - `listing_create_stepX` yanında `wizard_step_l0`, `wizard_step_ln`, `wizard_step_form`, `wizard_preview`, `wizard_doping_payment`, `wizard_result` için policy-report ve auto-fix aktif.
+- **Runtime eşlemeleri standardize edildi:**
+  - `SearchPage`: `search_l1/search_l2` yerine `category_l0_l1/search_ln`
+  - `WizardContainer`: step bazlı `wizard_step_l0|wizard_step_ln|wizard_step_form|wizard_preview`
+  - Builder preview path mapping `wizard_preview` dahil yeni tiplerle hizalandı.
+
+### Test Durumu
+- Self-test (curl):
+  - `POST /api/admin/site/content-layout/pages/seed-defaults` → 200 + summary PASS
+  - `GET /api/admin/site/content-layout/revisions/{id}/policy-report` (wizard_preview) → PASS
+  - `GET /api/site/content-layout/resolve?...&layout_preview=draft&page_type=wizard_preview` → draft resolve PASS
+- Testing agent raporu: `/app/test_reports/iteration_134.json`
+  - Backend: %100 PASS
+  - Frontend: %100 PASS
+  - Not: select/option kaynaklı non-blocking hydration warning (fonksiyonel blokaj yok)
+
+### P0 Kapanış Notu
+- Kullanıcı seçimleri doğrultusunda (#975):
+  - 15 tip isimleri birebir,
+  - kapsamlı default layout,
+  - seed tetikleme hem UI hem backend endpoint üzerinden tamamlandı.
+
 ## 2026-03-01 Tamamlananlar
 
 ## 2026-03-04 (P0 — Search Kategori Landing L1/L2 Tasarım Uygulaması)
