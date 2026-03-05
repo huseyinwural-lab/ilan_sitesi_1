@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="13" failures="5" skipped="0" tests="18" time="82.666" timestamp="2026-03-05T00:45:04.002734+00:00" hostname="agent-env-55b94196-8d2c-4b20-a91c-dd6f5a8d84b6"><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestListingCreateGuard" name="test_disallowed_component_key_rejected_with_400" time="15.176"><error message="failed on setup with &quot;requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)&quot;">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="13" failures="5" skipped="0" tests="18" time="82.664" timestamp="2026-03-05T01:19:43.035897+00:00" hostname="agent-env-55b94196-8d2c-4b20-a91c-dd6f5a8d84b6"><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestListingCreateGuard" name="test_disallowed_component_key_rejected_with_400" time="15.134"><error message="failed on setup with &quot;requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)&quot;">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
     response = conn.getresponse()
                ^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/urllib3/connection.py:571: in getresponse
@@ -118,7 +118,7 @@ backend/tests/test_p122_layout_builder_guards_preview.py:37: in admin_token
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/requests/adapters.py:690: in send
     raise ReadTimeout(e, request=request)
-E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)</error></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestListingCreateGuard" name="test_allowed_component_with_valid_props_accepted" time="0.014"><error message="failed on setup with &quot;requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)&quot;">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
+E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)</error></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestListingCreateGuard" name="test_allowed_component_with_valid_props_accepted" time="0.000"><error message="failed on setup with &quot;requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)&quot;">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
     response = conn.getresponse()
                ^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/urllib3/connection.py:571: in getresponse
@@ -178,7 +178,7 @@ backend/tests/test_p122_layout_builder_guards_preview.py:37: in admin_token
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/requests/adapters.py:690: in send
     raise ReadTimeout(e, request=request)
-E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)</error></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestListingCreateGuard" name="test_shared_ad_slot_with_placement_prop_allowed" time="0.001"><error message="failed on setup with &quot;requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)&quot;">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
+E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)</error></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestListingCreateGuard" name="test_shared_ad_slot_with_placement_prop_allowed" time="0.000"><error message="failed on setup with &quot;requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)&quot;">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
     response = conn.getresponse()
                ^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/urllib3/connection.py:571: in getresponse
@@ -538,7 +538,7 @@ backend/tests/test_p122_layout_builder_guards_preview.py:37: in admin_token
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/requests/adapters.py:690: in send
     raise ReadTimeout(e, request=request)
-E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)</error></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestDraftPreviewMode" name="test_unauthenticated_draft_preview_returns_403" time="10.085"><failure message="requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
+E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)</error></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestDraftPreviewMode" name="test_unauthenticated_draft_preview_returns_403" time="10.088"><failure message="requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
     response = conn.getresponse()
                ^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/urllib3/connection.py:571: in getresponse
@@ -598,7 +598,7 @@ backend/tests/test_p122_layout_builder_guards_preview.py:547: in test_unauthenti
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/requests/adapters.py:690: in send
     raise ReadTimeout(e, request=request)
-E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)</failure></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestDraftPreviewMode" name="test_non_admin_user_draft_preview_returns_403" time="15.089"><error message="failed on setup with &quot;requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)&quot;">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
+E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)</failure></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestDraftPreviewMode" name="test_non_admin_user_draft_preview_returns_403" time="15.079"><error message="failed on setup with &quot;requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)&quot;">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
     response = conn.getresponse()
                ^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/urllib3/connection.py:571: in getresponse
@@ -778,7 +778,7 @@ backend/tests/test_p122_layout_builder_guards_preview.py:37: in admin_token
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/requests/adapters.py:690: in send
     raise ReadTimeout(e, request=request)
-E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)</error></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestDraftPreviewMode" name="test_draft_preview_no_draft_returns_409" time="0.000"><error message="failed on setup with &quot;requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)&quot;">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
+E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)</error></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestDraftPreviewMode" name="test_draft_preview_no_draft_falls_back_to_published" time="0.000"><error message="failed on setup with &quot;requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)&quot;">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
     response = conn.getresponse()
                ^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/urllib3/connection.py:571: in getresponse
@@ -838,7 +838,7 @@ backend/tests/test_p122_layout_builder_guards_preview.py:37: in admin_token
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/requests/adapters.py:690: in send
     raise ReadTimeout(e, request=request)
-E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)</error></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestRegressionFlows" name="test_home_resolve_still_works" time="10.140"><failure message="requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
+E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=15)</error></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestRegressionFlows" name="test_home_resolve_still_works" time="10.173"><failure message="requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
     response = conn.getresponse()
                ^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/urllib3/connection.py:571: in getresponse
@@ -882,7 +882,7 @@ The above exception was the direct cause of the following exception:
 E   urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)
 
 During handling of the above exception, another exception occurred:
-backend/tests/test_p122_layout_builder_guards_preview.py:770: in test_home_resolve_still_works
+backend/tests/test_p122_layout_builder_guards_preview.py:774: in test_home_resolve_still_works
     res = requests.get(
 /root/.venv/lib/python3.11/site-packages/requests/api.py:73: in get
     return request("get", url, params=params, **kwargs)
@@ -898,7 +898,7 @@ backend/tests/test_p122_layout_builder_guards_preview.py:770: in test_home_resol
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/requests/adapters.py:690: in send
     raise ReadTimeout(e, request=request)
-E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)</failure></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestRegressionFlows" name="test_search_l1_resolve_still_works" time="10.092"><failure message="requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
+E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)</failure></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestRegressionFlows" name="test_search_l1_resolve_still_works" time="10.100"><failure message="requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
     response = conn.getresponse()
                ^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/urllib3/connection.py:571: in getresponse
@@ -942,7 +942,7 @@ The above exception was the direct cause of the following exception:
 E   urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)
 
 During handling of the above exception, another exception occurred:
-backend/tests/test_p122_layout_builder_guards_preview.py:784: in test_search_l1_resolve_still_works
+backend/tests/test_p122_layout_builder_guards_preview.py:788: in test_search_l1_resolve_still_works
     res = requests.get(
 /root/.venv/lib/python3.11/site-packages/requests/api.py:73: in get
     return request("get", url, params=params, **kwargs)
@@ -958,7 +958,7 @@ backend/tests/test_p122_layout_builder_guards_preview.py:784: in test_search_l1_
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/requests/adapters.py:690: in send
     raise ReadTimeout(e, request=request)
-E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)</failure></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestRegressionFlows" name="test_listing_create_stepx_resolve_still_works" time="10.089"><failure message="requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
+E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)</failure></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestRegressionFlows" name="test_listing_create_stepx_resolve_still_works" time="10.093"><failure message="requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
     response = conn.getresponse()
                ^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/urllib3/connection.py:571: in getresponse
@@ -1002,7 +1002,7 @@ The above exception was the direct cause of the following exception:
 E   urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)
 
 During handling of the above exception, another exception occurred:
-backend/tests/test_p122_layout_builder_guards_preview.py:797: in test_listing_create_stepx_resolve_still_works
+backend/tests/test_p122_layout_builder_guards_preview.py:801: in test_listing_create_stepx_resolve_still_works
     res = requests.get(
 /root/.venv/lib/python3.11/site-packages/requests/api.py:73: in get
     return request("get", url, params=params, **kwargs)
@@ -1018,7 +1018,7 @@ backend/tests/test_p122_layout_builder_guards_preview.py:797: in test_listing_cr
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/requests/adapters.py:690: in send
     raise ReadTimeout(e, request=request)
-E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)</failure></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestRegressionFlows" name="test_categories_api_still_works" time="10.121"><failure message="requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
+E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)</failure></testcase><testcase classname="backend.tests.test_p122_layout_builder_guards_preview.TestRegressionFlows" name="test_categories_api_still_works" time="10.130"><failure message="requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
     response = conn.getresponse()
                ^^^^^^^^^^^^^^^^^^
 /root/.venv/lib/python3.11/site-packages/urllib3/connection.py:571: in getresponse
@@ -1062,7 +1062,7 @@ The above exception was the direct cause of the following exception:
 E   urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='category-results.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)
 
 During handling of the above exception, another exception occurred:
-backend/tests/test_p122_layout_builder_guards_preview.py:810: in test_categories_api_still_works
+backend/tests/test_p122_layout_builder_guards_preview.py:814: in test_categories_api_still_works
     res = requests.get(
 /root/.venv/lib/python3.11/site-packages/requests/api.py:73: in get
     return request("get", url, params=params, **kwargs)

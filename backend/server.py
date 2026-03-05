@@ -1783,24 +1783,33 @@ async def lifespan(app: FastAPI):
     )
 
     try:
-        async with sql_engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-            await _ensure_wizard_progress_column(conn)
-            await _ensure_listing_doping_columns(conn)
-            await _ensure_pricing_campaign_item_columns(conn)
-            await _ensure_finance_v2_columns(conn)
+        async def _bootstrap_sql_init() -> None:
+            async with sql_engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+                await _ensure_wizard_progress_column(conn)
+                await _ensure_listing_doping_columns(conn)
+                await _ensure_pricing_campaign_item_columns(conn)
+                await _ensure_finance_v2_columns(conn)
+
+        await asyncio.wait_for(_bootstrap_sql_init(), timeout=45)
     except Exception as exc:
         logging.getLogger("sql_config").warning("SQL init skipped: %s", exc)
 
     try:
-        async with health_sql_engine.connect() as conn:
-            await conn.execute(text("SELECT 1"))
+        async def _bootstrap_health_warmup() -> None:
+            async with health_sql_engine.connect() as conn:
+                await conn.execute(text("SELECT 1"))
+
+        await asyncio.wait_for(_bootstrap_health_warmup(), timeout=10)
     except Exception as exc:
         logging.getLogger("sql_config").warning("Health DB warmup skipped: %s", exc)
 
     try:
-        async with sql_engine.connect() as conn:
-            await _get_migration_state(conn)
+        async def _bootstrap_migration_warmup() -> None:
+            async with sql_engine.connect() as conn:
+                await _get_migration_state(conn)
+
+        await asyncio.wait_for(_bootstrap_migration_warmup(), timeout=10)
     except Exception as exc:
         logging.getLogger("sql_config").warning("Migration cache warmup skipped: %s", exc)
 

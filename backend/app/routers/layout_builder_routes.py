@@ -762,11 +762,24 @@ async def _resolve_effective_layout(
             if preview_mode == "draft":
                 draft = await _latest_by_status(bound_page.id, LayoutRevisionStatus.DRAFT)
                 if not draft:
-                    raise HTTPException(status_code=409, detail="bound_layout_has_no_draft_revision")
+                    if not published:
+                        raise HTTPException(status_code=409, detail="bound_layout_has_no_draft_or_published_revision")
+                    _METRICS["resolve_binding_hits"] += 1
+                    return {
+                        "source": "binding_draft_fallback",
+                        "preview_mode": "draft",
+                        "draft_available": False,
+                        "layout_page": _serialize_layout_page(bound_page),
+                        "revision": _serialize_layout_revision(published),
+                        "comparison": {
+                            "published_revision": _serialize_layout_revision(published),
+                        },
+                    }
                 _METRICS["resolve_binding_hits"] += 1
                 return {
                     "source": "binding_draft",
                     "preview_mode": "draft",
+                    "draft_available": True,
                     "layout_page": _serialize_layout_page(bound_page),
                     "revision": _serialize_layout_revision(draft),
                     "comparison": {
@@ -804,11 +817,24 @@ async def _resolve_effective_layout(
     if preview_mode == "draft":
         draft = await _latest_by_status(default_page.id, LayoutRevisionStatus.DRAFT)
         if not draft:
-            raise HTTPException(status_code=409, detail="default_layout_has_no_draft_revision")
+            if not published:
+                raise HTTPException(status_code=409, detail="default_layout_has_no_draft_or_published_revision")
+            _METRICS["resolve_default_hits"] += 1
+            return {
+                "source": "default_draft_fallback",
+                "preview_mode": "draft",
+                "draft_available": False,
+                "layout_page": _serialize_layout_page(default_page),
+                "revision": _serialize_layout_revision(published),
+                "comparison": {
+                    "published_revision": _serialize_layout_revision(published),
+                },
+            }
         _METRICS["resolve_default_hits"] += 1
         return {
             "source": "default_draft",
             "preview_mode": "draft",
+            "draft_available": True,
             "layout_page": _serialize_layout_page(default_page),
             "revision": _serialize_layout_revision(draft),
             "comparison": {

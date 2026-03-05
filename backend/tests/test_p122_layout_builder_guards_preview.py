@@ -705,8 +705,8 @@ class TestDraftPreviewMode:
             assert published_rev.get("status") == "published"
             assert "payload_json" in published_rev
 
-    def test_draft_preview_no_draft_returns_409(self, admin_token):
-        """Draft preview with no draft revision returns 409."""
+    def test_draft_preview_no_draft_falls_back_to_published(self, admin_token):
+        """Draft preview with no draft revision falls back to published with draft_available=False."""
         marker = uuid.uuid4().hex[:8]
         module_name = f"test_no_draft_{marker}"
         
@@ -741,7 +741,7 @@ class TestDraftPreviewMode:
             timeout=10,
         )
         
-        # Try draft preview when no draft exists
+        # Try draft preview when no draft exists - should fallback to published
         resolve_res = requests.get(
             f"{BASE_URL}/api/site/content-layout/resolve",
             headers=_headers(admin_token),
@@ -754,9 +754,13 @@ class TestDraftPreviewMode:
             timeout=10,
         )
         
-        assert resolve_res.status_code == 409, f"Expected 409, got {resolve_res.status_code}"
-        detail = resolve_res.json().get("detail", "")
-        assert "no_draft" in str(detail).lower() or "draft" in str(detail).lower()
+        # Should return 200 with fallback behavior
+        assert resolve_res.status_code == 200, f"Expected 200, got {resolve_res.status_code}"
+        data = resolve_res.json()
+        # Should indicate draft is not available but fallback to published
+        assert data.get("preview_mode") == "draft"
+        assert data.get("draft_available") is False
+        assert data.get("source") in {"default_draft_fallback", "binding_draft_fallback"}
 
 
 # =====================================================
