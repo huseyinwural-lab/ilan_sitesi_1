@@ -401,6 +401,32 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Frontend akışlar: **PASS**
   - Not: hydration warning için select alanlarında `suppressHydrationWarning` uygulandı.
 
+## 2026-03-05 (Adres Formu Güncellemesi + Listing Flow Settings Taşıma)
+
+### Uygulananlar
+- **Adres formu güncellendi (user + admin):**
+  - User tarafı `/ilan-ver/detaylar` adres bloğu, fotoğraf düzenine uygun 2 kolon + 1 kolon akışına getirildi:
+    - Satır 1: Street + House Number
+    - Satır 2: Address Extra + Postal Code
+    - Satır 3: City
+  - Yeni alanlar: `house_number`, `address_extra` (draft payload/location içine eklendi).
+  - Etiketler locale bazlı (TR/DE) işlendi.
+  - Admin tarafında “İlan Ver Akış Ayarları” kartına locale seçilebilir adres form önizlemesi eklendi (TR/DE).
+
+- **İlan Ver Akış Ayarları taşındı (System Settings -> Site Design):**
+  - Yeni route: `/admin/site-design/listing-flow-settings?focus=listing-create`
+  - Eski route redirect: `/admin/system-settings/listing-flow-settings` -> yeni route
+  - Sidebar’da Site İç Tasarımı altında menü girişi eklendi.
+  - System Settings ana ekranında listing-create kartı route bazlı gizlendi; yalnız yeni konumda gösteriliyor.
+
+- **Kritik erişim bug fix (RBAC):**
+  - `/admin/site-design/listing-flow-settings` için admin RBAC kuralı eklendi (`adminRbac.js`).
+  - Böylece yeni sayfada yanlış 403 engeli kalktı.
+
+### Test Durumu
+- `/app/test_reports/iteration_132.json`: İlk testte RBAC kaynaklı 403 tespit edildi.
+- `/app/test_reports/iteration_133.json`: RBAC fix sonrası **Frontend %100 PASS**.
+
 ### P0 — Google Autocomplete Real Mode (manuel key destekli)
 - Backend eklendi:
   - `GET /api/places/config`
