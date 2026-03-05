@@ -135,6 +135,49 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - P1.2: Search L1/L2 için kategoriye özel binding yönetim akışını admin ekranına “tek tık bağla/çöz” olarak ekleme.
 - P2: Listing create stepX runtime bileşen eşlemesi ve controlled form contract.
 
+## 2026-03-05 (P1.1 + P1.2 + P2 Devam)
+
+### P1.1 — Builder Canvas UX Güçlendirme (Tamamlandı)
+- `AdminContentBuilder` canvas tarafına görsel drop indicator eklendi:
+  - Row drag-over: `Satırı buraya bırak`
+  - Column drag-over: `Bileşeni bu sütuna bırak`
+- Satır taşıma kontrolleri (Yukarı/Aşağı) korunup akış iyileştirildi.
+- Sütun taşıma kontrolleri eklendi (← / →) ve row içinde sıralama yapılabilir hale getirildi.
+- Drag state temizleme/geri dönüş davranışları iyileştirildi (drag end/drop sonrası state reset).
+
+### P1.2 — Kategori Binding Yönetimi Tek Panelde (Tamamlandı)
+- `AdminContentBuilder` header alanına binding panel eklendi:
+  - Aktif binding sorgula
+  - Bu page’i kategoriye bağla
+  - Binding kaldır
+  - Aktif binding özeti (layout_page_id) gösterimi
+- Kullanılan API’ler:
+  - `GET /api/admin/site/content-layout/bindings/active`
+  - `POST /api/admin/site/content-layout/bindings`
+  - `POST /api/admin/site/content-layout/bindings/unbind`
+
+### P2 — listing_create_stepX Controlled Runtime Mapping (İlk Faz Tamamlandı)
+- `WizardContainer` içinde runtime resolve entegrasyonu eklendi:
+  - `pageType='listing_create_stepX'`
+  - `module=moduleKey`
+  - `country=selected_country`
+- Controlled güvenlik kuralı uygulandı:
+  - Runtime payload içinde `listing.create.default-content` yoksa otomatik ekleniyor.
+  - Böylece form adımları (validation/business flow) kaybolmadan her zaman render ediliyor.
+- Runtime varsa `LayoutRenderer`, yoksa mevcut wizard adım bileşenleri fallback olarak çalışıyor.
+
+### Test / Doğrulama
+- Testing agent raporu: `/app/test_reports/iteration_121.json`
+  - Backend 9/9 PASS
+  - Frontend PASS (P1.1/P1.2/P2 doğrulandı)
+  - Data-testid coverage yüksek (AdminContentBuilder 80 adet)
+- Home sayfada test amaçlı “Content Builder Aktif” metni kaldırıldı, daha nötr içerik yayınlandı.
+
+### Güncel Sonraki İşler
+- P2.1: Listing wizard için component-level props guard (izinli prop whitelist + schema doğrulama).
+- P2.2: Binding panelde kategori seçimini ID yerine ağaç/arama dropdown ile kolaylaştırma.
+- P2.3: Runtime preview mode (`?layout_preview=draft`) ile admin’den canlı önizleme.
+
 ### P0 — Google Autocomplete Real Mode (manuel key destekli)
 - Backend eklendi:
   - `GET /api/places/config`
