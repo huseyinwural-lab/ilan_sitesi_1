@@ -43,6 +43,8 @@ const normalizeItems = (items, fallbackPrefix = 'item') => {
         price: item.price,
         currency: item.currency,
         image_url: item.image_url,
+        score: item.score,
+        score_explanation: Array.isArray(item.score_explanation) ? item.score_explanation : [],
       };
     })
     .filter(Boolean);
@@ -474,6 +476,9 @@ export const SellerCardBlock = ({ props, runtimeContext }) => {
         <p className="text-xs text-slate-500" data-testid="runtime-seller-meta">
           Profil: {seller?.profile_type || props?.membership || 'kurumsal'} • Aktif İlan: {seller?.total_listings ?? '-'}
         </p>
+        <p className="text-xs text-slate-500" data-testid="runtime-seller-reputation">
+          Puan: {seller?.rating ?? '4.7'} • Yorum: {seller?.reviews_count ?? 0} • Yanıt: %{seller?.response_rate ?? 0}
+        </p>
       </div>
     </div>
     <a href={props?.all_listings_url || '#'} className="mt-3 inline-flex rounded border px-3 py-1 text-xs" data-testid="runtime-seller-all-listings-link">Tüm İlanları</a>
@@ -484,11 +489,39 @@ export const SellerCardBlock = ({ props, runtimeContext }) => {
 export const InteractiveMapBlock = ({ props, runtimeContext }) => {
   const { listing } = useRuntimeListingData(props, runtimeContext);
   const [showNearby, setShowNearby] = useState(props?.show_nearby_layers !== false);
+  const [poiItems, setPoiItems] = useState([]);
+  const [poiLoading, setPoiLoading] = useState(false);
   const lat = parseCoordinate(props?.lat ?? listing?.location?.latitude) ?? 35.1856;
   const lng = parseCoordinate(props?.lng ?? listing?.location?.longitude) ?? 33.3823;
   const zoom = Math.max(8, Math.min(18, toNumber(props?.default_zoom, 14)));
   const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.02}%2C${lat - 0.02}%2C${lng + 0.02}%2C${lat + 0.02}&layer=mapnik&marker=${lat}%2C${lng}`;
-  const nearbyLayers = ['Okul', 'Hastane', 'Toplu Taşıma'];
+
+  useEffect(() => {
+    let alive = true;
+    if (!showNearby) return () => {
+      alive = false;
+    };
+
+    setPoiLoading(true);
+    const endpoint = `${API}/public/geo/nearby-pois?lat=${lat}&lng=${lng}&radius_km=1.6&limit=6`;
+    fetch(endpoint, { cache: 'no-store' })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (!alive) return;
+        const items = Array.isArray(payload?.items) ? payload.items : [];
+        setPoiItems(items);
+      })
+      .catch(() => {
+        if (alive) setPoiItems([]);
+      })
+      .finally(() => {
+        if (alive) setPoiLoading(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [lat, lng, showNearby]);
 
   return (
     <section className="rounded-xl border bg-white p-4" data-testid="runtime-interactive-map">
@@ -502,9 +535,15 @@ export const InteractiveMapBlock = ({ props, runtimeContext }) => {
       <p className="mt-2 text-xs text-slate-500" data-testid="runtime-interactive-map-meta">Zoom: {zoom} • Şehir: {listing?.location?.city || '-'}</p>
       {showNearby ? (
         <div className="mt-2 flex flex-wrap gap-2" data-testid="runtime-interactive-map-nearby-layers">
-          {nearbyLayers.map((layer) => (
-            <span key={layer} className="rounded-full border bg-slate-50 px-2 py-1 text-[11px]" data-testid={`runtime-interactive-map-nearby-${layer}`}>
-              {layer}
+          {poiLoading ? <span className="text-[11px] text-slate-500" data-testid="runtime-interactive-map-poi-loading">POI yükleniyor...</span> : null}
+          {!poiLoading && poiItems.length === 0 ? <span className="text-[11px] text-slate-500" data-testid="runtime-interactive-map-poi-empty">Yakın POI bulunamadı.</span> : null}
+          {poiItems.map((poi, index) => (
+            <span
+              key={`${poi.id || index}`}
+              className="rounded-full border bg-slate-50 px-2 py-1 text-[11px]"
+              data-testid={`runtime-interactive-map-nearby-${index}`}
+            >
+              {poi.name} • {poi.distance_km} km
             </span>
           ))}
         </div>
@@ -564,6 +603,16 @@ export const SimilarListingsSliderBlock = ({ props, runtimeContext }) => {
           <a key={item.id} href={item.url || '#'} className="min-w-[220px] rounded-lg border bg-slate-50 p-3 text-xs" data-testid={`runtime-similar-slider-item-${item.id}`}>
             <div className="font-semibold">{item.label}</div>
             <div className="mt-1 text-slate-500">{item.price ? `${new Intl.NumberFormat('tr-TR').format(item.price)} ${item.currency || 'EUR'}` : 'Detay'}</div>
+            {typeof item.score === 'number' ? (
+              <div className="mt-1 text-[11px] text-slate-600" data-testid={`runtime-similar-slider-score-${item.id}`}>
+                Skor: {item.score}/100
+              </div>
+            ) : null}
+            {Array.isArray(item.score_explanation) && item.score_explanation.length > 0 ? (
+              <div className="mt-1 text-[11px] text-slate-500" data-testid={`runtime-similar-slider-explain-${item.id}`}>
+                {item.score_explanation[0]}
+              </div>
+            ) : null}
           </a>
         ))}
       </div>

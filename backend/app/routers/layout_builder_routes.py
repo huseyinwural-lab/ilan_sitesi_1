@@ -527,6 +527,239 @@ def _build_listing_policy_report(payload_json: dict[str, Any]) -> dict[str, Any]
     }
 
 
+def _safe_bool(value: Any, *, fallback: bool) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"true", "1", "yes"}:
+            return True
+        if lowered in {"false", "0", "no"}:
+            return False
+    return fallback
+
+
+def _safe_int(value: Any, *, fallback: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return int(fallback)
+
+
+def _autofix_listing_payload(payload_json: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    actions: list[str] = []
+    rows = payload_json.get("rows") if isinstance(payload_json, dict) else None
+    if not isinstance(rows, list):
+        rows = []
+        actions.append("rows yapısı yoktu; boş layout iskeleti oluşturuldu.")
+
+    row_ids: set[str] = set()
+    col_ids: set[str] = set()
+    cmp_ids: set[str] = set()
+
+    fixed_rows: list[dict[str, Any]] = []
+    default_component_count = 0
+    doping_selector_count = 0
+
+    for row_index, row in enumerate(rows[:LISTING_MAX_ROWS], start=1):
+        if not isinstance(row, dict):
+            actions.append(f"Row {row_index} geçersizdi; atlandı.")
+            continue
+
+        row_id = str(row.get("id") or "").strip() or f"row-autofix-{row_index}"
+        if row_id in row_ids:
+            row_id = f"{row_id}-{row_index}"
+            actions.append(f"Duplicate row id düzeltildi: {row_id}")
+        row_ids.add(row_id)
+
+        raw_columns = row.get("columns")
+        if not isinstance(raw_columns, list):
+            raw_columns = []
+            actions.append(f"Row {row_id} için columns dizisi oluşturuldu.")
+
+        fixed_columns: list[dict[str, Any]] = []
+        for col_index, column in enumerate(raw_columns[:LISTING_MAX_COLUMNS_PER_ROW], start=1):
+            if not isinstance(column, dict):
+                actions.append(f"Row {row_id} içindeki geçersiz column atlandı.")
+                continue
+
+            col_id = str(column.get("id") or "").strip() or f"col-autofix-{row_index}-{col_index}"
+            if col_id in col_ids:
+                col_id = f"{col_id}-{col_index}"
+                actions.append(f"Duplicate column id düzeltildi: {col_id}")
+            col_ids.add(col_id)
+
+            width_payload = column.get("width") if isinstance(column.get("width"), dict) else {}
+            fixed_width = {
+                "desktop": max(1, min(12, _safe_int(width_payload.get("desktop"), fallback=12))),
+                "tablet": max(1, min(12, _safe_int(width_payload.get("tablet"), fallback=12))),
+                "mobile": max(1, min(12, _safe_int(width_payload.get("mobile"), fallback=12))),
+            }
+
+            raw_components = column.get("components")
+            if not isinstance(raw_components, list):
+                raw_components = []
+                actions.append(f"Column {col_id} için components dizisi oluşturuldu.")
+
+            fixed_components: list[dict[str, Any]] = []
+            for cmp_index, component in enumerate(raw_components[:LISTING_MAX_COMPONENTS_PER_COLUMN], start=1):
+                if not isinstance(component, dict):
+                    actions.append(f"Column {col_id} içindeki geçersiz component atlandı.")
+                    continue
+
+                component_key = component.get("key")
+                if component_key not in LISTING_CREATE_ALLOWED_COMPONENTS:
+                    component_key = "shared.text-block"
+                    actions.append(f"İzinli olmayan component text-block'a çevrildi (column: {col_id}).")
+
+                component_id = str(component.get("id") or "").strip() or f"cmp-autofix-{row_index}-{col_index}-{cmp_index}"
+                if component_id in cmp_ids:
+                    component_id = f"{component_id}-{cmp_index}"
+                    actions.append(f"Duplicate component id düzeltildi: {component_id}")
+                cmp_ids.add(component_id)
+
+                raw_props = component.get("props") if isinstance(component.get("props"), dict) else {}
+                allowed_props = LISTING_CREATE_ALLOWED_COMPONENTS[component_key]
+                cleaned_props = {key: raw_props.get(key) for key in raw_props.keys() if key in allowed_props}
+
+                if component_key == "shared.text-block":
+                    title = cleaned_props.get("title")
+                    body = cleaned_props.get("body")
+                    cleaned_props["title"] = str(title or "Bilgilendirme")[:LISTING_TEXT_TITLE_MAX]
+                    cleaned_props["body"] = str(body or "")[:LISTING_TEXT_BODY_MAX]
+
+                if component_key == "shared.ad-slot":
+                    placement = str(cleaned_props.get("placement") or "").strip()
+                    if placement not in LISTING_ALLOWED_AD_PLACEMENTS:
+                        cleaned_props["placement"] = "AD_LOGIN_1"
+                        actions.append(f"Column {col_id} ad-slot placement değeri AD_LOGIN_1 olarak düzeltildi.")
+
+                if component_key == "interactive.doping-selector":
+                    doping_selector_count += 1
+                    if doping_selector_count > 1:
+                        actions.append("Fazla doping-selector bileşeni kaldırıldı.")
+                        continue
+
+                    raw_options = cleaned_props.get("available_dopings")
+                    if not isinstance(raw_options, list):
+                        raw_options = []
+                    normalized_options = [
+                        str(item or "").strip()
+                        for item in raw_options
+                        if str(item or "").strip() in LISTING_ALLOWED_DOPING_PACKAGES
+                    ][:LISTING_MAX_DOPING_OPTIONS]
+                    if not normalized_options:
+                        normalized_options = ["Vitrin", "Acil", "Anasayfa"]
+                        actions.append("Doping seçenekleri whitelist'e göre varsayılana çekildi.")
+
+                    cleaned_props["available_dopings"] = normalized_options
+                    cleaned_props["show_prices"] = _safe_bool(cleaned_props.get("show_prices"), fallback=True)
+                    selected = str(cleaned_props.get("default_selected") or "").strip()
+                    cleaned_props["default_selected"] = selected if selected in normalized_options else normalized_options[0]
+
+                if component_key == "listing.create.default-content":
+                    default_component_count += 1
+                    if default_component_count > 1:
+                        actions.append("Fazla default-content bileşeni kaldırıldı.")
+                        continue
+                    cleaned_props = {}
+
+                fixed_components.append(
+                    {
+                        "id": component_id,
+                        "key": component_key,
+                        "props": cleaned_props,
+                        "visibility": component.get("visibility") if isinstance(component.get("visibility"), dict) else {
+                            "desktop": True,
+                            "tablet": True,
+                            "mobile": True,
+                        },
+                    }
+                )
+
+            fixed_columns.append(
+                {
+                    "id": col_id,
+                    "width": fixed_width,
+                    "components": fixed_components,
+                }
+            )
+
+        if not fixed_columns:
+            generated_column_id = f"col-autofix-{row_index}-1"
+            if generated_column_id in col_ids:
+                generated_column_id = f"{generated_column_id}-{row_index}"
+            col_ids.add(generated_column_id)
+            fixed_columns.append(
+                {
+                    "id": generated_column_id,
+                    "width": {"desktop": 12, "tablet": 12, "mobile": 12},
+                    "components": [],
+                }
+            )
+            actions.append(f"Row {row_id} için varsayılan column üretildi.")
+
+        fixed_rows.append(
+            {
+                "id": row_id,
+                "columns": fixed_columns,
+            }
+        )
+
+    if not fixed_rows:
+        fixed_rows = [
+            {
+                "id": "row-autofix-1",
+                "columns": [
+                    {
+                        "id": "col-autofix-1",
+                        "width": {"desktop": 12, "tablet": 12, "mobile": 12},
+                        "components": [],
+                    }
+                ],
+            }
+        ]
+        row_ids.add("row-autofix-1")
+        col_ids.add("col-autofix-1")
+        actions.append("Boş payload için varsayılan row/column üretildi.")
+
+    if default_component_count == 0:
+        target_column = fixed_rows[0]["columns"][0]
+        default_component_id = "cmp-autofix-default"
+        if default_component_id in cmp_ids:
+            default_component_id = f"{default_component_id}-{len(cmp_ids)+1}"
+        cmp_ids.add(default_component_id)
+        target_column["components"].insert(
+            0,
+            {
+                "id": default_component_id,
+                "key": "listing.create.default-content",
+                "props": {},
+                "visibility": {"desktop": True, "tablet": True, "mobile": True},
+            },
+        )
+        actions.append("Eksik default-content bileşeni otomatik eklendi.")
+
+    total_components = sum(
+        len(column.get("components") or [])
+        for row in fixed_rows
+        for column in (row.get("columns") or [])
+    )
+    if total_components == 0:
+        target_column = fixed_rows[0]["columns"][0]
+        target_column["components"].append(
+            {
+                "id": "cmp-autofix-text",
+                "key": "shared.text-block",
+                "props": {"title": "Bilgilendirme", "body": "İçerik alanı otomatik düzeltme ile oluşturuldu."},
+                "visibility": {"desktop": True, "tablet": True, "mobile": True},
+            }
+        )
+        actions.append("Boş component listesine bilgilendirme text-block eklendi.")
+
+    return {"rows": fixed_rows}, actions
+
+
 def _validate_listing_runtime_guard_or_400(payload_json: dict) -> None:
     rows = payload_json.get("rows") if isinstance(payload_json, dict) else None
     if not isinstance(rows, list):
@@ -997,6 +1230,41 @@ async def get_revision_policy_report_admin(
 
     report = _build_listing_policy_report(row.payload_json or {})
     return {"ok": True, "report": report}
+
+
+@router.post("/admin/site/content-layout/revisions/{revision_id}/policy-autofix")
+async def auto_fix_revision_policy_admin(
+    revision_id: str,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    revision_uuid = _as_uuid_or_400(revision_id, field_name="revision_id")
+    row = await session.get(LayoutRevision, revision_uuid)
+    if not row:
+        raise HTTPException(status_code=404, detail="Revision not found")
+
+    page_row = await session.get(LayoutPage, row.layout_page_id)
+    if not page_row:
+        raise HTTPException(status_code=404, detail="Layout page not found")
+
+    if page_row.page_type != LayoutPageType.LISTING_CREATE_STEPX:
+        raise HTTPException(status_code=400, detail="policy_autofix_not_applicable")
+
+    before_payload = row.payload_json or {}
+    report_before = _build_listing_policy_report(before_payload)
+    fixed_payload, auto_fix_actions = _autofix_listing_payload(before_payload)
+    report_after = _build_listing_policy_report(fixed_payload)
+
+    row.payload_json = fixed_payload
+    await session.commit()
+
+    return {
+        "ok": True,
+        "item": _serialize_layout_revision(row),
+        "report_before": report_before,
+        "report_after": report_after,
+        "auto_fix_actions": auto_fix_actions,
+    }
 
 
 @router.post("/admin/site/content-layout/revisions/{revision_id}/archive")

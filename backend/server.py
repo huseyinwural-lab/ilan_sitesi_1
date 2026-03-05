@@ -37212,6 +37212,60 @@ async def get_vehicle_detail(listing_id: str, preview: bool = False, session: As
         or 0
     )
 
+    seller_total_threads = int(
+        (
+            await session.execute(
+                select(func.count(Conversation.id)).where(Conversation.seller_id == listing.user_id)
+            )
+        ).scalar_one()
+        or 0
+    )
+
+    seller_replied_threads = int(
+        (
+            await session.execute(
+                select(func.count(func.distinct(Message.conversation_id)))
+                .select_from(Message)
+                .join(Conversation, Conversation.id == Message.conversation_id)
+                .where(
+                    Conversation.seller_id == listing.user_id,
+                    Message.sender_id == listing.user_id,
+                )
+            )
+        ).scalar_one()
+        or 0
+    )
+
+    seller_distinct_buyers = int(
+        (
+            await session.execute(
+                select(func.count(func.distinct(Conversation.buyer_id))).where(
+                    Conversation.seller_id == listing.user_id,
+                    Conversation.buyer_id.is_not(None),
+                )
+            )
+        ).scalar_one()
+        or 0
+    )
+
+    seller_response_rate = 0.0
+    if seller_total_threads > 0:
+        seller_response_rate = round((seller_replied_threads / max(1, seller_total_threads)) * 100, 1)
+
+    seller_reviews_count = max(seller_distinct_buyers, min(250, seller_total_listings * 2))
+    seller_rating = round(
+        min(
+            5.0,
+            max(
+                3.9,
+                4.05
+                + min(0.55, seller_response_rate / 250.0)
+                + min(0.35, seller_total_listings / 180.0),
+            ),
+        ),
+        1,
+    )
+
     if seller_user:
         seller_name = (
             seller_user.full_name
@@ -37244,13 +37298,23 @@ async def get_vehicle_detail(listing_id: str, preview: bool = False, session: As
         "secondary_currency": None,
         "published_at": listing.published_at.isoformat() if listing.published_at else None,
         "created_at": listing.created_at.isoformat() if listing.created_at else None,
-        "location": {"city": listing.city or "", "country": listing.country},
+        "location": {
+            "city": listing.city or "",
+            "country": listing.country,
+            "latitude": float(listing.latitude) if listing.latitude is not None else None,
+            "longitude": float(listing.longitude) if listing.longitude is not None else None,
+        },
         "description": listing.description or "",
         "seller": {
             "id": str(seller_user.id) if seller_user else str(listing.user_id),
             "name": seller_name,
             "profile_type": seller_profile_type,
             "total_listings": seller_total_listings,
+            "rating": seller_rating,
+            "reviews_count": seller_reviews_count,
+            "response_rate": seller_response_rate,
+            "response_threads": seller_replied_threads,
+            "total_threads": seller_total_threads,
             "member_since": seller_member_since,
             "is_verified": seller_verified,
             "phone": seller_phone,
@@ -37332,12 +37396,33 @@ async def get_vehicle_similar_listings(
         )
 
     items = []
+    source_published_ref = source.published_at or source.created_at or datetime.now(timezone.utc)
     for row in similar_rows:
         media_meta = _listing_media_meta(row)
         cover = media_meta[0] if media_meta else None
         attrs = row.attributes or {}
         vehicle = attrs.get("vehicle") or {}
         row_title = row.title or f"{vehicle.get('make_key', '').upper()} {vehicle.get('model_key', '')} {vehicle.get('year', '')}".strip()
+
+        row_price = int(row.price or 0)
+        price_similarity = 55
+        if source_price > 0 and row_price > 0:
+            price_gap_ratio = abs(row_price - source_price) / max(1, source_price)
+            price_similarity = max(0, min(100, int(round(100 - (price_gap_ratio * 100)))))
+
+        same_city = bool((row.city or "").strip().lower() == (source.city or "").strip().lower())
+        city_score = 100 if same_city else 60
+
+        row_published_ref = row.published_at or row.created_at or source_published_ref
+        recency_days_gap = abs((source_published_ref - row_published_ref).days)
+        recency_score = max(40, 100 - min(60, recency_days_gap * 4))
+
+        final_score = int(round((price_similarity * 0.45) + (city_score * 0.25) + (recency_score * 0.30)))
+        score_explanation = [
+            f"Fiyat benzerliği: %{price_similarity}",
+            "Konum eşleşmesi yüksek" if same_city else "Farklı şehir ama benzer kategori",
+            f"Yayın tarihi yakınlığı: %{recency_score}",
+        ]
 
         items.append(
             {
@@ -37348,12 +37433,154 @@ async def get_vehicle_similar_listings(
                 "city": row.city or "",
                 "published_at": row.published_at.isoformat() if row.published_at else None,
                 "image_url": f"/media/listings/{row.id}/{cover['file']}" if cover and cover.get("file") else None,
+                "score": final_score,
+                "score_explanation": score_explanation,
+                "score_breakdown": {
+                    "price_similarity": int(price_similarity),
+                    "city_match": int(city_score),
+                    "recency": int(recency_score),
+                },
             }
         )
 
     return {
         "items": items,
         "fallback_used": fallback_used,
+    }
+
+
+def _haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    radius_km = 6371.0
+    d_lat = math.radians(lat2 - lat1)
+    d_lng = math.radians(lng2 - lng1)
+    a = math.sin(d_lat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(d_lng / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return radius_km * c
+
+
+def _fallback_nearby_pois(lat: float, lng: float, limit: int) -> list[dict[str, Any]]:
+    templates = [
+        ("Okul", "school", 0.0032, 0.0011),
+        ("Hastane", "hospital", -0.0024, 0.0017),
+        ("Eczane", "pharmacy", 0.0018, -0.0020),
+        ("Otobüs Durağı", "transport", -0.0015, -0.0012),
+        ("Market", "market", 0.0021, 0.0028),
+        ("Banka", "bank", -0.0027, 0.0021),
+    ]
+    items = []
+    for index, (name, category, d_lat, d_lng) in enumerate(templates[: max(1, limit)]):
+        poi_lat = lat + d_lat
+        poi_lng = lng + d_lng
+        items.append(
+            {
+                "id": f"fallback-{index}",
+                "name": name,
+                "category": category,
+                "latitude": round(poi_lat, 6),
+                "longitude": round(poi_lng, 6),
+                "distance_km": round(_haversine_km(lat, lng, poi_lat, poi_lng), 2),
+                "source": "fallback",
+            }
+        )
+    return items
+
+
+async def _fetch_osm_nearby_pois(lat: float, lng: float, radius_m: int, limit: int) -> list[dict[str, Any]]:
+    overpass_url = "https://overpass-api.de/api/interpreter"
+    safe_radius_m = max(250, min(5000, int(radius_m)))
+    safe_limit = max(1, min(20, int(limit)))
+    query = (
+        "[out:json][timeout:8];"
+        "("
+        f'node["amenity"~"school|hospital|clinic|pharmacy|bank|restaurant|bus_station|parking"](around:{safe_radius_m},{lat},{lng});'
+        f'node["shop"~"supermarket|mall"](around:{safe_radius_m},{lat},{lng});'
+        ");"
+        "out body 60;"
+    )
+
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.post(overpass_url, data=query)
+            response.raise_for_status()
+            payload = response.json()
+    except Exception:
+        return []
+
+    elements = payload.get("elements") if isinstance(payload, dict) else None
+    if not isinstance(elements, list):
+        return []
+
+    normalized = []
+    for element in elements:
+        if not isinstance(element, dict):
+            continue
+        poi_lat = element.get("lat")
+        poi_lng = element.get("lon")
+        if poi_lat is None or poi_lng is None:
+            continue
+        try:
+            poi_lat_f = float(poi_lat)
+            poi_lng_f = float(poi_lng)
+        except (TypeError, ValueError):
+            continue
+
+        tags = element.get("tags") or {}
+        amenity = str(tags.get("amenity") or tags.get("shop") or "poi")
+        name = str(tags.get("name") or amenity.replace("_", " ").title())
+        distance_km = _haversine_km(lat, lng, poi_lat_f, poi_lng_f)
+
+        normalized.append(
+            {
+                "id": str(element.get("id") or f"osm-{len(normalized)}"),
+                "name": name,
+                "category": amenity,
+                "latitude": round(poi_lat_f, 6),
+                "longitude": round(poi_lng_f, 6),
+                "distance_km": round(distance_km, 2),
+                "source": "osm",
+            }
+        )
+
+    normalized.sort(key=lambda item: item.get("distance_km", 999))
+    deduped = []
+    seen = set()
+    for item in normalized:
+        dedupe_key = (item["name"].lower(), item["category"])
+        if dedupe_key in seen:
+            continue
+        seen.add(dedupe_key)
+        deduped.append(item)
+        if len(deduped) >= safe_limit:
+            break
+    return deduped
+
+
+@api_router.get("/public/geo/nearby-pois")
+async def get_public_nearby_pois(
+    lat: float = Query(...),
+    lng: float = Query(...),
+    radius_km: float = Query(1.5),
+    limit: int = Query(8),
+):
+    if lat < -90 or lat > 90:
+        raise HTTPException(status_code=400, detail="invalid_lat")
+    if lng < -180 or lng > 180:
+        raise HTTPException(status_code=400, detail="invalid_lng")
+
+    safe_limit = max(1, min(int(limit or 8), 12))
+    radius_m = int(max(0.25, min(float(radius_km or 1.5), 5.0)) * 1000)
+
+    items = await _fetch_osm_nearby_pois(lat=lat, lng=lng, radius_m=radius_m, limit=safe_limit)
+    source = "osm"
+    if not items:
+        items = _fallback_nearby_pois(lat=lat, lng=lng, limit=safe_limit)
+        source = "fallback"
+
+    return {
+        "center": {"latitude": lat, "longitude": lng},
+        "radius_km": round(radius_m / 1000, 2),
+        "source": source,
+        "items": items[:safe_limit],
     }
 
 

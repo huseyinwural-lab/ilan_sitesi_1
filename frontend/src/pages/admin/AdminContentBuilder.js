@@ -436,17 +436,33 @@ const PRESET_PACK_OPTIONS = [
     label: 'Preset • Home Default',
     targetPageType: 'home',
     description: 'Ana sayfa için slider + kategori + ilan akışı başlangıç düzeni',
-    buildPayload: () => ({
+    personas: ['individual', 'corporate'],
+    variants: ['A', 'B'],
+    buildPayload: ({ persona = 'individual', variant = 'A' } = {}) => ({
       rows: [
-        createPresetRow([createPresetColumn(12, [
-          createPresetComponent('home.default-content'),
-          createPresetComponent('media.auto-play-carousel-hero'),
-        ])]),
+        ...(variant === 'B'
+          ? [
+              createPresetRow([createPresetColumn(12, [
+                createPresetComponent('home.default-content'),
+                createPresetComponent('layout.breadcrumb-header'),
+              ])]),
+              createPresetRow([createPresetColumn(12, [createPresetComponent('media.auto-play-carousel-hero')])]),
+            ]
+          : [createPresetRow([createPresetColumn(12, [
+              createPresetComponent('home.default-content'),
+              createPresetComponent('media.auto-play-carousel-hero'),
+            ])])]),
         createPresetRow([
-          createPresetColumn(4, [createPresetComponent('layout.category-navigator-side')]),
-          createPresetColumn(8, [
-            createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: 8 }),
-            createPresetComponent('media.ad-promo-slot', { placement: 'AD_HOME_TOP', campaign_label: 'Vitrin Kampanya' }),
+          createPresetColumn(persona === 'corporate' ? 5 : 4, [
+            createPresetComponent('layout.category-navigator-side'),
+            ...(persona === 'corporate' ? [createPresetComponent('data.seller-card')] : []),
+          ]),
+          createPresetColumn(persona === 'corporate' ? 7 : 8, [
+            createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: variant === 'B' ? 10 : 8 }),
+            createPresetComponent('media.ad-promo-slot', {
+              placement: 'AD_HOME_TOP',
+              campaign_label: persona === 'corporate' ? 'Kurumsal Vitrin Kampanyası' : 'Vitrin Kampanya',
+            }),
           ]),
         ]),
       ],
@@ -457,15 +473,18 @@ const PRESET_PACK_OPTIONS = [
     label: 'Preset • Search L1',
     targetPageType: 'search_l1',
     description: 'L1 kategori için breadcrumb + navigator + sonuç odaklı düzen',
-    buildPayload: () => ({
+    personas: ['individual', 'corporate'],
+    variants: ['A', 'B'],
+    buildPayload: ({ persona = 'individual', variant = 'A' } = {}) => ({
       rows: [
         createPresetRow([createPresetColumn(12, [
           createPresetComponent('search.l1.default-content'),
           createPresetComponent('layout.breadcrumb-header'),
           createPresetComponent('layout.category-navigator-top'),
+          ...(variant === 'B' ? [createPresetComponent('layout.category-navigator-side')] : []),
         ])]),
         createPresetRow([createPresetColumn(12, [
-          createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: 10 }),
+          createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: persona === 'corporate' ? 12 : 10 }),
           createPresetComponent('shared.ad-slot', { placement: 'AD_SEARCH_TOP' }),
         ])]),
       ],
@@ -476,16 +495,20 @@ const PRESET_PACK_OPTIONS = [
     label: 'Preset • Search L2',
     targetPageType: 'search_l2',
     description: 'L2 kırılımı için detay sonuç + benzer ilan kurgusu',
-    buildPayload: () => ({
+    personas: ['individual', 'corporate'],
+    variants: ['A', 'B'],
+    buildPayload: ({ persona = 'individual', variant = 'A' } = {}) => ({
       rows: [
         createPresetRow([createPresetColumn(12, [
           createPresetComponent('search.l2.default-content'),
           createPresetComponent('layout.breadcrumb-header'),
+          ...(variant === 'B' ? [createPresetComponent('media.auto-play-carousel-hero')] : []),
         ])]),
         createPresetRow([
           createPresetColumn(8, [
             createPresetComponent('data.price-title-block'),
             createPresetComponent('data.description-text-area'),
+            ...(persona === 'corporate' ? [createPresetComponent('data.attribute-grid-dynamic')] : []),
           ]),
           createPresetColumn(4, [
             createPresetComponent('data.seller-card'),
@@ -500,11 +523,14 @@ const PRESET_PACK_OPTIONS = [
     label: 'Preset • Listing Detail',
     targetPageType: null,
     description: 'İlan detay görünümü için medya + fiyat + satıcı + harita + benzer ilan seti',
-    buildPayload: () => ({
+    personas: ['individual', 'corporate'],
+    variants: ['A', 'B'],
+    buildPayload: ({ persona = 'individual', variant = 'A' } = {}) => ({
       rows: [
         createPresetRow([createPresetColumn(12, [
           createPresetComponent('layout.breadcrumb-header'),
           createPresetComponent('media.advanced-photo-gallery'),
+          ...(variant === 'B' ? [createPresetComponent('media.video-3d-tour-player')] : []),
         ])]),
         createPresetRow([
           createPresetColumn(8, [
@@ -517,6 +543,7 @@ const PRESET_PACK_OPTIONS = [
             createPresetComponent('data.seller-card'),
             createPresetComponent('interactive.interactive-map'),
             createPresetComponent('layout.sticky-action-bar'),
+            ...(persona === 'corporate' ? [createPresetComponent('media.ad-promo-slot', { placement: 'AD_HOME_TOP', campaign_label: 'Ofis Vitrin' })] : []),
           ]),
         ]),
       ],
@@ -527,24 +554,34 @@ const PRESET_PACK_OPTIONS = [
     label: 'Preset • Listing Create StepX',
     targetPageType: 'listing_create_stepX',
     description: 'İlan ver adımı için default blok + bilgilendirme + doping + reklam',
-    buildPayload: () => ({
+    personas: ['individual', 'corporate'],
+    variants: ['A', 'B'],
+    buildPayload: ({ persona = 'individual', variant = 'A' } = {}) => ({
       rows: [
         createPresetRow([createPresetColumn(12, [
           createPresetComponent('listing.create.default-content'),
-          createPresetComponent('shared.text-block', { title: 'İlan Ver Akışı', body: 'Adımları tamamlayarak ilanınızı güvenle yayınlayın.' }),
+          createPresetComponent('shared.text-block', {
+            title: persona === 'corporate' ? 'Kurumsal İlan Yönetimi' : 'Bireysel İlan Ver Akışı',
+            body: persona === 'corporate'
+              ? 'Ofis ekibiniz için standart form ve ödeme adımlarını hızlıca tamamlayın.'
+              : 'Adımları tamamlayarak ilanınızı güvenle yayınlayın.',
+          }),
         ])]),
         createPresetRow([createPresetColumn(12, [
           createPresetComponent('interactive.doping-selector', {
-            available_dopings: ['Vitrin', 'Acil', 'Anasayfa'],
+            available_dopings: persona === 'corporate' ? ['Premium', 'Vitrin', 'Anasayfa'] : ['Vitrin', 'Acil', 'Anasayfa'],
             show_prices: true,
-            default_selected: 'Vitrin',
+            default_selected: persona === 'corporate' ? 'Premium' : 'Vitrin',
           }),
           createPresetComponent('shared.ad-slot', { placement: 'AD_LOGIN_1' }),
+          ...(variant === 'B' ? [createPresetComponent('data.seller-card')] : []),
         ])]),
       ],
     }),
   },
 ];
+
+const PRESET_ANALYTICS_STORAGE_KEY = 'content-builder-preset-analytics-v1';
 
 const buildMenuComponentLibraryItems = (menuItems) => {
   const activeItems = Array.isArray(menuItems)
@@ -919,6 +956,10 @@ export default function AdminContentBuilder() {
   const [libraryMenuCategoryFilterId, setLibraryMenuCategoryFilterId] = useState('');
   const [collapsedLibraryGroups, setCollapsedLibraryGroups] = useState({});
   const [selectedPresetPackId, setSelectedPresetPackId] = useState('');
+  const [presetPersona, setPresetPersona] = useState('individual');
+  const [presetVariant, setPresetVariant] = useState('A');
+  const [presetAnalytics, setPresetAnalytics] = useState({ events: [] });
+  const [lastAppliedPresetMeta, setLastAppliedPresetMeta] = useState(null);
 
   const [policyReport, setPolicyReport] = useState(null);
   const [policyReportLoading, setPolicyReportLoading] = useState(false);
@@ -1088,10 +1129,74 @@ export default function AdminContentBuilder() {
     return grouped;
   }, [filteredLibraryItems]);
 
-  const selectedPresetPack = useMemo(
-    () => PRESET_PACK_OPTIONS.find((item) => item.id === selectedPresetPackId) || null,
-    [selectedPresetPackId],
+  const availablePresetPacks = useMemo(
+    () => PRESET_PACK_OPTIONS.filter((item) => !Array.isArray(item.personas) || item.personas.includes(presetPersona)),
+    [presetPersona],
   );
+
+  const selectedPresetPack = useMemo(
+    () => availablePresetPacks.find((item) => item.id === selectedPresetPackId) || null,
+    [availablePresetPacks, selectedPresetPackId],
+  );
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(PRESET_ANALYTICS_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.events)) {
+        setPresetAnalytics({ events: parsed.events.slice(-500) });
+      }
+    } catch (_err) {
+      // ignore storage parse errors
+    }
+  }, []);
+
+  useEffect(() => {
+    const stillAvailable = availablePresetPacks.some((item) => item.id === selectedPresetPackId);
+    if (!stillAvailable) setSelectedPresetPackId('');
+  }, [availablePresetPacks, selectedPresetPackId]);
+
+  const trackPresetAnalyticsEvent = useCallback((event) => {
+    setPresetAnalytics((prev) => {
+      const nextEvents = [...(prev?.events || []), event].slice(-500);
+      const nextPayload = { events: nextEvents };
+      try {
+        window.localStorage.setItem(PRESET_ANALYTICS_STORAGE_KEY, JSON.stringify(nextPayload));
+      } catch (_err) {
+        // ignore storage quota errors
+      }
+      return nextPayload;
+    });
+  }, []);
+
+  const presetAnalyticsSummary = useMemo(() => {
+    const grouped = new Map();
+    (presetAnalytics?.events || []).forEach((event) => {
+      const key = `${event.preset_id}__${event.persona}__${event.variant}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          preset_id: event.preset_id,
+          preset_label: event.preset_label,
+          persona: event.persona,
+          variant: event.variant,
+          apply_count: 0,
+          publish_count: 0,
+        });
+      }
+      const entry = grouped.get(key);
+      if (event.event_type === 'apply') entry.apply_count += 1;
+      if (event.event_type === 'publish') entry.publish_count += 1;
+    });
+
+    return Array.from(grouped.values())
+      .map((entry) => ({
+        ...entry,
+        publish_rate: entry.apply_count > 0 ? Math.round((entry.publish_count / entry.apply_count) * 100) : 0,
+      }))
+      .sort((a, b) => b.apply_count - a.apply_count)
+      .slice(0, 8);
+  }, [presetAnalytics]);
 
   const draggingLibraryComponentName = useMemo(() => {
     if (!draggingLibraryComponentKey) return '';
@@ -1213,15 +1318,30 @@ export default function AdminContentBuilder() {
       setStatus(`Preset hedef page_type (${selectedPresetPack.targetPageType}) otomatik seçildi. Sayfayı Yükle/Oluştur ile devam edin.`);
     }
 
-    const nextPayload = selectedPresetPack.buildPayload();
+    const nextPayload = selectedPresetPack.buildPayload({
+      persona: presetPersona,
+      variant: presetVariant,
+      pageType,
+    });
     setPayloadJson(normalizePayload(nextPayload, selectedPresetPack.targetPageType || pageType));
     setSelectedRowId('');
     setSelectedColumnId('');
     setSelectedComponentId('');
+    const meta = {
+      preset_id: selectedPresetPack.id,
+      preset_label: selectedPresetPack.label,
+      persona: presetPersona,
+      variant: presetVariant,
+      event_type: 'apply',
+      occurred_at: new Date().toISOString(),
+      page_type: selectedPresetPack.targetPageType || pageType,
+    };
+    setLastAppliedPresetMeta(meta);
+    trackPresetAnalyticsEvent(meta);
     setError('');
     refreshPreviewAfterInteraction();
     autoFocusPreviewIfVisible();
-    toast.success(`${selectedPresetPack.label} uygulandı.`);
+    toast.success(`${selectedPresetPack.label} (${presetPersona.toUpperCase()}-${presetVariant}) uygulandı.`);
   };
 
   const updateComponentPropValue = (rowId, columnId, componentId, propKey, propValue) => {
@@ -1368,6 +1488,43 @@ export default function AdminContentBuilder() {
     }
   };
 
+  const applyPolicyAutoFix = async () => {
+    if (!activeDraftId) {
+      toast.error('Önce aktif bir draft yükleyin.');
+      return;
+    }
+
+    const saveOk = await saveDraft();
+    if (!saveOk) return;
+
+    setPolicyReportLoading(true);
+    try {
+      const response = await axios.post(
+        `${API}/admin/site/content-layout/revisions/${activeDraftId}/policy-autofix`,
+        {},
+        { headers: authHeaders },
+      );
+
+      const item = response.data?.item;
+      const reportAfter = response.data?.report_after || null;
+      const actions = Array.isArray(response.data?.auto_fix_actions) ? response.data.auto_fix_actions : [];
+
+      if (item?.payload_json) {
+        setPayloadJson(normalizePayload(item.payload_json, pageType));
+      }
+      if (reportAfter) setPolicyReport(reportAfter);
+      setStatus(`Auto-fix uygulandı (${actions.length} aksiyon).`);
+      toast.success(`Auto-fix tamamlandı (${actions.length} düzeltme).`);
+      refreshPreviewAfterInteraction();
+      autoFocusPreviewIfVisible();
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Auto-fix uygulanamadı');
+      toast.error('Auto-fix uygulanamadı.');
+    } finally {
+      setPolicyReportLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (pageType !== 'listing_create_stepX' || !activeDraftId) {
       setPolicyReport(null);
@@ -1406,6 +1563,14 @@ export default function AdminContentBuilder() {
       setStatus('Draft publish edildi. Yeni draft oluşturuluyor...');
       await getRevisionsForPage(pageId, pageType);
       setStatus('Publish tamamlandı. Yeni draft hazır.');
+      if (lastAppliedPresetMeta) {
+        trackPresetAnalyticsEvent({
+          ...lastAppliedPresetMeta,
+          event_type: 'publish',
+          occurred_at: new Date().toISOString(),
+          page_type: pageType,
+        });
+      }
       toast.success('Publish tamamlandı.');
     } catch (err) {
       setError(err?.response?.data?.detail || 'Publish başarısız');
@@ -1856,13 +2021,33 @@ export default function AdminContentBuilder() {
 
           <div className="flex min-w-[280px] flex-wrap items-center gap-2" data-testid="admin-content-builder-preset-controls">
             <select
+              className="h-10 rounded border px-2 text-xs"
+              value={presetPersona}
+              onChange={(event) => setPresetPersona(event.target.value)}
+              data-testid="admin-content-builder-preset-persona-select"
+            >
+              <option value="individual">Persona: Individual</option>
+              <option value="corporate">Persona: Corporate</option>
+            </select>
+
+            <select
+              className="h-10 rounded border px-2 text-xs"
+              value={presetVariant}
+              onChange={(event) => setPresetVariant(event.target.value)}
+              data-testid="admin-content-builder-preset-variant-select"
+            >
+              <option value="A">A Variant</option>
+              <option value="B">B Variant</option>
+            </select>
+
+            <select
               className="h-10 min-w-[240px] rounded border px-2 text-xs"
               value={selectedPresetPackId}
               onChange={(event) => setSelectedPresetPackId(event.target.value)}
               data-testid="admin-content-builder-preset-select"
             >
               <option value="">Preset Pack Seçin</option>
-              {PRESET_PACK_OPTIONS.map((preset) => (
+              {availablePresetPacks.map((preset) => (
                 <option key={preset.id} value={preset.id}>{preset.label}</option>
               ))}
             </select>
@@ -1896,6 +2081,16 @@ export default function AdminContentBuilder() {
 
           <button
             type="button"
+            className="h-10 rounded border border-amber-300 bg-amber-50 px-4 text-xs text-amber-800"
+            onClick={applyPolicyAutoFix}
+            disabled={!activeDraftId || policyReportLoading || pageType !== 'listing_create_stepX'}
+            data-testid="admin-content-builder-policy-autofix-button"
+          >
+            Auto-Fix Uygula
+          </button>
+
+          <button
+            type="button"
             className="h-10 rounded border px-4 text-xs"
             onClick={() => setShowPreviewComparison((prev) => !prev)}
             data-testid="admin-content-builder-preview-toggle-button"
@@ -1914,8 +2109,30 @@ export default function AdminContentBuilder() {
         {selectedPresetPack ? (
           <div className="mt-2 rounded border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800" data-testid="admin-content-builder-preset-description">
             <strong>{selectedPresetPack.label}</strong> — {selectedPresetPack.description}
+            <span className="ml-2" data-testid="admin-content-builder-preset-active-meta">
+              Persona: {presetPersona.toUpperCase()} • Variant: {presetVariant}
+            </span>
           </div>
         ) : null}
+
+        <div className="mt-2 rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs text-indigo-800" data-testid="admin-content-builder-preset-analytics-panel">
+          <div className="font-semibold" data-testid="admin-content-builder-preset-analytics-title">Preset A/B İstatistikleri</div>
+          {presetAnalyticsSummary.length > 0 ? (
+            <div className="mt-1 space-y-1" data-testid="admin-content-builder-preset-analytics-list">
+              {presetAnalyticsSummary.map((item) => (
+                <div key={`${item.preset_id}-${item.persona}-${item.variant}`} className="flex flex-wrap gap-2" data-testid={`admin-content-builder-preset-analytics-item-${item.preset_id}-${item.persona}-${item.variant}`}>
+                  <span className="font-medium">{item.preset_label}</span>
+                  <span>{item.persona.toUpperCase()}-{item.variant}</span>
+                  <span>Apply: {item.apply_count}</span>
+                  <span>Publish: {item.publish_count}</span>
+                  <span>Publish Rate: %{item.publish_rate}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-1 text-[11px]" data-testid="admin-content-builder-preset-analytics-empty">Henüz preset istatistiği yok.</div>
+          )}
+        </div>
 
         <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-600" data-testid="admin-content-builder-meta-row">
           <span data-testid="admin-content-builder-page-id">page_id: {pageId || '-'}</span>
