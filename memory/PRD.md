@@ -173,6 +173,14 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Data-testid coverage yüksek (AdminContentBuilder 80 adet)
 - Home sayfada test amaçlı “Content Builder Aktif” metni kaldırıldı, daha nötr içerik yayınlandı.
 
+### P2.1/P2.2/P2.3 Son İyileştirme Notları
+- `layout_preview=draft` akışında draft bulunamazsa published fallback eklendi (kırılma yerine kontrollü fallback).
+- Startup stabilitesi için backend SQL bootstrap adımları `asyncio.wait_for` ile timeout’a alındı (uzun DB lock durumunda sonsuz bekleme engellendi).
+- Ek doğrulama raporu: `/app/test_reports/iteration_123.json`
+  - P2.1 guard senaryoları (disallowed component/props) verified
+  - P2.2 category-tree picker + binding operations verified
+  - P2.3 draft preview auth/fallback davranışı verified
+
 ### Güncel Sonraki İşler
 - P2.1: Listing wizard için component-level props guard (izinli prop whitelist + schema doğrulama).
 - P2.2: Binding panelde kategori seçimini ID yerine ağaç/arama dropdown ile kolaylaştırma.
