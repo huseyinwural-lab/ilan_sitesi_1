@@ -97,6 +97,44 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - P1: Content-only builder’ın Home/Search L1/L2 runtime renderer ile frontend entegrasyonu.
 - P2: İlan Ver adımlarında kontrollü (iş kuralı bozmayan) dinamik içerik düzeni.
 
+## 2026-03-04 (P1 — Admin Content Builder UI + Frontend Runtime Entegrasyonu)
+
+### Tamamlananlar
+- Yeni admin ekranı eklendi: `frontend/src/pages/admin/AdminContentBuilder.js`
+  - Route: `/admin/site-design/content-builder`
+  - Component Library
+  - Sortable Canvas (satır/sütun ve component sıralama + drag/drop)
+  - Width Selector (Desktop/Tablet/Mobile 1..12)
+  - Draft kaydet + Publish + payload preview
+- Backoffice route entegrasyonu:
+  - `frontend/src/portals/backoffice/BackofficePortalApp.jsx`
+  - Sol menü entegrasyonu: `frontend/src/components/Layout.js`
+  - RBAC route rule eklendi/fixlendi: `frontend/src/shared/adminRbac.js`
+
+### Runtime Renderer (Home + Search L1/L2)
+- Yeni ortak renderer: `frontend/src/components/layout-builder/LayoutRenderer.js`
+- Yeni resolve hook: `frontend/src/hooks/useContentLayoutResolve.js`
+- Home runtime bağlandı: `frontend/src/pages/public/HomePageRefreshed.js`
+  - `home` + `module=global` resolve
+  - Runtime layout varsa LayoutRenderer, yoksa mevcut statik içerik fallback
+- Search runtime bağlandı: `frontend/src/pages/public/SearchPage.js`
+  - Kategori seviyesine göre `search_l1` / `search_l2` resolve
+  - Runtime layout varsa render, yoksa mevcut L1/L2 template fallback
+  - Kategori listesi fetch’i `Promise.allSettled` ile dayanıklı hale getirildi
+
+### Data-testid
+- Yeni admin builder UI içinde tüm kritik/etkileşimli elemanlara test id eklendi (66+ coverage, testing report doğruladı).
+
+### Test Durumu
+- Testing agent raporu: `/app/test_reports/iteration_120.json`
+  - Frontend doğrulama PASS, RBAC route bug fix uygulandı.
+- Auto frontend smoke: Home/Search runtime-fallback akışları render hatası olmadan yükleniyor.
+
+### Sonraki Adımlar
+- P1.1: Builder UI’ye gerçek sürükle-bırak deneyimini daha akıcı hale getirme (row/column tutma alanları + drop indicator).
+- P1.2: Search L1/L2 için kategoriye özel binding yönetim akışını admin ekranına “tek tık bağla/çöz” olarak ekleme.
+- P2: Listing create stepX runtime bileşen eşlemesi ve controlled form contract.
+
 ### P0 — Google Autocomplete Real Mode (manuel key destekli)
 - Backend eklendi:
   - `GET /api/places/config`
