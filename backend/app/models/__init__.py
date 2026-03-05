@@ -61,6 +61,8 @@ from app.models.layout_builder import (
     LayoutComponentDefinition,
     LayoutPage,
     LayoutPageType,
+    LayoutPresetEvent,
+    LayoutPresetEventType,
     LayoutRevision,
     LayoutRevisionStatus,
 )

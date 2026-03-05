@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+import asyncio
+from datetime import datetime, timedelta, timezone
 import logging
 import time
 import uuid
@@ -11,7 +12,7 @@ from jsonschema import Draft7Validator
 from jsonschema.exceptions import SchemaError
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, desc, func, select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -34,6 +35,8 @@ from app.models.layout_builder import (
     LayoutComponentDefinition,
     LayoutPage,
     LayoutPageType,
+    LayoutPresetEvent,
+    LayoutPresetEventType,
     LayoutRevision,
     LayoutRevisionStatus,
 )
@@ -57,6 +60,18 @@ _METRICS = {
     "resolve_total_latency_ms": 0.0,
 }
 
+TRANSIENT_DB_ERROR_MARKERS = (
+    "timeout",
+    "timed out",
+    "connection reset",
+    "connection aborted",
+    "server closed the connection",
+    "could not connect",
+    "too many connections",
+    "deadlock",
+    "db_error",
+)
+
 LISTING_CREATE_ALLOWED_COMPONENTS = {
     "listing.create.default-content": set(),
     "shared.text-block": {"title", "body"},
@@ -79,6 +94,33 @@ LISTING_MAX_COMPONENTS_PER_COLUMN = 12
 LISTING_TEXT_TITLE_MAX = 160
 LISTING_TEXT_BODY_MAX = 4000
 LISTING_MAX_DOPING_OPTIONS = 8
+
+
+def _is_transient_db_error(exc: Exception) -> bool:
+    if isinstance(exc, SQLAlchemyError):
+        message = str(getattr(exc, "orig", exc) or "").lower()
+    else:
+        message = str(exc or "").lower()
+    return any(marker in message for marker in TRANSIENT_DB_ERROR_MARKERS)
+
+
+async def _run_with_db_retry(session: AsyncSession, operation, *, retries: int = 2):
+    last_exc: Optional[Exception] = None
+    for attempt in range(1, retries + 1):
+        try:
+            return await operation()
+        except Exception as exc:
+            last_exc = exc
+            if attempt >= retries or not _is_transient_db_error(exc):
+                raise
+            try:
+                await session.rollback()
+            except Exception:
+                pass
+            await asyncio.sleep(min(0.25 * attempt, 0.75))
+    if last_exc:
+        raise last_exc
+    raise RuntimeError("db_retry_operation_failed")
 
 
 class ComponentDefinitionPayload(BaseModel):
@@ -122,6 +164,19 @@ class LayoutUnbindPayload(BaseModel):
     country: str = Field(min_length=2, max_length=5)
     module: str = Field(min_length=2, max_length=64)
     category_id: str
+
+
+class LayoutPresetEventPayload(BaseModel):
+    preset_id: str = Field(min_length=2, max_length=120)
+    preset_label: str = Field(min_length=2, max_length=200)
+    persona: str = Field(min_length=2, max_length=32)
+    variant: str = Field(min_length=1, max_length=16)
+    event_type: LayoutPresetEventType
+    page_type: Optional[LayoutPageType] = None
+    layout_page_id: Optional[str] = None
+    country: Optional[str] = Field(default=None, min_length=2, max_length=5)
+    module: Optional[str] = Field(default=None, min_length=2, max_length=64)
+    metadata_json: dict = Field(default_factory=dict)
 
 
 def _cache_key(country: str, module: str, page_type: LayoutPageType, category_id: Optional[str]) -> str:
@@ -197,6 +252,24 @@ def _serialize_binding(row: LayoutBinding) -> dict[str, Any]:
         "is_active": bool(row.is_active),
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+    }
+
+
+def _serialize_preset_event(row: LayoutPresetEvent) -> dict[str, Any]:
+    return {
+        "id": str(row.id),
+        "layout_page_id": str(row.layout_page_id) if row.layout_page_id else None,
+        "page_type": row.page_type.value if row.page_type else None,
+        "country": row.country,
+        "module": row.module,
+        "preset_id": row.preset_id,
+        "preset_label": row.preset_label,
+        "persona": row.persona,
+        "variant": row.variant,
+        "event_type": row.event_type.value,
+        "actor_user_id": str(row.actor_user_id) if row.actor_user_id else None,
+        "metadata_json": row.metadata_json or {},
+        "created_at": row.created_at.isoformat() if row.created_at else None,
     }
 
 
@@ -1020,15 +1093,19 @@ async def create_layout_page_admin(
     session: AsyncSession = Depends(get_db),
 ):
     try:
-        row = await create_layout_page(
-            session,
-            page_type=payload.page_type,
-            country=payload.country,
-            module=payload.module,
-            category_id=payload.category_id,
-            actor_user_id=current_user.get("id"),
-        )
-        await session.commit()
+        async def _op():
+            created_row = await create_layout_page(
+                session,
+                page_type=payload.page_type,
+                country=payload.country,
+                module=payload.module,
+                category_id=payload.category_id,
+                actor_user_id=current_user.get("id"),
+            )
+            await session.commit()
+            return created_row
+
+        row = await _run_with_db_retry(session, _op)
     except ValueError as exc:
         await session.rollback()
         if str(exc) == "layout_page_scope_conflict":
@@ -1098,13 +1175,17 @@ async def create_draft_revision_admin(
         _validate_listing_runtime_guard_or_400(payload.payload_json)
 
     try:
-        row = await create_draft_revision(
-            session,
-            layout_page_id=page_id,
-            payload_json=payload.payload_json,
-            actor_user_id=current_user.get("id"),
-        )
-        await session.commit()
+        async def _op():
+            created_row = await create_draft_revision(
+                session,
+                layout_page_id=page_id,
+                payload_json=payload.payload_json,
+                actor_user_id=current_user.get("id"),
+            )
+            await session.commit()
+            return created_row
+
+        row = await _run_with_db_retry(session, _op)
     except ValueError as exc:
         await session.rollback()
         code = str(exc)
@@ -1150,7 +1231,12 @@ async def patch_draft_revision_admin(
         ip=request.client.host if request and request.client else None,
         user_agent=request.headers.get("user-agent") if request else None,
     )
-    await session.commit()
+
+    async def _op():
+        await session.commit()
+        return True
+
+    await _run_with_db_retry(session, _op)
     return {"ok": True, "item": _serialize_layout_revision(row)}
 
 
@@ -1168,12 +1254,16 @@ async def publish_revision_admin(
             _validate_listing_runtime_guard_or_400(target_revision.payload_json or {})
 
     try:
-        published = await publish_revision(
-            session,
-            revision_id=revision_id,
-            actor_user_id=current_user.get("id"),
-        )
-        await session.commit()
+        async def _op():
+            published_row = await publish_revision(
+                session,
+                revision_id=revision_id,
+                actor_user_id=current_user.get("id"),
+            )
+            await session.commit()
+            return published_row
+
+        published = await _run_with_db_retry(session, _op)
     except ValueError as exc:
         await session.rollback()
         code = str(exc)
@@ -1256,7 +1346,12 @@ async def auto_fix_revision_policy_admin(
     report_after = _build_listing_policy_report(fixed_payload)
 
     row.payload_json = fixed_payload
-    await session.commit()
+
+    async def _op():
+        await session.commit()
+        return True
+
+    await _run_with_db_retry(session, _op)
 
     return {
         "ok": True,
@@ -1274,12 +1369,16 @@ async def archive_revision_admin(
     session: AsyncSession = Depends(get_db),
 ):
     try:
-        row = await archive_revision(
-            session,
-            revision_id=revision_id,
-            actor_user_id=current_user.get("id"),
-        )
-        await session.commit()
+        async def _op():
+            archived_row = await archive_revision(
+                session,
+                revision_id=revision_id,
+                actor_user_id=current_user.get("id"),
+            )
+            await session.commit()
+            return archived_row
+
+        row = await _run_with_db_retry(session, _op)
     except ValueError as exc:
         await session.rollback()
         code = str(exc)
@@ -1319,15 +1418,19 @@ async def bind_layout_page_to_category(
     session: AsyncSession = Depends(get_db),
 ):
     try:
-        row = await bind_category_to_page(
-            session,
-            country=payload.country,
-            module=payload.module,
-            category_id=payload.category_id,
-            layout_page_id=payload.layout_page_id,
-            actor_user_id=current_user.get("id"),
-        )
-        await session.commit()
+        async def _op():
+            bind_row = await bind_category_to_page(
+                session,
+                country=payload.country,
+                module=payload.module,
+                category_id=payload.category_id,
+                layout_page_id=payload.layout_page_id,
+                actor_user_id=current_user.get("id"),
+            )
+            await session.commit()
+            return bind_row
+
+        row = await _run_with_db_retry(session, _op)
     except ValueError as exc:
         await session.rollback()
         code = str(exc)
@@ -1349,14 +1452,18 @@ async def unbind_layout_page_from_category(
     session: AsyncSession = Depends(get_db),
 ):
     try:
-        unbound_count = await unbind_category(
-            session,
-            country=payload.country,
-            module=payload.module,
-            category_id=payload.category_id,
-            actor_user_id=current_user.get("id"),
-        )
-        await session.commit()
+        async def _op():
+            count = await unbind_category(
+                session,
+                country=payload.country,
+                module=payload.module,
+                category_id=payload.category_id,
+                actor_user_id=current_user.get("id"),
+            )
+            await session.commit()
+            return count
+
+        unbound_count = await _run_with_db_retry(session, _op)
     except ValueError as exc:
         await session.rollback()
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -1444,6 +1551,113 @@ async def list_layout_audit_logs(
             for row in rows
         ],
         "pagination": {"page": page, "limit": limit, "total": total},
+    }
+
+
+@router.post("/admin/site/content-layout/preset-events")
+async def create_layout_preset_event(
+    payload: LayoutPresetEventPayload,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    layout_page_uuid = _as_uuid_or_400(payload.layout_page_id, field_name="layout_page_id") if payload.layout_page_id else None
+
+    actor_user_uuid = None
+    raw_actor_id = current_user.get("id") if isinstance(current_user, dict) else None
+    if raw_actor_id:
+        try:
+            actor_user_uuid = uuid.UUID(str(raw_actor_id))
+        except (TypeError, ValueError):
+            actor_user_uuid = None
+
+    row = LayoutPresetEvent(
+        layout_page_id=layout_page_uuid,
+        page_type=payload.page_type,
+        country=payload.country.upper() if payload.country else None,
+        module=payload.module.strip() if payload.module else None,
+        preset_id=payload.preset_id.strip(),
+        preset_label=payload.preset_label.strip(),
+        persona=payload.persona.strip().lower(),
+        variant=payload.variant.strip().upper(),
+        event_type=payload.event_type,
+        actor_user_id=actor_user_uuid,
+        metadata_json=payload.metadata_json if isinstance(payload.metadata_json, dict) else {},
+    )
+    session.add(row)
+
+    async def _op():
+        await session.commit()
+        await session.refresh(row)
+        return True
+
+    await _run_with_db_retry(session, _op)
+    return {"ok": True, "item": _serialize_preset_event(row)}
+
+
+@router.get("/admin/site/content-layout/preset-events/summary")
+async def get_layout_preset_event_summary(
+    days: int = Query(default=30, ge=1, le=365),
+    page_type: Optional[LayoutPageType] = Query(default=None),
+    country: Optional[str] = Query(default=None),
+    module: Optional[str] = Query(default=None),
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    del current_user
+    start_at = datetime.now(timezone.utc) - timedelta(days=days)
+
+    query = select(LayoutPresetEvent).where(LayoutPresetEvent.created_at >= start_at)
+    if page_type:
+        query = query.where(LayoutPresetEvent.page_type == page_type)
+    if country:
+        query = query.where(LayoutPresetEvent.country == country.upper())
+    if module:
+        query = query.where(LayoutPresetEvent.module == module.strip())
+
+    rows = (
+        (
+            await session.execute(
+                query.order_by(desc(LayoutPresetEvent.created_at)).limit(5000)
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    grouped: dict[tuple[str, str, str, str], dict[str, Any]] = {}
+    for row in rows:
+        key = (row.preset_id, row.preset_label, row.persona, row.variant)
+        if key not in grouped:
+            grouped[key] = {
+                "preset_id": row.preset_id,
+                "preset_label": row.preset_label,
+                "persona": row.persona,
+                "variant": row.variant,
+                "apply_count": 0,
+                "publish_count": 0,
+                "last_event_at": row.created_at.isoformat() if row.created_at else None,
+            }
+        target = grouped[key]
+        if row.event_type == LayoutPresetEventType.APPLY:
+            target["apply_count"] += 1
+        if row.event_type == LayoutPresetEventType.PUBLISH:
+            target["publish_count"] += 1
+        if row.created_at and (not target["last_event_at"] or row.created_at.isoformat() > str(target["last_event_at"])):
+            target["last_event_at"] = row.created_at.isoformat()
+
+    summary = []
+    for item in grouped.values():
+        apply_count = int(item["apply_count"])
+        publish_count = int(item["publish_count"])
+        item["publish_rate"] = int(round((publish_count / apply_count) * 100)) if apply_count > 0 else 0
+        summary.append(item)
+
+    summary.sort(key=lambda item: (item["apply_count"], item["publish_count"]), reverse=True)
+    return {
+        "ok": True,
+        "days": int(days),
+        "total_events": int(len(rows)),
+        "items": summary,
     }
 
 

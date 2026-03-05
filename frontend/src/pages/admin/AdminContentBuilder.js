@@ -581,8 +581,6 @@ const PRESET_PACK_OPTIONS = [
   },
 ];
 
-const PRESET_ANALYTICS_STORAGE_KEY = 'content-builder-preset-analytics-v1';
-
 const buildMenuComponentLibraryItems = (menuItems) => {
   const activeItems = Array.isArray(menuItems)
     ? menuItems.filter((item) => item && item.active_flag !== false && item.id)
@@ -958,17 +956,20 @@ export default function AdminContentBuilder() {
   const [selectedPresetPackId, setSelectedPresetPackId] = useState('');
   const [presetPersona, setPresetPersona] = useState('individual');
   const [presetVariant, setPresetVariant] = useState('A');
-  const [presetAnalytics, setPresetAnalytics] = useState({ events: [] });
+  const [presetAnalyticsSummary, setPresetAnalyticsSummary] = useState([]);
+  const [presetAnalyticsLoading, setPresetAnalyticsLoading] = useState(false);
   const [lastAppliedPresetMeta, setLastAppliedPresetMeta] = useState(null);
+  const [menuManagementHealth, setMenuManagementHealth] = useState(null);
 
   const [policyReport, setPolicyReport] = useState(null);
   const [policyReportLoading, setPolicyReportLoading] = useState(false);
+  const [lastAutoFixDiff, setLastAutoFixDiff] = useState(null);
 
   const previewComparisonRef = useRef(null);
 
   const getLibrary = useCallback(async () => {
     try {
-      const [componentDefsResponse, menuItemsResponse, dealerConfigResponse, topMenuResponse] = await Promise.allSettled([
+      const [componentDefsResponse, menuItemsResponse, dealerConfigResponse, topMenuResponse, menuHealthResponse] = await Promise.allSettled([
         axios.get(`${API}/admin/site/content-layout/components`, {
           headers: authHeaders,
           params: { page: 1, limit: 100, is_active: true },
@@ -982,6 +983,9 @@ export default function AdminContentBuilder() {
           params: { mode: 'draft' },
         }),
         axios.get(`${API}/menu/top-items`),
+        axios.get(`${API}/admin/menu-items/health`, {
+          headers: authHeaders,
+        }),
       ]);
 
       const fetchedItems = componentDefsResponse.status === 'fulfilled' && Array.isArray(componentDefsResponse.value.data?.items)
@@ -999,6 +1003,9 @@ export default function AdminContentBuilder() {
       const topMenuItems = topMenuResponse.status === 'fulfilled' && Array.isArray(topMenuResponse.value?.data)
         ? topMenuResponse.value.data
         : [];
+
+      const menuHealth = menuHealthResponse.status === 'fulfilled' ? menuHealthResponse.value?.data : null;
+      setMenuManagementHealth(menuHealth || null);
 
       const menuLibraryItems = [
         ...buildMenuComponentLibraryItems(menuItems),
@@ -1026,6 +1033,7 @@ export default function AdminContentBuilder() {
       setComponentLibrary(merged);
     } catch (_err) {
       setComponentLibrary(DEFAULT_COMPONENT_LIBRARY);
+      setMenuManagementHealth(null);
     }
   }, [authHeaders, country]);
 
@@ -1140,63 +1148,59 @@ export default function AdminContentBuilder() {
   );
 
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(PRESET_ANALYTICS_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.events)) {
-        setPresetAnalytics({ events: parsed.events.slice(-500) });
-      }
-    } catch (_err) {
-      // ignore storage parse errors
-    }
-  }, []);
-
-  useEffect(() => {
     const stillAvailable = availablePresetPacks.some((item) => item.id === selectedPresetPackId);
     if (!stillAvailable) setSelectedPresetPackId('');
   }, [availablePresetPacks, selectedPresetPackId]);
 
-  const trackPresetAnalyticsEvent = useCallback((event) => {
-    setPresetAnalytics((prev) => {
-      const nextEvents = [...(prev?.events || []), event].slice(-500);
-      const nextPayload = { events: nextEvents };
-      try {
-        window.localStorage.setItem(PRESET_ANALYTICS_STORAGE_KEY, JSON.stringify(nextPayload));
-      } catch (_err) {
-        // ignore storage quota errors
-      }
-      return nextPayload;
-    });
-  }, []);
+  const fetchPresetAnalyticsSummary = useCallback(async () => {
+    setPresetAnalyticsLoading(true);
+    try {
+      const response = await axios.get(`${API}/admin/site/content-layout/preset-events/summary`, {
+        headers: authHeaders,
+        params: {
+          days: 90,
+          page_type: pageType,
+          country: country.toUpperCase(),
+          module: moduleName.trim(),
+        },
+      });
+      const items = Array.isArray(response.data?.items) ? response.data.items : [];
+      setPresetAnalyticsSummary(items.slice(0, 8));
+    } catch (_err) {
+      setPresetAnalyticsSummary([]);
+    } finally {
+      setPresetAnalyticsLoading(false);
+    }
+  }, [authHeaders, country, moduleName, pageType]);
 
-  const presetAnalyticsSummary = useMemo(() => {
-    const grouped = new Map();
-    (presetAnalytics?.events || []).forEach((event) => {
-      const key = `${event.preset_id}__${event.persona}__${event.variant}`;
-      if (!grouped.has(key)) {
-        grouped.set(key, {
-          preset_id: event.preset_id,
-          preset_label: event.preset_label,
-          persona: event.persona,
-          variant: event.variant,
-          apply_count: 0,
-          publish_count: 0,
-        });
-      }
-      const entry = grouped.get(key);
-      if (event.event_type === 'apply') entry.apply_count += 1;
-      if (event.event_type === 'publish') entry.publish_count += 1;
-    });
+  useEffect(() => {
+    fetchPresetAnalyticsSummary();
+  }, [fetchPresetAnalyticsSummary]);
 
-    return Array.from(grouped.values())
-      .map((entry) => ({
-        ...entry,
-        publish_rate: entry.apply_count > 0 ? Math.round((entry.publish_count / entry.apply_count) * 100) : 0,
-      }))
-      .sort((a, b) => b.apply_count - a.apply_count)
-      .slice(0, 8);
-  }, [presetAnalytics]);
+  const trackPresetAnalyticsEvent = useCallback(async (event) => {
+    try {
+      await axios.post(`${API}/admin/site/content-layout/preset-events`, {
+        preset_id: event.preset_id,
+        preset_label: event.preset_label,
+        persona: event.persona,
+        variant: event.variant,
+        event_type: event.event_type,
+        page_type: event.page_type,
+        layout_page_id: event.layout_page_id || null,
+        country: country.toUpperCase(),
+        module: moduleName.trim(),
+        metadata_json: {
+          source: 'admin_content_builder',
+          occurred_at: event.occurred_at,
+        },
+      }, {
+        headers: authHeaders,
+      });
+      await fetchPresetAnalyticsSummary();
+    } catch (_err) {
+      // non-blocking analytics
+    }
+  }, [authHeaders, country, moduleName, fetchPresetAnalyticsSummary]);
 
   const draggingLibraryComponentName = useMemo(() => {
     if (!draggingLibraryComponentKey) return '';
@@ -1335,6 +1339,7 @@ export default function AdminContentBuilder() {
       event_type: 'apply',
       occurred_at: new Date().toISOString(),
       page_type: selectedPresetPack.targetPageType || pageType,
+      layout_page_id: pageId || null,
     };
     setLastAppliedPresetMeta(meta);
     trackPresetAnalyticsEvent(meta);
@@ -1506,6 +1511,7 @@ export default function AdminContentBuilder() {
       );
 
       const item = response.data?.item;
+      const reportBefore = response.data?.report_before || null;
       const reportAfter = response.data?.report_after || null;
       const actions = Array.isArray(response.data?.auto_fix_actions) ? response.data.auto_fix_actions : [];
 
@@ -1513,6 +1519,12 @@ export default function AdminContentBuilder() {
         setPayloadJson(normalizePayload(item.payload_json, pageType));
       }
       if (reportAfter) setPolicyReport(reportAfter);
+      setLastAutoFixDiff({
+        before: reportBefore,
+        after: reportAfter,
+        actions,
+        occurred_at: new Date().toISOString(),
+      });
       setStatus(`Auto-fix uygulandı (${actions.length} aksiyon).`);
       toast.success(`Auto-fix tamamlandı (${actions.length} düzeltme).`);
       refreshPreviewAfterInteraction();
@@ -1528,6 +1540,7 @@ export default function AdminContentBuilder() {
   useEffect(() => {
     if (pageType !== 'listing_create_stepX' || !activeDraftId) {
       setPolicyReport(null);
+      setLastAutoFixDiff(null);
       return;
     }
     fetchPolicyReport({ silent: true });
@@ -1569,6 +1582,7 @@ export default function AdminContentBuilder() {
           event_type: 'publish',
           occurred_at: new Date().toISOString(),
           page_type: pageType,
+          layout_page_id: pageId || null,
         });
       }
       toast.success('Publish tamamlandı.');
@@ -2117,7 +2131,9 @@ export default function AdminContentBuilder() {
 
         <div className="mt-2 rounded border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs text-indigo-800" data-testid="admin-content-builder-preset-analytics-panel">
           <div className="font-semibold" data-testid="admin-content-builder-preset-analytics-title">Preset A/B İstatistikleri</div>
-          {presetAnalyticsSummary.length > 0 ? (
+          {presetAnalyticsLoading ? (
+            <div className="mt-1 text-[11px]" data-testid="admin-content-builder-preset-analytics-loading">İstatistikler yükleniyor...</div>
+          ) : presetAnalyticsSummary.length > 0 ? (
             <div className="mt-1 space-y-1" data-testid="admin-content-builder-preset-analytics-list">
               {presetAnalyticsSummary.map((item) => (
                 <div key={`${item.preset_id}-${item.persona}-${item.variant}`} className="flex flex-wrap gap-2" data-testid={`admin-content-builder-preset-analytics-item-${item.preset_id}-${item.persona}-${item.variant}`}>
@@ -2187,6 +2203,36 @@ export default function AdminContentBuilder() {
           </div>
         ) : null}
 
+        {lastAutoFixDiff ? (
+          <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs" data-testid="admin-content-builder-policy-autofix-diff-panel">
+            <div className="font-semibold" data-testid="admin-content-builder-policy-autofix-diff-title">Auto-Fix Görsel Diff Özeti</div>
+            <div className="mt-1 text-[11px] text-slate-600" data-testid="admin-content-builder-policy-autofix-diff-meta">
+              {lastAutoFixDiff.occurred_at}
+            </div>
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2" data-testid="admin-content-builder-policy-autofix-diff-stats">
+              <div className="rounded border bg-white p-2" data-testid="admin-content-builder-policy-autofix-before">
+                <div className="font-medium">Before</div>
+                <div>Pass: {String(lastAutoFixDiff.before?.passed)}</div>
+                <div>Row: {lastAutoFixDiff.before?.stats?.row_count ?? '-'}</div>
+                <div>Component: {lastAutoFixDiff.before?.stats?.total_component_count ?? '-'}</div>
+              </div>
+              <div className="rounded border bg-white p-2" data-testid="admin-content-builder-policy-autofix-after">
+                <div className="font-medium">After</div>
+                <div>Pass: {String(lastAutoFixDiff.after?.passed)}</div>
+                <div>Row: {lastAutoFixDiff.after?.stats?.row_count ?? '-'}</div>
+                <div>Component: {lastAutoFixDiff.after?.stats?.total_component_count ?? '-'}</div>
+              </div>
+            </div>
+            {Array.isArray(lastAutoFixDiff.actions) && lastAutoFixDiff.actions.length > 0 ? (
+              <ul className="mt-2 list-disc space-y-1 pl-5" data-testid="admin-content-builder-policy-autofix-actions">
+                {lastAutoFixDiff.actions.map((action, index) => (
+                  <li key={`${action}-${index}`} data-testid={`admin-content-builder-policy-autofix-action-${index}`}>{action}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
+
         {showPreviewComparison ? (
           <div ref={previewComparisonRef} className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2" data-testid="admin-content-builder-preview-iframes">
             <div className="rounded border bg-white p-2" data-testid="admin-content-builder-preview-published-wrap">
@@ -2210,6 +2256,15 @@ export default function AdminContentBuilder() {
           <p className="mt-1 text-xs text-slate-500" data-testid="admin-content-builder-library-note">
             Bir sütunu seçip bileşen ekleyin. Menü bileşenleri: <strong data-testid="admin-content-builder-library-menu-count">{menuComponentCount}</strong>
           </p>
+
+          {menuManagementHealth ? (
+            <div
+              className={`mt-2 rounded border px-2 py-1 text-[11px] ${menuManagementHealth.enabled ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-800'}`}
+              data-testid="admin-content-builder-menu-health-badge"
+            >
+              Menü API: {menuManagementHealth.enabled ? 'AKTİF' : 'FEATURE-DISABLED (fallback aktif)'} • Toplam Menü: {menuManagementHealth.total_items ?? '-'}
+            </div>
+          ) : null}
 
           <div className="mt-3 space-y-2" data-testid="admin-content-builder-library-filters">
             <input

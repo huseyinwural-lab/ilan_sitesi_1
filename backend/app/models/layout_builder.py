@@ -45,6 +45,11 @@ class LayoutAuditAction(str, enum.Enum):
     UPDATE_SCHEMA = "UPDATE_SCHEMA"
 
 
+class LayoutPresetEventType(str, enum.Enum):
+    APPLY = "apply"
+    PUBLISH = "publish"
+
+
 class LayoutComponentDefinition(Base):
     __tablename__ = "layout_component_definitions"
 
@@ -230,4 +235,52 @@ class LayoutAuditLog(Base):
         CheckConstraint("before_json IS NULL OR jsonb_typeof(before_json) = 'object'", name="ck_layout_audit_before_json_object"),
         CheckConstraint("jsonb_typeof(after_json) = 'object'", name="ck_layout_audit_after_json_object"),
         Index("ix_layout_audit_entity_created", "entity_type", "entity_id", "created_at"),
+    )
+
+
+class LayoutPresetEvent(Base):
+    __tablename__ = "layout_preset_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    layout_page_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("layout_pages.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    page_type: Mapped[LayoutPageType | None] = mapped_column(
+        Enum(
+            LayoutPageType,
+            name="layout_page_type",
+            native_enum=True,
+            values_callable=lambda enum_cls: [item.value for item in enum_cls],
+        ),
+        nullable=True,
+    )
+    country: Mapped[str | None] = mapped_column(String(5), nullable=True)
+    module: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    preset_id: Mapped[str] = mapped_column(String(120), nullable=False)
+    preset_label: Mapped[str] = mapped_column(String(200), nullable=False)
+    persona: Mapped[str] = mapped_column(String(32), nullable=False)
+    variant: Mapped[str] = mapped_column(String(16), nullable=False)
+    event_type: Mapped[LayoutPresetEventType] = mapped_column(
+        Enum(
+            LayoutPresetEventType,
+            name="layout_preset_event_type",
+            native_enum=True,
+            values_callable=lambda enum_cls: [item.value for item in enum_cls],
+        ),
+        nullable=False,
+        index=True,
+    )
+    actor_user_id: Mapped[uuid.UUID | None] = mapped_column(PGUUID(as_uuid=True), nullable=True)
+    metadata_json: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
+
+    page: Mapped[LayoutPage | None] = relationship("LayoutPage", lazy="joined")
+
+    __table_args__ = (
+        CheckConstraint("char_length(preset_id) > 0", name="ck_layout_preset_events_preset_id_not_empty"),
+        CheckConstraint("char_length(persona) > 0", name="ck_layout_preset_events_persona_not_empty"),
+        Index("ix_layout_preset_events_grouping", "preset_id", "persona", "variant", "event_type", "created_at"),
+        Index("ix_layout_preset_events_scope", "country", "module", "created_at"),
     )

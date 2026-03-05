@@ -306,6 +306,7 @@ MEILI_SETTINGS_SYNC_INTERVAL_SECONDS = 300
 MEILI_SETTINGS_RETRY_ATTEMPTS = 3
 MEILI_SETTINGS_RETRY_BASE_SECONDS = 1.0
 MEILI_SETTINGS_RETRY_MAX_SECONDS = 8.0
+MEILI_SETTINGS_CALL_TIMEOUT_SECONDS = 6.0
 MEILI_SETTINGS_CIRCUIT_THRESHOLD = 3
 MEILI_SETTINGS_CIRCUIT_OPEN_SECONDS = 60
 
@@ -31293,6 +31294,28 @@ def _ensure_menu_management_enabled() -> None:
         raise HTTPException(status_code=403, detail="feature_disabled")
 
 
+@api_router.get("/admin/menu-items/health")
+async def admin_menu_items_health(
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    ctx = await resolve_admin_country_context(request, current_user=current_user, session=session)
+    sample_query = select(func.count(MenuItem.id)).where(MenuItem.deleted_at.is_(None))
+    if ctx.mode == "country" and ctx.country:
+        sample_query = sample_query.where(MenuItem.country_code == ctx.country)
+    total_items = int((await session.execute(sample_query)).scalar_one() or 0)
+
+    return {
+        "enabled": bool(ADMIN_MENU_MANAGEMENT_ENABLED),
+        "status": "enabled" if ADMIN_MENU_MANAGEMENT_ENABLED else "feature_disabled",
+        "fallback_recommended": not bool(ADMIN_MENU_MANAGEMENT_ENABLED),
+        "context_mode": ctx.mode,
+        "context_country": ctx.country,
+        "total_items": total_items,
+    }
+
+
 @api_router.get("/admin/menu-items")
 async def admin_list_menu_items(
     request: Request,
@@ -33843,8 +33866,14 @@ async def _meili_settings_sync_job(runtime: Dict[str, str], filterable_attribute
     sortable = ["price", "premium_score", "published_at", "featured_until_ts", "urgent_until_ts"]
     for attempt in range(1, MEILI_SETTINGS_RETRY_ATTEMPTS + 1):
         try:
-            await meili_update_filterable_attributes(runtime, filterable_attributes)
-            await meili_update_sortable_attributes(runtime, sortable)
+            await asyncio.wait_for(
+                meili_update_filterable_attributes(runtime, filterable_attributes),
+                timeout=MEILI_SETTINGS_CALL_TIMEOUT_SECONDS,
+            )
+            await asyncio.wait_for(
+                meili_update_sortable_attributes(runtime, sortable),
+                timeout=MEILI_SETTINGS_CALL_TIMEOUT_SECONDS,
+            )
             return
         except Exception:
             if attempt >= MEILI_SETTINGS_RETRY_ATTEMPTS:
@@ -37396,6 +37425,7 @@ async def get_vehicle_similar_listings(
         )
 
     items = []
+    source_vehicle = (source.attributes or {}).get("vehicle") or {}
     source_published_ref = source.published_at or source.created_at or datetime.now(timezone.utc)
     for row in similar_rows:
         media_meta = _listing_media_meta(row)
@@ -37417,10 +37447,35 @@ async def get_vehicle_similar_listings(
         recency_days_gap = abs((source_published_ref - row_published_ref).days)
         recency_score = max(40, 100 - min(60, recency_days_gap * 4))
 
-        final_score = int(round((price_similarity * 0.45) + (city_score * 0.25) + (recency_score * 0.30)))
+        row_make = str(vehicle.get("make_key") or "").strip().lower()
+        row_model = str(vehicle.get("model_key") or "").strip().lower()
+        source_make = str(source_vehicle.get("make_key") or "").strip().lower()
+        source_model = str(source_vehicle.get("model_key") or "").strip().lower()
+        make_model_score = 50
+        if source_make and row_make and source_make == row_make:
+            make_model_score = 85
+        if source_model and row_model and source_model == row_model:
+            make_model_score = 100
+
+        source_year = int(source_vehicle.get("year") or 0)
+        row_year = int(vehicle.get("year") or 0)
+        year_score = 65
+        if source_year > 0 and row_year > 0:
+            year_gap = abs(source_year - row_year)
+            year_score = max(45, 100 - min(55, year_gap * 12))
+
+        final_score = int(round(
+            (price_similarity * 0.35)
+            + (city_score * 0.18)
+            + (recency_score * 0.17)
+            + (make_model_score * 0.2)
+            + (year_score * 0.1)
+        ))
         score_explanation = [
             f"Fiyat benzerliği: %{price_similarity}",
             "Konum eşleşmesi yüksek" if same_city else "Farklı şehir ama benzer kategori",
+            f"Marka/Model uyumu: %{make_model_score}",
+            f"Model yılı yakınlığı: %{year_score}",
             f"Yayın tarihi yakınlığı: %{recency_score}",
         ]
 
@@ -37439,6 +37494,8 @@ async def get_vehicle_similar_listings(
                     "price_similarity": int(price_similarity),
                     "city_match": int(city_score),
                     "recency": int(recency_score),
+                    "make_model_match": int(make_model_score),
+                    "year_match": int(year_score),
                 },
             }
         )

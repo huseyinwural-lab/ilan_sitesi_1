@@ -1,0 +1,90 @@
+{
+  "summary": "Iteration 131 - Tested preset analytics, menu-items health, policy-autofix, nearby-pois, vehicle similar/seller fields. Backend APIs all working. Frontend AdminContentBuilder UI elements verified including persona/variant selects, analytics panel, autofix button, and menu health badge.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "AdminContentBuilder",
+        "issues": [
+          "Console shows HTML hydration warnings: <span> cannot be a child of <select>/<option> - minor React hydration issue"
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_131_features.py",
+    "/app/test_reports/pytest/pytest_results_131.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "React hydration warning in AdminContentBuilder.js around lines 2041-2065 for select/option elements - caused by dynamic span wrappers inside select elements"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_131_features.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "95%"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "Created test preset event via /api/admin/site/content-layout/preset-events POST",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All backend endpoints working correctly. AdminContentBuilder has all required UI elements with proper data-testid attributes. Transient timeouts may occur but APIs respond correctly with retry.",
+  "tested_endpoints": {
+    "/api/admin/menu-items/health": {
+      "status": "PASS",
+      "response_fields": ["enabled", "status", "fallback_recommended"],
+      "sample_response": {"enabled": false, "status": "feature_disabled", "fallback_recommended": true}
+    },
+    "/api/admin/site/content-layout/preset-events POST": {
+      "status": "PASS",
+      "response_fields": ["ok", "item"],
+      "notes": "Creates analytics event with preset_id, persona, variant, event_type"
+    },
+    "/api/admin/site/content-layout/preset-events/summary GET": {
+      "status": "PASS",
+      "response_fields": ["ok", "items", "days", "total_events"],
+      "notes": "Returns preset statistics with apply_count, publish_count, publish_rate"
+    },
+    "/api/admin/site/content-layout/revisions/{id}/policy-autofix POST": {
+      "status": "PASS",
+      "response_fields": ["ok", "item", "report_before", "report_after", "auto_fix_actions"],
+      "notes": "Applies auto-fix to draft revision layout"
+    },
+    "/api/public/geo/nearby-pois GET": {
+      "status": "PASS",
+      "response_fields": ["center", "radius_km", "items", "source"],
+      "notes": "Returns nearby POIs from OSM or fallback source"
+    },
+    "/api/v1/listings/vehicle/{id}": {
+      "status": "PASS",
+      "seller_fields": ["rating", "reviews_count", "response_rate"],
+      "sample_seller": {"rating": 4.4, "reviews_count": 226, "response_rate": 0}
+    },
+    "/api/v1/listings/vehicle/{id}/similar": {
+      "status": "PASS",
+      "response_fields": ["items", "fallback_used"],
+      "item_fields": ["score", "score_explanation", "score_breakdown"],
+      "score_breakdown_fields": ["price_similarity", "city_match", "recency", "make_model_match", "year_match"]
+    }
+  },
+  "frontend_elements_verified": {
+    "admin-content-builder-preset-persona-select": "SELECT - Found and working",
+    "admin-content-builder-preset-variant-select": "SELECT - Found and working",
+    "admin-content-builder-preset-analytics-panel": "DIV - Found with preset statistics",
+    "admin-content-builder-policy-autofix-button": "BUTTON - Found and clickable",
+    "admin-content-builder-menu-health-badge": "DIV - Shows 'FEATURE-DISABLED (fallback aktif)' status",
+    "admin-content-builder-policy-autofix-diff-panel": "DIV - Available after autofix execution"
+  },
+  "regression_tests": {
+    "home_page": "PASS - Loads correctly with categories and listings",
+    "search_page": "PASS - Loads correctly with filters",
+    "detail_page": "PASS - Shows seller info with rating/reviews/response_rate and similar listings"
+  }
+}
