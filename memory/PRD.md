@@ -186,6 +186,40 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - P2.2: Binding panelde kategori seçimini ID yerine ağaç/arama dropdown ile kolaylaştırma.
 - P2.3: Runtime preview mode (`?layout_preview=draft`) ile admin’den canlı önizleme.
 
+## 2026-03-05 (P1 — P0 Mini Entegrasyon + Sağ Drawer Formlar + Credential Stabilizasyonu)
+
+### Uygulananlar
+- **Admin Content Builder formları sağ Drawer'a taşındı** (`Formları Aç`):
+  - Layout Page Formu: `page_type`, `country`, `module`, `category_id` + `Sayfayı Yükle/Oluştur`
+  - Binding Formu: kategori arama, kategori ağacı seçimi, `Aktifi Getir / Bu Page'i Bağla / Binding Kaldır`
+- **Drag-drop temel seviyede güçlendirildi**:
+  - Component Library öğeleri artık doğrudan sürüklenip canvas column drop alanına bırakılabiliyor.
+  - Mevcut component taşımaları (column/row içi) korunarak draft payload ile entegre çalışıyor.
+- **Draft/Published akışı UI entegrasyonu doğrulandı**:
+  - Draft kaydet ve publish butonları draft state'e bağlı çalışıyor.
+  - Publish sonrası yeni draft hazırlama akışı korunuyor.
+- **Admin credential stabilizasyonu (SEED kontrolü)**:
+  - `server.py` içinde fixture şifre çözümüne `SEED_*` alias desteği eklendi.
+  - `SEED/FIXTURE` env yoksa preview/test için deterministik fallback şifreler eklendi:
+    - `admin@platform.com / Admin123!`
+    - `dealer@platform.com / Dealer123!`
+    - `user@platform.com / User123!`
+    - `countryadmin@platform.com / Country123!`
+  - Startup sırasında preview ortamında fixture kullanıcılar ensure edilerek login kırılganlığı azaltıldı.
+
+### Test Durumu
+- Testing agent raporu: `/app/test_reports/iteration_125.json`
+  - Backend: **11/11 PASS**
+  - Frontend: **PASS** (drawer, form alanları, draft/publish, drag-drop doğrulandı)
+- Ek doğrulama:
+  - `auto_frontend_testing_agent`: PASS
+  - `deep_testing_backend_v2`: kritik akışlar PASS (login + layout API + resolve)
+
+### Güncel Önceliklendirme
+- **P0 (tamamlandı):** P0 mini entegrasyon + sağ drawer form kurgusu + admin erişim stabilizasyonu
+- **P1 (devam):** menü bileşenlerini Component Library’e alma (#665), canvas UX ince iyileştirmeler
+- **P2:** ilan-ver controlled runtime ileri fazları ve ek hardening
+
 ### P0 — Google Autocomplete Real Mode (manuel key destekli)
 - Backend eklendi:
   - `GET /api/places/config`
