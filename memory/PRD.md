@@ -20,6 +20,54 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ## 2026-03-05 (P1 — Reklam Yönetimi Formu: Firma Adı + İletişim)
 
+## 2026-03-05 (P0 — Content Builder Finalizasyonu: Görev Emri Uyumlu)
+
+### Kullanıcı Talebi (Uygulandı)
+- Content Builder, verilen görev emrine göre (Layout/Category/CTA/Listing/SubCategory/Ad/Media/Map) finalize edildi.
+- Ek istek uygulandı: canvas sütunları kilitli değil, **sağa-sola sürükle-bırak** ile taşınabilir.
+
+### Uygulananlar
+- **Frontend — AdminContentBuilder.js**
+  - Component şemaları görev emriyle hizalandı:
+    - `category.navigator`: `start_level=L0`, `depth=L1|Lall`, `placement=side|top`
+    - `cta.block`: `mode=link|quick_filter`, `quick_filter`, `target`, font/style kontrol alanları
+    - `listing.grid`: `source`, `columns`, `rows`, `auto_refresh=off|15s|30s|60s`, `order=newest|random|price`
+    - `listing.list`: `source`, `pagination`, `order`, query alanları
+    - `ad.slot`: `placement`, `size`, `rotation`
+    - media: `mode=static|dynamic`, `placement`
+    - yeni manuel içerik componentleri: `content.heading`, `content.text-block`
+  - Component Veri Kaynağı Matrisi ve library source kartları görev emri endpointleriyle güncellendi.
+  - **Column drag**: `admin-content-builder-drag-column-handle-*` ile aynı satırda sütun sıralama drag-drop eklendi.
+  - Payload üretimi deterministik hale getirildi (`order` alanları + id üretim standardizasyonu).
+- **Frontend — ExtendedRuntimeBlocks.jsx / AdSlot.jsx**
+  - Category Navigator artık `/api/categories/tree?country=...&depth=...` üzerinden çalışır.
+  - CTA quick_filter yönlendirmeleri:
+    - `/acil?badge=urgent`
+    - `/vitrin?badge=showcase`
+    - `/kampanya?badge=campaign`
+  - Listing Grid/List veri kaynağı normalize edildi: `/api/public/listings` (source→query map + auto refresh + pagination).
+  - Listing Card tek DTO template (foto/başlık/fiyat/lokasyon/badge) ile grid/list içinde ortaklaştırıldı.
+  - Sub Category Block: `/api/categories/children` + `/api/categories/listing-counts` entegrasyonu.
+  - Ad Slot: `/api/ads/resolve?placement=...&country=...` + boş state koruması.
+  - Media dynamic mode: `/api/banners?placement=...`.
+  - Map Block: `/api/public/listings` lat/lng kaynaklı gösterim.
+- **Backend — server.py**
+  - Yeni public contract endpointleri eklendi:
+    - `GET /api/categories/tree`
+    - `GET /api/categories/listing-counts`
+    - `GET /api/public/listings`
+    - `GET /api/ads/resolve`
+    - `GET /api/banners`
+  - `GET /api/categories/children` depth destekli nested yanıt verecek şekilde genişletildi.
+- **Backend — layout_builder_routes.py**
+  - Kilitli policy sözlüğündeki API/source spec metinleri görev emri endpointleriyle güncellendi.
+
+### Test Durumu
+- Python + JS lint PASS (backend/frontend ilgili dosyalar).
+- Backend contract test (`deep_testing_backend_v2`) PASS (8/8 endpoint).
+- Frontend regresyon (`auto_frontend_testing_agent`) PASS (7/7).
+- Smoke screenshot PASS: matrix + RBAC + column drag handle görünürlüğü.
+
 ## 2026-03-05 (P0 — Content Builder Component Veri Kaynağı Tanımlama)
 
 ## 2026-03-05 (P0 — Backend Policy Lock + RBAC Görünürlük Kolonu)
