@@ -270,6 +270,41 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - “Seçili Sütuna Ekle” aksiyonu yeni bileşen için başarılı
   - Blocker yok
 
+## 2026-03-05 (P1+P2 Tamamlama — Runtime Renderer + Grouped Library + Policy Report)
+
+### Tamamlanan İşler
+- **Runtime renderer bağlantıları tamamlandı:**
+  - Yeni dosya: `ExtendedRuntimeBlocks.jsx`
+  - Home/Search runtime registry’lerine tüm yeni component key’leri bağlandı:
+    - `layout.*`, `media.*`, `data.*`, `interactive.*`
+  - Wizard runtime’a `interactive.doping-selector` render/sanitize akışı eklendi.
+- **Component Library UX yükseltildi (P1):**
+  - Kategori bazlı grouped/collapsible görünüm
+  - Hızlı arama
+  - Grup filtresi
+  - Menü bileşenleri için kategori ağacı filtresi
+- **Policy guard ve policy report (P2) tamamlandı:**
+  - Backend: `interactive.doping-selector` whitelist + validation kuralları
+  - Backend: `GET /api/admin/site/content-layout/revisions/{id}/policy-report`
+  - Backend: publish öncesi listing_create guard (API seviyesinde enforce)
+  - Frontend: Policy Report paneli (PASS/FAIL check listesi), listing_create publish öncesi otomatik kontrol
+- **Preview/drag-drop UX iyileştirmeleri:**
+  - Drag/drop sonrası auto-focus (seçilen component)
+  - Preview açıkken auto-scroll
+  - Preview iframe URL’lerinde refresh token ile güncel görünüm tetikleme
+
+### Doğrulama / Testler
+- Smoke UI screenshot: grouped library + policy report butonu doğrulandı.
+- Manual backend API testleri:
+  - listing_create valid draft + policy report + publish: PASS
+  - invalid doping option: 400 (`listing_create_doping_option_not_allowed`)
+- Testing agent raporu: `/app/test_reports/iteration_127.json`
+  - Backend: **100% (9/9)**
+  - Frontend: **100%**
+
+### Bilinen Not
+- Bu ortamda `/api/admin/menu-items` endpointi `403 feature_disabled` dönebiliyor; library otomatik fallback (`/api/admin/dealer-portal/config`, `/api/menu/top-items`) ile çalışır.
+
 ### P0 — Google Autocomplete Real Mode (manuel key destekli)
 - Backend eklendi:
   - `GET /api/places/config`
