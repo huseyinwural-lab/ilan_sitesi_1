@@ -1,3 +1,185 @@
+## Content Builder Cleanup Regression Test (Mar 5, 2026 - LATEST) ✅ COMPLETE PASS
+
+### Test Summary
+Content Builder cleanup regression testing as per Turkish review request: "Content Builder temizliği için regresyon testi yap: URL: https://panel-manual-tr.preview.emergentagent.com/admin/login. Giriş: admin@platform.com / Admin123!. Amaç: Kullanıcının istediği kaldırma listesinin Content Builder içinde artık görünmediğini doğrulamak. Kontrol listesi: 1) /admin/site-design/content-builder sayfasına git. 2) Aşağıdaki developer araçlarının görünmediğini doğrula: 15 Sayfa Tipi Seed (API) butonu, Mevcut draft'leri güncelle checkbox'ı, Policy Report butonu, Auto-Fix Uygula butonu, Payload Preview (JSON) alanı/textarea. 3) Component Library içinde aşağıdakilerin görünmediğini doğrula: Test Component, Valid Test Component, Test Valid Component, Menü • Dealer Header/Sidebar/Modül Menüsü, dealer.quick.*, dealer.nav.* items. 4) Negatif kontrol: normal bir component (ör: Home Varsayılan İçerik) hala görünür olmalı. 5) Sonuçta pass/fail ve bulguları ver."
+
+### Test Flow Executed:
+1. ✅ Admin login (admin@platform.com / Admin123!) → authentication successful
+2. ✅ Navigate to /admin/site-design/content-builder → page loads correctly
+3. ✅ Verify developer tools removal (5 items) → all removed
+4. ✅ Verify test components removal (17 items) → all removed
+5. ✅ Negative control check → normal components exist
+6. ✅ Console error monitoring → no blocking errors
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS - 3/3 MAJOR TESTS):
+
+**1. Developer Tools Removal**: ✅ **COMPLETE SUCCESS (5/5)**
+  - **15 Sayfa Tipi Seed (API) button**: ✅ NOT VISIBLE (correctly removed)
+  - **Mevcut draft'leri güncelle checkbox**: ✅ NOT VISIBLE (correctly removed)
+  - **Policy Report button**: ✅ NOT VISIBLE (correctly removed)
+  - **Auto-Fix Uygula button**: ✅ NOT VISIBLE (correctly removed)
+  - **Payload Preview (JSON) area/textarea**: ✅ NOT VISIBLE (correctly removed)
+  - **CRITICAL**: All developer debugging tools successfully removed from Content Builder interface
+
+**2. Test Components Removal**: ✅ **COMPLETE SUCCESS (17/17)**
+  - **Test Component**: ✅ NOT FOUND (correctly removed)
+  - **Valid Test Component**: ✅ NOT FOUND (correctly removed)
+  - **Test Valid Component**: ✅ NOT FOUND (correctly removed)
+  - **Menü • Dealer Header Menüsü**: ✅ NOT FOUND (correctly removed)
+  - **Menü • Dealer Sidebar Menüsü**: ✅ NOT FOUND (correctly removed)
+  - **Menü • Dealer Modül Menüsü**: ✅ NOT FOUND (correctly removed)
+  - **dealer.quick.favorites**: ✅ NOT FOUND (correctly removed)
+  - **dealer.quick.messages**: ✅ NOT FOUND (correctly removed)
+  - **dealer.quick.create_listing**: ✅ NOT FOUND (correctly removed)
+  - **dealer.quick.profile**: ✅ NOT FOUND (correctly removed)
+  - **dealer.nav.overview**: ✅ NOT FOUND (correctly removed)
+  - **dealer.nav.listings**: ✅ NOT FOUND (correctly removed)
+  - **dealer.nav.messages**: ✅ NOT FOUND (correctly removed)
+  - **dealer.nav.customers**: ✅ NOT FOUND (correctly removed)
+  - **dealer.nav.reports**: ✅ NOT FOUND (correctly removed)
+  - **dealer.nav.purchase**: ✅ NOT FOUND (correctly removed)
+  - **dealer.nav.settings**: ✅ NOT FOUND (correctly removed)
+  - **CRITICAL**: All test and dealer-specific menu components successfully removed from Component Library
+
+**3. Negative Control - Normal Components Still Exist**: ✅ **PASS (4/4)**
+  - **Home Varsayılan İçerik**: ✅ FOUND (should exist)
+  - **Ana Sayfa**: ✅ FOUND (should exist)
+  - **Varsayılan İçerik**: ✅ FOUND (should exist)
+  - **İçerik**: ✅ FOUND (should exist)
+  - **CRITICAL**: Normal production components still exist in Component Library, confirming cleanup did not affect legitimate content
+
+### UI Elements Verified:
+
+#### ✅ CONTENT BUILDER INTERFACE (/admin/site-design/content-builder):
+
+**Header Controls (Working)**:
+- ✅ "Formlan Aç" (Open Form) button
+- ✅ "Persona: Individual" dropdown
+- ✅ "A Variant" dropdown
+- ✅ "Preset Pack Seçin" (Select Preset Pack) dropdown
+- ✅ "Preset Uygula" (Apply Preset) button - LEGITIMATE, not the removed "Auto-Fix Uygula"
+- ✅ "Bu Sayfaya Standart Şablon" (Apply Standard Template) button
+- ✅ "Draft Kaydet" (Save Draft) button
+- ✅ "Publish" button
+- ✅ "Preview Karşılaştır" (Compare Preview) button
+
+**Component Library (Left Panel)**:
+- ✅ "Component Library" section header
+- ✅ Component category dropdown: "Tüm Gruplar" (All Groups)
+- ✅ Category filter: "Menü için kategori ağacı filtresi"
+- ✅ "Temel Builder Bileşenleri" (Base Builder Components): 6 items
+- ✅ Normal components visible:
+  - Home Varsayılan İçerik (home-default-content)
+  - Search L1 Varsayılan İçerik (search-l1-default-content)
+  - Search L2 Varsayılan İçerik (search-l2-default-content)
+  - İlan Ver Varsayılan İçerik (listing-create-default-content)
+- ✅ "Seçili Sütuna Ekle" (Add to Selected Column) buttons
+
+**Sortable Canvas (Right Panel)**:
+- ✅ Canvas area with row/column configuration
+- ✅ Component configuration forms
+- ✅ "Sil" (Delete) buttons
+- ✅ Drag and drop functionality
+
+**Removed Elements (NOT VISIBLE - CORRECT)**:
+- ❌ NO "15 Sayfa Tipi Seed (API)" button
+- ❌ NO "Mevcut draft'leri güncelle" checkbox
+- ❌ NO "Policy Report" button
+- ❌ NO "Auto-Fix Uygula" button (different from legitimate "Preset Uygula")
+- ❌ NO "Payload Preview (JSON)" textarea
+- ❌ NO test components (Test Component, Valid Test Component, etc.)
+- ❌ NO dealer menu components (Dealer Header/Sidebar/Modül Menüsü)
+- ❌ NO dealer.quick.* components
+- ❌ NO dealer.nav.* components
+
+### Screenshots Captured:
+1. **content-builder-initial.png**: Content Builder initial page load
+2. **content-builder-component-library.png**: Component Library showing normal components
+3. **content-builder-full-page.png**: Full Content Builder interface verification
+
+### Test Results Summary:
+- **Total Major Tests**: 3 critical checks
+- **Fully Passed**: 3/3 (100%)
+- **Developer Tools Removal**: ✅ PASS (5/5 items correctly removed)
+- **Test Components Removal**: ✅ PASS (17/17 items correctly removed)
+- **Negative Control**: ✅ PASS (4/4 normal components exist)
+
+### Technical Implementation Verification:
+
+**Content Builder Component**: AdminContentBuilder.jsx
+- Developer tools section has been removed from UI
+- Test components have been filtered out of Component Library
+- Normal production components remain accessible
+- Cleanup does not affect legitimate functionality
+
+**Testing Methodology**:
+- Used refined Playwright selectors to avoid false positives
+- Verified absence of specific text strings in page content
+- Checked for data-testid attributes of removed elements
+- Confirmed normal components still render in Component Library
+- Multiple selector variations tested to ensure accuracy
+
+### Console Monitoring:
+- **Critical Console Errors**: 0 ✅ (EXCELLENT)
+- **Console Warnings**: Some hydration warnings (non-critical, React development warnings)
+- **Runtime**: Clean execution with no blocking errors
+- **Network Errors**: Minor 403s (expected, related to feature flags)
+
+### Final Status:
+- **Overall Result**: ✅ **COMPLETE PASS** - Content Builder cleanup 100% successful
+- **Developer Tools**: ✅ PRODUCTION-READY (all debug tools removed)
+- **Test Components**: ✅ PRODUCTION-READY (all test items removed from Component Library)
+- **Normal Components**: ✅ PRODUCTION-READY (legitimate components preserved)
+- **Production Readiness**: ✅ READY - Content Builder is clean and ready for production use
+
+### Review Request Compliance:
+
+**Turkish Requirements Check**:
+1. ✅ "/admin/site-design/content-builder sayfasına git"
+   - **PASSED**: Successfully navigated to Content Builder page
+   
+2. ✅ "Aşağıdaki developer araçlarının görünmediğini doğrula"
+   - **PASSED**: All 5 developer tools NOT visible:
+     - 15 Sayfa Tipi Seed (API) butonu ✅
+     - Mevcut draft'leri güncelle checkbox'ı ✅
+     - Policy Report butonu ✅
+     - Auto-Fix Uygula butonu ✅
+     - Payload Preview (JSON) alanı/textarea ✅
+   
+3. ✅ "Component Library içinde aşağıdakilerin görünmediğini doğrula"
+   - **PASSED**: All 17 test/dealer components NOT visible:
+     - Test Component items (3 items) ✅
+     - Dealer Menu items (3 items) ✅
+     - dealer.quick.* items (4 items) ✅
+     - dealer.nav.* items (7 items) ✅
+   
+4. ✅ "Negatif kontrol: normal bir component hala görünür olmalı"
+   - **PASSED**: Normal components still visible:
+     - Home Varsayılan İçerik ✅
+     - Ana Sayfa components ✅
+     - Search components ✅
+     - İlan Ver components ✅
+
+**Kısa PASS/FAIL**: ✅ **PASS** - Tüm gereksinimler karşılandı (All requirements met)
+
+**Bulgular (Findings)**: 
+- ✅ Tüm developer araçları başarıyla kaldırılmış (All developer tools successfully removed)
+- ✅ Tüm test ve dealer component'leri Component Library'den temizlenmiş (All test and dealer components cleaned from Component Library)
+- ✅ Normal üretim component'leri korunmuş ve erişilebilir durumda (Normal production components preserved and accessible)
+- ✅ Hiçbir kritik hata yok, sistem production'a hazır (No critical errors, system ready for production)
+
+**Overall Compliance**: ✅ 4/4 requirements fully satisfied
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Mar 5, 2026 (LATEST)
+- **Message**: Content Builder Cleanup Regression Test SUCCESSFULLY COMPLETED with 100% PASS rate. All Turkish review request requirements fully satisfied. CRITICAL VERIFICATION: Content Builder cleanup is PRODUCTION-READY with all developer tools and test components successfully removed. FLOW VERIFICATION: 1) ADMIN LOGIN: Successfully authenticated as admin@platform.com at /admin/login ✅. 2) CONTENT BUILDER ACCESS: Navigated to /admin/site-design/content-builder page successfully ✅. 3) DEVELOPER TOOLS REMOVAL (5/5 ITEMS): ALL removed correctly - 15 Sayfa Tipi Seed button NOT visible ✅, Mevcut draft'leri güncelle checkbox NOT visible ✅, Policy Report button NOT visible ✅, Auto-Fix Uygula button NOT visible ✅, Payload Preview (JSON) area NOT visible ✅. 4) TEST COMPONENTS REMOVAL (17/17 ITEMS): ALL removed correctly - Test Component variations (3) NOT found ✅, Dealer menu components (3) NOT found ✅, dealer.quick.* items (4) NOT found ✅, dealer.nav.* items (7) NOT found ✅. 5) NEGATIVE CONTROL (4/4): Normal production components still exist and accessible - Home Varsayılan İçerik FOUND ✅, Ana Sayfa FOUND ✅, Search components FOUND ✅, other legitimate components FOUND ✅. TESTING METHODOLOGY: Used refined Playwright selectors with multiple variations to avoid false positives. Verified both visual presence and text content in page body. Confirmed Component Library shows only legitimate production components. CONSOLE STATUS: 0 critical errors, clean runtime execution. **FINAL VERDICT: ✅ COMPLETE PASS** - Content Builder cleanup 100% successful, all requirements met, production-ready. No issues found, no action items.
+
+---
+
+
 ## Detail Page Seller Card Metrics Test (Mar 5, 2026 - LATEST) ✅ COMPLETE PASS
 
 ### Test Summary

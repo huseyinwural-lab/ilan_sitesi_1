@@ -403,6 +403,30 @@ const LIBRARY_GROUP_DEFINITIONS = [
   { id: 'other', label: 'Diğer' },
 ];
 
+const BLOCKED_BUILDER_ITEM_NAME_KEYWORDS = [
+  'test component',
+  'valid test component',
+  'test valid component',
+  'dealer header menüsü',
+  'dealer sidebar menüsü',
+  'dealer modül menüsü',
+];
+
+const isBlockedBuilderLibraryItem = (item) => {
+  const key = String(item?.key || '').toLowerCase();
+  const name = String(item?.name || '').toLowerCase();
+  const menuLabel = String(item?.default_props?.menu_label || '').toLowerCase();
+  const menuSlug = String(item?.default_props?.menu_slug || '').toLowerCase();
+  const haystack = `${key} ${name} ${menuLabel} ${menuSlug}`;
+
+  if (key.startsWith('menu.snapshot.dealer.')) return true;
+  if (haystack.includes('dealer.quick.')) return true;
+  if (haystack.includes('dealer.nav.')) return true;
+  if (key.startsWith('test.') || key.includes('.test')) return true;
+
+  return BLOCKED_BUILDER_ITEM_NAME_KEYWORDS.some((keyword) => haystack.includes(keyword));
+};
+
 const resolveLibraryGroupByKey = (componentKey) => {
   const key = String(componentKey || '');
   if (key.startsWith('menu.snapshot.')) return 'menu';
@@ -808,115 +832,7 @@ const buildMenuComponentLibraryItems = (menuItems) => {
   });
 };
 
-const buildDealerPortalMenuLibraryItems = (configPayload) => {
-  const navItems = Array.isArray(configPayload?.nav_items)
-    ? configPayload.nav_items.filter((item) => item && item.visible !== false && item.id)
-    : [];
-  const moduleItems = Array.isArray(configPayload?.modules)
-    ? configPayload.modules.filter((item) => item && item.visible !== false && item.id)
-    : [];
-
-  if (!navItems.length && !moduleItems.length) return [];
-
-  const normalizeChild = (item, fallbackPrefix = 'item') => ({
-    id: item.id || `${fallbackPrefix}-${item.key || item.label || 'x'}`,
-    label: item.label || item.label_i18n_key || item.title_i18n_key || item.key || 'Menu',
-    slug: item.slug || item.key || '',
-    url: item.url || item.route || '',
-  });
-
-  const headerChildren = navItems.filter((item) => item.location === 'header').map((item) => normalizeChild(item, 'header'));
-  const sidebarChildren = navItems.filter((item) => item.location === 'sidebar').map((item) => normalizeChild(item, 'sidebar'));
-  const moduleChildren = moduleItems.map((item) => normalizeChild(item, 'module'));
-
-  const rootBlocks = [
-    {
-      key: 'menu.snapshot.dealer.header',
-      label: 'Dealer Header Menüsü',
-      children: headerChildren,
-    },
-    {
-      key: 'menu.snapshot.dealer.sidebar',
-      label: 'Dealer Sidebar Menüsü',
-      children: sidebarChildren,
-    },
-    {
-      key: 'menu.snapshot.dealer.modules',
-      label: 'Dealer Modül Menüsü',
-      children: moduleChildren,
-    },
-  ].filter((item) => item.children.length > 0);
-
-  const rootComponents = rootBlocks.map((block) => ({
-    key: block.key,
-    name: `Menü • ${block.label}`,
-    schema_json: {
-      type: 'object',
-      properties: {
-        title: { type: 'string', title: 'Başlık' },
-        show_children: { type: 'boolean', title: 'Alt menüleri göster' },
-        style: { type: 'string', title: 'Görünüm', enum: ['list', 'chips'] },
-        max_children: { type: 'integer', title: 'Maks. alt menü', minimum: 1, maximum: 20 },
-      },
-      additionalProperties: true,
-    },
-    default_props: {
-      title: block.label,
-      menu_label: block.label,
-      menu_url: '',
-      menu_slug: block.key,
-      menu_item_id: block.key,
-      show_children: true,
-      style: 'list',
-      max_children: 10,
-      menu_snapshot: {
-        id: block.key,
-        label: block.label,
-        slug: block.key,
-        url: '',
-        children: block.children,
-      },
-    },
-  }));
-
-  const rowComponents = navItems.map((item) => {
-    const label = item.label || item.label_i18n_key || item.key || 'Menu';
-    return {
-      key: `menu.snapshot.dealer.nav.${item.id}`,
-      name: `Alt Menü • ${label}`,
-      schema_json: {
-        type: 'object',
-        properties: {
-          title: { type: 'string', title: 'Başlık' },
-          show_children: { type: 'boolean', title: 'Alt menüleri göster' },
-          style: { type: 'string', title: 'Görünüm', enum: ['list', 'chips'] },
-          max_children: { type: 'integer', title: 'Maks. alt menü', minimum: 1, maximum: 20 },
-        },
-        additionalProperties: true,
-      },
-      default_props: {
-        title: label,
-        menu_label: label,
-        menu_url: item.route || '',
-        menu_slug: item.key || '',
-        menu_item_id: item.id,
-        menu_parent_label: item.location || '',
-        show_children: true,
-        style: 'list',
-        max_children: 8,
-        menu_snapshot: {
-          id: item.id,
-          label,
-          slug: item.key || '',
-          url: item.route || '',
-          children: [],
-        },
-      },
-    };
-  });
-
-  return [...rootComponents, ...rowComponents];
-};
+const buildDealerPortalMenuLibraryItems = () => [];
 
 const buildTopMenuLibraryItems = (topItems) => {
   const items = Array.isArray(topItems) ? topItems.filter((item) => item && item.id) : [];
@@ -1173,13 +1089,10 @@ export default function AdminContentBuilder() {
   const [presetAnalyticsSummary, setPresetAnalyticsSummary] = useState([]);
   const [presetAnalyticsLoading, setPresetAnalyticsLoading] = useState(false);
   const [lastAppliedPresetMeta, setLastAppliedPresetMeta] = useState(null);
-  const [seedDefaultsLoading, setSeedDefaultsLoading] = useState(false);
-  const [seedOverwriteExistingDraft, setSeedOverwriteExistingDraft] = useState(true);
   const [menuManagementHealth, setMenuManagementHealth] = useState(null);
 
-  const [policyReport, setPolicyReport] = useState(null);
-  const [policyReportLoading, setPolicyReportLoading] = useState(false);
-  const [lastAutoFixDiff, setLastAutoFixDiff] = useState(null);
+  const [, setPolicyReport] = useState(null);
+  const [, setPolicyReportLoading] = useState(false);
 
   const previewComparisonRef = useRef(null);
 
@@ -1263,7 +1176,7 @@ export default function AdminContentBuilder() {
           merged.push(item);
         }
       });
-      setComponentLibrary(merged);
+      setComponentLibrary(merged.filter((item) => !isBlockedBuilderLibraryItem(item)));
     } catch (_err) {
       setComponentLibrary(DEFAULT_COMPONENT_LIBRARY);
       setMenuManagementHealth(null);
@@ -1607,37 +1520,6 @@ export default function AdminContentBuilder() {
     toast.success(`${selectedPresetPack.label} (${presetPersona.toUpperCase()}-${presetVariant}) uygulandı.`);
   };
 
-  const seedStandardPageTypes = async () => {
-    setSeedDefaultsLoading(true);
-    setError('');
-    setStatus('');
-    try {
-      const response = await axios.post(
-        `${API}/admin/site/content-layout/pages/seed-defaults`,
-        {
-          country: country.toUpperCase(),
-          module: moduleName.trim(),
-          persona: presetPersona,
-          variant: presetVariant,
-          overwrite_existing_draft: seedOverwriteExistingDraft,
-        },
-        { headers: authHeaders },
-      );
-
-      const summary = response.data?.summary || {};
-      setStatus(
-        `Standart 15 sayfa tipi seed tamamlandı • page:${summary.created_pages || 0} / draft(create:${summary.created_drafts || 0}, update:${summary.updated_drafts || 0}, skip:${summary.skipped_drafts || 0})`,
-      );
-      toast.success('15 standart sayfa tipi için seed işlemi tamamlandı.');
-      await fetchPresetAnalyticsSummary();
-    } catch (err) {
-      setError(err?.response?.data?.detail || 'Standart seed işlemi başarısız');
-      toast.error('Standart sayfa tipi seed başarısız.');
-    } finally {
-      setSeedDefaultsLoading(false);
-    }
-  };
-
   const updateComponentPropValue = (rowId, columnId, componentId, propKey, propValue) => {
     const next = deepClone(payloadJson);
     const row = (next.rows || []).find((item) => item.id === rowId);
@@ -1782,54 +1664,9 @@ export default function AdminContentBuilder() {
     }
   };
 
-  const applyPolicyAutoFix = async () => {
-    if (!activeDraftId) {
-      toast.error('Önce aktif bir draft yükleyin.');
-      return;
-    }
-
-    const saveOk = await saveDraft();
-    if (!saveOk) return;
-
-    setPolicyReportLoading(true);
-    try {
-      const response = await axios.post(
-        `${API}/admin/site/content-layout/revisions/${activeDraftId}/policy-autofix`,
-        {},
-        { headers: authHeaders },
-      );
-
-      const item = response.data?.item;
-      const reportBefore = response.data?.report_before || null;
-      const reportAfter = response.data?.report_after || null;
-      const actions = Array.isArray(response.data?.auto_fix_actions) ? response.data.auto_fix_actions : [];
-
-      if (item?.payload_json) {
-        setPayloadJson(normalizePayload(item.payload_json, pageType));
-      }
-      if (reportAfter) setPolicyReport(reportAfter);
-      setLastAutoFixDiff({
-        before: reportBefore,
-        after: reportAfter,
-        actions,
-        occurred_at: new Date().toISOString(),
-      });
-      setStatus(`Auto-fix uygulandı (${actions.length} aksiyon).`);
-      toast.success(`Auto-fix tamamlandı (${actions.length} düzeltme).`);
-      refreshPreviewAfterInteraction();
-      autoFocusPreviewIfVisible();
-    } catch (err) {
-      setError(err?.response?.data?.detail || 'Auto-fix uygulanamadı');
-      toast.error('Auto-fix uygulanamadı.');
-    } finally {
-      setPolicyReportLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (!isWizardPolicyPageType(pageType) || !activeDraftId) {
       setPolicyReport(null);
-      setLastAutoFixDiff(null);
       return;
     }
     fetchPolicyReport({ silent: true });
@@ -2448,25 +2285,6 @@ export default function AdminContentBuilder() {
               Bu Sayfaya Standart Şablon
             </button>
 
-            <label className="inline-flex items-center gap-2 text-[11px] text-slate-600" data-testid="admin-content-builder-seed-overwrite-checkbox-wrap">
-              <input
-                type="checkbox"
-                checked={seedOverwriteExistingDraft}
-                onChange={(event) => setSeedOverwriteExistingDraft(event.target.checked)}
-                data-testid="admin-content-builder-seed-overwrite-checkbox"
-              />
-              Mevcut draft'leri güncelle
-            </label>
-
-            <button
-              type="button"
-              className="h-10 rounded border border-violet-300 bg-violet-50 px-3 text-xs font-semibold text-violet-700"
-              onClick={seedStandardPageTypes}
-              disabled={seedDefaultsLoading}
-              data-testid="admin-content-builder-seed-standard-pages-button"
-            >
-              {seedDefaultsLoading ? '15 Sayfa Tipi Seed...' : '15 Sayfa Tipi Seed (API)'}
-            </button>
           </div>
 
           <button type="button" className="h-10 rounded border px-4 text-sm" onClick={saveDraft} disabled={saving || !activeDraftId} data-testid="admin-content-builder-save-draft-button">
@@ -2475,26 +2293,6 @@ export default function AdminContentBuilder() {
 
           <button type="button" className="h-10 rounded bg-emerald-600 px-4 text-sm text-white" onClick={publishDraft} disabled={saving || !activeDraftId} data-testid="admin-content-builder-publish-button">
             Publish
-          </button>
-
-          <button
-            type="button"
-            className="h-10 rounded border px-4 text-xs"
-            onClick={() => fetchPolicyReport()}
-            disabled={!activeDraftId || policyReportLoading}
-            data-testid="admin-content-builder-policy-report-button"
-          >
-            {policyReportLoading ? 'Policy Raporu...' : 'Policy Report'}
-          </button>
-
-          <button
-            type="button"
-            className="h-10 rounded border border-amber-300 bg-amber-50 px-4 text-xs text-amber-800"
-            onClick={applyPolicyAutoFix}
-            disabled={!activeDraftId || policyReportLoading || !isWizardPolicyPageType(pageType)}
-            data-testid="admin-content-builder-policy-autofix-button"
-          >
-            Auto-Fix Uygula
           </button>
 
           <button
@@ -2558,74 +2356,6 @@ export default function AdminContentBuilder() {
             )}
           </span>
         </div>
-
-        {policyReport?.policy === 'listing_create' ? (
-          <div className={`mt-3 rounded-lg border p-3 text-xs ${policyReport.passed ? 'border-emerald-200 bg-emerald-50' : 'border-rose-200 bg-rose-50'}`} data-testid="admin-content-builder-policy-report-panel">
-            <div className="flex items-center justify-between gap-3" data-testid="admin-content-builder-policy-report-header">
-              <strong data-testid="admin-content-builder-policy-report-title">Listing Create Policy Report</strong>
-              <span data-testid="admin-content-builder-policy-report-status">Durum: {policyReport.passed ? 'PASS' : 'FAIL'}</span>
-            </div>
-            <div className="mt-2 space-y-1" data-testid="admin-content-builder-policy-report-list">
-              {(policyReport.checks || []).map((check) => (
-                <div key={check.id} className="rounded border border-white/70 bg-white/60 p-2" data-testid={`admin-content-builder-policy-check-${check.id}`}>
-                  <div className="flex flex-wrap items-center gap-2">
-                  <span className={`inline-flex rounded px-2 py-0.5 ${check.status === 'pass' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`} data-testid={`admin-content-builder-policy-check-status-${check.id}`}>
-                    {String(check.status || '').toUpperCase()}
-                  </span>
-                  <span data-testid={`admin-content-builder-policy-check-label-${check.id}`}>{check.label}</span>
-                    <span className="text-slate-500" data-testid={`admin-content-builder-policy-check-detail-${check.id}`}>{check.detail}</span>
-                  </div>
-                  {check?.fix_suggestion ? (
-                    <div className="mt-1 text-[11px] text-slate-700" data-testid={`admin-content-builder-policy-check-fix-${check.id}`}>
-                      Öneri: {check.fix_suggestion}
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-
-            {Array.isArray(policyReport?.suggested_fixes) && policyReport.suggested_fixes.length > 0 ? (
-              <div className="mt-3 rounded border border-amber-200 bg-amber-50 p-2" data-testid="admin-content-builder-policy-suggestions-list">
-                <div className="font-semibold" data-testid="admin-content-builder-policy-suggestions-title">Önerilen Düzeltmeler</div>
-                <ul className="mt-1 list-disc space-y-1 pl-5" data-testid="admin-content-builder-policy-suggestions-items">
-                  {policyReport.suggested_fixes.map((suggestion, index) => (
-                    <li key={`${suggestion}-${index}`} data-testid={`admin-content-builder-policy-suggestion-${index}`}>{suggestion}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-
-        {lastAutoFixDiff ? (
-          <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs" data-testid="admin-content-builder-policy-autofix-diff-panel">
-            <div className="font-semibold" data-testid="admin-content-builder-policy-autofix-diff-title">Auto-Fix Görsel Diff Özeti</div>
-            <div className="mt-1 text-[11px] text-slate-600" data-testid="admin-content-builder-policy-autofix-diff-meta">
-              {lastAutoFixDiff.occurred_at}
-            </div>
-            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2" data-testid="admin-content-builder-policy-autofix-diff-stats">
-              <div className="rounded border bg-white p-2" data-testid="admin-content-builder-policy-autofix-before">
-                <div className="font-medium">Before</div>
-                <div>Pass: {String(lastAutoFixDiff.before?.passed)}</div>
-                <div>Row: {lastAutoFixDiff.before?.stats?.row_count ?? '-'}</div>
-                <div>Component: {lastAutoFixDiff.before?.stats?.total_component_count ?? '-'}</div>
-              </div>
-              <div className="rounded border bg-white p-2" data-testid="admin-content-builder-policy-autofix-after">
-                <div className="font-medium">After</div>
-                <div>Pass: {String(lastAutoFixDiff.after?.passed)}</div>
-                <div>Row: {lastAutoFixDiff.after?.stats?.row_count ?? '-'}</div>
-                <div>Component: {lastAutoFixDiff.after?.stats?.total_component_count ?? '-'}</div>
-              </div>
-            </div>
-            {Array.isArray(lastAutoFixDiff.actions) && lastAutoFixDiff.actions.length > 0 ? (
-              <ul className="mt-2 list-disc space-y-1 pl-5" data-testid="admin-content-builder-policy-autofix-actions">
-                {lastAutoFixDiff.actions.map((action, index) => (
-                  <li key={`${action}-${index}`} data-testid={`admin-content-builder-policy-autofix-action-${index}`}>{action}</li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-        ) : null}
 
         {showPreviewComparison ? (
           <div ref={previewComparisonRef} className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2" data-testid="admin-content-builder-preview-iframes">
@@ -3188,23 +2918,6 @@ export default function AdminContentBuilder() {
             ))}
           </div>
 
-          <div className="mt-4" data-testid="admin-content-builder-payload-preview-wrap">
-            <h3 className="text-xs font-semibold" data-testid="admin-content-builder-payload-preview-title">Payload Preview</h3>
-            <textarea
-              className="mt-2 min-h-[220px] w-full rounded border p-2 font-mono text-[11px]"
-              value={JSON.stringify(payloadJson, null, 2)}
-              onChange={(e) => {
-                try {
-                  const parsed = JSON.parse(e.target.value || '{}');
-                  setPayloadJson(parsed);
-                  setError('');
-                } catch (_err) {
-                  setError('Payload JSON geçersiz');
-                }
-              }}
-              data-testid="admin-content-builder-payload-preview-input"
-            />
-          </div>
         </section>
       </div>
     </div>
