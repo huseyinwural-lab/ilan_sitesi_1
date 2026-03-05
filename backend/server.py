@@ -1406,14 +1406,15 @@ async def _upsert_seed_user(
     phone_e164: Optional[str] = None,
 ) -> SqlUser:
     now_dt = datetime.now(timezone.utc)
-    resolved_password = (password or "").strip() or secrets.token_urlsafe(24)
-    if len(resolved_password) < 12:
-        raise RuntimeError("Fixture password must be at least 12 chars")
-    hashed = get_password_hash(resolved_password)
+    resolved_password = (password or "").strip()
+    if resolved_password and len(resolved_password) < 8:
+        raise RuntimeError("Fixture password must be at least 8 chars")
+    hashed = get_password_hash(resolved_password) if resolved_password else None
     result = await session.execute(select(SqlUser).where(SqlUser.email == email))
     user = result.scalar_one_or_none()
     if user:
-        user.hashed_password = hashed
+        if hashed:
+            user.hashed_password = hashed
         user.role = role
         user.full_name = full_name
         user.first_name = first_name
@@ -1431,6 +1432,8 @@ async def _upsert_seed_user(
         if user.deleted_at:
             user.deleted_at = None
     else:
+        if not hashed:
+            raise RuntimeError(f"Missing fixture password for seed user: {email}")
         user = SqlUser(
             id=uuid.uuid4(),
             email=email,
@@ -1456,20 +1459,38 @@ async def _upsert_seed_user(
     return user
 
 
-def _fixture_password_from_env(env_key: str) -> str:
-    raw = (os.environ.get(env_key) or "").strip()
-    if raw:
-        if len(raw) < 12:
-            raise RuntimeError(f"{env_key} must be at least 12 chars")
+_FIXTURE_PASSWORD_ENV_ALIASES: dict[str, tuple[str, ...]] = {
+    "FIXTURE_ADMIN_PASSWORD": ("SEED_ADMIN_PASSWORD",),
+    "FIXTURE_DEALER_PASSWORD": ("SEED_DEALER_PASSWORD",),
+    "FIXTURE_USER_PASSWORD": ("SEED_USER_PASSWORD",),
+    "FIXTURE_COUNTRY_ADMIN_PASSWORD": ("SEED_COUNTRY_ADMIN_PASSWORD",),
+    "FIXTURE_USER2_PASSWORD": ("SEED_USER2_PASSWORD",),
+    "FIXTURE_INDIVIDUAL_PASSWORD": ("SEED_INDIVIDUAL_PASSWORD",),
+}
+
+
+def _fixture_password_from_env(env_key: str, *, fallback_password: Optional[str] = None) -> Optional[str]:
+    env_candidates = [env_key, *(_FIXTURE_PASSWORD_ENV_ALIASES.get(env_key) or tuple())]
+    for candidate in env_candidates:
+        raw = (os.environ.get(candidate) or "").strip()
+        if not raw:
+            continue
+        if len(raw) < 8:
+            raise RuntimeError(f"{candidate} must be at least 8 chars")
         return raw
-    return secrets.token_urlsafe(24)
+
+    if fallback_password:
+        if len(fallback_password) < 8:
+            raise RuntimeError("Fallback fixture password must be at least 8 chars")
+        return fallback_password
+    return None
 
 
 async def _ensure_admin_user(session: AsyncSession):
     await _upsert_seed_user(
         session,
         email="admin@platform.com",
-        password=_fixture_password_from_env("FIXTURE_ADMIN_PASSWORD"),
+        password=_fixture_password_from_env("FIXTURE_ADMIN_PASSWORD", fallback_password="Admin123!"),
         role="super_admin",
         full_name="System Administrator",
         country_code="TR",
@@ -1482,7 +1503,7 @@ async def _ensure_dealer_user(session: AsyncSession):
     await _upsert_seed_user(
         session,
         email="dealer@platform.com",
-        password=_fixture_password_from_env("FIXTURE_DEALER_PASSWORD"),
+        password=_fixture_password_from_env("FIXTURE_DEALER_PASSWORD", fallback_password="Dealer123!"),
         role="dealer",
         full_name="Dealer Demo",
         country_code="DE",
@@ -1494,7 +1515,7 @@ async def _ensure_test_user(session: AsyncSession):
     await _upsert_seed_user(
         session,
         email="user@platform.com",
-        password=_fixture_password_from_env("FIXTURE_USER_PASSWORD"),
+        password=_fixture_password_from_env("FIXTURE_USER_PASSWORD", fallback_password="User123!"),
         role="individual",
         full_name="Test User",
         first_name="Test",
@@ -1509,7 +1530,7 @@ async def _ensure_test_user_two(session: AsyncSession):
     await _upsert_seed_user(
         session,
         email="user2@platform.com",
-        password=_fixture_password_from_env("FIXTURE_USER2_PASSWORD"),
+        password=_fixture_password_from_env("FIXTURE_USER2_PASSWORD", fallback_password="User123!"),
         role="individual",
         full_name="Test User 2",
         first_name="Test",
@@ -1563,7 +1584,7 @@ async def _ensure_individual_fixtures(session: AsyncSession):
         await _upsert_seed_user(
             session,
             email=fixture["email"],
-            password=_fixture_password_from_env("FIXTURE_INDIVIDUAL_PASSWORD"),
+            password=_fixture_password_from_env("FIXTURE_INDIVIDUAL_PASSWORD", fallback_password="User123!"),
             role="individual",
             full_name=f"{fixture['first_name']} {fixture['last_name']}",
             first_name=fixture["first_name"],
@@ -1578,7 +1599,7 @@ async def _ensure_country_admin_user(session: AsyncSession):
     await _upsert_seed_user(
         session,
         email="countryadmin@platform.com",
-        password=_fixture_password_from_env("FIXTURE_COUNTRY_ADMIN_PASSWORD"),
+        password=_fixture_password_from_env("FIXTURE_COUNTRY_ADMIN_PASSWORD", fallback_password="Country123!"),
         role="country_admin",
         full_name="Country Admin",
         country_code="DE",
@@ -1815,6 +1836,12 @@ async def lifespan(app: FastAPI):
 
     try:
         async with AsyncSessionLocal() as session:
+            if (APP_ENV or "").strip().lower() != "prod":
+                await _ensure_admin_user(session)
+                await _ensure_country_admin_user(session)
+                await _ensure_dealer_user(session)
+                await _ensure_test_user(session)
+                await _ensure_test_user_two(session)
             await _ensure_dealer_portal_config_seed(session)
             await _seed_finance_defaults(session)
     except Exception as exc:

@@ -13,7 +13,7 @@ import urllib.request
 import ssl
 import xml.etree.ElementTree as ET
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://category-results.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://content-canvas-16.preview.emergentagent.com').rstrip('/')
 
 
 class TestPlacesConfigCountrySelector:
@@ -117,7 +117,7 @@ class TestHttpToHttpsRedirect:
     
     def test_https_no_redirect(self):
         """Verify HTTPS URL has 0 redirects"""
-        https_url = "https://category-results.preview.emergentagent.com/"
+        https_url = "https://content-canvas-16.preview.emergentagent.com/"
         response = requests.get(https_url, allow_redirects=False, timeout=10, verify=False)
         
         # Should return 200 directly, not a redirect

@@ -1,79 +1,102 @@
 <analysis>**original_problem_statement:**
-The user's primary goal is to build a full-stack application similar to sahibinden.com. The project's focus has evolved from an initial hardening phase to implementing significant new features based on explicit user GÖREV EMRİ (Task Orders).
+The user's initial goal was to build a full-stack application similar to sahibinden.com. However, the project's direction has fundamentally shifted based on a new, major feature request from the user.
 
-The main objective in this session was to completely redesign the homepage to match a provided design () and to implement a corresponding dynamic, multi-level category management system in the admin panel. The user has provided extensive lists of categories to be populated.
+The current and sole focus is to architect and build a **Dynamic Page Builder**. This feature will allow an administrator to visually construct and manage the layout of various pages (Homepage, Category/Search Pages, Ad Creation Wizard) using a component-based, drag-and-drop interface from the admin panel.
 
-The current task is to design the search results/category landing page () based on two new reference images provided by the user, differentiating the design for Level 1 (L1) and Level 2 (L2) category pages.
+Key requirements for the Page Builder:
+- It should operate on a Slot and Component model. Slots are predefined areas on a page, and Components are reusable UI blocks (e.g., image gallery, price box, map) that can be placed into these slots.
+- The builder must only control the **main content** area of a page. The global Header and Footer must remain fixed and are not part of this system.
+- The admin should be able to define different layouts for different contexts (e.g., a specific layout for the Emlak category vs. the Vasıta category).
+- The system must support a draft/publish/rollback workflow for layout changes.
+- The user has provided an extensive, phased plan for this feature, which the agent has started to implement.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-The agent has successfully completed a major overhaul of the application. The homepage has been completely redesigned, featuring a dynamic, multi-level category menu on the left. This menu is fully managed from a new, sophisticated admin panel ().
+The agent has successfully built the entire backend foundation for the new Dynamic Page Builder feature. This is a significant architectural addition, introducing PostgreSQL into the existing MongoDB-based stack.
 
-The category management system supports:
--   Infinite-level nested categories (L0, L1, L2...).
--   A dedicated UI for creating, editing, and viewing the hierarchy.
--   Drag-and-drop sorting for top-level (L0) categories.
--   SVG/Icon uploads for L0 categories.
--   Multi-language support (TR, DE, FR) for category names.
--   Validation for leaf nodes (categories that cannot have children).
--   Displaying the total count of ads within each category and its sub-categories on the homepage.
-
-The agent also populated the database with a large, detailed category structure provided by the user across multiple modules (Emlak, Vasıta, Diğer). Numerous iterative UI fixes were made to the homepage category list based on direct user feedback.
+- **Database and Models (PostgreSQL):** Five new database tables (, , , , ) have been created using Alembic migrations. The corresponding SQLAlchemy ORM models and Pydantic schemas are fully implemented.
+- **Backend Services & API:** A complete set of transactional services and FastAPI endpoints have been created to manage the entire lifecycle of layouts. This includes APIs for creating/managing components, defining page layouts, saving/publishing revisions, and binding layouts to specific categories. A public-facing endpoint () to fetch the active layout for any given page is also ready.
+- **Admin UI Skeleton:** The groundwork for the admin interface has been laid. A new menu item, Content Builder, has been added under Site İç Tasarımı (). The basic page structure, state management with Zustand, and the UI for listing and creating new page layouts have been implemented.
 
 **Last working item**:
--   **Last item agent was working:** Designing the category/search listing page. The user provided two distinct designs: one for when a user clicks a Level 1 (L1) category, and another for a Level 2 (L2) category. The agent has analyzed this request, presented a plan, and received user approval to proceed with implementation.
--   **Status:** NOT STARTED
+-   **Last item agent was working:** Implementing the UI form () to allow administrators to define a new page layout record. This form captures the page type, module, country, and an optional category to create a new layout entry in the  table, which will later hold the visual design.
+-   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** both
+-   **Which testing method agent to use?** Frontend testing agent
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: P0 - Implement L1/L2 Search Page Design**
-    -   **Description:** The primary task is to create the new search/category listing page. It must dynamically render one of two different layouts based on whether the selected category is Level 1 or Level 2, as per the user's reference images and instructions. This design should apply to all categories across all modules.
+The project is focused on a single, large feature. The issues below represent the remaining major work packages for the Dynamic Page Builder.
+
+-   **Issue 1: P0 - Complete Admin Layout Manager UI**
+    -   **Description:** The core task is to build the visual, interactive part of the page builder. The backend is ready, but the frontend editor needs to be created.
+    -   **Attempted fixes:** N/A (New feature)
+    -   **Next debug checklist:**
+        -   Implement the main drag-and-drop canvas using a library like .
+        -   Create the Component Library panel that lists available components to be dragged onto the canvas.
+        -   Develop the Properties panel to edit the settings of a selected component.
+        -   Implement the UI for , , and  actions.
+        -   Build the UI for managing category-to-layout bindings.
+        -   File references:  and related components.
+    -   **Why fix this issue and what will be achieved with the fix?** This will deliver the main interactive tool that allows admins to visually design page layouts, which is the central promise of the feature.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** both
+-   **Issue 2: P1 - Implement Frontend Runtime Renderer**
+    -   **Description:** Create a universal React component () that fetches a page's layout from the  endpoint and dynamically renders the appropriate components in the correct order and layout.
     -   **Status:** NOT STARTED
--   **Issue 2: P1 - Complete Apple Social Login Integration**
-    -   **Description:** The backend and admin UI are ready, but the feature is blocked pending user-provided credentials.
+-   **Issue 3: P1 - Integrate Renderer into Application Pages**
+    -   **Description:** Refactor the existing , , and  pages to replace their static content sections with the new  component.
+    -   **Status:** NOT STARTED
+-   **Issue 4: P2 - Implement Controlled Layout for İlan Ver (Ad Create) Page**
+    -   **Description:** Adapt the page builder to manage the layout of the multi-step ad creation form while ensuring that core business logic, validation, and step sequence remain fixed and secure.
+    -   **Status:** NOT STARTED
+-   **Issue 5: P2 - Add Menus to Component Library**
+    -   **Description:** Per user request, the Component Library should be populated with components that can render the various menus (and sub-menus) managed elsewhere in the admin panel.
+    -   **Status:** NOT STARTED
+-   **Issue 6: P1 - Complete Apple Social Login Integration**
+    -   **Description:** The feature is implemented but is blocked pending user-provided credentials (API Keys).
     -   **Status:** BLOCKED
--   **Issue 3: P2 - Use  for Vasıta Module Categories**
-    -   **Description:** The user questioned why the Vasıta categories on the homepage aren't pulled from the existing  data. The agent confirmed this could be done. The task is to refactor the homepage to source the Vasıta categories from this table instead of the general-purpose categories table.
-    -   **Status:** NOT STARTED
--   **Issue 4: P2 - FAZ 3: Remove Mock Data**
-    -   **Description:** An outstanding task from the initial hardening phase. The mocked  data needs to be removed from production builds.
-    -   **Status:** NOT STARTED
 
 **In progress Task List**:
-There are no partially completed tasks. The previous large task of building and populating the category system is complete.
+-   **Task 1: P0 - Integrate and Test Create New Page Layout Form**
+    -   **Where to resume:** The component  has been created. It now needs to be imported into , rendered (likely within a modal/drawer), and connected to the Add New Page button to ensure it correctly creates new layout records via the API.
+    -   **What will be achieved with this?** Admins will be able to create the container records for page layouts, which is the prerequisite for designing them.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** Frontend
 
 **Upcoming and Future Tasks**
-**Upcoming Tasks:**
--   **P1: Implement Admin Management for Main Category Ads**: The user asked to be able to manage ads for main categories directly from the admin panel (). This feature needs to be designed and implemented.
--   **P1: Add CI Script for Deprecated Locales:** Create and add the  script to the CI pipeline to prevent new keys from being added to old locale files.
--   **P2: Implement Route-Based Header Rules:** Add automatic test scenarios and an admin toggle for header behavior based on routes.
--   **P2: Refine i18n Namespaces:** Gradually narrow down the  namespace and move keys to domain-specific namespaces.
 
-**Future Tasks:**
--   Permission What-if Simulator UI.
--   Two-Factor Approval for critical permission changes.
--   Full User/Dealer Flow Validation pass.
--   Final HTML/CSS standardization polish.
--   Advanced business analytics and A/B testing framework.
+-   **Upcoming Tasks (P1):**
+    -   Build the main Drag-and-Drop Canvas Editor for the Admin UI.
+    -   Implement the Component Library and Properties Editor panels in the Admin UI.
+    -   Implement Publish/Rollback/Preview functionality in the Admin UI.
+    -   Create the frontend  component to display the built layouts.
+    -   Integrate  into  and .
+    -   Apply  standard to all new interactive elements in the builder UI.
+
+-   **Future Tasks (P2+):**
+    -   Implement a secure plugin system for adding new components to the builder.
+    -   Implement RBAC (Role-Based Access Control) for layout publishing.
+    -   Implement visual diffing to compare draft and published layouts.
+    -   Improve UX of builder: better category selection tree for bindings, jump-to-change in diffs.
+    -   Refactor Vasıta categories on the homepage to source from the  table.
+    -   (From previous fork) Remove mock  data.
+    -   (From previous fork) Add CI script for deprecated locales.
 
 **Completed work in this session**
--   **Homepage Redesign:** The entire homepage was rebuilt to match the user's design from , featuring a new dynamic left-side category menu.
--   **Dynamic Category System (Backend & Admin):**
-    -   Created a full CRUD backend for a deeply nested, hierarchical category structure.
-    -   Built a comprehensive admin UI at  to create, edit, and visualize the category tree.
-    -   Implemented features like drag-and-drop sorting, multi-language name fields (TR/DE/FR), icon management, and leaf-node validation.
-    -   Fixed multiple bugs in the admin UI, including issues with slug generation, stale validation errors, and limitations on nesting depth.
--   **Category Data Population:** Successfully entered a large volume of hierarchical category data provided by the user for modules like 'Emlak', 'Vasıta', and 'Diğer'.
--   **Iterative UI Refinements:**
-    -   Removed hardcoded shortcuts and ensured the homepage category list is sourced exclusively from the admin-managed categories.
-    -   Adjusted the category list styling multiple times to match user specifications (e.g., removing background boxes, removing colored dots).
-    -   Restored the Acil İlanlar (Urgent Ads) box on the homepage as requested.
+-   **Dynamic Page Builder - Backend Foundation (P0 COMPLETE):**
+    -   **Database:** Created and migrated a full PostgreSQL schema for the layout system (, , , , ).
+    -   **Models & Services:** Implemented all necessary SQLAlchemy ORM models, Pydantic schemas, and transactional business logic services.
+    -   **API:** Developed a complete set of Admin REST APIs for managing layouts and a public-facing API to resolve and fetch layouts for rendering.
+-   **Dynamic Page Builder - Admin UI (Initial Skeleton):**
+    -   **Navigation:** Added Content Builder to the admin side menu ().
+    -   **Core UI:** Created the main  page.
+    -   **State Management:** Set up a Zustand store () for the builder's state.
+    -   **Functionality:** Implemented the UI to list existing page layouts and the form to create new ones.
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1: Quick-Access Menu Sync:** The customizable quick-access menu is based on  and does not sync across devices. This remains a potential future enhancement.
+-   **Quick-Access Menu Sync:** The customizable quick-access menu is based on  and does not sync across devices. This remains a potential future enhancement.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork**: Platform failure to inject  secret.
@@ -84,61 +107,78 @@ There are no partially completed tasks. The previous large task of building and 
 
 
 **Key Technical Concepts**
--   **Hierarchical Data Management:** The core of this session was building a system to manage deeply nested data (categories). This involved using  references in the MongoDB collection and recursive logic on both the backend (for aggregation) and frontend (for rendering).
--   **Dynamic Admin UI:** The admin category management page is highly dynamic, using recursive components to render and manage an infinitely deep tree structure within a single interface.
--   **State Management for Complex Forms:** The agent managed complex form state in the admin panel, handling validation, nested data, and error feedback for a multi-level editing experience.
--   **Backend-Driven UI:** The homepage's primary navigation element (the category list) is now entirely driven by data configured in the admin panel, including content, order, and icons.
+-   **Hybrid Database Architecture:** The application now uses both **MongoDB** (for existing features) and **PostgreSQL** (for the new Page Builder feature).
+-   **ORM and Migrations:** **SQLAlchemy** is used as the ORM for PostgreSQL, and **Alembic** manages database schema migrations.
+-   **Component-Based Page Builder:** The core architectural pattern involves dynamically assembling pages from pre-defined, reusable components based on a layout definition stored in the database.
+-   **Draft/Publish/Revision System:** A versioning pattern allowing for safe editing and rollback of page layouts.
+-   **Transactional Backend Services:** Business logic is encapsulated in services that use transactions to ensure data integrity across multiple database operations.
+-   **Zustand:** A lightweight state management library used for the complex state of the new Admin UI.
 
 **key DB schema**
--   **categories**: 
--   **header_configurations**: 
--   **system_settings**: 
+-   **layout_component_definitions**: 
+-   **layout_pages**: 
+-   **layout_revisions**: 
+-   **layout_bindings**: 
+-   **layout_audit_logs**: 
+
+**changes in tech stack**
+-   **Database:** Added **PostgreSQL** to the existing **MongoDB** stack.
+-   **Backend Libraries:** Introduced **SQLAlchemy** (ORM) and **Alembic** (Migrations).
+-   **Frontend Libraries:** Introduced **Zustand** for state management.
 
 **All files of reference**
--   : The rebuilt homepage component.
--   : The main admin page for managing the category hierarchy.
--   : The FastAPI router containing all CRUD endpoints for categories.
--   : The backend service containing the business logic for category management, including aggregation for ad counts.
--   : The user-provided artifact that was used as the design reference for the homepage.
+-   : The entire new backend domain for the page builder.
+-   : The new API router for all layout management endpoints.
+-   : Contains the database migration scripts for the new tables.
+-   : The root directory for all new Admin UI components related to the page builder.
+-   : Modified to add the new admin route.
+
+**key api endpoints**
+-   : Creates a new page layout definition.
+-   : Lists existing page layout definitions.
+-   : Creates a new draft revision for a layout.
+-   : Publishes a draft revision, making it live.
+-   : The public endpoint used by the frontend to fetch the active layout for a given page/category.
 
 **Critical Info for New Agent**
--   **TOP PRIORITY:** Immediately begin work on the new  page design. The user has approved the plan. This is the highest priority.
--   **USER COMMUNICATION & ITERATION:** The user communicates exclusively in **Turkish** and is very detail-oriented, often providing screenshots and requesting iterative changes. Expect to refine UI details multiple times. Always confirm your plan before major implementation.
--   **CATEGORY SYSTEM COMPLEXITY:** The category system is the application's core. Understand the data model (, , ) and the recursive nature of the admin UI before making changes. The user is actively using this feature and is sensitive to bugs in it.
--   **TWO DESIGNS FOR SEARCH PAGE:** Remember the key requirement for the next task: the layout must change depending on whether the category is L1 or L2.
--   **APPLE LOGIN IS BLOCKED:** Do not work on Apple Login. It is blocked on the user.
+-   **Project Pivot:** The primary focus has completely shifted to building the **Dynamic Page Builder**. All other tasks are secondary unless they are blockers.
+-   **New Tech Stack:** A major architectural change has introduced **PostgreSQL, SQLAlchemy, and Alembic**. You must be proficient with these technologies. The new Page Builder feature resides entirely in Postgres.
+-   **Follow the Plan:** The user has provided a detailed, phased implementation plan. The work is currently focused on **P0 (Admin UI)**. Adhere to this plan.
+-   **User Language:** Continue all communication in **Turkish**.
+-   **Scope:** Remember that the builder's scope is strictly the **main content area**. Header and Footer are fixed and managed separately.
 
 **documents and test reports created in this job**
 None.
 
 **Last 10 User Messages and any pending HUMAN messages**
--   **#933 (User):** Clarifies the requirements for the new search page design: Resim1 (Image 1) is for L1 category pages, and Resim2 (Image 2) is for L2 pages. This logic must apply to ALL categories. (PENDING IMPLEMENTATION)
--   **#930 (User):** Requests a new design for the  page, providing two reference images for how L1 and L2 pages should look. (PENDING IMPLEMENTATION)
--   **#874 (User):** Provides a detailed category structure in an image and asks the agent to create it under the Emlak L0 category in the admin panel. (RESOLVED)
--   **#793 (User):** Provides an image of a complex category structure for Emlak and asks the agent to create it. (RESOLVED)
--   **#781 (User):** Sends a screenshot of a stale validation error in the category admin panel. (RESOLVED)
--   **#779 (User):** Asks for an explanation of the Seviye 3.5 için alt seviye bulunamadı. Leaf işaretleyin. error. (RESOLVED)
--   **#763 (User):** Reports being blocked after adding 5 sub-categories and asks if there is a limit. (RESOLVED)
--   **#707 (User):** Explicitly requests that the category  field should accept spaces and Turkish characters, overriding the agent's default hyphenated-slug behavior. (RESOLVED)
--   **#705 (User):** Reports an error while trying to add sub-categories in the admin panel. (RESOLVED)
--   **#703 (User):** Asks for instructions on how to add sub-categories to Kategori 1.2 and Kategori 1.3. (RESOLVED)
+-   **#665:** Adds a requirement: Component Library should include all admin-managed menus. (PENDING)
+-   **#616, #509, #454, #325:** Series of messages from the user asking for the next steps and confirming the phased plan presented by the agent. (RESOLVED by agent providing next steps)
+-   **#126:** Provides a highly detailed, technical task list for the backend foundation (P0) and instructs the agent to begin. (RESOLVED, backend is complete)
+-   **#112:** Asks where the new builder UI will be located in the admin panel. (RESOLVED)
+-   **#110:** Gives the final go-ahead to start development on the page builder based on the agent's plan: o zaman başlalım (then let's start). (RESOLVED)
+-   **#108:** Asks for confirmation that components can be moved and that new plugins can be added. (RESOLVED)
+-   **#106:** Clarifies the critical requirement that the builder should *not* touch the header or footer. (RESOLVED)
+-   **#104:** Asks for the agent to create a phased task list for the new feature. (RESOLVED)
+-   **#102:** The initial message where the user proposes the entire Dynamic Page Builder idea, providing a detailed analogy and core technical requirements. This is the origin of the current workstream. (RESOLVED)
 
 **Project Health Check:**
--   **Broken:** None. The application is stable.
--   **Mocked:**  data remains mocked, pending the **FAZ 3: Remove Mock Data** task.
+-   **Broken:** None.
+-   **Mocked:**  data remains mocked.
 
 **3rd Party Integrations**
--   Stripe (Payments)
 -   MongoDB (Database)
--   PostgreSQL (Database)
+-   **PostgreSQL (Database) - NEW**
+-   **SQLAlchemy / Alembic - NEW**
+-   Stripe (Payments)
 -   Meilisearch (Search)
 -   Sentry (Error Tracking)
 -    (Internationalization)
+-   **Zustand (Frontend State Management) - NEW**
 -   Emergent-managed Google Auth (Social Login) — uses Emergent LLM Key
 -   Apple Auth (Social Login, pending credentials) — requires User API Key
 
 **Testing status**
--   **Testing agent used after significant changes:** NO. The agent performed extensive manual debugging and verification directly with the user throughout the session.
+-   **Testing agent used after significant changes:** NO
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None.
 -   **Known regressions:** None.
@@ -149,6 +189,6 @@ None.
 -   **User:**  / 
 
 **What agent forgot to execute**
--   The user's request to manage main category ads from the admin panel () was acknowledged but not implemented or added to the plan.
--   The user's question about sourcing Vasıta categories from the  table was answered, and the agent offered to make the change, but it was not implemented or prioritized.
--   The task to create and add the  script to the CI pipeline, carried over from the previous fork, remains unimplemented.</analysis>
+-   The user's request to manage main category ads from the admin panel has not been prioritized.
+-   The task to refactor Vasıta categories to use the  table is still pending.
+-   The CI script task () from a previous fork remains unimplemented.</analysis>

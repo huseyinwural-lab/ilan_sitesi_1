@@ -1,7 +1,7 @@
 # TWOFA_BACKUP_CODE_EVIDENCE
 
 **Tarih:** 2026-02-24 13:47:41 UTC
-**Ortam URL:** https://category-results.preview.emergentagent.com
+**Ortam URL:** https://content-canvas-16.preview.emergentagent.com
 **Test Kullanıcı:** user2@platform.com
 
 ## Curl Kanıtı (Tek Kullanım)

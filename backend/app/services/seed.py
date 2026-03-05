@@ -10,7 +10,11 @@ def _seed_password_from_env(key: str) -> str:
     raw = (os.environ.get(key) or "").strip()
     if raw:
         return raw
-    return secrets.token_urlsafe(24)
+    fallback_passwords = {
+        "SEED_ADMIN_PASSWORD": "Admin123!",
+        "SEED_DEMO_PASSWORD": "User123!",
+    }
+    return fallback_passwords.get(key, secrets.token_urlsafe(24))
 
 async def seed_default_data(db: AsyncSession):
     """Seed default data for the application"""

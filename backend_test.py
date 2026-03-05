@@ -5,7 +5,7 @@ import json
 import sys
 
 # Base URL from review request
-BASE_URL = "https://category-results.preview.emergentagent.com"
+BASE_URL = "https://content-canvas-16.preview.emergentagent.com"
 
 def test_admin_auth():
     """Test admin authentication to get access token"""

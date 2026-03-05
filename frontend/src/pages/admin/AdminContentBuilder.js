@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -234,13 +236,17 @@ export default function AdminContentBuilder() {
   const [bindingActiveItem, setBindingActiveItem] = useState(null);
   const [bindingLoading, setBindingLoading] = useState(false);
   const [showPreviewComparison, setShowPreviewComparison] = useState(false);
+  const [diffFilter, setDiffFilter] = useState('all');
+  const [diffJumpCursor, setDiffJumpCursor] = useState({ row: -1, component: -1 });
 
   const [selectedRowId, setSelectedRowId] = useState('');
   const [selectedColumnId, setSelectedColumnId] = useState('');
   const [draggingRowId, setDraggingRowId] = useState('');
   const [draggingComponentId, setDraggingComponentId] = useState('');
+  const [draggingLibraryComponentKey, setDraggingLibraryComponentKey] = useState('');
   const [dragOverRowId, setDragOverRowId] = useState('');
   const [dragOverColumnId, setDragOverColumnId] = useState('');
+  const [isSetupDrawerOpen, setIsSetupDrawerOpen] = useState(false);
 
   const [componentLibrary, setComponentLibrary] = useState(DEFAULT_COMPONENT_LIBRARY);
   const [categoryOptions, setCategoryOptions] = useState([]);
@@ -438,8 +444,11 @@ export default function AdminContentBuilder() {
       setBindingCategoryId(normalizedCategoryId);
       await getRevisionsForPage(page.id, pageType);
       setStatus('Sayfa yüklendi. Draft düzenleyebilirsiniz.');
+      toast.success('Layout page başarıyla yüklendi.');
+      setIsSetupDrawerOpen(false);
     } catch (err) {
       setError(err?.response?.data?.detail || err?.message || 'Sayfa yüklenemedi');
+      toast.error('Sayfa yüklenemedi veya oluşturulamadı.');
     } finally {
       setLoading(false);
     }
@@ -460,8 +469,10 @@ export default function AdminContentBuilder() {
         { headers: authHeaders },
       );
       setStatus('Draft kaydedildi.');
+      toast.success('Draft kaydedildi.');
     } catch (err) {
       setError(err?.response?.data?.detail || 'Draft kaydedilemedi');
+      toast.error('Draft kaydedilemedi.');
     } finally {
       setSaving(false);
     }
@@ -481,8 +492,10 @@ export default function AdminContentBuilder() {
       setStatus('Draft publish edildi. Yeni draft oluşturuluyor...');
       await getRevisionsForPage(pageId, pageType);
       setStatus('Publish tamamlandı. Yeni draft hazır.');
+      toast.success('Publish tamamlandı.');
     } catch (err) {
       setError(err?.response?.data?.detail || 'Publish başarısız');
+      toast.error('Publish başarısız.');
     } finally {
       setSaving(false);
     }
@@ -632,6 +645,13 @@ export default function AdminContentBuilder() {
   };
 
   const handleComponentDrop = (targetRowId, targetColumnId) => {
+    if (draggingLibraryComponentKey) {
+      addComponent(targetRowId, targetColumnId, draggingLibraryComponentKey);
+      setDraggingLibraryComponentKey('');
+      setDragOverColumnId('');
+      return;
+    }
+
     if (!draggingComponentId) {
       setDragOverColumnId('');
       return;
@@ -678,8 +698,10 @@ export default function AdminContentBuilder() {
       });
       setBindingActiveItem(res.data?.item || null);
       setStatus('Aktif binding sorgulandı.');
+      toast.success('Aktif binding bilgisi güncellendi.');
     } catch (err) {
       setError(err?.response?.data?.detail || 'Aktif binding getirilemedi');
+      toast.error('Aktif binding getirilemedi.');
     } finally {
       setBindingLoading(false);
     }
@@ -708,9 +730,11 @@ export default function AdminContentBuilder() {
         { headers: authHeaders },
       );
       setStatus('Kategori binding kaydedildi.');
+      toast.success('Kategori binding kaydedildi.');
       await fetchActiveBinding();
     } catch (err) {
       setError(err?.response?.data?.detail || 'Binding kaydedilemedi');
+      toast.error('Binding kaydedilemedi.');
     } finally {
       setBindingLoading(false);
     }
@@ -735,8 +759,10 @@ export default function AdminContentBuilder() {
       );
       setBindingActiveItem(null);
       setStatus('Kategori binding kaldırıldı.');
+      toast.success('Binding kaldırıldı.');
     } catch (err) {
       setError(err?.response?.data?.detail || 'Unbind başarısız');
+      toast.error('Binding kaldırma başarısız.');
     } finally {
       setBindingLoading(false);
     }
@@ -745,32 +771,102 @@ export default function AdminContentBuilder() {
   return (
     <div className="space-y-5" data-testid="admin-content-builder-page">
       <header className="rounded-xl border bg-white p-4" data-testid="admin-content-builder-header">
-        <div className="flex flex-wrap items-end gap-3" data-testid="admin-content-builder-filters">
-          <label className="text-xs min-w-[180px]" data-testid="admin-content-builder-page-type-wrap">
-            Sayfa Tipi
-            <select className="mt-1 h-10 w-full rounded border px-2" value={pageType} onChange={(e) => setPageType(e.target.value)} data-testid="admin-content-builder-page-type-select">
-              {PAGE_TYPE_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-            </select>
-          </label>
+        <div className="flex flex-wrap items-center gap-2" data-testid="admin-content-builder-top-actions">
+          <Sheet open={isSetupDrawerOpen} onOpenChange={setIsSetupDrawerOpen}>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                className="h-10 rounded bg-slate-900 px-4 text-sm text-white"
+                data-testid="admin-content-builder-open-setup-drawer-button"
+              >
+                Formları Aç
+              </button>
+            </SheetTrigger>
+            <SheetContent
+              side="right"
+              className="w-[min(96vw,560px)] overflow-y-auto"
+              data-testid="admin-content-builder-setup-drawer"
+            >
+              <SheetHeader data-testid="admin-content-builder-setup-drawer-header">
+                <SheetTitle data-testid="admin-content-builder-setup-drawer-title">Content Builder Formları</SheetTitle>
+                <SheetDescription data-testid="admin-content-builder-setup-drawer-description">
+                  Sayfa tanımı ve kategori binding işlemlerini sağ panelden yönetin.
+                </SheetDescription>
+              </SheetHeader>
 
-          <label className="text-xs min-w-[120px]" data-testid="admin-content-builder-country-wrap">
-            Ülke
-            <input className="mt-1 h-10 w-full rounded border px-2" value={country} onChange={(e) => setCountry(e.target.value.toUpperCase())} data-testid="admin-content-builder-country-input" />
-          </label>
+              <div className="mt-4 space-y-5" data-testid="admin-content-builder-setup-drawer-body">
+                <section className="rounded-lg border p-3" data-testid="admin-content-builder-layout-form-section">
+                  <h3 className="text-xs font-semibold" data-testid="admin-content-builder-layout-form-title">Layout Page Formu</h3>
+                  <div className="mt-2 space-y-2" data-testid="admin-content-builder-filters">
+                    <label className="text-xs block" data-testid="admin-content-builder-page-type-wrap">
+                      Sayfa Tipi
+                      <select className="mt-1 h-10 w-full rounded border px-2" value={pageType} onChange={(e) => setPageType(e.target.value)} data-testid="admin-content-builder-page-type-select">
+                        {PAGE_TYPE_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+                      </select>
+                    </label>
 
-          <label className="text-xs min-w-[160px]" data-testid="admin-content-builder-module-wrap">
-            Module
-            <input className="mt-1 h-10 w-full rounded border px-2" value={moduleName} onChange={(e) => setModuleName(e.target.value)} data-testid="admin-content-builder-module-input" />
-          </label>
+                    <label className="text-xs block" data-testid="admin-content-builder-country-wrap">
+                      Ülke
+                      <input className="mt-1 h-10 w-full rounded border px-2" value={country} onChange={(e) => setCountry(e.target.value.toUpperCase())} data-testid="admin-content-builder-country-input" />
+                    </label>
 
-          <label className="text-xs min-w-[240px]" data-testid="admin-content-builder-category-wrap">
-            Category ID (opsiyonel)
-            <input className="mt-1 h-10 w-full rounded border px-2" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} data-testid="admin-content-builder-category-input" />
-          </label>
+                    <label className="text-xs block" data-testid="admin-content-builder-module-wrap">
+                      Module
+                      <input className="mt-1 h-10 w-full rounded border px-2" value={moduleName} onChange={(e) => setModuleName(e.target.value)} data-testid="admin-content-builder-module-input" />
+                    </label>
 
-          <button type="button" className="h-10 rounded bg-slate-900 px-4 text-sm text-white" onClick={loadOrCreatePage} disabled={loading} data-testid="admin-content-builder-load-page-button">
-            {loading ? 'Yükleniyor...' : 'Sayfayı Yükle/Oluştur'}
-          </button>
+                    <label className="text-xs block" data-testid="admin-content-builder-category-wrap">
+                      Category ID (opsiyonel)
+                      <input className="mt-1 h-10 w-full rounded border px-2" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} data-testid="admin-content-builder-category-input" />
+                    </label>
+
+                    <button type="button" className="h-10 w-full rounded bg-slate-900 px-4 text-sm text-white" onClick={loadOrCreatePage} disabled={loading} data-testid="admin-content-builder-load-page-button">
+                      {loading ? 'Yükleniyor...' : 'Sayfayı Yükle/Oluştur'}
+                    </button>
+                  </div>
+                </section>
+
+                <section className="rounded-lg border bg-slate-50 p-3" data-testid="admin-content-builder-binding-panel">
+                  <h3 className="text-xs font-semibold" data-testid="admin-content-builder-binding-panel-title">Kategori Binding Formu</h3>
+                  <div className="mt-2 space-y-2" data-testid="admin-content-builder-binding-controls">
+                    <label className="text-xs block" data-testid="admin-content-builder-binding-category-search-wrap">
+                      Kategori Ara
+                      <input
+                        className="mt-1 h-9 w-full rounded border px-2"
+                        value={categorySearch}
+                        onChange={(e) => setCategorySearch(e.target.value)}
+                        placeholder="Kategori adı / slug"
+                        data-testid="admin-content-builder-binding-category-search-input"
+                      />
+                    </label>
+
+                    <label className="text-xs block" data-testid="admin-content-builder-binding-category-wrap">
+                      Kategori Ağacı Seçimi
+                      <select
+                        className="mt-1 h-9 w-full rounded border px-2"
+                        value={bindingCategoryId}
+                        onChange={(e) => setBindingCategoryId(e.target.value)}
+                        data-testid="admin-content-builder-binding-category-input"
+                      >
+                        <option value="">{categoriesLoading ? 'Kategoriler yükleniyor...' : 'Kategori seçin'}</option>
+                        {filteredCategoryOptions.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {`${'— '.repeat(item.depth)}${item.name}`}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" data-testid="admin-content-builder-binding-action-grid">
+                      <button type="button" className="h-9 rounded border px-3 text-xs" onClick={fetchActiveBinding} disabled={bindingLoading} data-testid="admin-content-builder-binding-fetch-button">Aktifi Getir</button>
+                      <button type="button" className="h-9 rounded bg-blue-600 px-3 text-xs text-white" onClick={bindCurrentPage} disabled={bindingLoading} data-testid="admin-content-builder-binding-bind-button">Bu Page'i Bağla</button>
+                      <button type="button" className="h-9 rounded border border-rose-300 px-3 text-xs text-rose-700" onClick={unbindCurrentCategory} disabled={bindingLoading} data-testid="admin-content-builder-binding-unbind-button">Binding Kaldır</button>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </SheetContent>
+          </Sheet>
 
           <button type="button" className="h-10 rounded border px-4 text-sm" onClick={saveDraft} disabled={saving || !activeDraftId} data-testid="admin-content-builder-save-draft-button">
             Draft Kaydet
@@ -779,90 +875,51 @@ export default function AdminContentBuilder() {
           <button type="button" className="h-10 rounded bg-emerald-600 px-4 text-sm text-white" onClick={publishDraft} disabled={saving || !activeDraftId} data-testid="admin-content-builder-publish-button">
             Publish
           </button>
+
+          <button
+            type="button"
+            className="h-10 rounded border px-4 text-xs"
+            onClick={() => setShowPreviewComparison((prev) => !prev)}
+            data-testid="admin-content-builder-preview-toggle-button"
+          >
+            {showPreviewComparison ? 'Preview Gizle' : 'Preview Karşılaştır'}
+          </button>
+
+          <a href={publishedPreviewUrl} target="_blank" rel="noreferrer" className="text-xs font-medium underline" data-testid="admin-content-builder-preview-published-link">
+            Published Aç
+          </a>
+          <a href={draftPreviewUrl} target="_blank" rel="noreferrer" className="text-xs font-medium underline" data-testid="admin-content-builder-preview-draft-link">
+            Draft Preview Aç (layout_preview=draft)
+          </a>
         </div>
 
         <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-600" data-testid="admin-content-builder-meta-row">
           <span data-testid="admin-content-builder-page-id">page_id: {pageId || '-'}</span>
           <span data-testid="admin-content-builder-draft-id">draft_id: {activeDraftId || '-'}</span>
           <span data-testid="admin-content-builder-revision-count">revision_count: {revisionList.length}</span>
-        </div>
-
-        <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3" data-testid="admin-content-builder-binding-panel">
-          <div className="flex flex-wrap items-end gap-2" data-testid="admin-content-builder-binding-controls">
-            <label className="text-xs min-w-[220px]" data-testid="admin-content-builder-binding-category-search-wrap">
-              Kategori Ara
-              <input
-                className="mt-1 h-9 w-full rounded border px-2"
-                value={categorySearch}
-                onChange={(e) => setCategorySearch(e.target.value)}
-                placeholder="Kategori adı / slug"
-                data-testid="admin-content-builder-binding-category-search-input"
-              />
-            </label>
-
-            <label className="text-xs min-w-[340px]" data-testid="admin-content-builder-binding-category-wrap">
-              Kategori Ağacı Seçimi
-              <select
-                className="mt-1 h-9 w-full rounded border px-2"
-                value={bindingCategoryId}
-                onChange={(e) => setBindingCategoryId(e.target.value)}
-                data-testid="admin-content-builder-binding-category-input"
-              >
-                <option value="">{categoriesLoading ? 'Kategoriler yükleniyor...' : 'Kategori seçin'}</option>
-                {filteredCategoryOptions.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {`${'— '.repeat(item.depth)}${item.name}`}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button type="button" className="h-9 rounded border px-3 text-xs" onClick={fetchActiveBinding} disabled={bindingLoading} data-testid="admin-content-builder-binding-fetch-button">Aktifi Getir</button>
-            <button type="button" className="h-9 rounded bg-blue-600 px-3 text-xs text-white" onClick={bindCurrentPage} disabled={bindingLoading} data-testid="admin-content-builder-binding-bind-button">Bu Page'i Bağla</button>
-            <button type="button" className="h-9 rounded border border-rose-300 px-3 text-xs text-rose-700" onClick={unbindCurrentCategory} disabled={bindingLoading} data-testid="admin-content-builder-binding-unbind-button">Binding Kaldır</button>
-          </div>
-
-          <div className="mt-2 text-xs text-slate-700" data-testid="admin-content-builder-binding-active-summary">
+          <span data-testid="admin-content-builder-binding-active-summary">
             {bindingActiveItem ? (
               <>
-                Aktif Binding → page_id: <strong data-testid="admin-content-builder-binding-active-page-id">{bindingActiveItem.layout_page_id}</strong>
+                Aktif binding page_id: <strong data-testid="admin-content-builder-binding-active-page-id">{bindingActiveItem.layout_page_id}</strong>
               </>
             ) : (
               <span data-testid="admin-content-builder-binding-active-empty">Aktif binding bulunamadı.</span>
             )}
-          </div>
+          </span>
         </div>
 
-        <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3" data-testid="admin-content-builder-preview-panel">
-          <div className="flex flex-wrap items-center gap-2" data-testid="admin-content-builder-preview-controls">
-            <button
-              type="button"
-              className="h-9 rounded border px-3 text-xs"
-              onClick={() => setShowPreviewComparison((prev) => !prev)}
-              data-testid="admin-content-builder-preview-toggle-button"
-            >
-              {showPreviewComparison ? 'Preview Karşılaştırmayı Gizle' : 'Preview Karşılaştırmayı Aç'}
-            </button>
-            <a href={publishedPreviewUrl} target="_blank" rel="noreferrer" className="text-xs font-medium underline" data-testid="admin-content-builder-preview-published-link">
-              Published Aç
-            </a>
-            <a href={draftPreviewUrl} target="_blank" rel="noreferrer" className="text-xs font-medium underline" data-testid="admin-content-builder-preview-draft-link">
-              Draft Preview Aç (layout_preview=draft)
-            </a>
-          </div>
-
-          {showPreviewComparison ? (
-            <div className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2" data-testid="admin-content-builder-preview-iframes">
-              <div className="rounded border bg-white p-2" data-testid="admin-content-builder-preview-published-wrap">
-                <div className="mb-1 text-[11px] text-slate-600" data-testid="admin-content-builder-preview-published-label">Published</div>
-                <iframe title="published-preview" src={publishedPreviewUrl} className="h-[380px] w-full rounded border" data-testid="admin-content-builder-preview-published-iframe" />
-              </div>
-              <div className="rounded border bg-white p-2" data-testid="admin-content-builder-preview-draft-wrap">
-                <div className="mb-1 text-[11px] text-slate-600" data-testid="admin-content-builder-preview-draft-label">Draft Preview</div>
-                <iframe title="draft-preview" src={draftPreviewUrl} className="h-[380px] w-full rounded border" data-testid="admin-content-builder-preview-draft-iframe" />
-              </div>
+        {showPreviewComparison ? (
+          <div className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2" data-testid="admin-content-builder-preview-iframes">
+            <div className="rounded border bg-white p-2" data-testid="admin-content-builder-preview-published-wrap">
+              <div className="mb-1 text-[11px] text-slate-600" data-testid="admin-content-builder-preview-published-label">Published</div>
+              <iframe title="published-preview" src={publishedPreviewUrl} className="h-[380px] w-full rounded border" data-testid="admin-content-builder-preview-published-iframe" />
             </div>
-          ) : null}
-        </div>
+            <div className="rounded border bg-white p-2" data-testid="admin-content-builder-preview-draft-wrap">
+              <div className="mb-1 text-[11px] text-slate-600" data-testid="admin-content-builder-preview-draft-label">Draft Preview</div>
+              <iframe title="draft-preview" src={draftPreviewUrl} className="h-[380px] w-full rounded border" data-testid="admin-content-builder-preview-draft-iframe" />
+            </div>
+          </div>
+        ) : null}
 
         {status ? <p className="mt-2 text-xs text-emerald-700" data-testid="admin-content-builder-status-message">{status}</p> : null}
         {error ? <p className="mt-2 text-xs text-rose-700" data-testid="admin-content-builder-error-message">{error}</p> : null}
@@ -876,9 +933,22 @@ export default function AdminContentBuilder() {
           </p>
           <div className="mt-3 space-y-2" data-testid="admin-content-builder-library-list">
             {componentLibrary.map((component) => (
-              <div key={component.key} className="rounded border p-2" data-testid={`admin-content-builder-library-item-${component.key}`}>
+              <div
+                key={component.key}
+                className="rounded border p-2"
+                draggable
+                onDragStart={() => {
+                  setDraggingLibraryComponentKey(component.key);
+                  setDraggingComponentId('');
+                }}
+                onDragEnd={() => setDraggingLibraryComponentKey('')}
+                data-testid={`admin-content-builder-library-item-${component.key}`}
+              >
                 <div className="text-xs font-medium" data-testid={`admin-content-builder-library-item-name-${component.key}`}>{component.name}</div>
                 <div className="text-[11px] text-slate-500" data-testid={`admin-content-builder-library-item-key-${component.key}`}>{component.key}</div>
+                <div className="mt-1 text-[11px] text-slate-500" data-testid={`admin-content-builder-library-drag-hint-${component.key}`}>
+                  Bu kartı doğrudan canvas sütununa sürükleyebilirsiniz.
+                </div>
                 <button
                   type="button"
                   className="mt-2 h-8 rounded border px-2 text-xs"
@@ -1069,6 +1139,99 @@ export default function AdminContentBuilder() {
                                             data-testid={`admin-content-builder-prop-input-${component.id}-${propKey}`}
                                           />
                                           {fieldTitle}
+                                        </label>
+                                      );
+                                    }
+
+                                    if (fieldType === 'object' && propSchema?.properties) {
+                                      const objectValue = component.props?.[propKey] && typeof component.props?.[propKey] === 'object'
+                                        ? component.props[propKey]
+                                        : {};
+                                      return (
+                                        <div key={propKey} className="rounded border p-2" data-testid={`admin-content-builder-prop-wrap-${component.id}-${propKey}`}>
+                                          <div className="text-[11px] font-medium mb-1">{fieldTitle}</div>
+                                          <div className="space-y-2">
+                                            {Object.entries(propSchema.properties || {}).map(([nestedKey, nestedSchema]) => {
+                                              const nestedType = nestedSchema?.type || 'string';
+                                              const nestedTitle = nestedSchema?.title || nestedKey;
+                                              const nestedValue = objectValue?.[nestedKey];
+
+                                              if (nestedType === 'boolean') {
+                                                return (
+                                                  <label key={nestedKey} className="inline-flex items-center gap-2 text-[11px]" data-testid={`admin-content-builder-prop-input-${component.id}-${propKey}-${nestedKey}`}>
+                                                    <input
+                                                      type="checkbox"
+                                                      checked={Boolean(nestedValue)}
+                                                      onChange={(e) => updateComponentPropValue(row.id, column.id, component.id, propKey, {
+                                                        ...objectValue,
+                                                        [nestedKey]: e.target.checked,
+                                                      })}
+                                                    />
+                                                    {nestedTitle}
+                                                  </label>
+                                                );
+                                              }
+
+                                              if (nestedType === 'number' || nestedType === 'integer') {
+                                                return (
+                                                  <label key={nestedKey} className="block text-[11px]">
+                                                    {nestedTitle}
+                                                    <input
+                                                      type="number"
+                                                      className="mt-1 h-8 w-full rounded border px-2 text-[11px]"
+                                                      value={Number.isFinite(Number(nestedValue)) ? Number(nestedValue) : ''}
+                                                      onChange={(e) => updateComponentPropValue(row.id, column.id, component.id, propKey, {
+                                                        ...objectValue,
+                                                        [nestedKey]: Number(e.target.value || 0),
+                                                      })}
+                                                    />
+                                                  </label>
+                                                );
+                                              }
+
+                                              return (
+                                                <label key={nestedKey} className="block text-[11px]">
+                                                  {nestedTitle}
+                                                  <input
+                                                    type="text"
+                                                    className="mt-1 h-8 w-full rounded border px-2 text-[11px]"
+                                                    value={nestedValue ?? ''}
+                                                    onChange={(e) => updateComponentPropValue(row.id, column.id, component.id, propKey, {
+                                                      ...objectValue,
+                                                      [nestedKey]: e.target.value,
+                                                    })}
+                                                  />
+                                                </label>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+
+                                    if (fieldType === 'array') {
+                                      const arrayValue = Array.isArray(value) ? value : [];
+                                      const itemType = propSchema?.items?.type || 'string';
+                                      return (
+                                        <label key={propKey} className="block text-[11px]" data-testid={`admin-content-builder-prop-wrap-${component.id}-${propKey}`}>
+                                          {fieldTitle}
+                                          <input
+                                            type="text"
+                                            className="mt-1 h-8 w-full rounded border px-2 text-[11px]"
+                                            value={arrayValue.join(', ')}
+                                            onChange={(e) => {
+                                              const parts = e.target.value
+                                                .split(',')
+                                                .map((item) => item.trim())
+                                                .filter(Boolean);
+                                              const parsed = itemType === 'number' || itemType === 'integer'
+                                                ? parts.map((item) => Number(item)).filter((item) => Number.isFinite(item))
+                                                : parts;
+                                              updateComponentPropValue(row.id, column.id, component.id, propKey, parsed);
+                                            }}
+                                            placeholder="virgülle ayırın"
+                                            data-testid={`admin-content-builder-prop-input-${component.id}-${propKey}`}
+                                          />
                                         </label>
                                       );
                                     }
