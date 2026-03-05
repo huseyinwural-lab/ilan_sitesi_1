@@ -145,6 +145,7 @@ const DEFAULT_COMPONENT_LIBRARY = [
       properties: {
         title: { type: 'string', title: 'Başlık' },
         show_counts: { type: 'boolean', title: 'İlan Sayıları Göster' },
+        tree_behavior: { type: 'string', title: 'Ağaç Davranışı', enum: ['expanded', 'accordion'] },
         max_levels: { type: 'integer', title: 'Maksimum Seviye' },
       },
       additionalProperties: false,
@@ -152,6 +153,7 @@ const DEFAULT_COMPONENT_LIBRARY = [
     default_props: {
       title: 'Kategoriler',
       show_counts: true,
+      tree_behavior: 'expanded',
       max_levels: 6,
     },
   },
@@ -163,6 +165,7 @@ const DEFAULT_COMPONENT_LIBRARY = [
       properties: {
         title: { type: 'string', title: 'Başlık' },
         show_counts: { type: 'boolean', title: 'İlan Sayıları Göster' },
+        tree_behavior: { type: 'string', title: 'Ağaç Davranışı', enum: ['expanded', 'accordion'] },
         max_levels: { type: 'integer', title: 'Maksimum Seviye' },
       },
       additionalProperties: false,
@@ -170,6 +173,7 @@ const DEFAULT_COMPONENT_LIBRARY = [
     default_props: {
       title: 'Kırılımlar',
       show_counts: true,
+      tree_behavior: 'expanded',
       max_levels: 6,
     },
   },
@@ -555,7 +559,7 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
         ])]),
         createPresetRow([
           createPresetColumn(personaKey === 'corporate' ? 5 : 4, [
-            createPresetComponent('layout.category-navigator-side'),
+            createPresetComponent('layout.category-navigator-side', { tree_behavior: 'expanded' }),
             ...(personaKey === 'corporate' ? [createPresetComponent('data.seller-card')] : []),
           ]),
           createPresetColumn(personaKey === 'corporate' ? 7 : 8, [
@@ -573,10 +577,10 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
         createPresetRow([createPresetColumn(12, [
           createPresetComponent('search.l1.default-content'),
           createPresetComponent('layout.breadcrumb-header'),
-          createPresetComponent('layout.category-navigator-top', { title: 'Sub Categories', show_counts: true, max_levels: 4 }),
+          createPresetComponent('layout.category-navigator-top', { title: 'Sub Categories', show_counts: true, tree_behavior: 'expanded', max_levels: 4 }),
         ])]),
         createPresetRow([
-          createPresetColumn(4, [createPresetComponent('layout.category-navigator-side', { title: 'Category Tree', show_counts: true, max_levels: 6 })]),
+          createPresetColumn(4, [createPresetComponent('layout.category-navigator-side', { title: 'Category Tree', show_counts: true, tree_behavior: 'expanded', max_levels: 6 })]),
           createPresetColumn(8, [
             createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: 12 }),
             createPresetComponent('shared.ad-slot', { placement: 'AD_SEARCH_TOP' }),
@@ -598,7 +602,7 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
         createPresetRow([
           createPresetColumn(8, [createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: 12 })]),
           createPresetColumn(4, [
-            createPresetComponent('layout.category-navigator-side', { title: 'Segments', show_counts: true, max_levels: 5 }),
+            createPresetComponent('layout.category-navigator-side', { title: 'Segments', show_counts: true, tree_behavior: 'expanded', max_levels: 5 }),
             createPresetComponent('shared.ad-slot', { placement: 'AD_SEARCH_TOP' }),
           ]),
         ]),
@@ -981,6 +985,41 @@ const buildCategoryTreeOptions = (items) => {
   return flattened;
 };
 
+const buildBindingCategoryTree = (items, query = '') => {
+  const normalizedQuery = String(query || '').trim().toLowerCase();
+  const byParent = new Map();
+
+  items.forEach((item) => {
+    const parentKey = item.parent_id || '__root__';
+    if (!byParent.has(parentKey)) byParent.set(parentKey, []);
+    byParent.get(parentKey).push(item);
+  });
+
+  const sortNodes = (nodes) => [...nodes].sort((a, b) => {
+    const aOrder = Number(a.sort_order || 0);
+    const bOrder = Number(b.sort_order || 0);
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return String(a.name || '').localeCompare(String(b.name || ''), 'tr');
+  });
+
+  const roots = sortNodes(byParent.get('__root__') || []).map((root) => {
+    const children = sortNodes(byParent.get(root.id) || []);
+    return { ...root, children };
+  });
+
+  if (!normalizedQuery) return roots;
+
+  return roots
+    .map((root) => {
+      const rootHit = `${root.name || ''} ${root.slug || ''}`.toLowerCase().includes(normalizedQuery);
+      const children = (root.children || []).filter((child) => `${child.name || ''} ${child.slug || ''}`.toLowerCase().includes(normalizedQuery));
+      if (rootHit) return { ...root, children: root.children || [] };
+      if (children.length) return { ...root, children };
+      return null;
+    })
+    .filter(Boolean);
+};
+
 const computeLayoutDiff = (publishedPayload, draftPayload) => {
   const publishedRows = Array.isArray(publishedPayload?.rows) ? publishedPayload.rows : [];
   const draftRows = Array.isArray(draftPayload?.rows) ? draftPayload.rows : [];
@@ -1099,6 +1138,8 @@ export default function AdminContentBuilder() {
   const [payloadJson, setPayloadJson] = useState(createEmptyPayload('home'));
 
   const [bindingCategoryId, setBindingCategoryId] = useState('');
+  const [bindingTreeBehavior, setBindingTreeBehavior] = useState('expanded');
+  const [bindingTreeOpenRootId, setBindingTreeOpenRootId] = useState('');
   const [bindingActiveItem, setBindingActiveItem] = useState(null);
   const [bindingLoading, setBindingLoading] = useState(false);
   const [showPreviewComparison, setShowPreviewComparison] = useState(false);
@@ -1200,7 +1241,24 @@ export default function AdminContentBuilder() {
       [...normalized, ...menuLibraryItems].forEach((item) => {
         const index = merged.findIndex((existing) => existing.key === item.key);
         if (index >= 0) {
-          merged[index] = { ...merged[index], ...item };
+          const existingItem = merged[index];
+          const existingSchema = existingItem?.schema_json && typeof existingItem.schema_json === 'object' ? existingItem.schema_json : {};
+          const nextSchema = item?.schema_json && typeof item.schema_json === 'object' ? item.schema_json : {};
+          const existingProperties = existingSchema?.properties && typeof existingSchema.properties === 'object' ? existingSchema.properties : {};
+          const nextProperties = nextSchema?.properties && typeof nextSchema.properties === 'object' ? nextSchema.properties : {};
+
+          merged[index] = {
+            ...existingItem,
+            ...item,
+            schema_json: {
+              ...existingSchema,
+              ...nextSchema,
+              properties: {
+                ...existingProperties,
+                ...nextProperties,
+              },
+            },
+          };
         } else {
           merged.push(item);
         }
@@ -1248,15 +1306,19 @@ export default function AdminContentBuilder() {
     };
   }, [moduleName, country]);
 
-  const filteredCategoryOptions = useMemo(() => {
-    const query = categorySearch.trim().toLowerCase();
-    if (!query) return categoryOptions;
-    return categoryOptions.filter((item) => {
-      const name = String(item.name || '').toLowerCase();
-      const slug = String(item.slug || '').toLowerCase();
-      return name.includes(query) || slug.includes(query);
+  const bindingCategoryTree = useMemo(
+    () => buildBindingCategoryTree(categoryOptions, categorySearch),
+    [categoryOptions, categorySearch],
+  );
+
+  useEffect(() => {
+    if (!bindingCategoryId) return;
+    const matchedRoot = bindingCategoryTree.find((root) => {
+      if (root.id === bindingCategoryId) return true;
+      return (root.children || []).some((child) => child.id === bindingCategoryId);
     });
-  }, [categoryOptions, categorySearch]);
+    if (matchedRoot?.id) setBindingTreeOpenRootId(matchedRoot.id);
+  }, [bindingCategoryId, bindingCategoryTree]);
 
   const menuComponentCount = useMemo(
     () => componentLibrary.filter((item) => String(item?.key || '').startsWith('menu.snapshot.')).length,
@@ -2234,19 +2296,86 @@ export default function AdminContentBuilder() {
 
                     <label className="text-xs block" data-testid="admin-content-builder-binding-category-wrap">
                       Kategori Ağacı Seçimi
-                      <select
-                        className="mt-1 h-9 w-full rounded border px-2"
-                        value={bindingCategoryId}
-                        onChange={(e) => setBindingCategoryId(e.target.value)}
-                        data-testid="admin-content-builder-binding-category-input"
-                      >
-                        <option value="">{categoriesLoading ? 'Kategoriler yükleniyor...' : 'Kategori seçin'}</option>
-                        {filteredCategoryOptions.map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {`${'— '.repeat(item.depth)}${item.name}`}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="mt-1 space-y-2" data-testid="admin-content-builder-binding-category-tree-wrap">
+                        <select
+                          className="h-9 w-full rounded border px-2 text-xs"
+                          value={bindingTreeBehavior}
+                          onChange={(event) => setBindingTreeBehavior(event.target.value)}
+                          data-testid="admin-content-builder-binding-tree-behavior-select"
+                        >
+                          <option value="expanded">Ağaç Davranışı: Tümü Açık</option>
+                          <option value="accordion">Ağaç Davranışı: Accordion</option>
+                        </select>
+
+                        <div className="max-h-56 overflow-auto rounded border bg-white p-2" data-testid="admin-content-builder-binding-category-tree">
+                          {categoriesLoading ? (
+                            <div className="text-[11px] text-slate-500" data-testid="admin-content-builder-binding-category-tree-loading">Kategoriler yükleniyor...</div>
+                          ) : bindingCategoryTree.length === 0 ? (
+                            <div className="text-[11px] text-slate-500" data-testid="admin-content-builder-binding-category-tree-empty">Eşleşen kategori bulunamadı.</div>
+                          ) : (
+                            bindingCategoryTree.map((root) => {
+                              const hasChildren = Array.isArray(root.children) && root.children.length > 0;
+                              const isOpen = bindingTreeBehavior === 'expanded' || bindingTreeOpenRootId === root.id;
+                              const rootSelected = bindingCategoryId === root.id;
+
+                              return (
+                                <div key={root.id} className="border-b last:border-b-0" data-testid={`admin-content-builder-binding-root-${root.id}`}>
+                                  <div className="flex items-center gap-1 py-1">
+                                    {hasChildren ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => setBindingTreeOpenRootId((prev) => (prev === root.id ? '' : root.id))}
+                                        className="h-6 w-6 rounded border text-[10px] text-slate-500"
+                                        data-testid={`admin-content-builder-binding-root-toggle-${root.id}`}
+                                      >
+                                        {isOpen ? '−' : '+'}
+                                      </button>
+                                    ) : <span className="inline-block h-6 w-6" aria-hidden="true" />}
+
+                                    <button
+                                      type="button"
+                                      onClick={() => setBindingCategoryId(root.id)}
+                                      className={`flex w-full items-center justify-between rounded px-2 py-1 text-left text-xs ${rootSelected ? 'bg-slate-900 font-semibold text-white' : 'font-semibold text-slate-700 hover:bg-slate-100'}`}
+                                      data-testid={`admin-content-builder-binding-root-select-${root.id}`}
+                                    >
+                                      <span>{root.name}</span>
+                                      <span className={`text-[10px] ${rootSelected ? 'text-white/90' : 'text-slate-500'}`}>({Number(root.listing_count || 0)})</span>
+                                    </button>
+                                  </div>
+
+                                  {hasChildren && isOpen ? (
+                                    <div className="mb-2 ml-7 space-y-1" data-testid={`admin-content-builder-binding-children-${root.id}`}>
+                                      {root.children.map((child) => {
+                                        const childSelected = bindingCategoryId === child.id;
+                                        return (
+                                          <button
+                                            key={child.id}
+                                            type="button"
+                                            onClick={() => setBindingCategoryId(child.id)}
+                                            className={`flex w-full items-center justify-between rounded px-2 py-1 text-left text-xs ${childSelected ? 'bg-blue-50 font-semibold text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                                            data-testid={`admin-content-builder-binding-child-select-${child.id}`}
+                                          >
+                                            <span>{child.name}</span>
+                                            <span className="text-[10px] text-slate-500">({Number(child.listing_count || 0)})</span>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+
+                        <input
+                          className="h-8 w-full rounded border bg-slate-50 px-2 text-[11px]"
+                          readOnly
+                          value={bindingCategoryId || ''}
+                          placeholder="Seçilen kategori ID"
+                          data-testid="admin-content-builder-binding-category-input"
+                        />
+                      </div>
                     </label>
 
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" data-testid="admin-content-builder-binding-action-grid">
@@ -2561,7 +2690,7 @@ export default function AdminContentBuilder() {
             >
               <option value="">Menü için kategori ağacı filtresi (opsiyonel)</option>
               {categoryOptions.map((item) => (
-                <option key={item.id} value={item.id}>{`${'— '.repeat(item.depth)}${item.name}`}</option>
+                <option key={item.id} value={item.id}>{`${'— '.repeat(item.depth)}${item.name} (${Number(item.listing_count || 0)})`}</option>
               ))}
             </select>
           </div>

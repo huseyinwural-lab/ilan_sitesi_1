@@ -803,7 +803,13 @@ export default function SearchPage() {
   const renderFilterPanel = (prefix = 'search-filter', showVehicleFilters = false) => (
     <Card data-testid={`${prefix}-card`}>
       <CardContent className="p-4" data-testid={`${prefix}-content`}>
-        <CategorySidebar categories={categories} activeCategorySlug={searchState.category} onCategoryChange={handleCategoryChange} />
+        <CategorySidebar
+          categories={categories}
+          activeCategorySlug={searchState.category}
+          onCategoryChange={handleCategoryChange}
+          treeBehavior="expanded"
+          showCounts
+        />
         {showVehicleFilters ? (
           <>
             <div className="my-4 border-t border-border" data-testid={`${prefix}-vehicle-divider`} />
@@ -1062,6 +1068,9 @@ export default function SearchPage() {
 
   const runtimeContext = useMemo(() => ({
     countryCode,
+    categories,
+    activeCategorySlug: searchState.category || null,
+    onCategoryChange: handleCategoryChange,
     searchItems: Array.isArray(data?.items) ? data.items : [],
     categoryShowcase,
     selectedListingId,
@@ -1071,7 +1080,7 @@ export default function SearchPage() {
       ...(Array.isArray(data?.items) ? data.items : []),
       ...(Array.isArray(categoryShowcase) ? categoryShowcase : []),
     ].filter(Boolean),
-  }), [countryCode, data, categoryShowcase, selectedListingId]);
+  }), [countryCode, categories, searchState.category, handleCategoryChange, data, categoryShowcase, selectedListingId]);
 
   return (
     <div data-testid="search-page">

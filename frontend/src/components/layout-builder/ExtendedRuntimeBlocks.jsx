@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AdSlot from '@/components/public/AdSlot';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const FALLBACK_IMAGES = ['/homepage/slide-1.jpg', '/homepage/slide-2.jpg', '/homepage/slide-3.jpg'];
@@ -48,6 +49,42 @@ const normalizeItems = (items, fallbackPrefix = 'item') => {
       };
     })
     .filter(Boolean);
+};
+
+const normalizeToken = (value) => String(value || '').trim().toLowerCase();
+
+const resolveLocalePrefix = () => {
+  if (typeof window === 'undefined') return '';
+  const first = String(window.location.pathname || '/').split('/').filter(Boolean)[0]?.toLowerCase();
+  return ['tr', 'de', 'fr'].includes(first) ? `/${first}` : '';
+};
+
+const buildSearchCategoryUrl = (categoryToken) => {
+  const localePrefix = resolveLocalePrefix();
+  const base = `${localePrefix}/search`;
+  if (!categoryToken) return base;
+  return `${base}?category=${encodeURIComponent(categoryToken)}`;
+};
+
+const buildL0L1Categories = (items = []) => {
+  const byParent = new Map();
+  items.forEach((item) => {
+    const parentKey = item?.parent_id || '__root__';
+    if (!byParent.has(parentKey)) byParent.set(parentKey, []);
+    byParent.get(parentKey).push(item);
+  });
+
+  const sortNodes = (nodes) => [...nodes].sort((a, b) => {
+    const aOrder = Number(a?.sort_order || 0);
+    const bOrder = Number(b?.sort_order || 0);
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return String(a?.name || '').localeCompare(String(b?.name || ''), 'tr');
+  });
+
+  return sortNodes(byParent.get('__root__') || []).map((root) => ({
+    ...root,
+    children: sortNodes(byParent.get(root.id) || []),
+  }));
 };
 
 const normalizeListingFromCandidate = (candidate) => {
@@ -263,25 +300,130 @@ export const StickyActionBarBlock = ({ props }) => {
 const CategoryNavigatorBase = ({ props, mode, runtimeContext }) => {
   const title = props?.title || (mode === 'top' ? 'Kırılımlar' : 'Kategoriler');
   const showCounts = props?.show_counts !== false;
-  const runtimeItems = Array.isArray(runtimeContext?.categories) ? runtimeContext.categories : null;
-  const rawItems = props?.items || props?.menu_snapshot?.children || runtimeItems || ['Emlak', 'Vasıta', 'Yedek Parça', 'İkinci El'];
-  const items = normalizeItems(rawItems, `cat-${mode}`);
+  const treeBehavior = props?.tree_behavior === 'accordion' ? 'accordion' : 'expanded';
+  const maxLevels = Math.max(1, Math.min(3, toNumber(props?.max_levels, 2)));
+  const selectedToken = normalizeToken(runtimeContext?.activeCategorySlug);
+  const triggerCategoryChange = (categoryToken) => {
+    if (typeof runtimeContext?.onCategoryChange === 'function') {
+      runtimeContext.onCategoryChange(categoryToken || null);
+      return;
+    }
+    if (typeof window !== 'undefined') {
+      window.location.href = buildSearchCategoryUrl(categoryToken);
+    }
+  };
+
+  const runtimeItems = Array.isArray(runtimeContext?.categories) ? runtimeContext.categories : [];
+  const l0l1Tree = useMemo(() => {
+    if (runtimeItems.length > 0) return buildL0L1Categories(runtimeItems);
+
+    const fallbackItems = normalizeItems(props?.items || props?.menu_snapshot?.children || ['Emlak', 'Vasıta', 'Yedek Parça', 'İkinci El'], `cat-${mode}`);
+    return fallbackItems.map((item, index) => ({
+      id: item.id || `fallback-root-${index}`,
+      name: item.label,
+      slug: item.id || `fallback-root-${index}`,
+      listing_count: item.count,
+      children: [],
+    }));
+  }, [runtimeItems, props?.items, props?.menu_snapshot?.children, mode]);
+  const [openRootId, setOpenRootId] = useState('');
+
+  useEffect(() => {
+    if (!selectedToken || !l0l1Tree.length) return;
+    const matchedRoot = l0l1Tree.find((root) => {
+      const rootMatch = [root.id, root.slug].some((token) => normalizeToken(token) === selectedToken);
+      const childMatch = (root.children || []).some((child) => [child.id, child.slug].some((token) => normalizeToken(token) === selectedToken));
+      return rootMatch || childMatch;
+    });
+    if (matchedRoot?.id) setOpenRootId(matchedRoot.id);
+  }, [selectedToken, l0l1Tree]);
+
+  if (mode === 'top') {
+    const chips = l0l1Tree.slice(0, Math.max(1, toNumber(props?.max_levels, 8))).map((root) => ({
+      id: root.id,
+      label: root.name,
+      count: root.listing_count,
+      href: buildSearchCategoryUrl(root.id || root.slug),
+    }));
+
+    return (
+      <section className="rounded-xl border bg-white p-4" data-testid="runtime-category-navigator-top">
+        <h3 className="text-sm font-semibold" data-testid="runtime-category-navigator-top-title">{title}</h3>
+        <div className="mt-3 flex flex-wrap gap-2" data-testid="runtime-category-navigator-top-list">
+          {chips.map((chip) => (
+            <button
+              key={chip.id}
+              type="button"
+              onClick={() => triggerCategoryChange(chip.id)}
+              className="rounded-full border bg-slate-50 px-3 py-1 text-xs hover:bg-slate-100"
+              data-testid={`runtime-category-navigator-top-item-${chip.id}`}
+            >
+              {chip.label}{showCounts ? ` (${Number(chip.count || 0)})` : ''}
+            </button>
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="rounded-xl border bg-white p-4" data-testid={`runtime-category-navigator-${mode}`}>
-      <h3 className="text-sm font-semibold" data-testid={`runtime-category-navigator-${mode}-title`}>{title}</h3>
-      <div className={mode === 'top' ? 'mt-3 flex flex-wrap gap-2' : 'mt-3 space-y-2'} data-testid={`runtime-category-navigator-${mode}-list`}>
-        {items.map((item) => (
-          <a
-            key={item.id}
-            href={item.url || '#'}
-            className={mode === 'top' ? 'rounded-full border bg-slate-50 px-3 py-1 text-xs' : 'flex items-center justify-between rounded-md border px-3 py-2 text-xs'}
-            data-testid={`runtime-category-navigator-${mode}-item-${item.id}`}
-          >
-            <span>{item.label}</span>
-            {showCounts && mode !== 'top' ? <span className="text-slate-500">{item.count ?? '-'}</span> : null}
-          </a>
-        ))}
+    <section className="rounded-xl border bg-white p-4" data-testid="runtime-category-navigator-side">
+      <h3 className="text-sm font-semibold" data-testid="runtime-category-navigator-side-title">{title}</h3>
+      <div className="mt-3 rounded-lg border bg-white p-2" data-testid="runtime-category-navigator-side-tree">
+        {l0l1Tree.map((root) => {
+          const rootToken = root.id || root.slug;
+          const rootSelected = [root.id, root.slug].some((token) => normalizeToken(token) === selectedToken);
+          const isOpen = treeBehavior === 'expanded' || openRootId === root.id;
+          const hasChildren = Array.isArray(root.children) && root.children.length > 0;
+
+          return (
+            <div key={root.id} className="border-b last:border-b-0" data-testid={`runtime-category-navigator-side-root-${root.id}`}>
+              <div className="flex items-center gap-1 py-1">
+                {hasChildren ? (
+                  <button
+                    type="button"
+                    onClick={() => setOpenRootId((prev) => (prev === root.id ? '' : root.id))}
+                    className="rounded p-1 text-slate-500 hover:bg-slate-100"
+                    data-testid={`runtime-category-navigator-side-toggle-${root.id}`}
+                  >
+                    {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                  </button>
+                ) : <span className="inline-block h-6 w-6" aria-hidden="true" />}
+
+                <button
+                  type="button"
+                  onClick={() => triggerCategoryChange(rootToken)}
+                  className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm transition ${rootSelected ? 'bg-slate-900 font-semibold text-white' : 'font-semibold text-slate-800 hover:bg-slate-100'}`}
+                  data-testid={`runtime-category-navigator-side-root-link-${root.id}`}
+                >
+                  <span>{root.name}</span>
+                  {showCounts ? <span className={`text-xs ${rootSelected ? 'text-white/90' : 'text-slate-500'}`}>({Number(root.listing_count || 0)})</span> : null}
+                </button>
+              </div>
+
+              {hasChildren && isOpen && maxLevels > 1 ? (
+                <div className="mb-2 ml-7 space-y-1" data-testid={`runtime-category-navigator-side-children-${root.id}`}>
+                  {root.children.map((child) => {
+                    const childToken = child.id || child.slug;
+                    const childSelected = [child.id, child.slug].some((token) => normalizeToken(token) === selectedToken);
+                    return (
+                      <button
+                        key={child.id}
+                        type="button"
+                        onClick={() => triggerCategoryChange(childToken)}
+                        className={`flex items-center justify-between rounded-md px-2 py-1 text-sm transition ${childSelected ? 'bg-blue-50 font-medium text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                        data-testid={`runtime-category-navigator-side-child-link-${child.id}`}
+                      >
+                        <span>{child.name}</span>
+                        {showCounts ? <span className="text-xs text-slate-500">({Number(child.listing_count || 0)})</span> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
       </div>
     </section>
   );

@@ -1,106 +1,121 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Folder } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ChevronDown, ChevronRight, Folder } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export const CategorySidebar = ({ 
-  categories, 
-  activeCategorySlug, 
-  onCategoryChange 
+const normalizeToken = (value) => String(value || '').trim().toLowerCase();
+
+const buildL0L1Tree = (categories = []) => {
+  const byParent = new Map();
+  categories.forEach((item) => {
+    const parentKey = item?.parent_id || '__root__';
+    if (!byParent.has(parentKey)) byParent.set(parentKey, []);
+    byParent.get(parentKey).push(item);
+  });
+
+  const sortNodes = (items) => [...items].sort((a, b) => {
+    const aOrder = Number(a?.sort_order || 0);
+    const bOrder = Number(b?.sort_order || 0);
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return String(a?.name || '').localeCompare(String(b?.name || ''), 'tr');
+  });
+
+  return sortNodes(byParent.get('__root__') || []).map((root) => ({
+    ...root,
+    children: sortNodes(byParent.get(root.id) || []),
+  }));
+};
+
+export const CategorySidebar = ({
+  categories,
+  activeCategorySlug,
+  onCategoryChange,
+  showCounts = true,
+  treeBehavior = 'expanded',
 }) => {
-  // Flatten tree to find active category and its relations easily
-  // Assuming categories is a flat list for now, or we traverse tree.
-  // API returns flat list on /api/categories which is easier for lookup.
-  
-  const activeCategory = categories.find(c => c.id === activeCategorySlug || c.slug === activeCategorySlug);
-  
-  // Find Parent
-  const parentCategory = activeCategory?.parent_id 
-    ? categories.find(c => c.id === activeCategory.parent_id)
-    : null;
+  const tree = useMemo(() => buildL0L1Tree(Array.isArray(categories) ? categories : []), [categories]);
+  const [openRootId, setOpenRootId] = useState('');
+  const selectedToken = normalizeToken(activeCategorySlug);
 
-  // Find Children
-  const childCategories = activeCategory 
-    ? categories.filter(c => c.parent_id === activeCategory.id)
-    : categories.filter(c => !c.parent_id); // Root categories if none active
+  useEffect(() => {
+    if (!selectedToken || !tree.length) return;
+    const matchedRoot = tree.find((root) => {
+      const rootMatches = [root.id, root.slug].some((token) => normalizeToken(token) === selectedToken);
+      const childMatches = (root.children || []).some((child) => [child.id, child.slug].some((token) => normalizeToken(token) === selectedToken));
+      return rootMatches || childMatches;
+    });
+    if (matchedRoot?.id) setOpenRootId(matchedRoot.id);
+  }, [selectedToken, tree]);
 
-  // Find Siblings (if no children, show siblings to allow lateral move)
-  const siblingCategories = activeCategory && childCategories.length === 0 && activeCategory.parent_id
-    ? categories.filter(c => c.parent_id === activeCategory.parent_id)
-    : [];
-
-  const displayCategories = childCategories.length > 0 ? childCategories : siblingCategories;
-  const listTitle = childCategories.length > 0 ? 'Alt Kategoriler' : 'Diğer Kategoriler';
-
-  if (!categories || categories.length === 0) return null;
+  if (!tree.length) return null;
 
   return (
-    <div className="space-y-4 mb-6">
-      <div className="flex items-center gap-2 font-semibold text-sm text-foreground/80">
+    <div className="mb-6 space-y-3" data-testid="category-sidebar-tree-root">
+      <div className="flex items-center gap-2 text-sm font-semibold text-foreground/80" data-testid="category-sidebar-tree-title">
         <Folder className="h-4 w-4" />
         Kategoriler
       </div>
 
-      {/* Navigation Header */}
-      {activeCategory && (
-        <div className="space-y-2">
-          {parentCategory ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start px-0 text-muted-foreground hover:text-foreground h-auto py-1"
-              onClick={() => onCategoryChange(parentCategory.id || parentCategory.slug)}
-              data-testid="category-parent-back"
-            >
-              <ChevronLeft className="h-3 w-3 mr-1" />
-              {parentCategory.name}
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start px-0 text-muted-foreground hover:text-foreground h-auto py-1"
-              onClick={() => onCategoryChange(null)}
-              data-testid="category-all-back"
-            >
-              <ChevronLeft className="h-3 w-3 mr-1" />
-              Tüm Kategoriler
-            </Button>
-          )}
-          
-          <div className="font-bold text-lg px-1">
-            {activeCategory.name}
-          </div>
-        </div>
-      )}
+      <div className="rounded-lg border bg-white p-2" data-testid="category-sidebar-tree-container">
+        {tree.map((root) => {
+          const rootToken = root.id || root.slug;
+          const rootSelected = [root.id, root.slug].some((token) => normalizeToken(token) === selectedToken);
+          const isOpen = treeBehavior === 'expanded' || openRootId === root.id;
+          const hasChildren = Array.isArray(root.children) && root.children.length > 0;
 
-      {/* Category List */}
-      <div className="space-y-1">
-        {activeCategory && childCategories.length === 0 && (
-           <div className="px-2 py-1.5 text-sm font-medium bg-primary/10 text-primary rounded-md">
-             {activeCategory.name}
-           </div>
-        )}
-        
-        {displayCategories.map(cat => (
-          <Button
-            key={cat.id}
-            variant="ghost"
-            className={cn(
-              "w-full justify-between h-8 px-2 text-sm font-normal",
-              (activeCategorySlug === cat.id || activeCategorySlug === cat.slug)
-                ? "bg-accent text-accent-foreground font-medium"
-                : "text-muted-foreground"
-            )}
-            onClick={() => onCategoryChange(cat.id || cat.slug)}
-            data-testid={`category-select-${cat.id}`}
-          >
-            <span>{cat.name}</span>
-            {cat.listing_count > 0 && (
-              <span className="text-xs text-muted-foreground ml-2">({cat.listing_count})</span>
-            )}
-          </Button>
-        ))}
+          return (
+            <div key={root.id} className="border-b last:border-b-0" data-testid={`category-sidebar-root-${root.id}`}>
+              <div className="flex items-center gap-1 py-1">
+                {hasChildren ? (
+                  <button
+                    type="button"
+                    onClick={() => setOpenRootId((prev) => (prev === root.id ? '' : root.id))}
+                    className="rounded p-1 text-slate-500 hover:bg-slate-100"
+                    data-testid={`category-sidebar-root-toggle-${root.id}`}
+                  >
+                    {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                  </button>
+                ) : <span className="inline-block h-6 w-6" aria-hidden="true" />}
+
+                <button
+                  type="button"
+                  onClick={() => onCategoryChange(rootToken || null)}
+                  className={cn(
+                    'flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm transition',
+                    rootSelected ? 'bg-slate-900 font-semibold text-white' : 'font-semibold text-slate-800 hover:bg-slate-100',
+                  )}
+                  data-testid={`category-sidebar-root-select-${root.id}`}
+                >
+                  <span>{root.name}</span>
+                  {showCounts ? <span className={cn('text-xs', rootSelected ? 'text-white/90' : 'text-slate-500')}>({Number(root.listing_count || 0)})</span> : null}
+                </button>
+              </div>
+
+              {hasChildren && isOpen ? (
+                <div className="mb-2 ml-7 space-y-1" data-testid={`category-sidebar-children-${root.id}`}>
+                  {root.children.map((child) => {
+                    const childToken = child.id || child.slug;
+                    const childSelected = [child.id, child.slug].some((token) => normalizeToken(token) === selectedToken);
+                    return (
+                      <button
+                        key={child.id}
+                        type="button"
+                        onClick={() => onCategoryChange(childToken || null)}
+                        className={cn(
+                          'flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm transition',
+                          childSelected ? 'bg-blue-50 font-medium text-blue-700' : 'text-slate-600 hover:bg-slate-50',
+                        )}
+                        data-testid={`category-sidebar-child-select-${child.id}`}
+                      >
+                        <span>{child.name}</span>
+                        {showCounts ? <span className="text-xs text-slate-500">({Number(child.listing_count || 0)})</span> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

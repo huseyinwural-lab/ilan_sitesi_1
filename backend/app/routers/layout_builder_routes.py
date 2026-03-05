@@ -806,7 +806,7 @@ def _build_standard_page_seed_payload(
                 ]),
                 _seed_row([
                     _seed_column(4 if persona_key == "individual" else 5, [
-                        _seed_component("layout.category-navigator-side", {"title": "Categories", "show_counts": True, "max_levels": 6}),
+                        _seed_component("layout.category-navigator-side", {"title": "Categories", "show_counts": True, "tree_behavior": "expanded", "max_levels": 6}),
                     ]),
                     _seed_column(8 if persona_key == "individual" else 7, [
                         _seed_component("interactive.similar-listings-slider", {"source": "similar", "max_items": 10 if variant_key == "B" else 8}),
@@ -823,11 +823,11 @@ def _build_standard_page_seed_payload(
                     _seed_column(12, [
                         _seed_component("search.l1.default-content"),
                         _seed_component("layout.breadcrumb-header"),
-                        _seed_component("layout.category-navigator-top", {"title": "Sub Categories", "show_counts": True, "max_levels": 4}),
+                        _seed_component("layout.category-navigator-top", {"title": "Sub Categories", "show_counts": True, "tree_behavior": "expanded", "max_levels": 4}),
                     ])
                 ]),
                 _seed_row([
-                    _seed_column(4, [_seed_component("layout.category-navigator-side", {"title": "Category Tree", "show_counts": True, "max_levels": 6})]),
+                    _seed_column(4, [_seed_component("layout.category-navigator-side", {"title": "Category Tree", "show_counts": True, "tree_behavior": "expanded", "max_levels": 6})]),
                     _seed_column(8, [
                         _seed_component("interactive.similar-listings-slider", {"source": "similar", "max_items": 12}),
                         _seed_component("shared.ad-slot", {"placement": "AD_SEARCH_TOP"}),
@@ -852,7 +852,7 @@ def _build_standard_page_seed_payload(
                 _seed_row([
                     _seed_column(8, [_seed_component("interactive.similar-listings-slider", {"source": "similar", "max_items": 12 if page_type == LayoutPageType.SEARCH_LN else 10})]),
                     _seed_column(4, [
-                        _seed_component("layout.category-navigator-side", {"title": "Filters and Categories", "show_counts": True, "max_levels": 5}),
+                        _seed_component("layout.category-navigator-side", {"title": "Filters and Categories", "show_counts": True, "tree_behavior": "expanded", "max_levels": 5}),
                         _seed_component("shared.ad-slot", {"placement": "AD_SEARCH_TOP"}),
                     ]),
                 ]),
