@@ -1,6 +1,13 @@
 # CHANGELOG
 
 ## Uygulanan Özellikler
+- **P0 i18n TR/DE/FR Altyapı Entegrasyonu (2026-03-05):**
+  - URL locale prefix desteği + `/` -> `/tr` yönlendirmesi + public route hreflang/canonical güncellemesi eklendi.
+  - Backend JSONB i18n kolonları (`layout_pages`, `categories`) ve startup kolon güvence adımı eklendi.
+  - `layout resolve` + `categories` yanıtlarında locale tabanlı localized dönüş (Accept-Language / X-URL-Locale) aktif edildi.
+  - Admin Content Builder property paneline TR/DE/FR text-tab editor eklendi; translatable props locale-map saklıyor.
+  - `seed-defaults` 15 standart sayfa tipi i18n seed/fallback (TR->DE/FR başlangıç) ile güncellendi.
+  - Doğrulama: `/app/test_reports/iteration_135.json` (frontend %100, backend %93; LOW notlar yalnızca transient/expected davranış).
 - **P0 15 Standart Sayfa Tipi Entegrasyonu (2026-03-05):**
   - `AdminContentBuilder` 15 standart page type setiyle hizalandı; kapsamlı preset payload üretimi eklendi.
   - UI aksiyonları eklendi: `Bu Sayfaya Standart Şablon`, `15 Sayfa Tipi Seed (API)`, draft overwrite toggle.

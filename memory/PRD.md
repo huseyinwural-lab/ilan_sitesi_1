@@ -52,6 +52,42 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - kapsamlı default layout,
   - seed tetikleme hem UI hem backend endpoint üzerinden tamamlandı.
 
+## 2026-03-05 (P0 — i18n & Çok Dilli TR/DE/FR Altyapı Entegrasyonu)
+
+### Uygulananlar
+- **Dil önceliği** uygulandı: `URL prefix (/tr|/de|/fr) > kullanıcı tercihi > Accept-Language`.
+- **Routing & SEO:**
+  - `/` istemci tarafında otomatik `/tr` yönlendirmesi aktif.
+  - Public route’larda locale prefix desteği eklendi (`/:locale/...`).
+  - `canonical` + `hreflang` (tr/de/fr + x-default) dinamik üretimi eklendi (home/search/detail).
+- **Backend i18n veri modeli (JSONB):**
+  - `layout_pages`: `title_i18n`, `description_i18n`, `label_i18n`
+  - `categories`: `title_i18n`, `description_i18n`, `label_i18n`
+  - Startup bootstrap’a kolon varlık güvencesi eklendi (`ALTER TABLE ... IF NOT EXISTS`).
+- **API locale davranışı:**
+  - `layout resolve` ve `categories` akışlarında locale çözümleme + fallback uygulanıp localized yanıt üretildi.
+  - `Accept-Language` ve `X-URL-Locale` header’ları dikkate alınıyor.
+- **Admin Content Builder i18n editor:**
+  - Property panelde text alanları için TR/DE/FR tab düzeni eklendi.
+  - Translatable prop’lar locale-map (`{tr,de,fr}`) olarak saklanıyor.
+- **Global preset/seed i18n sync:**
+  - `seed-defaults` akışında 15 standart tip için metin prop’ları 3 dil map’i ile seed’leniyor.
+  - Kullanıcı tercihi doğrultusunda TR değerler DE/FR başlangıç fallback’i olarak kopyalanıyor.
+- **Locale persistence:**
+  - Dil seçimi `localStorage`’da kalıcı.
+  - Girişli kullanıcıda dil değişimi backend user locale endpointine sync edilmeye çalışılıyor (scope uyumsuzluğu olursa sessiz degrade).
+
+### Test Durumu
+- Self-test:
+  - `POST /api/admin/site/content-layout/pages/seed-defaults` PASS
+  - `GET /api/site/content-layout/resolve?...&layout_preview=draft` (auth) PASS
+  - `GET /api/categories` i18n alanları PASS
+  - Smoke: `/` -> `/tr`, `/fr/search` PASS
+- Testing agent raporu: `/app/test_reports/iteration_135.json`
+  - Backend: 25/27 (%93)
+  - Frontend: %100
+  - LOW notlar: transient 502 (yük altında), draft preview auth gereksinimi (beklenen davranış)
+
 ## 2026-03-01 Tamamlananlar
 
 ## 2026-03-04 (P0 — Search Kategori Landing L1/L2 Tasarım Uygulaması)
