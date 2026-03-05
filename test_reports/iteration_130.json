@@ -1,0 +1,47 @@
+{
+  "summary": "Iteration 130: DetailPage seller card metrics fix verified. rating/reviews_count/response_rate now displayed in UI. Admin Content Builder preset persona/variant controls and policy autofix button working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_130.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 130 verified the fix from iteration 129. All previously reported issues are now resolved.",
+  "features_tested": {
+    "detail_page_seller_card_metrics": {
+      "rating": "PASS - Shows 'Puan: 4.4' with data-testid=listing-seller-desktop-rating",
+      "reviews_count": "PASS - Shows 'Yorum: 118' with data-testid=listing-seller-desktop-reviews",
+      "response_rate": "PASS - Shows 'Yanıt oranı: %0' with data-testid=listing-seller-desktop-response-rate",
+      "member_since": "PASS - Shows 'Üyelik: Şubat 2026' with data-testid=listing-seller-desktop-member-since"
+    },
+    "admin_content_builder_preset_controls": {
+      "persona_select": "PASS - data-testid=admin-content-builder-preset-persona-select found",
+      "variant_select": "PASS - data-testid=admin-content-builder-preset-variant-select found",
+      "analytics_panel": "PASS - data-testid=admin-content-builder-preset-analytics-panel found",
+      "policy_autofix_button": "PASS - data-testid=admin-content-builder-policy-autofix-button found"
+    },
+    "backend_policy_endpoints": {
+      "policy_report": "PASS - /api/admin/site/content-layout/revisions/{id}/policy-report returns 200 with checks/suggested_fixes/stats",
+      "policy_autofix": "PASS - /api/admin/site/content-layout/revisions/{id}/policy-autofix returns 200 with auto_fix_actions/report_after"
+    }
+  },
+  "iteration_129_issue_resolution": {
+    "original_issue": "Seller card displays basic info but rating/reviews_count/response_rate from API not shown in UI",
+    "resolution_status": "FIXED",
+    "verification": "All three metrics now display correctly in DetailPage seller card (lines 69-77 of DetailPage.js)"
+  }
+}
