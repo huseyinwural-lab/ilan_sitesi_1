@@ -182,13 +182,21 @@ const WizardContent = () => {
   );
 
   const countryCode = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
+  const runtimePageType = useMemo(() => {
+    if (step === 1) return 'wizard_step_l0';
+    if (step === 2 || step === 3 || step === 4) return 'wizard_step_ln';
+    if (step === 5 || step === 6) return 'wizard_step_form';
+    if (step === 7) return 'wizard_preview';
+    return 'wizard_step_form';
+  }, [step]);
+
   const {
     layout: listingRuntimeLayout,
     hasLayoutRows: hasListingRuntimeRows,
   } = useContentLayoutResolve({
     country: countryCode,
     module: moduleKey,
-    pageType: 'listing_create_stepX',
+    pageType: runtimePageType,
     enabled: Boolean(moduleKey),
   });
 

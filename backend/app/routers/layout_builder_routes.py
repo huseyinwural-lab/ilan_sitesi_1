@@ -99,6 +99,34 @@ GENERIC_MAX_ROWS = 20
 GENERIC_MAX_COLUMNS_PER_ROW = 4
 GENERIC_MAX_COMPONENTS_PER_COLUMN = 16
 
+STANDARD_LAYOUT_PAGE_TYPES: tuple[LayoutPageType, ...] = (
+    LayoutPageType.HOME,
+    LayoutPageType.CATEGORY_L0_L1,
+    LayoutPageType.SEARCH_LN,
+    LayoutPageType.URGENT_LISTINGS,
+    LayoutPageType.CATEGORY_SHOWCASE,
+    LayoutPageType.LISTING_DETAIL,
+    LayoutPageType.LISTING_DETAIL_PARAMETERS,
+    LayoutPageType.STOREFRONT_PROFILE,
+    LayoutPageType.WIZARD_STEP_L0,
+    LayoutPageType.WIZARD_STEP_LN,
+    LayoutPageType.WIZARD_STEP_FORM,
+    LayoutPageType.WIZARD_PREVIEW,
+    LayoutPageType.WIZARD_DOPING_PAYMENT,
+    LayoutPageType.WIZARD_RESULT,
+    LayoutPageType.USER_DASHBOARD,
+)
+
+WIZARD_POLICY_PAGE_TYPES: set[LayoutPageType] = {
+    LayoutPageType.WIZARD_STEP_L0,
+    LayoutPageType.WIZARD_STEP_LN,
+    LayoutPageType.WIZARD_STEP_FORM,
+    LayoutPageType.WIZARD_PREVIEW,
+    LayoutPageType.WIZARD_DOPING_PAYMENT,
+    LayoutPageType.WIZARD_RESULT,
+    LayoutPageType.LISTING_CREATE_STEPX,
+}
+
 
 def _is_transient_db_error(exc: Exception) -> bool:
     if isinstance(exc, SQLAlchemyError):
@@ -452,6 +480,14 @@ class LayoutPresetEventPayload(BaseModel):
     metadata_json: dict = Field(default_factory=dict)
 
 
+class LayoutSeedDefaultsPayload(BaseModel):
+    country: str = Field(min_length=2, max_length=5)
+    module: str = Field(min_length=2, max_length=64)
+    persona: str = Field(default="individual", min_length=2, max_length=32)
+    variant: str = Field(default="A", min_length=1, max_length=16)
+    overwrite_existing_draft: bool = True
+
+
 def _cache_key(country: str, module: str, page_type: LayoutPageType, category_id: Optional[str]) -> str:
     normalized_category = str(category_id or "").strip().lower()
     return f"{country.upper()}|{module.strip().lower()}|{page_type.value}|{normalized_category}"
@@ -546,21 +582,264 @@ def _serialize_preset_event(row: LayoutPresetEvent) -> dict[str, Any]:
     }
 
 
+def _is_wizard_policy_page_type(page_type: Optional[LayoutPageType]) -> bool:
+    return bool(page_type and page_type in WIZARD_POLICY_PAGE_TYPES)
+
+
 def get_default_component_key(page_type: Optional[LayoutPageType]) -> str:
     if page_type == LayoutPageType.HOME:
         return "home.default-content"
-    if page_type in {LayoutPageType.SEARCH_L1, LayoutPageType.SEARCH_L2, LayoutPageType.SEARCH_LN, LayoutPageType.CATEGORY_L0_L1, LayoutPageType.CATEGORY_SHOWCASE, LayoutPageType.URGENT_LISTINGS}:
+    if page_type in {
+        LayoutPageType.SEARCH_L1,
+        LayoutPageType.SEARCH_L2,
+        LayoutPageType.SEARCH_LN,
+        LayoutPageType.CATEGORY_L0_L1,
+        LayoutPageType.CATEGORY_SHOWCASE,
+        LayoutPageType.URGENT_LISTINGS,
+    }:
         return "search.l1.default-content"
+    if _is_wizard_policy_page_type(page_type):
+        return "listing.create.default-content"
+    return "shared.text-block"
+
+
+def _seed_component(component_key: str, props: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    return {
+        "id": f"cmp-{uuid.uuid4().hex[:10]}",
+        "key": component_key,
+        "props": props or {},
+        "visibility": {"desktop": True, "tablet": True, "mobile": True},
+    }
+
+
+def _seed_column(desktop_width: int, components: list[dict[str, Any]]) -> dict[str, Any]:
+    safe_width = max(1, min(12, int(desktop_width)))
+    return {
+        "id": f"col-{uuid.uuid4().hex[:10]}",
+        "width": {"desktop": safe_width, "tablet": 12, "mobile": 12},
+        "components": components,
+    }
+
+
+def _seed_row(columns: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "id": f"row-{uuid.uuid4().hex[:10]}",
+        "columns": columns,
+    }
+
+
+def _build_standard_page_seed_payload(
+    page_type: LayoutPageType,
+    *,
+    persona: str = "individual",
+    variant: str = "A",
+) -> dict[str, Any]:
+    persona_key = "corporate" if str(persona).strip().lower() == "corporate" else "individual"
+    variant_key = "B" if str(variant).strip().upper() == "B" else "A"
+
+    if page_type == LayoutPageType.HOME:
+        return {
+            "rows": [
+                _seed_row([
+                    _seed_column(12, [
+                        _seed_component("home.default-content"),
+                        _seed_component("media.auto-play-carousel-hero", {"auto_play_seconds": 5, "show_overlay_text": True, "cta_label": "Create Free Listing"}),
+                    ])
+                ]),
+                _seed_row([
+                    _seed_column(4 if persona_key == "individual" else 5, [
+                        _seed_component("layout.category-navigator-side", {"title": "Categories", "show_counts": True, "max_levels": 6}),
+                    ]),
+                    _seed_column(8 if persona_key == "individual" else 7, [
+                        _seed_component("interactive.similar-listings-slider", {"source": "similar", "max_items": 10 if variant_key == "B" else 8}),
+                        _seed_component("media.ad-promo-slot", {"placement": "AD_HOME_TOP", "campaign_label": "Home Showcase"}),
+                    ]),
+                ]),
+            ]
+        }
+
+    if page_type == LayoutPageType.CATEGORY_L0_L1:
+        return {
+            "rows": [
+                _seed_row([
+                    _seed_column(12, [
+                        _seed_component("search.l1.default-content"),
+                        _seed_component("layout.breadcrumb-header"),
+                        _seed_component("layout.category-navigator-top", {"title": "Sub Categories", "show_counts": True, "max_levels": 4}),
+                    ])
+                ]),
+                _seed_row([
+                    _seed_column(4, [_seed_component("layout.category-navigator-side", {"title": "Category Tree", "show_counts": True, "max_levels": 6})]),
+                    _seed_column(8, [
+                        _seed_component("interactive.similar-listings-slider", {"source": "similar", "max_items": 12}),
+                        _seed_component("shared.ad-slot", {"placement": "AD_SEARCH_TOP"}),
+                    ]),
+                ]),
+            ]
+        }
+
+    if page_type in {LayoutPageType.SEARCH_LN, LayoutPageType.CATEGORY_SHOWCASE, LayoutPageType.URGENT_LISTINGS}:
+        header_text = "Category Listing" if page_type == LayoutPageType.SEARCH_LN else "Category Showcase"
+        if page_type == LayoutPageType.URGENT_LISTINGS:
+            header_text = "Urgent Listings"
+        return {
+            "rows": [
+                _seed_row([
+                    _seed_column(12, [
+                        _seed_component("search.l1.default-content"),
+                        _seed_component("layout.breadcrumb-header"),
+                        _seed_component("shared.text-block", {"title": header_text, "body": "This area was generated by the standard page-type seed template."}),
+                    ])
+                ]),
+                _seed_row([
+                    _seed_column(8, [_seed_component("interactive.similar-listings-slider", {"source": "similar", "max_items": 12 if page_type == LayoutPageType.SEARCH_LN else 10})]),
+                    _seed_column(4, [
+                        _seed_component("layout.category-navigator-side", {"title": "Filters and Categories", "show_counts": True, "max_levels": 5}),
+                        _seed_component("shared.ad-slot", {"placement": "AD_SEARCH_TOP"}),
+                    ]),
+                ]),
+            ]
+        }
+
+    if page_type == LayoutPageType.LISTING_DETAIL:
+        return {
+            "rows": [
+                _seed_row([
+                    _seed_column(12, [
+                        _seed_component("layout.breadcrumb-header"),
+                        _seed_component("media.advanced-photo-gallery"),
+                        *([_seed_component("media.video-3d-tour-player", {"provider": "youtube", "source_url": "", "auto_play": False})] if variant_key == "B" else []),
+                    ])
+                ]),
+                _seed_row([
+                    _seed_column(8, [
+                        _seed_component("data.price-title-block"),
+                        _seed_component("data.attribute-grid-dynamic"),
+                        _seed_component("data.description-text-area"),
+                        _seed_component("interactive.similar-listings-slider", {"source": "similar", "max_items": 8}),
+                    ]),
+                    _seed_column(4, [
+                        _seed_component("data.seller-card", {"show_rating": True, "show_membership": True, "show_all_listings_link": True}),
+                        _seed_component("interactive.interactive-map", {"default_zoom": 14, "show_nearby_layers": True, "map_style": "standard"}),
+                        _seed_component("layout.sticky-action-bar", {"position": "bottom", "primary_label": "Call Now", "secondary_label": "Send Message", "phone_number": ""}),
+                    ]),
+                ]),
+            ]
+        }
+
+    if page_type == LayoutPageType.LISTING_DETAIL_PARAMETERS:
+        return {
+            "rows": [
+                _seed_row([
+                    _seed_column(12, [
+                        _seed_component("shared.text-block", {"title": "Listing Parameters", "body": "Standard seed layout for detailed parameter blocks."}),
+                        _seed_component("data.attribute-grid-dynamic", {"include_modules": ["core_fields", "parameter_fields", "detail_groups"], "compact_mode": False}),
+                    ])
+                ])
+            ]
+        }
+
+    if page_type == LayoutPageType.STOREFRONT_PROFILE:
+        return {
+            "rows": [
+                _seed_row([
+                    _seed_column(12, [
+                        _seed_component("shared.text-block", {"title": "Storefront Profile", "body": "Showcase and profile content for storefront pages."}),
+                        _seed_component("data.seller-card"),
+                    ])
+                ]),
+                _seed_row([
+                    _seed_column(8, [_seed_component("interactive.similar-listings-slider", {"source": "seller_other", "max_items": 12})]),
+                    _seed_column(4, [
+                        _seed_component("interactive.interactive-map"),
+                        _seed_component("media.ad-promo-slot", {"placement": "AD_HOME_TOP", "campaign_label": "Store Campaign"}),
+                    ]),
+                ]),
+            ]
+        }
+
+    if page_type == LayoutPageType.USER_DASHBOARD:
+        return {
+            "rows": [
+                _seed_row([
+                    _seed_column(12, [
+                        _seed_component("shared.text-block", {"title": "User Dashboard", "body": "Standard content block for listings, favorites and quick actions."}),
+                    ])
+                ]),
+                _seed_row([
+                    _seed_column(6, [_seed_component("interactive.similar-listings-slider", {"source": "seller_other", "max_items": 6})]),
+                    _seed_column(6, [_seed_component("data.seller-card")]),
+                ]),
+            ]
+        }
+
+    if page_type == LayoutPageType.WIZARD_DOPING_PAYMENT:
+        return {
+            "rows": [
+                _seed_row([
+                    _seed_column(12, [
+                        _seed_component("listing.create.default-content"),
+                        _seed_component("shared.text-block", {"title": "Promotion and Payment", "body": "Select promotion packages and continue to payment."}),
+                    ])
+                ]),
+                _seed_row([
+                    _seed_column(12, [
+                        _seed_component("interactive.doping-selector", {
+                            "available_dopings": ["Premium", "Vitrin", "Anasayfa"] if persona_key == "corporate" else ["Vitrin", "Acil", "Anasayfa"],
+                            "show_prices": True,
+                            "default_selected": "Premium" if persona_key == "corporate" else "Vitrin",
+                        }),
+                        _seed_component("shared.ad-slot", {"placement": "AD_LOGIN_1"}),
+                    ])
+                ]),
+            ]
+        }
+
     if page_type in {
         LayoutPageType.WIZARD_STEP_L0,
         LayoutPageType.WIZARD_STEP_LN,
         LayoutPageType.WIZARD_STEP_FORM,
-        LayoutPageType.WIZARD_DOPING_PAYMENT,
+        LayoutPageType.WIZARD_PREVIEW,
         LayoutPageType.WIZARD_RESULT,
         LayoutPageType.LISTING_CREATE_STEPX,
     }:
-        return "listing.create.default-content"
-    return "shared.text-block"
+        title_map = {
+            LayoutPageType.WIZARD_STEP_L0: "Step 1 - Category",
+            LayoutPageType.WIZARD_STEP_LN: "Step 2 - Subcategory",
+            LayoutPageType.WIZARD_STEP_FORM: "Step 3 - Form",
+            LayoutPageType.WIZARD_PREVIEW: "Step 4 - Preview",
+            LayoutPageType.WIZARD_RESULT: "Step 5 - Result",
+            LayoutPageType.LISTING_CREATE_STEPX: "Create Listing",
+        }
+        return {
+            "rows": [
+                _seed_row([
+                    _seed_column(12, [
+                        _seed_component("listing.create.default-content"),
+                        _seed_component("shared.text-block", {
+                            "title": title_map.get(page_type, "Create Listing Flow"),
+                            "body": "This step is managed by a standardized template.",
+                        }),
+                    ])
+                ]),
+                _seed_row([
+                    _seed_column(12, [
+                        _seed_component("shared.ad-slot", {"placement": "AD_LOGIN_1"}),
+                    ])
+                ]),
+            ]
+        }
+
+    return {
+        "rows": [
+            _seed_row([
+                _seed_column(12, [
+                    _seed_component(get_default_component_key(page_type)),
+                    _seed_component("shared.text-block", {"title": "Standard Template", "body": "Default template applied for this page type."}),
+                ])
+            ])
+        ]
+    }
 
 
 def _validate_listing_column_width_or_400(width_payload: Any, *, row_index: int, column_index: int) -> None:
@@ -1451,6 +1730,131 @@ async def patch_layout_page_admin(
     return {"ok": True, "item": _serialize_layout_page(row)}
 
 
+@router.post("/admin/site/content-layout/pages/seed-defaults")
+async def seed_standard_layout_pages_admin(
+    payload: LayoutSeedDefaultsPayload,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    await _ensure_layout_page_type_enum_values(session)
+
+    normalized_country = payload.country.upper().strip()
+    normalized_module = payload.module.strip()
+    normalized_persona = payload.persona.strip().lower()
+    normalized_variant = payload.variant.strip().upper()
+    if normalized_persona not in {"individual", "corporate"}:
+        raise HTTPException(status_code=400, detail="persona_must_be_individual_or_corporate")
+    if normalized_variant not in {"A", "B"}:
+        raise HTTPException(status_code=400, detail="variant_must_be_A_or_B")
+
+    async def _op():
+        summary = {
+            "created_pages": 0,
+            "created_drafts": 0,
+            "updated_drafts": 0,
+            "skipped_drafts": 0,
+        }
+        seeded_items: list[dict[str, Any]] = []
+
+        for page_type in STANDARD_LAYOUT_PAGE_TYPES:
+            page_result = await session.execute(
+                select(LayoutPage)
+                .where(
+                    and_(
+                        LayoutPage.page_type == page_type,
+                        LayoutPage.country == normalized_country,
+                        LayoutPage.module == normalized_module,
+                        LayoutPage.category_id.is_(None),
+                    )
+                )
+                .order_by(desc(LayoutPage.updated_at), desc(LayoutPage.created_at))
+                .limit(1)
+            )
+            page_row = page_result.scalar_one_or_none()
+
+            page_created = False
+            if not page_row:
+                page_row = await create_layout_page(
+                    session,
+                    page_type=page_type,
+                    country=normalized_country,
+                    module=normalized_module,
+                    category_id=None,
+                    actor_user_id=current_user.get("id"),
+                )
+                page_created = True
+                summary["created_pages"] += 1
+
+            seed_payload = _build_standard_page_seed_payload(
+                page_type,
+                persona=normalized_persona,
+                variant=normalized_variant,
+            )
+
+            draft_result = await session.execute(
+                select(LayoutRevision)
+                .where(
+                    and_(
+                        LayoutRevision.layout_page_id == page_row.id,
+                        LayoutRevision.status == LayoutRevisionStatus.DRAFT,
+                    )
+                )
+                .order_by(desc(LayoutRevision.version), desc(LayoutRevision.created_at))
+                .limit(1)
+            )
+            draft_row = draft_result.scalar_one_or_none()
+
+            draft_action = "skipped"
+            if draft_row:
+                if payload.overwrite_existing_draft:
+                    draft_row.payload_json = seed_payload
+                    draft_action = "updated"
+                    summary["updated_drafts"] += 1
+                else:
+                    summary["skipped_drafts"] += 1
+            else:
+                draft_row = await create_draft_revision(
+                    session,
+                    layout_page_id=str(page_row.id),
+                    payload_json=seed_payload,
+                    actor_user_id=current_user.get("id"),
+                )
+                draft_action = "created"
+                summary["created_drafts"] += 1
+
+            seeded_items.append(
+                {
+                    "page_type": page_type.value,
+                    "layout_page_id": str(page_row.id),
+                    "layout_page_created": page_created,
+                    "draft_revision_id": str(draft_row.id) if draft_row else None,
+                    "draft_action": draft_action,
+                }
+            )
+
+        await session.commit()
+        return summary, seeded_items
+
+    try:
+        summary, items = await _run_with_db_retry(session, _op)
+    except ValueError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except IntegrityError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=409, detail="seed_defaults_conflict") from exc
+
+    return {
+        "ok": True,
+        "country": normalized_country,
+        "module": normalized_module,
+        "persona": normalized_persona,
+        "variant": normalized_variant,
+        "summary": summary,
+        "items": items,
+    }
+
+
 @router.post("/admin/site/content-layout/pages/{page_id}/revisions/draft")
 async def create_draft_revision_admin(
     page_id: str,
@@ -1462,7 +1866,7 @@ async def create_draft_revision_admin(
     page_row = await session.get(LayoutPage, page_uuid)
     if not page_row:
         raise HTTPException(status_code=404, detail="Layout page not found")
-    if page_row.page_type == LayoutPageType.LISTING_CREATE_STEPX:
+    if _is_wizard_policy_page_type(page_row.page_type):
         _validate_listing_runtime_guard_or_400(payload.payload_json)
 
     try:
@@ -1505,7 +1909,7 @@ async def patch_draft_revision_admin(
         raise HTTPException(status_code=400, detail="Only draft revisions can be updated")
 
     page_row = await session.get(LayoutPage, row.layout_page_id)
-    if page_row and page_row.page_type == LayoutPageType.LISTING_CREATE_STEPX:
+    if page_row and _is_wizard_policy_page_type(page_row.page_type):
         _validate_listing_runtime_guard_or_400(payload.payload_json)
 
     before = _serialize_layout_revision(row)
@@ -1541,7 +1945,7 @@ async def publish_revision_admin(
     target_revision = await session.get(LayoutRevision, revision_uuid)
     if target_revision:
         page_row = await session.get(LayoutPage, target_revision.layout_page_id)
-        if page_row and page_row.page_type == LayoutPageType.LISTING_CREATE_STEPX:
+        if page_row and _is_wizard_policy_page_type(page_row.page_type):
             _validate_listing_runtime_guard_or_400(target_revision.payload_json or {})
 
     try:
@@ -1587,7 +1991,7 @@ async def get_revision_policy_report_admin(
     if not page_row:
         raise HTTPException(status_code=404, detail="Layout page not found")
 
-    if page_row.page_type == LayoutPageType.LISTING_CREATE_STEPX:
+    if _is_wizard_policy_page_type(page_row.page_type):
         report = _build_listing_policy_report(row.payload_json or {})
     else:
         report = _build_generic_layout_policy_report(row.payload_json or {}, page_type=page_row.page_type.value if page_row.page_type else None)
@@ -1610,7 +2014,7 @@ async def auto_fix_revision_policy_admin(
         raise HTTPException(status_code=404, detail="Layout page not found")
 
     before_payload = row.payload_json or {}
-    if page_row.page_type == LayoutPageType.LISTING_CREATE_STEPX:
+    if _is_wizard_policy_page_type(page_row.page_type):
         report_before = _build_listing_policy_report(before_payload)
         fixed_payload, auto_fix_actions = _autofix_listing_payload(before_payload)
         report_after = _build_listing_policy_report(fixed_payload)

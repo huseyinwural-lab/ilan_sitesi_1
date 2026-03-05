@@ -312,7 +312,7 @@ export default function SearchPage() {
   const isVehicleCategory = (categoryContext?.selected?.module || '') === 'vehicle';
   const effectiveMapView = isMapView && !isCategoryTemplate;
 
-  const runtimePageType = isL1CategoryTemplate ? 'search_l1' : (isL2CategoryTemplate ? 'search_l2' : null);
+  const runtimePageType = isL1CategoryTemplate ? 'category_l0_l1' : (isL2CategoryTemplate ? 'search_ln' : null);
   const runtimeModule = categoryContext?.selected?.module || 'global';
   const {
     layout: resolvedCategoryLayout,

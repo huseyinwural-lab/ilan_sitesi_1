@@ -5,27 +5,50 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-const PAGE_TYPE_OPTIONS = [
-  { value: 'home', label: 'Ana Sayfa (home)' },
-  { value: 'category_l0_l1', label: 'L0/L1 Kategori Sayfası (category_l0_l1)' },
-  { value: 'search_ln', label: 'Kategori İlan Listesi (search_ln)' },
-  { value: 'urgent_listings', label: 'Acil İlanlar (urgent_listings)' },
-  { value: 'category_showcase', label: 'Kategori Vitrin (category_showcase)' },
-  { value: 'listing_detail', label: 'İlan Detay (listing_detail)' },
-  { value: 'listing_detail_parameters', label: 'İlan Detay Parametreleri (listing_detail_parameters)' },
-  { value: 'storefront_profile', label: 'Mağaza/Kurumsal Profil (storefront_profile)' },
-  { value: 'wizard_step_l0', label: 'İlan Ver Adım 1 - L0 (wizard_step_l0)' },
-  { value: 'wizard_step_ln', label: 'İlan Ver Adım 2 - L1>Ln (wizard_step_ln)' },
-  { value: 'wizard_step_form', label: 'İlan Ver Adım 3 - Form (wizard_step_form)' },
-  { value: 'wizard_preview', label: 'Ön İzleme (wizard_preview)' },
-  { value: 'wizard_doping_payment', label: 'Doping ve Ödeme (wizard_doping_payment)' },
-  { value: 'wizard_result', label: 'Başarı/Sonuç (wizard_result)' },
-  { value: 'user_dashboard', label: 'Kullanıcı Paneli (user_dashboard)' },
+const STANDARD_PAGE_TYPES = [
+  'home',
+  'category_l0_l1',
+  'search_ln',
+  'urgent_listings',
+  'category_showcase',
+  'listing_detail',
+  'listing_detail_parameters',
+  'storefront_profile',
+  'wizard_step_l0',
+  'wizard_step_ln',
+  'wizard_step_form',
+  'wizard_preview',
+  'wizard_doping_payment',
+  'wizard_result',
+  'user_dashboard',
+];
 
-  // Legacy page_type values kept for backward compatibility
-  { value: 'search_l1', label: 'Legacy Search L1 (search_l1)' },
-  { value: 'search_l2', label: 'Legacy Search L2 (search_l2)' },
-  { value: 'listing_create_stepX', label: 'İlan Ver (listing_create_stepX)' },
+const PAGE_TYPE_LABEL_MAP = {
+  home: 'Ana Sayfa',
+  category_l0_l1: 'L0/L1 Kategori Sayfası',
+  search_ln: 'Kategori İlan Listesi',
+  urgent_listings: 'Acil İlanlar',
+  category_showcase: 'Kategori Vitrin',
+  listing_detail: 'İlan Detay',
+  listing_detail_parameters: 'İlan Detay Parametreleri',
+  storefront_profile: 'Mağaza/Kurumsal Profil',
+  wizard_step_l0: 'İlan Ver Adım 1 - L0',
+  wizard_step_ln: 'İlan Ver Adım 2 - L1>Ln',
+  wizard_step_form: 'İlan Ver Adım 3 - Form',
+  wizard_preview: 'Ön İzleme',
+  wizard_doping_payment: 'Doping ve Ödeme',
+  wizard_result: 'Başarı/Sonuç',
+  user_dashboard: 'Kullanıcı Paneli',
+  search_l1: 'Legacy Search L1',
+  search_l2: 'Legacy Search L2',
+  listing_create_stepX: 'Legacy İlan Ver',
+};
+
+const PAGE_TYPE_OPTIONS = [
+  ...STANDARD_PAGE_TYPES.map((value) => ({ value, label: `${PAGE_TYPE_LABEL_MAP[value]} (${value})` })),
+  { value: 'search_l1', label: `${PAGE_TYPE_LABEL_MAP.search_l1} (search_l1)` },
+  { value: 'search_l2', label: `${PAGE_TYPE_LABEL_MAP.search_l2} (search_l2)` },
+  { value: 'listing_create_stepX', label: `${PAGE_TYPE_LABEL_MAP.listing_create_stepX} (listing_create_stepX)` },
 ];
 
 const DEFAULT_COMPONENT_LIBRARY = [
@@ -389,11 +412,35 @@ const resolveLibraryGroupByKey = (componentKey) => {
 
 const getDefaultComponentKey = (pageType) => {
   if (pageType === 'home') return 'home.default-content';
-  if (pageType === 'search_l1') return 'search.l1.default-content';
-  if (pageType === 'search_l2') return 'search.l2.default-content';
-  if (pageType === 'listing_create_stepX') return 'listing.create.default-content';
+  if (['search_l1', 'search_l2', 'category_l0_l1', 'search_ln', 'category_showcase', 'urgent_listings'].includes(pageType)) {
+    return 'search.l1.default-content';
+  }
+  if (['wizard_step_l0', 'wizard_step_ln', 'wizard_step_form', 'wizard_preview', 'wizard_doping_payment', 'wizard_result', 'listing_create_stepX'].includes(pageType)) {
+    return 'listing.create.default-content';
+  }
   return 'shared.text-block';
 };
+
+const WIZARD_POLICY_PAGE_TYPES = new Set([
+  'wizard_step_l0',
+  'wizard_step_ln',
+  'wizard_step_form',
+  'wizard_preview',
+  'wizard_doping_payment',
+  'wizard_result',
+  'listing_create_stepX',
+]);
+
+const SEARCH_TEMPLATE_PAGE_TYPES = new Set([
+  'search_l1',
+  'search_l2',
+  'category_l0_l1',
+  'search_ln',
+  'urgent_listings',
+  'category_showcase',
+]);
+
+const isWizardPolicyPageType = (pageType) => WIZARD_POLICY_PAGE_TYPES.has(pageType);
 
 const createEmptyPayload = (pageType) => ({
   rows: [
@@ -407,7 +454,7 @@ const createEmptyPayload = (pageType) => ({
             {
               id: `cmp-${Date.now()}`,
               key: getDefaultComponentKey(pageType),
-              props: pageType === 'home' || pageType === 'listing_create_stepX' ? {} : { note: 'Varsayılan içerik bloğu' },
+              props: pageType === 'home' || isWizardPolicyPageType(pageType) ? {} : { note: 'Varsayılan içerik bloğu' },
               visibility: { desktop: true, tablet: true, mobile: true },
             },
           ],
@@ -446,107 +493,77 @@ const createPresetRow = (columns = []) => ({
   columns,
 });
 
-const PRESET_PACK_OPTIONS = [
-  {
-    id: 'home-default-pack',
-    label: 'Preset • Home Default',
-    targetPageType: 'home',
-    description: 'Ana sayfa için slider + kategori + ilan akışı başlangıç düzeni',
-    personas: ['individual', 'corporate'],
-    variants: ['A', 'B'],
-    buildPayload: ({ persona = 'individual', variant = 'A' } = {}) => ({
+const buildStandardPageTypePayload = (pageType, { persona = 'individual', variant = 'A' } = {}) => {
+  const personaKey = persona === 'corporate' ? 'corporate' : 'individual';
+  const variantKey = variant === 'B' ? 'B' : 'A';
+
+  if (pageType === 'home') {
+    return {
       rows: [
-        ...(variant === 'B'
-          ? [
-              createPresetRow([createPresetColumn(12, [
-                createPresetComponent('home.default-content'),
-                createPresetComponent('layout.breadcrumb-header'),
-              ])]),
-              createPresetRow([createPresetColumn(12, [createPresetComponent('media.auto-play-carousel-hero')])]),
-            ]
-          : [createPresetRow([createPresetColumn(12, [
-              createPresetComponent('home.default-content'),
-              createPresetComponent('media.auto-play-carousel-hero'),
-            ])])]),
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('home.default-content'),
+          createPresetComponent('media.auto-play-carousel-hero'),
+        ])]),
         createPresetRow([
-          createPresetColumn(persona === 'corporate' ? 5 : 4, [
+          createPresetColumn(personaKey === 'corporate' ? 5 : 4, [
             createPresetComponent('layout.category-navigator-side'),
-            ...(persona === 'corporate' ? [createPresetComponent('data.seller-card')] : []),
+            ...(personaKey === 'corporate' ? [createPresetComponent('data.seller-card')] : []),
           ]),
-          createPresetColumn(persona === 'corporate' ? 7 : 8, [
-            createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: variant === 'B' ? 10 : 8 }),
-            createPresetComponent('media.ad-promo-slot', {
-              placement: 'AD_HOME_TOP',
-              campaign_label: persona === 'corporate' ? 'Kurumsal Vitrin Kampanyası' : 'Vitrin Kampanya',
-            }),
+          createPresetColumn(personaKey === 'corporate' ? 7 : 8, [
+            createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: variantKey === 'B' ? 10 : 8 }),
+            createPresetComponent('media.ad-promo-slot', { placement: 'AD_HOME_TOP', campaign_label: 'Home Showcase' }),
           ]),
         ]),
       ],
-    }),
-  },
-  {
-    id: 'search-l1-pack',
-    label: 'Preset • Search L1',
-    targetPageType: 'search_l1',
-    description: 'L1 kategori için breadcrumb + navigator + sonuç odaklı düzen',
-    personas: ['individual', 'corporate'],
-    variants: ['A', 'B'],
-    buildPayload: ({ persona = 'individual', variant = 'A' } = {}) => ({
+    };
+  }
+
+  if (pageType === 'category_l0_l1') {
+    return {
       rows: [
         createPresetRow([createPresetColumn(12, [
           createPresetComponent('search.l1.default-content'),
           createPresetComponent('layout.breadcrumb-header'),
-          createPresetComponent('layout.category-navigator-top'),
-          ...(variant === 'B' ? [createPresetComponent('layout.category-navigator-side')] : []),
-        ])]),
-        createPresetRow([createPresetColumn(12, [
-          createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: persona === 'corporate' ? 12 : 10 }),
-          createPresetComponent('shared.ad-slot', { placement: 'AD_SEARCH_TOP' }),
-        ])]),
-      ],
-    }),
-  },
-  {
-    id: 'search-l2-pack',
-    label: 'Preset • Search L2',
-    targetPageType: 'search_l2',
-    description: 'L2 kırılımı için detay sonuç + benzer ilan kurgusu',
-    personas: ['individual', 'corporate'],
-    variants: ['A', 'B'],
-    buildPayload: ({ persona = 'individual', variant = 'A' } = {}) => ({
-      rows: [
-        createPresetRow([createPresetColumn(12, [
-          createPresetComponent('search.l2.default-content'),
-          createPresetComponent('layout.breadcrumb-header'),
-          ...(variant === 'B' ? [createPresetComponent('media.auto-play-carousel-hero')] : []),
+          createPresetComponent('layout.category-navigator-top', { title: 'Sub Categories', show_counts: true, max_levels: 4 }),
         ])]),
         createPresetRow([
+          createPresetColumn(4, [createPresetComponent('layout.category-navigator-side', { title: 'Category Tree', show_counts: true, max_levels: 6 })]),
           createPresetColumn(8, [
-            createPresetComponent('data.price-title-block'),
-            createPresetComponent('data.description-text-area'),
-            ...(persona === 'corporate' ? [createPresetComponent('data.attribute-grid-dynamic')] : []),
-          ]),
-          createPresetColumn(4, [
-            createPresetComponent('data.seller-card'),
-            createPresetComponent('interactive.interactive-map'),
+            createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: 12 }),
+            createPresetComponent('shared.ad-slot', { placement: 'AD_SEARCH_TOP' }),
           ]),
         ]),
       ],
-    }),
-  },
-  {
-    id: 'listing-detail-pack',
-    label: 'Preset • Listing Detail',
-    targetPageType: null,
-    description: 'İlan detay görünümü için medya + fiyat + satıcı + harita + benzer ilan seti',
-    personas: ['individual', 'corporate'],
-    variants: ['A', 'B'],
-    buildPayload: ({ persona = 'individual', variant = 'A' } = {}) => ({
+    };
+  }
+
+  if (['search_ln', 'category_showcase', 'urgent_listings', 'search_l1', 'search_l2'].includes(pageType)) {
+    const pageTitle = pageType === 'urgent_listings' ? 'Urgent Listings' : (pageType === 'category_showcase' ? 'Category Showcase' : 'Category Listing');
+    return {
+      rows: [
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('search.l1.default-content'),
+          createPresetComponent('layout.breadcrumb-header'),
+          createPresetComponent('shared.text-block', { title: pageTitle, body: 'Comprehensive standard template loaded for this page type.' }),
+        ])]),
+        createPresetRow([
+          createPresetColumn(8, [createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: 12 })]),
+          createPresetColumn(4, [
+            createPresetComponent('layout.category-navigator-side', { title: 'Segments', show_counts: true, max_levels: 5 }),
+            createPresetComponent('shared.ad-slot', { placement: 'AD_SEARCH_TOP' }),
+          ]),
+        ]),
+      ],
+    };
+  }
+
+  if (pageType === 'listing_detail') {
+    return {
       rows: [
         createPresetRow([createPresetColumn(12, [
           createPresetComponent('layout.breadcrumb-header'),
           createPresetComponent('media.advanced-photo-gallery'),
-          ...(variant === 'B' ? [createPresetComponent('media.video-3d-tour-player')] : []),
+          ...(variantKey === 'B' ? [createPresetComponent('media.video-3d-tour-player')] : []),
         ])]),
         createPresetRow([
           createPresetColumn(8, [
@@ -559,41 +576,115 @@ const PRESET_PACK_OPTIONS = [
             createPresetComponent('data.seller-card'),
             createPresetComponent('interactive.interactive-map'),
             createPresetComponent('layout.sticky-action-bar'),
-            ...(persona === 'corporate' ? [createPresetComponent('media.ad-promo-slot', { placement: 'AD_HOME_TOP', campaign_label: 'Ofis Vitrin' })] : []),
           ]),
         ]),
       ],
-    }),
-  },
-  {
-    id: 'listing-create-stepx-pack',
-    label: 'Preset • Listing Create StepX',
-    targetPageType: 'listing_create_stepX',
-    description: 'İlan ver adımı için default blok + bilgilendirme + doping + reklam',
-    personas: ['individual', 'corporate'],
-    variants: ['A', 'B'],
-    buildPayload: ({ persona = 'individual', variant = 'A' } = {}) => ({
+    };
+  }
+
+  if (pageType === 'listing_detail_parameters') {
+    return {
+      rows: [
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('shared.text-block', { title: 'Listing Parameters', body: 'Standard template for detailed parameter blocks.' }),
+          createPresetComponent('data.attribute-grid-dynamic', { include_modules: ['core_fields', 'parameter_fields', 'detail_groups'], compact_mode: false }),
+        ])]),
+      ],
+    };
+  }
+
+  if (pageType === 'storefront_profile') {
+    return {
+      rows: [
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('shared.text-block', { title: 'Storefront Profile', body: 'Storefront showcase and profile performance area.' }),
+          createPresetComponent('data.seller-card'),
+        ])]),
+        createPresetRow([
+          createPresetColumn(8, [createPresetComponent('interactive.similar-listings-slider', { source: 'seller_other', max_items: 12 })]),
+          createPresetColumn(4, [
+            createPresetComponent('interactive.interactive-map'),
+            createPresetComponent('media.ad-promo-slot', { placement: 'AD_HOME_TOP', campaign_label: 'Store Campaign' }),
+          ]),
+        ]),
+      ],
+    };
+  }
+
+  if (pageType === 'user_dashboard') {
+    return {
+      rows: [
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('shared.text-block', { title: 'User Dashboard', body: 'Listing, favorites and quick action blocks for users.' }),
+        ])]),
+        createPresetRow([
+          createPresetColumn(6, [createPresetComponent('interactive.similar-listings-slider', { source: 'seller_other', max_items: 6 })]),
+          createPresetColumn(6, [createPresetComponent('data.seller-card')]),
+        ]),
+      ],
+    };
+  }
+
+  if (pageType === 'wizard_doping_payment') {
+    return {
       rows: [
         createPresetRow([createPresetColumn(12, [
           createPresetComponent('listing.create.default-content'),
-          createPresetComponent('shared.text-block', {
-            title: persona === 'corporate' ? 'Kurumsal İlan Yönetimi' : 'Bireysel İlan Ver Akışı',
-            body: persona === 'corporate'
-              ? 'Ofis ekibiniz için standart form ve ödeme adımlarını hızlıca tamamlayın.'
-              : 'Adımları tamamlayarak ilanınızı güvenle yayınlayın.',
-          }),
+          createPresetComponent('shared.text-block', { title: 'Promotion and Payment', body: 'Select promotion packages and confirm payment.' }),
         ])]),
         createPresetRow([createPresetColumn(12, [
           createPresetComponent('interactive.doping-selector', {
-            available_dopings: persona === 'corporate' ? ['Premium', 'Vitrin', 'Anasayfa'] : ['Vitrin', 'Acil', 'Anasayfa'],
+            available_dopings: personaKey === 'corporate' ? ['Premium', 'Vitrin', 'Anasayfa'] : ['Vitrin', 'Acil', 'Anasayfa'],
             show_prices: true,
-            default_selected: persona === 'corporate' ? 'Premium' : 'Vitrin',
+            default_selected: personaKey === 'corporate' ? 'Premium' : 'Vitrin',
           }),
           createPresetComponent('shared.ad-slot', { placement: 'AD_LOGIN_1' }),
-          ...(variant === 'B' ? [createPresetComponent('data.seller-card')] : []),
         ])]),
       ],
-    }),
+    };
+  }
+
+  if (isWizardPolicyPageType(pageType)) {
+    const titleByType = {
+      wizard_step_l0: 'Step 1 - Category',
+      wizard_step_ln: 'Step 2 - Subcategory',
+      wizard_step_form: 'Step 3 - Form',
+      wizard_preview: 'Step 4 - Preview',
+      wizard_result: 'Step 5 - Result',
+      listing_create_stepX: 'Legacy Create Listing Flow',
+    };
+    return {
+      rows: [
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('listing.create.default-content'),
+          createPresetComponent('shared.text-block', { title: titleByType[pageType] || 'Create Listing Flow', body: 'This step is protected by standard policy guard rules.' }),
+        ])]),
+        createPresetRow([createPresetColumn(12, [createPresetComponent('shared.ad-slot', { placement: 'AD_LOGIN_1' })])]),
+      ],
+    };
+  }
+
+  return createEmptyPayload(pageType);
+};
+
+const PRESET_PACK_OPTIONS = [
+  ...STANDARD_PAGE_TYPES.map((pageType) => ({
+    id: `standard-${pageType}-pack`,
+    label: `Standart • ${PAGE_TYPE_LABEL_MAP[pageType]}`,
+    targetPageType: pageType,
+    description: `${PAGE_TYPE_LABEL_MAP[pageType]} için kapsamlı varsayılan düzen`,
+    personas: ['individual', 'corporate'],
+    variants: ['A', 'B'],
+    buildPayload: ({ persona = 'individual', variant = 'A' } = {}) => buildStandardPageTypePayload(pageType, { persona, variant }),
+  })),
+  {
+    id: 'legacy-listing-create-stepx-pack',
+    label: 'Legacy • İlan Ver (listing_create_stepX)',
+    targetPageType: 'listing_create_stepX',
+    description: 'Geriye dönük uyumluluk için legacy page type şablonu',
+    personas: ['individual', 'corporate'],
+    variants: ['A', 'B'],
+    buildPayload: ({ persona = 'individual', variant = 'A' } = {}) => buildStandardPageTypePayload('listing_create_stepX', { persona, variant }),
   },
 ];
 
@@ -975,6 +1066,8 @@ export default function AdminContentBuilder() {
   const [presetAnalyticsSummary, setPresetAnalyticsSummary] = useState([]);
   const [presetAnalyticsLoading, setPresetAnalyticsLoading] = useState(false);
   const [lastAppliedPresetMeta, setLastAppliedPresetMeta] = useState(null);
+  const [seedDefaultsLoading, setSeedDefaultsLoading] = useState(false);
+  const [seedOverwriteExistingDraft, setSeedOverwriteExistingDraft] = useState(true);
   const [menuManagementHealth, setMenuManagementHealth] = useState(null);
 
   const [policyReport, setPolicyReport] = useState(null);
@@ -1248,9 +1341,18 @@ export default function AdminContentBuilder() {
   const previewBasePath = useMemo(() => {
     const selectedCategory = (bindingCategoryId || categoryId).trim();
     if (pageType === 'home') return '/';
-    if (pageType === 'search_l1' || pageType === 'search_l2') {
+    if (SEARCH_TEMPLATE_PAGE_TYPES.has(pageType)) {
       return `/search${selectedCategory ? `?category=${encodeURIComponent(selectedCategory)}` : ''}`;
     }
+    if (pageType === 'listing_detail' || pageType === 'listing_detail_parameters') return '/ilan/1';
+    if (pageType === 'storefront_profile') return '/kurumsal';
+    if (pageType === 'wizard_step_l0') return '/ilan-ver';
+    if (pageType === 'wizard_step_ln') return '/ilan-ver/arac-sec';
+    if (pageType === 'wizard_step_form') return '/ilan-ver/detaylar';
+    if (pageType === 'wizard_preview') return '/ilan-ver/onizleme';
+    if (pageType === 'wizard_doping_payment') return '/ilan-ver/doping';
+    if (pageType === 'wizard_result') return '/ilan-ver/onizleme?result=1';
+    if (pageType === 'user_dashboard') return '/account';
     return '/ilan-ver/detaylar';
   }, [pageType, bindingCategoryId, categoryId]);
 
@@ -1363,6 +1465,37 @@ export default function AdminContentBuilder() {
     refreshPreviewAfterInteraction();
     autoFocusPreviewIfVisible();
     toast.success(`${selectedPresetPack.label} (${presetPersona.toUpperCase()}-${presetVariant}) uygulandı.`);
+  };
+
+  const seedStandardPageTypes = async () => {
+    setSeedDefaultsLoading(true);
+    setError('');
+    setStatus('');
+    try {
+      const response = await axios.post(
+        `${API}/admin/site/content-layout/pages/seed-defaults`,
+        {
+          country: country.toUpperCase(),
+          module: moduleName.trim(),
+          persona: presetPersona,
+          variant: presetVariant,
+          overwrite_existing_draft: seedOverwriteExistingDraft,
+        },
+        { headers: authHeaders },
+      );
+
+      const summary = response.data?.summary || {};
+      setStatus(
+        `Standart 15 sayfa tipi seed tamamlandı • page:${summary.created_pages || 0} / draft(create:${summary.created_drafts || 0}, update:${summary.updated_drafts || 0}, skip:${summary.skipped_drafts || 0})`,
+      );
+      toast.success('15 standart sayfa tipi için seed işlemi tamamlandı.');
+      await fetchPresetAnalyticsSummary();
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Standart seed işlemi başarısız');
+      toast.error('Standart sayfa tipi seed başarısız.');
+    } finally {
+      setSeedDefaultsLoading(false);
+    }
   };
 
   const updateComponentPropValue = (rowId, columnId, componentId, propKey, propValue) => {
@@ -1554,7 +1687,7 @@ export default function AdminContentBuilder() {
   };
 
   useEffect(() => {
-    if (pageType !== 'listing_create_stepX' || !activeDraftId) {
+    if (!isWizardPolicyPageType(pageType) || !activeDraftId) {
       setPolicyReport(null);
       setLastAutoFixDiff(null);
       return;
@@ -1578,7 +1711,7 @@ export default function AdminContentBuilder() {
         return;
       }
 
-      if (pageType === 'listing_create_stepX') {
+      if (isWizardPolicyPageType(pageType)) {
         const report = await fetchPolicyReport({ silent: true });
         if (report?.policy === 'listing_create' && report.passed === false) {
           setError('Policy report başarısız. Publish öncesi kuralları düzeltin.');
@@ -1711,7 +1844,7 @@ export default function AdminContentBuilder() {
     const column = (row?.columns || []).find((item) => item.id === columnId);
     if (!column) return;
 
-    if (pageType === 'listing_create_stepX' && key === 'listing.create.default-content') {
+    if (isWizardPolicyPageType(pageType) && key === 'listing.create.default-content') {
       const rows = Array.isArray(next.rows) ? next.rows : [];
       const existingDefaultCount = rows.reduce((sum, currentRow) => {
         const columns = Array.isArray(currentRow?.columns) ? currentRow.columns : [];
@@ -1751,7 +1884,7 @@ export default function AdminContentBuilder() {
     const component = (column?.components || []).find((item) => item.id === componentId);
     if (!component) return;
     if (field === 'key') {
-      if (pageType === 'listing_create_stepX' && value === 'listing.create.default-content') {
+      if (isWizardPolicyPageType(pageType) && value === 'listing.create.default-content') {
         const existingDefaultCount = (next.rows || []).reduce((sum, currentRow) => {
           const columns = Array.isArray(currentRow?.columns) ? currentRow.columns : [];
           return sum + columns.reduce((innerSum, currentColumn) => {
@@ -2092,6 +2225,41 @@ export default function AdminContentBuilder() {
             >
               Preset Uygula
             </button>
+
+            <button
+              type="button"
+              className="h-10 rounded border border-indigo-300 bg-indigo-50 px-3 text-xs font-semibold text-indigo-700"
+              onClick={() => {
+                const nextPayload = buildStandardPageTypePayload(pageType, { persona: presetPersona, variant: presetVariant });
+                setPayloadJson(normalizePayload(nextPayload, pageType));
+                setStatus(`${PAGE_TYPE_LABEL_MAP[pageType] || pageType} için kapsamlı standart şablon yüklendi.`);
+                refreshPreviewAfterInteraction();
+                toast.success('Sayfa tipi için standart şablon yüklendi.');
+              }}
+              data-testid="admin-content-builder-load-standard-page-template-button"
+            >
+              Bu Sayfaya Standart Şablon
+            </button>
+
+            <label className="inline-flex items-center gap-2 text-[11px] text-slate-600" data-testid="admin-content-builder-seed-overwrite-checkbox-wrap">
+              <input
+                type="checkbox"
+                checked={seedOverwriteExistingDraft}
+                onChange={(event) => setSeedOverwriteExistingDraft(event.target.checked)}
+                data-testid="admin-content-builder-seed-overwrite-checkbox"
+              />
+              Mevcut draft'leri güncelle
+            </label>
+
+            <button
+              type="button"
+              className="h-10 rounded border border-violet-300 bg-violet-50 px-3 text-xs font-semibold text-violet-700"
+              onClick={seedStandardPageTypes}
+              disabled={seedDefaultsLoading}
+              data-testid="admin-content-builder-seed-standard-pages-button"
+            >
+              {seedDefaultsLoading ? '15 Sayfa Tipi Seed...' : '15 Sayfa Tipi Seed (API)'}
+            </button>
           </div>
 
           <button type="button" className="h-10 rounded border px-4 text-sm" onClick={saveDraft} disabled={saving || !activeDraftId} data-testid="admin-content-builder-save-draft-button">
@@ -2116,7 +2284,7 @@ export default function AdminContentBuilder() {
             type="button"
             className="h-10 rounded border border-amber-300 bg-amber-50 px-4 text-xs text-amber-800"
             onClick={applyPolicyAutoFix}
-            disabled={!activeDraftId || policyReportLoading || pageType !== 'listing_create_stepX'}
+            disabled={!activeDraftId || policyReportLoading || !isWizardPolicyPageType(pageType)}
             data-testid="admin-content-builder-policy-autofix-button"
           >
             Auto-Fix Uygula
