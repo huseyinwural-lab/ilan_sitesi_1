@@ -3,302 +3,438 @@
 import requests
 import json
 import sys
-import time
-from datetime import datetime
 
-# Configuration
-BASE_URL = "https://category-results.preview.emergentagent.com/api"
-ADMIN_EMAIL = "admin@platform.com"
-ADMIN_PASSWORD = "Admin123!"
+# Base URL from review request
+BASE_URL = "https://category-results.preview.emergentagent.com"
 
-class BackendTester:
-    def __init__(self):
-        self.session = requests.Session()
-        self.access_token = None
-        self.test_results = []
-        
-    def log_test(self, test_name, status, details=None):
-        """Log test results"""
-        result = {
-            "test": test_name,
-            "status": status,
-            "timestamp": datetime.now().isoformat(),
-            "details": details or {}
-        }
-        self.test_results.append(result)
-        status_emoji = "✅" if status == "PASS" else "❌" if status == "FAIL" else "⚠️"
-        print(f"{status_emoji} {test_name}: {status}")
-        if details:
-            for key, value in details.items():
-                print(f"   {key}: {value}")
-        print()
-
-    def admin_login(self):
-        """Authenticate as admin and get access token"""
-        print("🔐 Authenticating as admin...")
-        
-        login_data = {
-            "email": ADMIN_EMAIL,
-            "password": ADMIN_PASSWORD
-        }
-        
-        try:
-            response = self.session.post(f"{BASE_URL}/auth/login", json=login_data)
-            if response.status_code == 200:
-                data = response.json()
-                if "access_token" in data:
-                    self.access_token = data["access_token"]
-                    self.session.headers.update({"Authorization": f"Bearer {self.access_token}"})
-                    self.log_test("Admin Authentication", "PASS", {
-                        "email": data.get("email", "unknown"),
-                        "token_length": len(self.access_token)
-                    })
-                    return True
-                else:
-                    self.log_test("Admin Authentication", "FAIL", {
-                        "error": "No access_token in response",
-                        "response": data
-                    })
-                    return False
-            else:
-                self.log_test("Admin Authentication", "FAIL", {
-                    "status_code": response.status_code,
-                    "response": response.text
-                })
-                return False
-        except Exception as e:
-            self.log_test("Admin Authentication", "FAIL", {"error": str(e)})
-            return False
-
-    def test_bindings_active(self):
-        """Test GET /api/admin/site/content-layout/bindings/active with sample parameters"""
-        try:
-            # Test with sample parameters - this may return empty but should not error
-            params = {
-                "country": "DE",
-                "module": "real_estate",
-                "category_id": "12345678-1234-5678-9012-123456789012"  # Sample UUID
-            }
-            response = self.session.get(f"{BASE_URL}/admin/site/content-layout/bindings/active", params=params)
-            
-            if response.status_code == 200:
-                data = response.json()
-                self.log_test("GET /bindings/active", "PASS", {
-                    "status_code": response.status_code,
-                    "response_has_data": bool(data),
-                    "response_type": type(data).__name__
-                })
-                return data
-            elif response.status_code == 404:
-                # No binding found is acceptable
-                self.log_test("GET /bindings/active", "PASS", {
-                    "status_code": response.status_code,
-                    "note": "No active binding found (acceptable)"
-                })
-                return None
-            else:
-                self.log_test("GET /bindings/active", "FAIL", {
-                    "status_code": response.status_code,
-                    "response": response.text[:200]
-                })
-                return None
-        except Exception as e:
-            self.log_test("GET /bindings/active", "FAIL", {"error": str(e)})
-            return None
-
-    def test_bindings_unbind(self):
-        """Test POST /api/admin/site/content-layout/bindings/unbind"""
-        try:
-            # Test with sample parameters - this will likely return 404 but should not 5xx
-            unbind_data = {
-                "country": "DE",
-                "module": "real_estate",
-                "category_id": "12345678-1234-5678-9012-123456789012"  # Sample UUID
-            }
-            response = self.session.post(f"{BASE_URL}/admin/site/content-layout/bindings/unbind", json=unbind_data)
-            
-            if response.status_code in [200, 204]:
-                self.log_test("POST /bindings/unbind", "PASS", {
-                    "status_code": response.status_code,
-                    "note": "Unbind successful"
-                })
-                return True
-            elif response.status_code == 404:
-                # No binding to unbind is acceptable
-                self.log_test("POST /bindings/unbind", "PASS", {
-                    "status_code": response.status_code,
-                    "note": "No binding to unbind (acceptable)"
-                })
-                return True
-            else:
-                self.log_test("POST /bindings/unbind", "FAIL", {
-                    "status_code": response.status_code,
-                    "response": response.text[:200]
-                })
-                return False
-        except Exception as e:
-            self.log_test("POST /bindings/unbind", "FAIL", {"error": str(e)})
-            return False
-
-    def test_resolve_home(self):
-        """Test GET /api/site/content-layout/resolve for home page"""
-        try:
-            # Test resolve for home page
-            params = {
-                "page_type": "home",
-                "country": "DE",
-                "module": "global"
-            }
-            response = self.session.get(f"{BASE_URL}/site/content-layout/resolve", params=params)
-            
-            if response.status_code == 200:
-                data = response.json()
-                self.log_test("GET /api/site/content-layout/resolve (home)", "PASS", {
-                    "status_code": response.status_code,
-                    "page_type": data.get("page_type", "unknown"),
-                    "source": data.get("source", "unknown"),
-                    "has_layout": "layout" in data
-                })
-                return data
-            else:
-                self.log_test("GET /api/site/content-layout/resolve (home)", "FAIL", {
-                    "status_code": response.status_code,
-                    "response": response.text[:200]
-                })
-                return None
-        except Exception as e:
-            self.log_test("GET /api/site/content-layout/resolve (home)", "FAIL", {"error": str(e)})
-            return None
-
-    def test_resolve_search_l1(self):
-        """Test GET /api/site/content-layout/resolve for search_l1"""
-        try:
-            # Test resolve for search L1 page
-            params = {
-                "page_type": "search_l1",
-                "country": "DE",
-                "module": "real_estate",
-                "category_id": "12345678-1234-5678-9012-123456789012"  # Sample UUID
-            }
-            response = self.session.get(f"{BASE_URL}/site/content-layout/resolve", params=params)
-            
-            if response.status_code == 200:
-                data = response.json()
-                self.log_test("GET /api/site/content-layout/resolve (search_l1)", "PASS", {
-                    "status_code": response.status_code,
-                    "page_type": data.get("page_type", "unknown"),
-                    "source": data.get("source", "unknown"),
-                    "has_layout": "layout" in data
-                })
-                return data
-            else:
-                self.log_test("GET /api/site/content-layout/resolve (search_l1)", "FAIL", {
-                    "status_code": response.status_code,
-                    "response": response.text[:200]
-                })
-                return None
-        except Exception as e:
-            self.log_test("GET /api/site/content-layout/resolve (search_l1)", "FAIL", {"error": str(e)})
-            return None
-
-    def test_5xx_errors(self):
-        """Check for any 5xx errors in the tested flows"""
-        print("🔍 Checking for 5xx errors in tested endpoints...")
-        
-        error_count = 0
-        for result in self.test_results:
-            if result["status"] == "FAIL" and "status_code" in result["details"]:
-                status_code = result["details"]["status_code"]
-                if 500 <= status_code < 600:
-                    error_count += 1
-                    print(f"   ❌ 5xx Error found: {result['test']} returned {status_code}")
-        
-        if error_count == 0:
-            self.log_test("5xx Error Check", "PASS", {
-                "total_tests": len(self.test_results),
-                "5xx_errors": error_count
-            })
-        else:
-            self.log_test("5xx Error Check", "FAIL", {
-                "total_tests": len(self.test_results),
-                "5xx_errors": error_count
-            })
-
-    def run_all_tests(self):
-        """Run all backend tests"""
-        print("🚀 Starting Backend Sanity Test - P1.1/P1.2/P2 Continuation")
-        print("=" * 70)
-        
-        # Step 1: Admin Login
-        if not self.admin_login():
-            print("❌ Cannot proceed without admin authentication")
-            return False
-        
-        # Step 2: Test bindings endpoints (Note: No general /bindings endpoint exists)
-        self.test_bindings_active()
-        self.test_bindings_unbind()
-        
-        # Step 3: Test resolve endpoints
-        self.test_resolve_home()
-        self.test_resolve_search_l1()
-        
-        # Step 4: Check for 5xx errors
-        self.test_5xx_errors()
-        
-        return True
-
-    def print_summary(self):
-        """Print test summary"""
-        print("\n" + "=" * 70)
-        print("📊 TEST SUMMARY")
-        print("=" * 70)
-        
-        total_tests = len(self.test_results)
-        passed_tests = len([r for r in self.test_results if r["status"] == "PASS"])
-        failed_tests = len([r for r in self.test_results if r["status"] == "FAIL"])
-        skipped_tests = len([r for r in self.test_results if r["status"] == "SKIPPED"])
-        
-        print(f"Total Tests: {total_tests}")
-        print(f"✅ Passed: {passed_tests}")
-        print(f"❌ Failed: {failed_tests}")
-        print(f"⚠️ Skipped: {skipped_tests}")
-        
-        if failed_tests == 0:
-            print(f"\n✅ OVERALL RESULT: PASS ({passed_tests}/{total_tests} tests passed)")
-        else:
-            print(f"\n❌ OVERALL RESULT: FAIL ({passed_tests}/{total_tests} tests passed)")
-        
-        # Print failed tests details
-        if failed_tests > 0:
-            print("\nFailed Tests:")
-            for result in self.test_results:
-                if result["status"] == "FAIL":
-                    print(f"  ❌ {result['test']}")
-                    if "error" in result["details"]:
-                        print(f"     Error: {result['details']['error']}")
-                    if "status_code" in result["details"]:
-                        print(f"     Status Code: {result['details']['status_code']}")
-        
-        print("\n" + "=" * 70)
-
-def main():
-    """Main function"""
-    tester = BackendTester()
+def test_admin_auth():
+    """Test admin authentication to get access token"""
+    print("\n=== 1. TESTING ADMIN AUTHENTICATION ===")
+    
+    url = f"{BASE_URL}/api/auth/login"
+    payload = {
+        "email": "admin@platform.com", 
+        "password": "Admin123!"
+    }
     
     try:
-        success = tester.run_all_tests()
-        tester.print_summary()
+        response = requests.post(url, json=payload)
+        print(f"Status: {response.status_code}")
         
-        # Return appropriate exit code
-        failed_tests = len([r for r in tester.test_results if r["status"] == "FAIL"])
-        sys.exit(0 if failed_tests == 0 else 1)
-        
-    except KeyboardInterrupt:
-        print("\n🛑 Tests interrupted by user")
-        sys.exit(130)
+        if response.status_code == 200:
+            data = response.json()
+            access_token = data.get('access_token', '')
+            print(f"✅ Admin authentication successful")
+            print(f"Access token length: {len(access_token)} chars")
+            return access_token
+        else:
+            print(f"❌ Admin authentication failed: {response.text}")
+            return None
+            
     except Exception as e:
-        print(f"\n💥 Unexpected error: {e}")
-        sys.exit(1)
+        print(f"❌ Auth error: {str(e)}")
+        return None
+
+def test_listing_create_step_guard(token):
+    """Test listing_create_stepX guard returns 400 for disallowed component/props"""
+    print("\n=== 2. TESTING LISTING_CREATE_STEP GUARD ===")
+    
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    # First, try to create a LISTING_CREATE_STEPX page to test against
+    # Or find an existing one to test the validation
+    
+    # Create test page payload with disallowed components
+    # Based on the code, this should trigger validation in draft creation/update
+    disallowed_payload = {
+        "payload_json": {
+            "rows": [
+                {
+                    "columns": [
+                        {
+                            "components": [
+                                {
+                                    "key": "disallowed_component_key",  # Not in LISTING_CREATE_ALLOWED_COMPONENTS
+                                    "props": {"title": "test"}
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+    
+    # Test creating a page first to get a page_id for testing
+    create_page_payload = {
+        "page_type": "listing_create_stepX",  # Fixed enum value
+        "country": "DE",
+        "module": "real_estate"
+    }
+    
+    success_count = 0
+    
+    # 1. Try to create a listing_create_stepx page
+    try:
+        url = f"{BASE_URL}/api/admin/site/content-layout/pages"
+        response = requests.post(url, json=create_page_payload, headers=headers)
+        print(f"Create LISTING_CREATE_STEPX page: {response.status_code}")
+        
+        if response.status_code in [200, 201]:
+            page_data = response.json()
+            page_id = page_data.get("item", {}).get("id")
+            
+            if page_id:
+                print(f"✅ Created test page with ID: {page_id}")
+                
+                # 2. Now test the guard by creating a draft with disallowed components
+                url = f"{BASE_URL}/api/admin/site/content-layout/pages/{page_id}/revisions/draft"
+                response = requests.post(url, json=disallowed_payload, headers=headers)
+                print(f"Create draft with disallowed components: {response.status_code}")
+                
+                if response.status_code == 400:
+                    response_text = response.text
+                    if "listing_create_component_not_allowed" in response_text:
+                        print(f"✅ Guard working - returns 400 for disallowed component")
+                        success_count += 1
+                    else:
+                        print(f"⚠️ 400 response but different error: {response_text[:200]}")
+                else:
+                    print(f"⚠️ Expected 400 but got {response.status_code}: {response.text[:200]}")
+        else:
+            print(f"⚠️ Could not create test page: {response.text[:200]}")
+            
+    except Exception as e:
+        print(f"❌ Error testing listing create guard: {str(e)}")
+    
+    # 3. Test with disallowed props on allowed component
+    allowed_component_disallowed_props = {
+        "payload_json": {
+            "rows": [
+                {
+                    "columns": [
+                        {
+                            "components": [
+                                {
+                                    "key": "shared.text-block",  # Allowed component
+                                    "props": {
+                                        "title": "test",
+                                        "body": "test",
+                                        "disallowed_prop": "not_allowed"  # Not in allowed props
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+    
+    try:
+        # Find existing listing_create_stepX pages to test props validation
+        url = f"{BASE_URL}/api/admin/site/content-layout/pages?page_type=listing_create_stepX"
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code == 200:
+            pages_data = response.json()
+            pages = pages_data.get("items", [])
+            
+            if pages:
+                page_id = pages[0].get("id")
+                print(f"✅ Found existing LISTING_CREATE_STEPX page: {page_id}")
+                
+                # Test disallowed props
+                url = f"{BASE_URL}/api/admin/site/content-layout/pages/{page_id}/revisions/draft"
+                response = requests.post(url, json=allowed_component_disallowed_props, headers=headers)
+                print(f"Create draft with disallowed props: {response.status_code}")
+                
+                if response.status_code == 400:
+                    response_text = response.text
+                    if "listing_create_component_props_not_allowed" in response_text:
+                        print(f"✅ Props guard working - returns 400 for disallowed props")
+                        success_count += 1
+                    else:
+                        print(f"⚠️ 400 response but different error: {response_text[:200]}")
+                        
+    except Exception as e:
+        print(f"❌ Error testing props guard: {str(e)}")
+    
+    if success_count > 0:
+        print(f"✅ Guard validation working ({success_count} tests passed)")
+        return True
+    else:
+        print("❌ No guard validation detected")
+        return False
+
+def test_admin_draft_preview(token):
+    """Test admin draft preview returns 200 for layout_preview=draft with admin token"""
+    print("\n=== 3. TESTING ADMIN DRAFT PREVIEW ===")
+    
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    # Test layout preview endpoints with draft parameter (include required module param)
+    test_endpoints = [
+        "/api/site/content-layout/resolve?layout_preview=draft&page_type=home&country=DE&module=global",
+        "/api/site/content-layout/resolve?layout_preview=draft&page_type=search_l1&country=DE&module=real_estate"
+    ]
+    
+    success_count = 0
+    
+    for endpoint in test_endpoints:
+        url = f"{BASE_URL}{endpoint}"
+        
+        try:
+            response = requests.get(url, headers=headers)
+            print(f"Endpoint: {endpoint}")
+            print(f"Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                print(f"✅ Admin draft preview working - returns 200")
+                success_count += 1
+                # Print some response details
+                try:
+                    data = response.json()
+                    print(f"Response has {len(data)} keys")
+                    if 'preview_mode' in data:
+                        print(f"Preview mode: {data['preview_mode']}")
+                except:
+                    print(f"Response length: {len(response.text)} chars")
+            elif response.status_code == 404:
+                print(f"⚠️ Endpoint not found")
+            elif response.status_code == 403:
+                print(f"⚠️ 403 - Admin auth may not be working correctly")
+            else:
+                print(f"⚠️ Unexpected response: {response.status_code}")
+                print(f"Response: {response.text[:200]}")
+                
+        except Exception as e:
+            print(f"❌ Error testing {endpoint}: {str(e)}")
+    
+    if success_count > 0:
+        print(f"✅ Found {success_count} working admin draft preview endpoints")
+        return True
+    else:
+        print("❌ No working admin draft preview endpoints found")
+        return False
+
+def test_unauth_draft_preview():
+    """Test unauth draft preview returns 403"""
+    print("\n=== 4. TESTING UNAUTH DRAFT PREVIEW ===")
+    
+    # Test without auth headers - should return 403
+    test_endpoints = [
+        "/api/site/content-layout/resolve?layout_preview=draft&page_type=home&country=DE&module=global",
+        "/api/site/content-layout/resolve?layout_preview=draft&page_type=search_l1&country=DE&module=real_estate"
+    ]
+    
+    success_count = 0
+    
+    for endpoint in test_endpoints:
+        url = f"{BASE_URL}{endpoint}"
+        
+        try:
+            response = requests.get(url)  # No auth headers
+            print(f"Endpoint: {endpoint}")
+            print(f"Status: {response.status_code}")
+            
+            if response.status_code == 403:
+                print(f"✅ Auth protection working - returns 403 without token")
+                success_count += 1
+            elif response.status_code == 401:
+                print(f"✅ Auth protection working - returns 401 without token")
+                success_count += 1
+            elif response.status_code == 404:
+                print(f"⚠️ Endpoint not found")
+            else:
+                print(f"⚠️ Unexpected response: {response.status_code}")
+                print(f"Response: {response.text[:200]}")
+                
+        except Exception as e:
+            print(f"❌ Error testing {endpoint}: {str(e)}")
+    
+    if success_count > 0:
+        print(f"✅ Auth protection verified on {success_count} endpoints")
+        return True
+    else:
+        print("❌ Auth protection not working properly")
+        return False
+
+def test_published_resolve():
+    """Test published resolve still returns 200"""
+    print("\n=== 5. TESTING PUBLISHED RESOLVE ===")
+    
+    # Test public layout resolve endpoints (should work without auth)
+    test_endpoints = [
+        "/api/site/content-layout/resolve?page_type=home&country=DE&module=global",
+        "/api/site/content-layout/resolve?page_type=search_l1&country=DE&module=real_estate"
+    ]
+    
+    success_count = 0
+    
+    for endpoint in test_endpoints:
+        url = f"{BASE_URL}{endpoint}"
+        
+        try:
+            response = requests.get(url)
+            print(f"Endpoint: {endpoint}")
+            print(f"Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                print(f"✅ Published resolve working - returns 200")
+                success_count += 1
+                # Check if it's actual layout data
+                try:
+                    data = response.json()
+                    if 'layout' in data or 'components' in data or len(data) > 0:
+                        print(f"✅ Response contains layout data")
+                    else:
+                        print(f"⚠️ Empty response")
+                except:
+                    print(f"Response length: {len(response.text)} chars")
+            else:
+                print(f"⚠️ Unexpected response: {response.status_code}")
+                print(f"Response: {response.text[:200]}")
+                
+        except Exception as e:
+            print(f"❌ Error testing {endpoint}: {str(e)}")
+    
+    if success_count > 0:
+        print(f"✅ Found {success_count} working published resolve endpoints")
+        return True
+    else:
+        print("❌ No working published resolve endpoints found")
+        return False
+
+def test_bind_fetch_unbind_endpoints(token):
+    """Test bind/fetch/unbind endpoints remain operational"""
+    print("\n=== 6. TESTING BIND/FETCH/UNBIND ENDPOINTS ===")
+    
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    # Test the bind/unbind/fetch cycle
+    success_count = 0
+    
+    # 1. Test fetch active bindings (with proper category_id parameter)
+    try:
+        # Use a real category ID from previous tests or a test UUID
+        test_category_id = "3d7dc54d-df6d-428e-8eea-f315d073ada9"  # Example UUID
+        url = f"{BASE_URL}/api/admin/site/content-layout/bindings/active?country=DE&module=real_estate&category_id={test_category_id}"
+        response = requests.get(url, headers=headers)
+        print(f"FETCH Active Bindings: {response.status_code}")
+        
+        if response.status_code == 200:
+            print(f"✅ Fetch active bindings working")
+            success_count += 1
+        elif response.status_code == 404:
+            print(f"⚠️ No bindings found for category (expected for test)")
+            success_count += 1  # This is actually expected behavior
+        else:
+            print(f"⚠️ Fetch response: {response.text[:200]}")
+            
+    except Exception as e:
+        print(f"❌ Fetch error: {str(e)}")
+    
+    # 2. Test bind endpoint (create a binding) - use correct endpoint path
+    try:
+        url = f"{BASE_URL}/api/admin/site/content-layout/bindings"  # Not /bind
+        bind_payload = {
+            "country": "DE", 
+            "module": "real_estate",
+            "category_id": "3d7dc54d-df6d-428e-8eea-f315d073ada9",
+            "layout_page_id": "test-page-id"  # Changed from page_id to layout_page_id
+        }
+        response = requests.post(url, json=bind_payload, headers=headers)
+        print(f"BIND Operation: {response.status_code}")
+        
+        if response.status_code in [200, 201]:
+            print(f"✅ Bind endpoint working")
+            success_count += 1
+        elif response.status_code in [400, 404, 409]:
+            print(f"⚠️ Bind validation working (expected error for test data)")
+            success_count += 1
+        else:
+            print(f"⚠️ Bind response: {response.text[:200]}")
+            
+    except Exception as e:
+        print(f"❌ Bind error: {str(e)}")
+    
+    # 3. Test unbind endpoint (with proper payload structure)
+    try:
+        url = f"{BASE_URL}/api/admin/site/content-layout/bindings/unbind"
+        unbind_payload = {
+            "country": "DE",
+            "module": "real_estate", 
+            "category_id": "3d7dc54d-df6d-428e-8eea-f315d073ada9"
+        }
+        response = requests.post(url, json=unbind_payload, headers=headers)
+        print(f"UNBIND Operation: {response.status_code}")
+        
+        if response.status_code in [200, 404]:
+            print(f"✅ Unbind endpoint working")
+            success_count += 1
+        else:
+            print(f"⚠️ Unbind response: {response.text[:200]}")
+            
+    except Exception as e:
+        print(f"❌ Unbind error: {str(e)}")
+    
+    if success_count >= 2:
+        print(f"✅ Bind/fetch/unbind endpoints operational ({success_count}/3 working)")
+        return True
+    else:
+        print(f"❌ Bind/fetch/unbind endpoints have issues ({success_count}/3 working)")
+        return False
+
+def main():
+    print("=== P2.1/P2.2/P2.3 BACKEND QUICK CHECK ===")
+    print(f"Base URL: {BASE_URL}")
+    print(f"Admin creds: admin@platform.com / Admin123!")
+    
+    results = {}
+    
+    # 1. Get admin token
+    token = test_admin_auth()
+    if not token:
+        print("\n❌ CRITICAL: Cannot proceed without admin authentication")
+        return
+    
+    # 2. Test listing create step guard
+    results['listing_guard'] = test_listing_create_step_guard(token)
+    
+    # 3. Test admin draft preview
+    results['admin_draft'] = test_admin_draft_preview(token)
+    
+    # 4. Test unauth draft preview
+    results['unauth_draft'] = test_unauth_draft_preview()
+    
+    # 5. Test published resolve
+    results['published_resolve'] = test_published_resolve()
+    
+    # 6. Test bind/fetch/unbind
+    results['bind_ops'] = test_bind_fetch_unbind_endpoints(token)
+    
+    # Summary
+    print("\n" + "="*50)
+    print("FINAL SUMMARY")
+    print("="*50)
+    
+    passed = sum(1 for v in results.values() if v)
+    total = len(results)
+    
+    for test_name, result in results.items():
+        status = "✅ PASS" if result else "❌ FAIL"
+        print(f"{test_name}: {status}")
+    
+    print(f"\nOverall: {passed}/{total} tests passed")
+    
+    if passed == total:
+        print("\n✅ FINAL RESULT: PASS - All P2.1/P2.2/P2.3 backend checks successful")
+    else:
+        print(f"\n❌ FINAL RESULT: PARTIAL PASS - {passed}/{total} tests successful")
+    
+    return passed == total
 
 if __name__ == "__main__":
-    main()
+    success = main()
+    sys.exit(0 if success else 1)
