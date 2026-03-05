@@ -143,6 +143,242 @@ TRANSLATABLE_PROP_KEYS = {
     "note",
 }
 
+LOCKED_COMPONENT_POLICY_BY_KEY: dict[str, dict[str, Any]] = {
+    "category.navigator": {
+        "component": "Category Navigator",
+        "menu_path": "Admin Panel → Katalog & İçerik → Kategoriler",
+        "data_source": "Kategori ağacı (L0 / L1 / Ln)",
+        "api": "GET /api/categories/tree",
+        "source_options": "-",
+        "usage": "Ana sayfa sol menü, acil sayfası, kategori sayfaları",
+        "click_behavior": "/kategori/{slug}",
+        "rbac_visibility": ["super_admin", "country_admin", "moderator"],
+        "locked": True,
+    },
+    "layout.category-navigator-side": {
+        "component": "Category Navigator",
+        "menu_path": "Admin Panel → Katalog & İçerik → Kategoriler",
+        "data_source": "Kategori ağacı (L0 / L1 / Ln)",
+        "api": "GET /api/categories/tree",
+        "source_options": "-",
+        "usage": "Ana sayfa sol menü, acil sayfası, kategori sayfaları",
+        "click_behavior": "/kategori/{slug}",
+        "rbac_visibility": ["super_admin", "country_admin", "moderator"],
+        "locked": True,
+    },
+    "layout.category-navigator-top": {
+        "component": "Category Navigator",
+        "menu_path": "Admin Panel → Katalog & İçerik → Kategoriler",
+        "data_source": "Kategori ağacı (L0 / L1 / Ln)",
+        "api": "GET /api/categories/tree",
+        "source_options": "-",
+        "usage": "Ana sayfa sol menü, acil sayfası, kategori sayfaları",
+        "click_behavior": "/kategori/{slug}",
+        "rbac_visibility": ["super_admin", "country_admin", "moderator"],
+        "locked": True,
+    },
+    "cta.block": {
+        "component": "CTA Block",
+        "menu_path": "Menü çağırmaz",
+        "data_source": "Manuel link ve stil ayarları",
+        "api": "-",
+        "source_options": "-",
+        "usage": "Acil / Vitrin / Kampanya yönlendirmesi",
+        "click_behavior": "Manuel linke yönlendirme",
+        "rbac_visibility": ["super_admin", "country_admin"],
+        "locked": True,
+    },
+    "listing.grid": {
+        "component": "Listing Grid",
+        "menu_path": "Admin Panel → İlan & Moderasyon → Onaylı Tüm İlanlar",
+        "data_source": "Onaylı ilan havuzu",
+        "api": "GET /api/public/listings",
+        "source_options": "showcase | urgent | latest | category",
+        "usage": "Ana sayfa vitrin ilanları, kategori vitrini",
+        "click_behavior": "İlan detayına yönlendirme",
+        "rbac_visibility": ["super_admin", "country_admin", "moderator"],
+        "locked": True,
+    },
+    "listing.list": {
+        "component": "Listing List",
+        "menu_path": "Admin Panel → İlan & Moderasyon → Onaylı Tüm İlanlar",
+        "data_source": "İlan havuzu",
+        "api": "GET /api/public/listings",
+        "source_options": "urgent | category | search",
+        "usage": "Acil, kategori liste ve arama sonuç sayfaları",
+        "click_behavior": "İlan detayına yönlendirme",
+        "rbac_visibility": ["super_admin", "country_admin", "moderator"],
+        "locked": True,
+    },
+    "listing.card": {
+        "component": "Listing Card",
+        "menu_path": "Menü çağırmaz",
+        "data_source": "Listing Grid/List çıktısı",
+        "api": "GET /api/public/listings (upstream)",
+        "source_options": "badge: acil | vitrin | ücretli",
+        "usage": "Grid/List görünümünde kart sunumu",
+        "click_behavior": "İlan detayına yönlendirme",
+        "rbac_visibility": ["super_admin", "country_admin", "moderator"],
+        "locked": True,
+    },
+    "category.sub-category-block": {
+        "component": "Sub Category Block",
+        "menu_path": "Admin Panel → Katalog & İçerik → Kategoriler",
+        "data_source": "Alt kategori listesi",
+        "api": "GET /api/categories/children",
+        "source_options": "columns | show_count | depth",
+        "usage": "Kategori sayfalarında alt kırılımlar",
+        "click_behavior": "/kategori/{slug}",
+        "rbac_visibility": ["super_admin", "country_admin", "moderator"],
+        "locked": True,
+    },
+    "ad.slot": {
+        "component": "Ad Slot",
+        "menu_path": "Admin Panel → Reklamlar → Reklam Yönetimi",
+        "data_source": "Aktif reklam bannerları",
+        "api": "GET /api/ads/resolve",
+        "source_options": "home_top | home_bottom | category_top | category_bottom",
+        "usage": "Sayfa içi banner yerleşimleri",
+        "click_behavior": "Reklam hedef URL yönlendirmesi",
+        "rbac_visibility": ["super_admin", "ads_manager"],
+        "locked": True,
+    },
+    "shared.ad-slot": {
+        "component": "Ad Slot",
+        "menu_path": "Admin Panel → Reklamlar → Reklam Yönetimi",
+        "data_source": "Aktif reklam bannerları",
+        "api": "GET /api/ads/resolve",
+        "source_options": "home_top | home_bottom | category_top | category_bottom",
+        "usage": "Sayfa içi banner yerleşimleri",
+        "click_behavior": "Reklam hedef URL yönlendirmesi",
+        "rbac_visibility": ["super_admin", "ads_manager"],
+        "locked": True,
+    },
+    "media.ad-promo-slot": {
+        "component": "Ad Slot",
+        "menu_path": "Admin Panel → Reklamlar → Reklam Yönetimi",
+        "data_source": "Aktif reklam bannerları",
+        "api": "GET /api/ads/resolve",
+        "source_options": "home_top | home_bottom | category_top | category_bottom",
+        "usage": "Sayfa içi banner yerleşimleri",
+        "click_behavior": "Reklam hedef URL yönlendirmesi",
+        "rbac_visibility": ["super_admin", "ads_manager"],
+        "locked": True,
+    },
+    "media.hero-banner": {
+        "component": "Hero Banner / Carousel / Image / Video",
+        "menu_path": "Statik: Builder manuel • Dinamik: Reklamlar / Vitrin Yönetimi",
+        "data_source": "Statik medya veya dinamik banner kaynağı",
+        "api": "GET /api/banners",
+        "source_options": "static | dynamic",
+        "usage": "Tanıtım ve vitrin medya alanları",
+        "click_behavior": "CTA / hedef medya linki",
+        "rbac_visibility": ["super_admin", "country_admin", "ads_manager"],
+        "locked": True,
+    },
+    "media.carousel": {
+        "component": "Hero Banner / Carousel / Image / Video",
+        "menu_path": "Statik: Builder manuel • Dinamik: Reklamlar / Vitrin Yönetimi",
+        "data_source": "Statik medya veya dinamik banner kaynağı",
+        "api": "GET /api/banners",
+        "source_options": "static | dynamic",
+        "usage": "Tanıtım ve vitrin medya alanları",
+        "click_behavior": "CTA / hedef medya linki",
+        "rbac_visibility": ["super_admin", "country_admin", "ads_manager"],
+        "locked": True,
+    },
+    "media.image": {
+        "component": "Hero Banner / Carousel / Image / Video",
+        "menu_path": "Statik: Builder manuel • Dinamik: Reklamlar / Vitrin Yönetimi",
+        "data_source": "Statik medya veya dinamik banner kaynağı",
+        "api": "GET /api/banners",
+        "source_options": "static | dynamic",
+        "usage": "Tanıtım ve vitrin medya alanları",
+        "click_behavior": "CTA / hedef medya linki",
+        "rbac_visibility": ["super_admin", "country_admin", "ads_manager"],
+        "locked": True,
+    },
+    "media.video": {
+        "component": "Hero Banner / Carousel / Image / Video",
+        "menu_path": "Statik: Builder manuel • Dinamik: Reklamlar / Vitrin Yönetimi",
+        "data_source": "Statik medya veya dinamik banner kaynağı",
+        "api": "GET /api/banners",
+        "source_options": "static | dynamic",
+        "usage": "Tanıtım ve vitrin medya alanları",
+        "click_behavior": "CTA / hedef medya linki",
+        "rbac_visibility": ["super_admin", "country_admin", "ads_manager"],
+        "locked": True,
+    },
+    "media.auto-play-carousel-hero": {
+        "component": "Hero Banner / Carousel / Image / Video",
+        "menu_path": "Statik: Builder manuel • Dinamik: Reklamlar / Vitrin Yönetimi",
+        "data_source": "Statik medya veya dinamik banner kaynağı",
+        "api": "GET /api/banners",
+        "source_options": "static | dynamic",
+        "usage": "Tanıtım ve vitrin medya alanları",
+        "click_behavior": "CTA / hedef medya linki",
+        "rbac_visibility": ["super_admin", "country_admin", "ads_manager"],
+        "locked": True,
+    },
+    "media.advanced-photo-gallery": {
+        "component": "Hero Banner / Carousel / Image / Video",
+        "menu_path": "Statik: Builder manuel • Dinamik: Reklamlar / Vitrin Yönetimi",
+        "data_source": "Statik medya veya dinamik banner kaynağı",
+        "api": "GET /api/banners",
+        "source_options": "static | dynamic",
+        "usage": "Tanıtım ve vitrin medya alanları",
+        "click_behavior": "CTA / hedef medya linki",
+        "rbac_visibility": ["super_admin", "country_admin", "ads_manager"],
+        "locked": True,
+    },
+    "media.video-3d-tour-player": {
+        "component": "Hero Banner / Carousel / Image / Video",
+        "menu_path": "Statik: Builder manuel • Dinamik: Reklamlar / Vitrin Yönetimi",
+        "data_source": "Statik medya veya dinamik banner kaynağı",
+        "api": "GET /api/banners",
+        "source_options": "static | dynamic",
+        "usage": "Tanıtım ve vitrin medya alanları",
+        "click_behavior": "CTA / hedef medya linki",
+        "rbac_visibility": ["super_admin", "country_admin", "ads_manager"],
+        "locked": True,
+    },
+    "map.block": {
+        "component": "Map Block",
+        "menu_path": "Admin Panel → Sistem Ayarları → Harita Ayarları",
+        "data_source": "İlan konum bilgileri (latitude/longitude)",
+        "api": "GET /api/public/listings",
+        "source_options": "-",
+        "usage": "İlan detay ve konum odaklı sayfalar",
+        "click_behavior": "Harita etkileşimi / lokasyon odak",
+        "rbac_visibility": ["super_admin", "country_admin"],
+        "locked": True,
+    },
+    "interactive.interactive-map": {
+        "component": "Map Block",
+        "menu_path": "Admin Panel → Sistem Ayarları → Harita Ayarları",
+        "data_source": "İlan konum bilgileri (latitude/longitude)",
+        "api": "GET /api/public/listings",
+        "source_options": "-",
+        "usage": "İlan detay ve konum odaklı sayfalar",
+        "click_behavior": "Harita etkileşimi / lokasyon odak",
+        "rbac_visibility": ["super_admin", "country_admin"],
+        "locked": True,
+    },
+}
+
+
+def _resolve_locked_component_policy(key: str | None) -> Optional[dict[str, Any]]:
+    normalized = str(key or "").strip().lower()
+    if not normalized:
+        return None
+    policy = LOCKED_COMPONENT_POLICY_BY_KEY.get(normalized)
+    if not policy:
+        return None
+    return {
+        **policy,
+        "rbac_visibility": list(policy.get("rbac_visibility") or []),
+    }
+
 
 def _normalize_i18n_lang(raw_lang: Optional[str]) -> str:
     normalized = str(raw_lang or "").strip().lower()
@@ -663,7 +899,7 @@ def _as_uuid_or_400(raw_value: Optional[str], *, field_name: str) -> Optional[uu
 
 
 def _serialize_component(row: LayoutComponentDefinition) -> dict[str, Any]:
-    return {
+    serialized = {
         "id": str(row.id),
         "key": row.key,
         "name": row.name,
@@ -673,6 +909,15 @@ def _serialize_component(row: LayoutComponentDefinition) -> dict[str, Any]:
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
     }
+    policy = _resolve_locked_component_policy(row.key)
+    if policy:
+        serialized["policy_locked"] = True
+        serialized["data_source_spec"] = policy
+        if policy.get("component"):
+            serialized["name"] = str(policy.get("component"))
+    else:
+        serialized["policy_locked"] = False
+    return serialized
 
 
 def _serialize_layout_page(row: LayoutPage) -> dict[str, Any]:
@@ -1756,8 +2001,10 @@ async def create_layout_component(
     session: AsyncSession = Depends(get_db),
 ):
     _validate_json_schema_or_400(payload.schema_json)
+    normalized_key = payload.key.strip()
+    component_policy = _resolve_locked_component_policy(normalized_key)
     existing_result = await session.execute(
-        select(LayoutComponentDefinition).where(LayoutComponentDefinition.key == payload.key.strip())
+        select(LayoutComponentDefinition).where(LayoutComponentDefinition.key == normalized_key)
     )
     if existing_result.scalar_one_or_none():
         raise HTTPException(status_code=409, detail="Component key already exists")
@@ -1765,10 +2012,10 @@ async def create_layout_component(
     try:
         row = await create_or_update_component_definition(
             session,
-            key=payload.key.strip(),
-            name=payload.name.strip(),
+            key=normalized_key,
+            name=str(component_policy.get("component")) if component_policy and component_policy.get("component") else payload.name.strip(),
             schema_json=payload.schema_json,
-            is_active=bool(payload.is_active),
+            is_active=True if component_policy else bool(payload.is_active),
             actor_user_id=current_user.get("id"),
         )
         await session.commit()
@@ -1796,6 +2043,15 @@ async def patch_layout_component(
     row = await session.get(LayoutComponentDefinition, component_uuid)
     if not row:
         raise HTTPException(status_code=404, detail="Component definition not found")
+    component_policy = _resolve_locked_component_policy(row.key)
+    if component_policy:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "component_policy_locked",
+                "message": "Bu component policy ile kilitli. Düzenleme devre dışı.",
+            },
+        )
 
     before = _serialize_component(row)
     if payload.schema_json is not None:

@@ -655,6 +655,7 @@ const COMPONENT_SOURCE_SPEC_RULES = [
       source_options: '-',
       usage: 'Ana sayfa sol menü, acil sayfası, kategori sayfaları',
       click_behavior: '/kategori/{slug}',
+      rbac_visibility: ['super_admin', 'country_admin', 'moderator'],
     },
   },
   {
@@ -668,6 +669,7 @@ const COMPONENT_SOURCE_SPEC_RULES = [
       source_options: '-',
       usage: 'Acil / Vitrin / Kampanya yönlendirmesi',
       click_behavior: 'Manuel linke yönlendirme',
+      rbac_visibility: ['super_admin', 'country_admin'],
     },
   },
   {
@@ -681,6 +683,7 @@ const COMPONENT_SOURCE_SPEC_RULES = [
       source_options: 'showcase | urgent | latest | category',
       usage: 'Ana sayfa vitrin ilanları, kategori vitrini',
       click_behavior: 'İlan detayına yönlendirme',
+      rbac_visibility: ['super_admin', 'country_admin', 'moderator'],
     },
   },
   {
@@ -694,6 +697,7 @@ const COMPONENT_SOURCE_SPEC_RULES = [
       source_options: 'urgent | category | search',
       usage: 'Acil, kategori liste ve arama sonuç sayfaları',
       click_behavior: 'İlan detayına yönlendirme',
+      rbac_visibility: ['super_admin', 'country_admin', 'moderator'],
     },
   },
   {
@@ -707,6 +711,7 @@ const COMPONENT_SOURCE_SPEC_RULES = [
       source_options: 'badge: acil | vitrin | ücretli',
       usage: 'Grid/List görünümünde kart sunumu',
       click_behavior: 'İlan detayına yönlendirme',
+      rbac_visibility: ['super_admin', 'country_admin', 'moderator'],
     },
   },
   {
@@ -720,6 +725,7 @@ const COMPONENT_SOURCE_SPEC_RULES = [
       source_options: 'columns | show_count | depth',
       usage: 'Kategori sayfalarında alt kırılımlar',
       click_behavior: '/kategori/{slug}',
+      rbac_visibility: ['super_admin', 'country_admin', 'moderator'],
     },
   },
   {
@@ -733,6 +739,7 @@ const COMPONENT_SOURCE_SPEC_RULES = [
       source_options: 'home_top | home_bottom | category_top | category_bottom',
       usage: 'Sayfa içi banner yerleşimleri',
       click_behavior: 'Reklam hedef URL yönlendirmesi',
+      rbac_visibility: ['super_admin', 'ads_manager'],
     },
   },
   {
@@ -746,6 +753,7 @@ const COMPONENT_SOURCE_SPEC_RULES = [
       source_options: 'static | dynamic',
       usage: 'Tanıtım ve vitrin medya alanları',
       click_behavior: 'CTA / hedef medya linki',
+      rbac_visibility: ['super_admin', 'country_admin', 'ads_manager'],
     },
   },
   {
@@ -759,6 +767,7 @@ const COMPONENT_SOURCE_SPEC_RULES = [
       source_options: '-',
       usage: 'İlan detay ve konum odaklı sayfalar',
       click_behavior: 'Harita etkileşimi / lokasyon odak',
+      rbac_visibility: ['super_admin', 'country_admin'],
     },
   },
 ];
@@ -771,6 +780,7 @@ const COMPONENT_DATA_SOURCE_MATRIX = [
     data_source: 'Yok',
     api: '-',
     usage: 'Sayfa yerleşim iskeleti',
+    rbac_visibility: ['super_admin', 'country_admin'],
   },
   ...COMPONENT_SOURCE_SPEC_RULES.map((rule) => ({
     id: `matrix-${rule.id}`,
@@ -779,10 +789,14 @@ const COMPONENT_DATA_SOURCE_MATRIX = [
     data_source: rule.spec.data_source,
     api: rule.spec.api,
     usage: rule.spec.usage,
+    rbac_visibility: Array.isArray(rule.spec.rbac_visibility) ? rule.spec.rbac_visibility : [],
   })),
 ];
 
 const resolveComponentSourceSpec = (item) => {
+  if (item?.data_source_spec && typeof item.data_source_spec === 'object') {
+    return item.data_source_spec;
+  }
   const key = String(item?.key || '').toLowerCase();
   const name = String(item?.name || '').toLowerCase();
   const matched = COMPONENT_SOURCE_SPEC_RULES.find((rule) => rule.match(key, name));
@@ -1642,6 +1656,7 @@ export default function AdminContentBuilder() {
         item?.data_source_spec?.data_source,
         item?.data_source_spec?.api,
         item?.data_source_spec?.usage,
+        Array.isArray(item?.data_source_spec?.rbac_visibility) ? item.data_source_spec.rbac_visibility.join(' ') : item?.data_source_spec?.rbac_visibility,
       ]
         .filter(Boolean)
         .join(' ')
@@ -2767,6 +2782,7 @@ export default function AdminContentBuilder() {
                 <th className="px-2 py-2">Veri Kaynağı</th>
                 <th className="px-2 py-2">API</th>
                 <th className="px-2 py-2">Kullanım</th>
+                <th className="px-2 py-2">RBAC Görünürlük</th>
               </tr>
             </thead>
             <tbody>
@@ -2777,6 +2793,9 @@ export default function AdminContentBuilder() {
                   <td className="px-2 py-2" data-testid={`admin-content-builder-data-source-source-${row.id}`}>{row.data_source}</td>
                   <td className="px-2 py-2" data-testid={`admin-content-builder-data-source-api-${row.id}`}>{row.api}</td>
                   <td className="px-2 py-2" data-testid={`admin-content-builder-data-source-usage-${row.id}`}>{row.usage}</td>
+                  <td className="px-2 py-2" data-testid={`admin-content-builder-data-source-rbac-${row.id}`}>
+                    {Array.isArray(row.rbac_visibility) ? row.rbac_visibility.join(', ') : (row.rbac_visibility || '-')}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -2871,6 +2890,11 @@ export default function AdminContentBuilder() {
                               <div data-testid={`admin-content-builder-library-item-source-menu-${component.key}`}><strong>Menü:</strong> {component.data_source_spec.menu_path}</div>
                               <div data-testid={`admin-content-builder-library-item-source-data-${component.key}`}><strong>Kaynak:</strong> {component.data_source_spec.data_source}</div>
                               <div data-testid={`admin-content-builder-library-item-source-api-${component.key}`}><strong>API:</strong> {component.data_source_spec.api}</div>
+                              <div data-testid={`admin-content-builder-library-item-source-rbac-${component.key}`}>
+                                <strong>RBAC:</strong> {Array.isArray(component.data_source_spec.rbac_visibility)
+                                  ? component.data_source_spec.rbac_visibility.join(', ')
+                                  : (component.data_source_spec.rbac_visibility || '-')}
+                              </div>
                               {component.data_source_spec.source_options && component.data_source_spec.source_options !== '-' ? (
                                 <div data-testid={`admin-content-builder-library-item-source-options-${component.key}`}><strong>Source:</strong> {component.data_source_spec.source_options}</div>
                               ) : null}
