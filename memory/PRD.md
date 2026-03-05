@@ -254,6 +254,22 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Notlar / Bilinen Durum
 - Bu ortamda `/api/admin/menu-items` endpointi `403 feature_disabled` dönebiliyor; bu durum için fallback tasarımı aktif.
 
+## 2026-03-05 (Component Library Genişletme — Kullanıcı Liste Talebi)
+
+### Uygulananlar
+- `AdminContentBuilder` içindeki **Component Library** genişletildi ve aşağıdaki 16 bileşen eklendi:
+  - **Navigasyon/Layout:** `layout.breadcrumb-header`, `layout.sticky-action-bar`, `layout.category-navigator-side`, `layout.category-navigator-top`
+  - **Medya:** `media.advanced-photo-gallery`, `media.auto-play-carousel-hero`, `media.video-3d-tour-player`, `media.ad-promo-slot`
+  - **Bilgi/Veri:** `data.price-title-block`, `data.attribute-grid-dynamic`, `data.description-text-area`, `data.seller-card`
+  - **Etkileşim:** `interactive.interactive-map`, `interactive.mortgage-loan-calculator`, `interactive.similar-listings-slider`, `interactive.doping-selector`
+- Her bileşen için `schema_json` + `default_props` tanımlandı; Schema Form Editor üzerinden düzenlenebilir hale getirildi.
+
+### Test Durumu
+- Frontend test agent doğrulaması: **PASS**
+  - 16/16 bileşen görünür
+  - “Seçili Sütuna Ekle” aksiyonu yeni bileşen için başarılı
+  - Blocker yok
+
 ### P0 — Google Autocomplete Real Mode (manuel key destekli)
 - Backend eklendi:
   - `GET /api/places/config`
