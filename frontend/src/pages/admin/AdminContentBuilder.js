@@ -14,6 +14,7 @@ const DEFAULT_COMPONENT_LIBRARY = [
   { key: 'home.default-content', name: 'Home Varsayılan İçerik' },
   { key: 'search.l1.default-content', name: 'Search L1 Varsayılan İçerik' },
   { key: 'search.l2.default-content', name: 'Search L2 Varsayılan İçerik' },
+  { key: 'listing.create.default-content', name: 'İlan Ver Varsayılan İçerik' },
   { key: 'shared.text-block', name: 'Metin Bloğu' },
   { key: 'shared.ad-slot', name: 'Reklam Slotu' },
 ];
@@ -22,6 +23,7 @@ const getDefaultComponentKey = (pageType) => {
   if (pageType === 'home') return 'home.default-content';
   if (pageType === 'search_l1') return 'search.l1.default-content';
   if (pageType === 'search_l2') return 'search.l2.default-content';
+  if (pageType === 'listing_create_stepX') return 'listing.create.default-content';
   return 'shared.text-block';
 };
 
@@ -77,10 +79,16 @@ export default function AdminContentBuilder() {
   const [revisionList, setRevisionList] = useState([]);
   const [payloadJson, setPayloadJson] = useState(createEmptyPayload('home'));
 
+  const [bindingCategoryId, setBindingCategoryId] = useState('');
+  const [bindingActiveItem, setBindingActiveItem] = useState(null);
+  const [bindingLoading, setBindingLoading] = useState(false);
+
   const [selectedRowId, setSelectedRowId] = useState('');
   const [selectedColumnId, setSelectedColumnId] = useState('');
   const [draggingRowId, setDraggingRowId] = useState('');
   const [draggingComponentId, setDraggingComponentId] = useState('');
+  const [dragOverRowId, setDragOverRowId] = useState('');
+  const [dragOverColumnId, setDragOverColumnId] = useState('');
 
   const [componentLibrary, setComponentLibrary] = useState(DEFAULT_COMPONENT_LIBRARY);
 
@@ -174,6 +182,7 @@ export default function AdminContentBuilder() {
 
       if (!page?.id) throw new Error('layout_page_not_created');
       setPageId(page.id);
+      setBindingCategoryId(normalizedCategoryId);
       await getRevisionsForPage(page.id, pageType);
       setStatus('Sayfa yüklendi. Draft düzenleyebilirsiniz.');
     } catch (err) {
@@ -274,6 +283,18 @@ export default function AdminContentBuilder() {
     updatePayload(next);
   };
 
+  const moveColumn = (rowId, columnId, direction) => {
+    const next = deepClone(payloadJson);
+    const row = (next.rows || []).find((item) => item.id === rowId);
+    const columns = row?.columns || [];
+    const index = columns.findIndex((item) => item.id === columnId);
+    if (index < 0) return;
+    const target = direction === 'left' ? index - 1 : index + 1;
+    if (target < 0 || target >= columns.length) return;
+    [columns[index], columns[target]] = [columns[target], columns[index]];
+    updatePayload(next);
+  };
+
   const updateColumnWidth = (rowId, columnId, key, value) => {
     const next = deepClone(payloadJson);
     const row = (next.rows || []).find((item) => item.id === rowId);
@@ -341,7 +362,10 @@ export default function AdminContentBuilder() {
   };
 
   const handleRowDrop = (targetRowId) => {
-    if (!draggingRowId || draggingRowId === targetRowId) return;
+    if (!draggingRowId || draggingRowId === targetRowId) {
+      setDragOverRowId('');
+      return;
+    }
     const next = deepClone(payloadJson);
     const rows = next.rows || [];
     const fromIndex = rows.findIndex((row) => row.id === draggingRowId);
@@ -351,10 +375,14 @@ export default function AdminContentBuilder() {
     rows.splice(toIndex, 0, moved);
     updatePayload(next);
     setDraggingRowId('');
+    setDragOverRowId('');
   };
 
   const handleComponentDrop = (targetRowId, targetColumnId) => {
-    if (!draggingComponentId) return;
+    if (!draggingComponentId) {
+      setDragOverColumnId('');
+      return;
+    }
     const next = deepClone(payloadJson);
     let movedComponent = null;
 
@@ -376,6 +404,89 @@ export default function AdminContentBuilder() {
     targetColumn.components.push(movedComponent);
     updatePayload(next);
     setDraggingComponentId('');
+    setDragOverColumnId('');
+  };
+
+  const fetchActiveBinding = async () => {
+    const categoryToCheck = (bindingCategoryId || categoryId).trim();
+    if (!categoryToCheck) {
+      setError('Binding için kategori ID zorunlu.');
+      return;
+    }
+    setBindingLoading(true);
+    try {
+      const res = await axios.get(`${API}/admin/site/content-layout/bindings/active`, {
+        headers: authHeaders,
+        params: {
+          country: country.toUpperCase(),
+          module: moduleName.trim(),
+          category_id: categoryToCheck,
+        },
+      });
+      setBindingActiveItem(res.data?.item || null);
+      setStatus('Aktif binding sorgulandı.');
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Aktif binding getirilemedi');
+    } finally {
+      setBindingLoading(false);
+    }
+  };
+
+  const bindCurrentPage = async () => {
+    const categoryToBind = (bindingCategoryId || categoryId).trim();
+    if (!pageId) {
+      setError('Önce bir page oluşturun/yükleyin.');
+      return;
+    }
+    if (!categoryToBind) {
+      setError('Binding için kategori ID zorunlu.');
+      return;
+    }
+    setBindingLoading(true);
+    try {
+      await axios.post(
+        `${API}/admin/site/content-layout/bindings`,
+        {
+          country: country.toUpperCase(),
+          module: moduleName.trim(),
+          category_id: categoryToBind,
+          layout_page_id: pageId,
+        },
+        { headers: authHeaders },
+      );
+      setStatus('Kategori binding kaydedildi.');
+      await fetchActiveBinding();
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Binding kaydedilemedi');
+    } finally {
+      setBindingLoading(false);
+    }
+  };
+
+  const unbindCurrentCategory = async () => {
+    const categoryToUnbind = (bindingCategoryId || categoryId).trim();
+    if (!categoryToUnbind) {
+      setError('Unbind için kategori ID zorunlu.');
+      return;
+    }
+    setBindingLoading(true);
+    try {
+      await axios.post(
+        `${API}/admin/site/content-layout/bindings/unbind`,
+        {
+          country: country.toUpperCase(),
+          module: moduleName.trim(),
+          category_id: categoryToUnbind,
+        },
+        { headers: authHeaders },
+      );
+      setBindingActiveItem(null);
+      setStatus('Kategori binding kaldırıldı.');
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Unbind başarısız');
+    } finally {
+      setBindingLoading(false);
+    }
   };
 
   return (
@@ -423,6 +534,34 @@ export default function AdminContentBuilder() {
           <span data-testid="admin-content-builder-revision-count">revision_count: {revisionList.length}</span>
         </div>
 
+        <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3" data-testid="admin-content-builder-binding-panel">
+          <div className="flex flex-wrap items-end gap-2" data-testid="admin-content-builder-binding-controls">
+            <label className="text-xs min-w-[280px]" data-testid="admin-content-builder-binding-category-wrap">
+              Binding Category ID
+              <input
+                className="mt-1 h-9 w-full rounded border px-2"
+                value={bindingCategoryId}
+                onChange={(e) => setBindingCategoryId(e.target.value)}
+                placeholder="Kategori UUID"
+                data-testid="admin-content-builder-binding-category-input"
+              />
+            </label>
+            <button type="button" className="h-9 rounded border px-3 text-xs" onClick={fetchActiveBinding} disabled={bindingLoading} data-testid="admin-content-builder-binding-fetch-button">Aktifi Getir</button>
+            <button type="button" className="h-9 rounded bg-blue-600 px-3 text-xs text-white" onClick={bindCurrentPage} disabled={bindingLoading} data-testid="admin-content-builder-binding-bind-button">Bu Page'i Bağla</button>
+            <button type="button" className="h-9 rounded border border-rose-300 px-3 text-xs text-rose-700" onClick={unbindCurrentCategory} disabled={bindingLoading} data-testid="admin-content-builder-binding-unbind-button">Binding Kaldır</button>
+          </div>
+
+          <div className="mt-2 text-xs text-slate-700" data-testid="admin-content-builder-binding-active-summary">
+            {bindingActiveItem ? (
+              <>
+                Aktif Binding → page_id: <strong data-testid="admin-content-builder-binding-active-page-id">{bindingActiveItem.layout_page_id}</strong>
+              </>
+            ) : (
+              <span data-testid="admin-content-builder-binding-active-empty">Aktif binding bulunamadı.</span>
+            )}
+          </div>
+        </div>
+
         {status ? <p className="mt-2 text-xs text-emerald-700" data-testid="admin-content-builder-status-message">{status}</p> : null}
         {error ? <p className="mt-2 text-xs text-rose-700" data-testid="admin-content-builder-error-message">{error}</p> : null}
       </header>
@@ -467,10 +606,20 @@ export default function AdminContentBuilder() {
             {(payloadJson.rows || []).map((row, rowIndex) => (
               <article
                 key={row.id}
-                className="rounded-lg border p-3"
+                className={`rounded-lg border p-3 transition ${dragOverRowId === row.id ? 'border-slate-900 bg-slate-50' : 'border-slate-200'}`}
                 draggable
                 onDragStart={() => setDraggingRowId(row.id)}
-                onDragOver={(e) => e.preventDefault()}
+                onDragEnd={() => {
+                  setDraggingRowId('');
+                  setDragOverRowId('');
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOverRowId(row.id);
+                }}
+                onDragLeave={() => {
+                  if (dragOverRowId === row.id) setDragOverRowId('');
+                }}
                 onDrop={() => handleRowDrop(row.id)}
                 data-testid={`admin-content-builder-row-${row.id}`}
               >
@@ -482,16 +631,28 @@ export default function AdminContentBuilder() {
                   <button type="button" className="h-8 rounded border border-rose-300 px-2 text-xs text-rose-700" onClick={() => removeRow(row.id)} data-testid={`admin-content-builder-row-remove-${row.id}`}>Satırı Sil</button>
                 </div>
 
+                {dragOverRowId === row.id ? (
+                  <div className="mb-3 rounded border border-dashed border-slate-500 bg-white px-2 py-1 text-[11px] text-slate-600" data-testid={`admin-content-builder-row-drop-indicator-${row.id}`}>
+                    Satırı buraya bırak
+                  </div>
+                ) : null}
+
                 <div className="grid grid-cols-1 gap-3 lg:grid-cols-2" data-testid={`admin-content-builder-row-columns-${row.id}`}>
                   {(row.columns || []).map((column) => (
                     <div
                       key={column.id}
-                      className={`rounded-md border p-3 ${selectedColumnId === column.id ? 'border-slate-900' : 'border-slate-200'}`}
+                      className={`rounded-md border p-3 transition ${selectedColumnId === column.id ? 'border-slate-900' : 'border-slate-200'} ${dragOverColumnId === column.id ? 'bg-amber-50 border-amber-400' : ''}`}
                       onClick={() => {
                         setSelectedRowId(row.id);
                         setSelectedColumnId(column.id);
                       }}
-                      onDragOver={(e) => e.preventDefault()}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setDragOverColumnId(column.id);
+                      }}
+                      onDragLeave={() => {
+                        if (dragOverColumnId === column.id) setDragOverColumnId('');
+                      }}
                       onDrop={() => handleComponentDrop(row.id, column.id)}
                       data-testid={`admin-content-builder-column-${column.id}`}
                     >
@@ -515,7 +676,19 @@ export default function AdminContentBuilder() {
                         <button type="button" className="ml-auto rounded border border-rose-300 px-2 py-1 text-[11px] text-rose-700" onClick={() => removeColumn(row.id, column.id)} data-testid={`admin-content-builder-remove-column-${column.id}`}>
                           Sil
                         </button>
+                        <button type="button" className="rounded border px-2 py-1 text-[11px]" onClick={() => moveColumn(row.id, column.id, 'left')} data-testid={`admin-content-builder-move-column-left-${column.id}`}>
+                          ←
+                        </button>
+                        <button type="button" className="rounded border px-2 py-1 text-[11px]" onClick={() => moveColumn(row.id, column.id, 'right')} data-testid={`admin-content-builder-move-column-right-${column.id}`}>
+                          →
+                        </button>
                       </div>
+
+                      {dragOverColumnId === column.id ? (
+                        <div className="mb-2 rounded border border-dashed border-amber-500 bg-amber-100 px-2 py-1 text-[11px] text-amber-700" data-testid={`admin-content-builder-column-drop-indicator-${column.id}`}>
+                          Bileşeni bu sütuna bırak
+                        </div>
+                      ) : null}
 
                       <div className="space-y-2" data-testid={`admin-content-builder-components-${column.id}`}>
                         {(column.components || []).map((component, componentIndex) => (
@@ -524,6 +697,10 @@ export default function AdminContentBuilder() {
                             className="rounded border bg-slate-50 p-2"
                             draggable
                             onDragStart={() => setDraggingComponentId(component.id)}
+                            onDragEnd={() => {
+                              setDraggingComponentId('');
+                              setDragOverColumnId('');
+                            }}
                             data-testid={`admin-content-builder-component-${component.id}`}
                           >
                             <div className="flex flex-wrap items-center gap-2" data-testid={`admin-content-builder-component-header-${component.id}`}>

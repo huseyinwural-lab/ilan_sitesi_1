@@ -9,6 +9,8 @@ import Step5CoreFields from './Step5CoreFields';
 import Step6FeaturesMedia from './Step6FeaturesMedia';
 import Step7Review from './Step4Review';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import LayoutRenderer from '@/components/layout-builder/LayoutRenderer';
+import { useContentLayoutResolve } from '@/hooks/useContentLayoutResolve';
 
 const WizardContent = () => {
   const { step, loading, editLoading, autosaveStatus, trackWizardEvent } = useWizard();
@@ -49,6 +51,75 @@ const WizardContent = () => {
     }),
     []
   );
+
+  const countryCode = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
+  const {
+    layout: listingRuntimeLayout,
+    hasLayoutRows: hasListingRuntimeRows,
+  } = useContentLayoutResolve({
+    country: countryCode,
+    module: moduleKey,
+    pageType: 'listing_create_stepX',
+    enabled: Boolean(moduleKey),
+  });
+
+  const renderDefaultWizardSteps = useCallback(() => (
+    <>
+      {step === 1 && <Step1Category />}
+      {isVehicleModule && step === 2 && <Step2Brand />}
+      {isVehicleModule && step === 3 && <Step3Model />}
+      {isVehicleModule && step === 4 && <Step4YearTrim />}
+      {step === 5 && <Step5CoreFields />}
+      {step === 6 && <Step6FeaturesMedia />}
+      {step === 7 && <Step7Review />}
+    </>
+  ), [isVehicleModule, step]);
+
+  const safeListingRuntimePayload = useMemo(() => {
+    if (!hasListingRuntimeRows) return null;
+    const rawRows = Array.isArray(listingRuntimeLayout?.revision?.payload_json?.rows)
+      ? listingRuntimeLayout.revision.payload_json.rows
+      : [];
+    const hasDefaultComponent = rawRows.some((row) =>
+      (row?.columns || []).some((column) =>
+        (column?.components || []).some((component) => component?.key === 'listing.create.default-content'),
+      ),
+    );
+    if (hasDefaultComponent) {
+      return listingRuntimeLayout?.revision?.payload_json || null;
+    }
+    return {
+      rows: [
+        ...rawRows,
+        {
+          id: `listing-runtime-default-row-${Date.now()}`,
+          columns: [
+            {
+              id: `listing-runtime-default-col-${Date.now()}`,
+              width: { desktop: 12, tablet: 12, mobile: 12 },
+              components: [
+                {
+                  id: `listing-runtime-default-component-${Date.now()}`,
+                  key: 'listing.create.default-content',
+                  props: {},
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+  }, [hasListingRuntimeRows, listingRuntimeLayout]);
+
+  const runtimeRegistry = {
+    'listing.create.default-content': () => renderDefaultWizardSteps(),
+    'shared.text-block': ({ props }) => (
+      <section className="rounded-xl border bg-white p-4" data-testid="wizard-runtime-text-block">
+        <h2 className="text-sm font-semibold" data-testid="wizard-runtime-text-title">{props?.title || 'İlan Ver Bilgilendirme'}</h2>
+        <p className="text-xs text-slate-600 mt-1" data-testid="wizard-runtime-text-body">{props?.body || ''}</p>
+      </section>
+    ),
+  };
 
   const showAutosaveBadge = step !== 7 && autosaveStatus?.status && autosaveStatus.status !== 'idle';
 
@@ -127,13 +198,15 @@ const WizardContent = () => {
         </div>
       )}
 
-      {step === 1 && <Step1Category />}
-      {isVehicleModule && step === 2 && <Step2Brand />}
-      {isVehicleModule && step === 3 && <Step3Model />}
-      {isVehicleModule && step === 4 && <Step4YearTrim />}
-      {step === 5 && <Step5CoreFields />}
-      {step === 6 && <Step6FeaturesMedia />}
-      {step === 7 && <Step7Review />}
+      {safeListingRuntimePayload ? (
+        <div data-testid="wizard-runtime-layout-wrapper">
+          <LayoutRenderer
+            payload={safeListingRuntimePayload}
+            registry={runtimeRegistry}
+            dataTestIdPrefix="wizard-runtime-layout"
+          />
+        </div>
+      ) : renderDefaultWizardSteps()}
     </div>
   );
 };
