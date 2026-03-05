@@ -9,7 +9,7 @@ function resolveAssetUrl(assetUrl) {
   return `${BACKEND_URL}${assetUrl}`;
 }
 
-export default function AdSlot({ placement, className = '' }) {
+export default function AdSlot({ placement, className = '', country = '', rotation = false, size = 'auto' }) {
   const [ad, setAd] = useState(null);
   const [impressionLogged, setImpressionLogged] = useState(false);
 
@@ -17,12 +17,16 @@ export default function AdSlot({ placement, className = '' }) {
     let active = true;
     setAd(null);
     setImpressionLogged(false);
-    fetch(`${API}/ads?placement=${encodeURIComponent(placement)}`)
+    const params = new URLSearchParams();
+    params.set('placement', placement);
+    if (country) params.set('country', String(country).toUpperCase());
+    params.set('rotation', rotation ? 'true' : 'false');
+    fetch(`${API}/ads/resolve?${params.toString()}`)
       .then((res) => res.json())
       .then((data) => {
         if (!active) return;
         const items = Array.isArray(data.items) ? data.items : [];
-        setAd(items[0] || null);
+        setAd(data.item || items[0] || null);
       })
       .catch(() => {
         if (!active) return;
@@ -31,7 +35,7 @@ export default function AdSlot({ placement, className = '' }) {
     return () => {
       active = false;
     };
-  }, [placement]);
+  }, [placement, country, rotation]);
 
   useEffect(() => {
     if (!ad?.id || impressionLogged) return;
@@ -62,7 +66,7 @@ export default function AdSlot({ placement, className = '' }) {
           className="rounded-lg border bg-white px-4 py-6 text-sm text-muted-foreground"
           data-testid={`ad-slot-empty-${placement}`}
         >
-          Reklam alanı
+          Bu placement için aktif reklam yok
         </div>
       </div>
     );
@@ -70,6 +74,13 @@ export default function AdSlot({ placement, className = '' }) {
 
   const assetUrl = resolveAssetUrl(ad.asset_url);
   const clickUrl = `${API}/ads/${ad.id}/click`;
+  const sizeClassMap = {
+    auto: 'w-full',
+    horizontal: 'aspect-[16/4] w-full',
+    vertical: 'aspect-[3/4] max-w-[280px]',
+    square: 'aspect-square max-w-[320px]',
+  };
+  const imageSizeClass = sizeClassMap[String(size || 'auto').toLowerCase()] || sizeClassMap.auto;
 
   return (
     <div className={className} data-testid={`ad-slot-${placement}`}>
@@ -82,7 +93,7 @@ export default function AdSlot({ placement, className = '' }) {
           <img
             src={assetUrl}
             alt="Reklam"
-            className="w-full rounded-lg border object-cover"
+            className={`${imageSizeClass} rounded-lg border object-cover`}
             data-testid={`ad-slot-image-${placement}`}
           />
         ) : (

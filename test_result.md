@@ -26358,6 +26358,18 @@ backend:
         - agent: "testing"
         - comment: "COMPLETE PASS (16/16 tests passed, 100% success rate). ✅ WORKING PERFECTLY: All Layout Builder P0 APIs fully functional and production-ready. Authentication: admin@platform.com / Admin123! working correctly. Components API: Valid schema → 200, Invalid schema → 400, Duplicate key → 409 - all working as expected with proper JSON Schema validation. Pages API: Default scope creation → 200, Duplicate scope → 409 - scope uniqueness enforcement working correctly. Revisions Flow: Draft create → publish → archive complete lifecycle operational with proper status transitions. Bindings Flow: Bind → get active → unbind complete lifecycle working with category binding system. Resolve API: Fallback behavior working correctly, cache mechanism returning source='cache' on repeat hits, public access without auth working. Metrics API: Returns 200 with all required metrics (resolve_requests, resolve_cache_hits, resolve_cache_misses, publish_count, binding_changes) plus additional performance metrics. Audit Logs API: Returns 200 with 71 audit log entries and proper pagination. Performance: All endpoints responding quickly with proper error handling, cache working correctly, database operations stable. Security: RBAC enforcement working, public endpoints properly accessible. PRODUCTION-READY: Complete Layout Builder P0 API suite operational with zero bugs detected."
 
+  - task: "Turkish API Contract Tests"
+    implemented: true
+    working: true
+    file: "tr_api_contract_test.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "testing"
+        - comment: "COMPLETE PASS (8/8 tests passed, 100% success rate). ✅ ALL TURKISH API CONTRACT REQUIREMENTS SATISFIED: 1) GET /api/categories/tree?country=TR&depth=L1&module=vehicle: Returns 200 with meta.start_level=L0, meta.depth=L1, items array ✅. 2) GET /api/categories/tree?country=TR&depth=Lall&module=vehicle: Returns 200 with meta.depth=Lall ✅. 3) GET /api/categories/children?country=TR&module=vehicle&depth=2: Returns 200 with items array (nested support) ✅. 4) GET /api/categories/listing-counts?country=TR&module=vehicle: Returns 200 with items array and listing_count field support ✅. 5) GET /api/public/listings?country=TR&source=showcase&limit=5&order=newest: Returns 200 with items + pagination, 5 items with badges normalized ✅. 6) GET /api/public/listings?country=TR&source=category (without category_id): Returns 400 Bad Request as expected ✅. 7) GET /api/ads/resolve?placement=home_top&country=TR: Returns 200 with placement_resolved='AD_HOME_TOP', has_active_ad=True ✅. 8) GET /api/banners?placement=home_top&country=TR: Returns 200 with items array (1 item) + meta.mode='dynamic' ✅. ALL BACKEND API CONTRACT ENDPOINTS WORKING CORRECTLY WITH PROPER RESPONSE FORMATS AND TURKISH LOCALE SUPPORT."
+
   - task: "Content Layout Backend Hızlı Doğrulama"
     implemented: true
     working: true

@@ -10326,12 +10326,107 @@ def _pick_category_translation_for_lang(translations: list[CategoryTranslation],
     return translations[0] if translations else None
 
 
+def _normalize_category_depth_token(depth: Optional[str]) -> tuple[Optional[int], str]:
+    token = str(depth or "").strip().lower()
+    if token in {"", "l1", "1"}:
+        return 1, "L1"
+    if token in {"all", "lall", "ln"}:
+        return None, "Lall"
+    try:
+        parsed = max(1, int(token))
+        return parsed, f"L{parsed}"
+    except Exception:
+        raise HTTPException(status_code=400, detail="depth must be one of: L1 | Lall | integer")
+
+
+def _build_category_tree_response(
+    items: list[dict],
+    *,
+    root_parent_id: Optional[str],
+    max_relative_depth: Optional[int],
+) -> list[dict]:
+    by_parent: dict[str, list[dict]] = defaultdict(list)
+    for item in items:
+        parent_key = str(item.get("parent_id") or "__root__")
+        by_parent[parent_key].append(item)
+
+    for parent_key in list(by_parent.keys()):
+        by_parent[parent_key].sort(
+            key=lambda node: (
+                int(node.get("sort_order") or 0),
+                str(node.get("name") or "").lower(),
+            )
+        )
+
+    root_key = str(root_parent_id) if root_parent_id else "__root__"
+
+    def walk(parent_key: str, level: int) -> list[dict]:
+        if max_relative_depth is not None and level > max_relative_depth:
+            return []
+        nodes = []
+        for item in by_parent.get(parent_key, []):
+            node = dict(item)
+            node["children"] = walk(str(item.get("id")), level + 1)
+            nodes.append(node)
+        return nodes
+
+    return walk(root_key, 1)
+
+
+@api_router.get("/categories/tree")
+async def list_categories_tree(
+    request: Request,
+    country: str,
+    module: Optional[str] = None,
+    depth: Optional[str] = Query("L1"),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if not country:
+        raise HTTPException(status_code=400, detail="country is required")
+
+    code = country.upper()
+    max_relative_depth, depth_label = _normalize_category_depth_token(depth)
+
+    query = (
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(Category.is_deleted.is_(False), Category.is_enabled.is_(True))
+    )
+    if module:
+        query = query.where(Category.module == module)
+
+    result = await session.execute(query)
+    preferred_lang = _resolve_public_request_locale(request)
+    filtered = _filter_categories_for_country(result.scalars().all(), code, preferred_lang=preferred_lang)
+    serialized = [
+        _serialize_category_sql(item, include_schema=False, include_translations=True, preferred_lang=preferred_lang)
+        for item in filtered
+    ]
+
+    tree_items = _build_category_tree_response(
+        serialized,
+        root_parent_id=None,
+        max_relative_depth=max_relative_depth,
+    )
+
+    return {
+        "items": tree_items,
+        "meta": {
+            "country": code,
+            "module": module or "all",
+            "start_level": "L0",
+            "depth": depth_label,
+        },
+    }
+
+
 @api_router.get("/categories/children")
 async def list_category_children(
     request: Request,
     country: str,
     parent_id: Optional[str] = None,
     module: Optional[str] = None,
+    depth: Optional[str] = None,
     session: AsyncSession = Depends(get_sql_session),
 ):
     if not country:
@@ -10345,22 +10440,115 @@ async def list_category_children(
     )
     if module:
         query = query.where(Category.module == module)
-    if module == "vehicle" and parent_id:
-        return []
+    parent_uuid = None
     if parent_id:
         try:
             parent_uuid = uuid.UUID(parent_id)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="parent_id not valid") from exc
+
+    max_relative_depth = None
+    depth_label = None
+    if depth:
+        max_relative_depth, depth_label = _normalize_category_depth_token(depth)
+
+    if max_relative_depth is None and depth:
+        # nested tree isteği: tüm adayları çekip ağaç üret
+        pass
+    elif max_relative_depth is not None and max_relative_depth > 1:
+        # nested tree isteği: tüm adayları çekip ağaç üret
+        pass
+    else:
+        if module == "vehicle" and parent_id:
+            return []
+        if parent_uuid:
+            query = query.where(Category.parent_id == parent_uuid)
+        else:
+            query = query.where(Category.parent_id.is_(None))
+
+    result = await session.execute(query)
+    categories = result.scalars().all()
+    preferred_lang = _resolve_public_request_locale(request)
+    filtered = _filter_categories_for_country(categories, code, preferred_lang=preferred_lang)
+
+    serialized = [
+        _serialize_category_sql(cat, include_schema=False, include_translations=True, preferred_lang=preferred_lang)
+        for cat in filtered
+    ]
+
+    if depth and ((max_relative_depth is None) or (max_relative_depth > 1)):
+        tree_items = _build_category_tree_response(
+            serialized,
+            root_parent_id=str(parent_uuid) if parent_uuid else None,
+            max_relative_depth=max_relative_depth,
+        )
+        return {
+            "items": tree_items,
+            "meta": {
+                "country": code,
+                "module": module or "all",
+                "parent_id": str(parent_uuid) if parent_uuid else None,
+                "depth": depth_label,
+            },
+        }
+
+    return serialized
+
+
+@api_router.get("/categories/listing-counts")
+async def category_listing_counts(
+    country: str,
+    parent_id: Optional[str] = None,
+    module: Optional[str] = None,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    if not country:
+        raise HTTPException(status_code=400, detail="country is required")
+
+    code = country.upper()
+    query = select(Category).where(Category.is_deleted.is_(False), Category.is_enabled.is_(True))
+    if module:
+        query = query.where(Category.module == module)
+
+    parent_uuid = None
+    if parent_id:
+        try:
+            parent_uuid = uuid.UUID(parent_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="parent_id not valid") from exc
+
+    if parent_uuid:
         query = query.where(Category.parent_id == parent_uuid)
     else:
         query = query.where(Category.parent_id.is_(None))
 
     result = await session.execute(query)
     categories = result.scalars().all()
-    preferred_lang = _resolve_public_request_locale(request)
-    filtered = _filter_categories_for_country(categories, code, preferred_lang=preferred_lang)
-    return [_serialize_category_sql(cat, include_schema=False, include_translations=True, preferred_lang=preferred_lang) for cat in filtered]
+
+    filtered: list[Category] = []
+    for category in categories:
+        if category.country_code and category.country_code != code:
+            continue
+        allowed = category.allowed_countries or []
+        if allowed and code not in allowed:
+            continue
+        filtered.append(category)
+
+    return {
+        "items": [
+            {
+                "id": str(item.id),
+                "parent_id": str(item.parent_id) if item.parent_id else None,
+                "listing_count": int(item.listing_count or 0),
+            }
+            for item in filtered
+        ],
+        "meta": {
+            "country": code,
+            "module": module or "all",
+            "parent_id": str(parent_uuid) if parent_uuid else None,
+        },
+    }
 
 
 @api_router.get("/categories/search")
@@ -34254,6 +34442,119 @@ async def public_search_suggest(
     return {**payload, "cached": False}
 
 
+def _normalize_public_listing_sort(order: Optional[str]) -> tuple[str, bool]:
+    token = str(order or "").strip().lower()
+    if token in {"", "newest", "date_desc"}:
+        return "date_desc", False
+    if token in {"price", "price_desc"}:
+        return "price_desc", False
+    if token in {"price_asc"}:
+        return "price_asc", False
+    if token == "random":
+        return "date_desc", True
+    raise HTTPException(status_code=400, detail="order must be one of: newest | price | random")
+
+
+def _normalize_public_listing_source(source: Optional[str]) -> Optional[str]:
+    token = str(source or "").strip().lower()
+    if not token:
+        return None
+    allowed = {"showcase", "urgent", "campaign", "category", "latest", "search"}
+    if token not in allowed:
+        raise HTTPException(status_code=400, detail="source must be one of: showcase|urgent|campaign|category|latest|search")
+    return token
+
+
+@api_router.get("/public/listings")
+async def public_listings_resolve(
+    request: Request,
+    response: Response,
+    country: str,
+    source: Optional[str] = None,
+    badge: Optional[str] = None,
+    category_id: Optional[str] = None,
+    q: Optional[str] = None,
+    order: Optional[str] = "newest",
+    page: int = 1,
+    limit: int = 20,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    source_token = _normalize_public_listing_source(source)
+    sort_value, randomize = _normalize_public_listing_sort(order)
+
+    badge_token = str(badge or "").strip().lower()
+    if source_token == "showcase" and not badge_token:
+        badge_token = "showcase"
+    elif source_token == "urgent" and not badge_token:
+        badge_token = "urgent"
+    elif source_token == "campaign" and not badge_token:
+        badge_token = "campaign"
+
+    if source_token == "category" and not category_id:
+        raise HTTPException(status_code=400, detail="category_id is required when source=category")
+
+    doping_type = badge_token or None
+
+    payload = await public_search_v2(
+        request=request,
+        response=response,
+        country=country,
+        q=q,
+        category=category_id,
+        make=None,
+        model=None,
+        doping_type=doping_type,
+        sort=sort_value,
+        page=page,
+        limit=limit,
+        bbox=None,
+        price_min=None,
+        price_max=None,
+        session=session,
+    )
+
+    items = list(payload.get("items") or [])
+    if randomize and len(items) > 1:
+        items = sorted(
+            items,
+            key=lambda item: hashlib.sha256(f"{item.get('id')}:{time.time_ns()}".encode("utf-8")).hexdigest(),
+        )
+
+    normalized_items = []
+    for item in items:
+        badges = []
+        if bool(item.get("is_urgent")):
+            badges.append("urgent")
+        if bool(item.get("is_featured")):
+            badges.append("showcase")
+        if doping_type == "campaign":
+            badges.append("campaign")
+        normalized_items.append(
+            {
+                **item,
+                "badges": badges,
+                "badge": badges[0] if badges else None,
+                "location": {
+                    "city": item.get("city") or "",
+                    "latitude": item.get("lat"),
+                    "longitude": item.get("lng"),
+                },
+            }
+        )
+
+    return {
+        "items": normalized_items,
+        "pagination": payload.get("pagination") or {"total": 0, "page": page, "pages": 0},
+        "query": {
+            "country": country.upper(),
+            "source": source_token,
+            "badge": badge_token or None,
+            "category_id": category_id,
+            "order": order,
+        },
+    }
+
+
 @api_router.get("/v2/search")
 async def public_search_v2(
     request: Request,
@@ -39160,6 +39461,108 @@ async def list_ads_public(
             }
         )
     return {"items": items}
+
+
+def _normalize_public_ad_placement_token(placement: str) -> str:
+    raw = str(placement or "").strip()
+    token = raw.lower()
+    mapping = {
+        "home_top": "AD_HOME_TOP",
+        "home_bottom": "AD_HOME_BOTTOM",
+        "category_top": "AD_CATEGORY_TOP",
+        "category_bottom": "AD_CATEGORY_BOTTOM",
+        "urgent_top": "AD_SEARCH_TOP",
+        "search_top": "AD_SEARCH_TOP",
+        "ad_home_top": "AD_HOME_TOP",
+        "ad_home_bottom": "AD_HOME_BOTTOM",
+        "ad_category_top": "AD_CATEGORY_TOP",
+        "ad_category_bottom": "AD_CATEGORY_BOTTOM",
+        "ad_search_top": "AD_SEARCH_TOP",
+    }
+    if token in mapping:
+        return mapping[token]
+    upper = raw.upper()
+    if upper in AD_PLACEMENTS:
+        return upper
+    raise HTTPException(status_code=400, detail="Invalid placement")
+
+
+@api_router.get("/ads/resolve")
+async def resolve_ads_public(
+    placement: str = Query(...),
+    country: Optional[str] = None,
+    rotation: bool = False,
+    session: AsyncSession = Depends(get_sql_session),
+):
+    resolved_placement = _normalize_public_ad_placement_token(placement)
+    payload = await list_ads_public(placement=resolved_placement, session=session)
+    items = payload.get("items") or []
+
+    selected = None
+    if items:
+        if rotation and len(items) > 1:
+            idx = int(time.time() // 30) % len(items)
+            selected = items[idx]
+        else:
+            selected = items[0]
+
+    return {
+        "placement": placement,
+        "placement_resolved": resolved_placement,
+        "country": country.upper() if country else None,
+        "rotation": bool(rotation),
+        "has_active_ad": bool(selected),
+        "item": selected,
+        "items": items,
+    }
+
+
+@api_router.get("/banners")
+async def list_banners_public(
+    placement: str = Query(...),
+    country: Optional[str] = None,
+    mode: str = "dynamic",
+    session: AsyncSession = Depends(get_sql_session),
+):
+    mode_token = str(mode or "dynamic").strip().lower()
+    if mode_token not in {"dynamic", "static"}:
+        raise HTTPException(status_code=400, detail="mode must be dynamic|static")
+
+    if mode_token == "static":
+        return {
+            "items": [],
+            "meta": {
+                "mode": "static",
+                "placement": placement,
+                "country": country.upper() if country else None,
+            },
+        }
+
+    resolve_payload = await resolve_ads_public(
+        placement=placement,
+        country=country,
+        rotation=False,
+        session=session,
+    )
+    banner_items = [
+        {
+            "id": item.get("id"),
+            "image_url": item.get("asset_url"),
+            "target_url": item.get("target_url"),
+            "placement": resolve_payload.get("placement_resolved"),
+        }
+        for item in (resolve_payload.get("items") or [])
+    ]
+
+    return {
+        "items": banner_items,
+        "meta": {
+            "mode": "dynamic",
+            "placement": placement,
+            "placement_resolved": resolve_payload.get("placement_resolved"),
+            "country": country.upper() if country else None,
+        },
+    }
 
 
 @api_router.post("/ads/{ad_id}/impression")

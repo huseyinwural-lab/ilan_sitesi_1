@@ -106,14 +106,20 @@ const DEFAULT_COMPONENT_LIBRARY = [
       type: 'object',
       properties: {
         title: { type: 'string', title: 'Başlık' },
-        max_levels: { type: 'integer', title: 'Derinlik (Ln)', minimum: 1, maximum: 8 },
+        start_level: { type: 'string', title: 'Start Level', enum: ['L0'] },
+        depth: { type: 'string', title: 'Depth', enum: ['L1', 'Lall'] },
+        placement: { type: 'string', title: 'Placement', enum: ['side', 'top'] },
+        module: { type: 'string', title: 'Module' },
         show_counts: { type: 'boolean', title: 'İlan Sayısı Göster' },
       },
       additionalProperties: false,
     },
     default_props: {
       title: 'Kategoriler',
-      max_levels: 6,
+      start_level: 'L0',
+      depth: 'L1',
+      placement: 'side',
+      module: 'vehicle',
       show_counts: true,
     },
   },
@@ -123,26 +129,34 @@ const DEFAULT_COMPONENT_LIBRARY = [
     schema_json: {
       type: 'object',
       properties: {
+        mode: { type: 'string', title: 'Mode', enum: ['link', 'quick_filter'] },
         title: { type: 'string', title: 'Title' },
         icon: { type: 'string', title: 'Icon' },
         link: { type: 'string', title: 'Link' },
-        style: { type: 'string', title: 'Style', enum: ['solid', 'outline', 'ghost'] },
+        quick_filter: { type: 'string', title: 'Quick Filter', enum: ['urgent', 'showcase', 'campaign'] },
+        style: { type: 'string', title: 'Style', enum: ['primary', 'danger', 'outline', 'ghost'] },
+        target: { type: 'string', title: 'Target', enum: ['same_tab', 'new_tab'] },
         font_size: { type: 'integer', title: 'Font Size' },
         font_weight: { type: 'string', title: 'Font Weight', enum: ['400', '500', '600', '700'] },
-        font_color: { type: 'string', title: 'Font Color' },
-        background_color: { type: 'string', title: 'Background Color' },
+        font_style: { type: 'string', title: 'Font Style', enum: ['normal', 'italic'] },
+        text_color: { type: 'string', title: 'Text Color' },
+        bg_color: { type: 'string', title: 'Background Color' },
       },
       additionalProperties: false,
     },
     default_props: {
+      mode: 'quick_filter',
       title: 'ACİL',
       icon: 'bolt',
       link: '/acil',
-      style: 'solid',
+      quick_filter: 'urgent',
+      style: 'danger',
+      target: 'same_tab',
       font_size: 14,
       font_weight: '700',
-      font_color: '#ffffff',
-      background_color: '#dc2626',
+      font_style: 'normal',
+      text_color: '#ffffff',
+      bg_color: '#dc2626',
     },
   },
   {
@@ -151,21 +165,21 @@ const DEFAULT_COMPONENT_LIBRARY = [
     schema_json: {
       type: 'object',
       properties: {
-        source: { type: 'string', title: 'Source', enum: ['showcase', 'urgent', 'latest', 'category'] },
+        source: { type: 'string', title: 'Source', enum: ['showcase', 'urgent', 'campaign', 'category', 'latest'] },
+        category_id: { type: 'string', title: 'Category ID (source=category)' },
         columns: { type: 'integer', title: 'Columns', minimum: 1, maximum: 6 },
         rows: { type: 'integer', title: 'Rows', minimum: 1, maximum: 12 },
-        auto_refresh: { type: 'boolean', title: 'Auto Refresh' },
-        refresh_seconds: { type: 'integer', title: 'Refresh (sn)', minimum: 10, maximum: 300 },
-        order: { type: 'string', title: 'Order', enum: ['newest', 'price_asc', 'price_desc'] },
+        auto_refresh: { type: 'string', title: 'Auto Refresh', enum: ['off', '15s', '30s', '60s'] },
+        order: { type: 'string', title: 'Order', enum: ['newest', 'random', 'price'] },
       },
       additionalProperties: false,
     },
     default_props: {
       source: 'showcase',
+      category_id: '',
       columns: 4,
       rows: 2,
-      auto_refresh: true,
-      refresh_seconds: 30,
+      auto_refresh: '30s',
       order: 'newest',
     },
   },
@@ -176,14 +190,18 @@ const DEFAULT_COMPONENT_LIBRARY = [
       type: 'object',
       properties: {
         source: { type: 'string', title: 'Source', enum: ['urgent', 'category', 'search'] },
+        category_id: { type: 'string', title: 'Category ID (source=category)' },
+        q: { type: 'string', title: 'Search Query (source=search)' },
         pagination: { type: 'boolean', title: 'Pagination' },
         per_page: { type: 'integer', title: 'Page Size', minimum: 5, maximum: 100 },
-        order: { type: 'string', title: 'Order', enum: ['newest', 'price_asc', 'price_desc'] },
+        order: { type: 'string', title: 'Order', enum: ['newest', 'price', 'random'] },
       },
       additionalProperties: false,
     },
     default_props: {
       source: 'urgent',
+      category_id: '',
+      q: '',
       pagination: true,
       per_page: 20,
       order: 'newest',
@@ -235,12 +253,56 @@ const DEFAULT_COMPONENT_LIBRARY = [
     schema_json: {
       type: 'object',
       properties: {
-        placement: { type: 'string', title: 'Placement', enum: ['home_top', 'home_bottom', 'category_top', 'category_bottom'] },
+        placement: { type: 'string', title: 'Placement', enum: ['home_top', 'home_bottom', 'category_top', 'category_bottom', 'urgent_top'] },
+        size: { type: 'string', title: 'Size', enum: ['auto', 'horizontal', 'vertical', 'square'] },
+        rotation: { type: 'string', title: 'Rotation', enum: ['off', 'on'] },
       },
       additionalProperties: false,
     },
     default_props: {
       placement: 'home_top',
+      size: 'auto',
+      rotation: 'off',
+    },
+  },
+  {
+    key: 'content.heading',
+    name: 'Heading',
+    schema_json: {
+      type: 'object',
+      properties: {
+        text: { type: 'string', title: 'Text' },
+        font_size: { type: 'integer', title: 'Font Size' },
+        font_weight: { type: 'string', title: 'Font Weight', enum: ['400', '500', '600', '700', '800'] },
+        alignment: { type: 'string', title: 'Alignment', enum: ['left', 'center', 'right'] },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      text: 'Başlık',
+      font_size: 32,
+      font_weight: '800',
+      alignment: 'left',
+    },
+  },
+  {
+    key: 'content.text-block',
+    name: 'Text Block',
+    schema_json: {
+      type: 'object',
+      properties: {
+        text: { type: 'string', title: 'Text' },
+        font_size: { type: 'integer', title: 'Font Size' },
+        font_weight: { type: 'string', title: 'Font Weight', enum: ['400', '500', '600', '700'] },
+        alignment: { type: 'string', title: 'Alignment', enum: ['left', 'center', 'right'] },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      text: 'Metin içeriği',
+      font_size: 15,
+      font_weight: '400',
+      alignment: 'left',
     },
   },
   {
@@ -249,10 +311,18 @@ const DEFAULT_COMPONENT_LIBRARY = [
     schema_json: {
       type: 'object',
       properties: {
+        mode: { type: 'string', title: 'Mode', enum: ['static', 'dynamic'] },
+        placement: { type: 'string', title: 'Placement', enum: ['home_top', 'home_bottom', 'category_top', 'category_bottom', 'urgent_top'] },
         title: { type: 'string', title: 'Başlık' },
         image_url: { type: 'string', title: 'Image URL' },
       },
       additionalProperties: false,
+    },
+    default_props: {
+      mode: 'static',
+      placement: 'home_top',
+      title: 'Hero Banner',
+      image_url: '',
     },
   },
   {
@@ -261,12 +331,16 @@ const DEFAULT_COMPONENT_LIBRARY = [
     schema_json: {
       type: 'object',
       properties: {
+        mode: { type: 'string', title: 'Mode', enum: ['static', 'dynamic'] },
+        placement: { type: 'string', title: 'Placement', enum: ['home_top', 'home_bottom', 'category_top', 'category_bottom', 'urgent_top'] },
         auto_play_seconds: { type: 'integer', title: 'Auto Play (sn)' },
         show_overlay_text: { type: 'boolean', title: 'Overlay Text' },
       },
       additionalProperties: false,
     },
     default_props: {
+      mode: 'static',
+      placement: 'home_top',
       auto_play_seconds: 5,
       show_overlay_text: true,
     },
@@ -277,10 +351,18 @@ const DEFAULT_COMPONENT_LIBRARY = [
     schema_json: {
       type: 'object',
       properties: {
+        mode: { type: 'string', title: 'Mode', enum: ['static', 'dynamic'] },
+        placement: { type: 'string', title: 'Placement', enum: ['home_top', 'home_bottom', 'category_top', 'category_bottom', 'urgent_top'] },
         image_url: { type: 'string', title: 'Image URL' },
         alt: { type: 'string', title: 'Alt' },
       },
       additionalProperties: false,
+    },
+    default_props: {
+      mode: 'static',
+      placement: 'home_top',
+      image_url: '',
+      alt: '',
     },
   },
   {
@@ -289,12 +371,16 @@ const DEFAULT_COMPONENT_LIBRARY = [
     schema_json: {
       type: 'object',
       properties: {
+        mode: { type: 'string', title: 'Mode', enum: ['static', 'dynamic'] },
+        placement: { type: 'string', title: 'Placement', enum: ['home_top', 'home_bottom', 'category_top', 'category_bottom', 'urgent_top'] },
         provider: { type: 'string', title: 'Provider', enum: ['youtube', 'vimeo', 'custom_url'] },
         source_url: { type: 'string', title: 'Source URL' },
       },
       additionalProperties: false,
     },
     default_props: {
+      mode: 'static',
+      placement: 'home_top',
       provider: 'youtube',
       source_url: '',
     },
@@ -651,8 +737,8 @@ const COMPONENT_SOURCE_SPEC_RULES = [
       component: 'Category Navigator',
       menu_path: 'Admin Panel → Katalog & İçerik → Kategoriler',
       data_source: 'Kategori ağacı (L0 / L1 / Ln)',
-      api: 'GET /api/categories/tree',
-      source_options: '-',
+      api: 'GET /api/categories/tree?country=...&depth=L1|all',
+      source_options: 'start_level=L0, depth=L1|Lall, placement=side|top',
       usage: 'Ana sayfa sol menü, acil sayfası, kategori sayfaları',
       click_behavior: '/kategori/{slug}',
       rbac_visibility: ['super_admin', 'country_admin', 'moderator'],
@@ -664,11 +750,11 @@ const COMPONENT_SOURCE_SPEC_RULES = [
     spec: {
       component: 'CTA Block',
       menu_path: 'Menü çağırmaz',
-      data_source: 'Manuel link ve stil ayarları',
-      api: '-',
-      source_options: '-',
+      data_source: 'Manuel stil + Onaylı ilan havuzuna quick_filter yönlendirmesi',
+      api: 'Doğrudan veri çekmez (route+query üretir)',
+      source_options: 'mode=link|quick_filter (urgent/showcase/campaign)',
       usage: 'Acil / Vitrin / Kampanya yönlendirmesi',
-      click_behavior: 'Manuel linke yönlendirme',
+      click_behavior: '/acil?badge=urgent / /vitrin?badge=showcase / /kampanya?badge=campaign',
       rbac_visibility: ['super_admin', 'country_admin'],
     },
   },
@@ -680,7 +766,7 @@ const COMPONENT_SOURCE_SPEC_RULES = [
       menu_path: 'Admin Panel → İlan & Moderasyon → Onaylı Tüm İlanlar',
       data_source: 'Onaylı ilan havuzu',
       api: 'GET /api/public/listings',
-      source_options: 'showcase | urgent | latest | category',
+      source_options: 'showcase | urgent | campaign | latest | category',
       usage: 'Ana sayfa vitrin ilanları, kategori vitrini',
       click_behavior: 'İlan detayına yönlendirme',
       rbac_visibility: ['super_admin', 'country_admin', 'moderator'],
@@ -708,7 +794,7 @@ const COMPONENT_SOURCE_SPEC_RULES = [
       menu_path: 'Menü çağırmaz',
       data_source: 'Listing Grid/List çıktısı',
       api: 'GET /api/public/listings (upstream)',
-      source_options: 'badge: acil | vitrin | ücretli',
+      source_options: 'badge: urgent | showcase | campaign',
       usage: 'Grid/List görünümünde kart sunumu',
       click_behavior: 'İlan detayına yönlendirme',
       rbac_visibility: ['super_admin', 'country_admin', 'moderator'],
@@ -721,7 +807,7 @@ const COMPONENT_SOURCE_SPEC_RULES = [
       component: 'Sub Category Block',
       menu_path: 'Admin Panel → Katalog & İçerik → Kategoriler',
       data_source: 'Alt kategori listesi',
-      api: 'GET /api/categories/children',
+      api: 'GET /api/categories/children + GET /api/categories/listing-counts',
       source_options: 'columns | show_count | depth',
       usage: 'Kategori sayfalarında alt kırılımlar',
       click_behavior: '/kategori/{slug}',
@@ -735,11 +821,25 @@ const COMPONENT_SOURCE_SPEC_RULES = [
       component: 'Ad Slot',
       menu_path: 'Admin Panel → Reklamlar → Reklam Yönetimi',
       data_source: 'Aktif reklam bannerları',
-      api: 'GET /api/ads/resolve',
-      source_options: 'home_top | home_bottom | category_top | category_bottom',
+      api: 'GET /api/ads/resolve?placement=...&country=...',
+      source_options: 'home_top | home_bottom | category_top | category_bottom | urgent_top',
       usage: 'Sayfa içi banner yerleşimleri',
       click_behavior: 'Reklam hedef URL yönlendirmesi',
       rbac_visibility: ['super_admin', 'ads_manager'],
+    },
+  },
+  {
+    id: 'manual-content',
+    match: (key, name) => key.startsWith('content.') || name === 'heading' || name === 'text block',
+    spec: {
+      component: 'Heading / Text Block',
+      menu_path: 'Menü çağırmaz',
+      data_source: 'Manuel içerik',
+      api: '-',
+      source_options: 'text + font controls + alignment',
+      usage: 'Statik başlık ve içerik metni',
+      click_behavior: 'Yok',
+      rbac_visibility: ['super_admin', 'country_admin', 'editor'],
     },
   },
   {
@@ -749,7 +849,7 @@ const COMPONENT_SOURCE_SPEC_RULES = [
       component: 'Hero Banner / Carousel / Image / Video',
       menu_path: 'Statik: Builder manuel • Dinamik: Reklamlar / Vitrin Yönetimi',
       data_source: 'Statik medya veya dinamik banner kaynağı',
-      api: 'GET /api/banners',
+      api: 'GET /api/banners?placement=...',
       source_options: 'static | dynamic',
       usage: 'Tanıtım ve vitrin medya alanları',
       click_behavior: 'CTA / hedef medya linki',
@@ -761,7 +861,7 @@ const COMPONENT_SOURCE_SPEC_RULES = [
     match: (key, name) => key.includes('interactive-map') || key.includes('map.block') || name.includes('map block'),
     spec: {
       component: 'Map Block',
-      menu_path: 'Admin Panel → Sistem Ayarları → Harita Ayarları',
+      menu_path: 'Admin Panel → Sistem Ayarları → Google Maps Ayarları',
       data_source: 'İlan konum bilgileri (latitude/longitude)',
       api: 'GET /api/public/listings',
       source_options: '-',
@@ -817,6 +917,7 @@ const resolveLibraryGroupByKey = (componentKey) => {
   if (key.startsWith('interactive.')) return 'interactive';
   if (key.startsWith('listing.')) return 'data';
   if (key.startsWith('category.')) return 'navigation';
+  if (key.startsWith('content.')) return 'core';
   if (key.startsWith('cta.') || key.startsWith('ad.')) return 'core';
   if (key.startsWith('map.')) return 'interactive';
   if (key.startsWith('home.') || key.startsWith('search.') || key.startsWith('listing.create.') || key.startsWith('shared.')) return 'core';
@@ -904,17 +1005,92 @@ const normalizeI18nProps = (props = {}) => {
 
 const isWizardPolicyPageType = (pageType) => WIZARD_POLICY_PAGE_TYPES.has(pageType);
 
+let layoutNodeCounter = 1;
+
+const parseLayoutNodeSuffix = (value, prefix) => {
+  const text = String(value || '');
+  const pattern = new RegExp(`^${prefix}-(\\d+)$`);
+  const match = text.match(pattern);
+  if (!match) return 0;
+  return Number(match[1]) || 0;
+};
+
+const syncLayoutNodeCounter = (payload) => {
+  const rows = Array.isArray(payload?.rows) ? payload.rows : [];
+  let maxValue = layoutNodeCounter;
+
+  rows.forEach((row) => {
+    maxValue = Math.max(maxValue, parseLayoutNodeSuffix(row?.id, 'row'));
+    (Array.isArray(row?.columns) ? row.columns : []).forEach((column) => {
+      maxValue = Math.max(maxValue, parseLayoutNodeSuffix(column?.id, 'col'));
+      (Array.isArray(column?.components) ? column.components : []).forEach((component) => {
+        maxValue = Math.max(maxValue, parseLayoutNodeSuffix(component?.id, 'cmp'));
+      });
+    });
+  });
+
+  layoutNodeCounter = maxValue + 1;
+};
+
+const createLayoutNodeId = (prefix) => {
+  const value = `${prefix}-${layoutNodeCounter}`;
+  layoutNodeCounter += 1;
+  return value;
+};
+
+const toDeterministicLayoutPayload = (rawPayload, pageType) => {
+  const sourceRows = Array.isArray(rawPayload?.rows) ? rawPayload.rows : [];
+  const rows = sourceRows.map((rawRow, rowIndex) => {
+    const columns = Array.isArray(rawRow?.columns) ? rawRow.columns : [];
+    const nextColumns = columns.map((rawColumn, columnIndex) => {
+      const components = Array.isArray(rawColumn?.components) ? rawColumn.components : [];
+      const nextComponents = components.map((rawComponent, componentIndex) => ({
+        id: rawComponent?.id || createLayoutNodeId('cmp'),
+        key: rawComponent?.key || getDefaultComponentKey(pageType),
+        props: normalizeI18nProps(rawComponent?.props || {}),
+        visibility: {
+          desktop: rawComponent?.visibility?.desktop !== false,
+          tablet: rawComponent?.visibility?.tablet !== false,
+          mobile: rawComponent?.visibility?.mobile !== false,
+        },
+        order: componentIndex + 1,
+      }));
+
+      return {
+        id: rawColumn?.id || createLayoutNodeId('col'),
+        width: {
+          desktop: Math.max(1, Math.min(12, Number(rawColumn?.width?.desktop || 12))),
+          tablet: Math.max(1, Math.min(12, Number(rawColumn?.width?.tablet || 12))),
+          mobile: Math.max(1, Math.min(12, Number(rawColumn?.width?.mobile || 12))),
+        },
+        components: nextComponents,
+        order: columnIndex + 1,
+      };
+    });
+
+    return {
+      id: rawRow?.id || createLayoutNodeId('row'),
+      columns: nextColumns,
+      order: rowIndex + 1,
+    };
+  });
+
+  const normalized = { rows };
+  syncLayoutNodeCounter(normalized);
+  return normalized;
+};
+
 const createEmptyPayload = (pageType) => ({
   rows: [
     {
-      id: `row-${Date.now()}`,
+      id: createLayoutNodeId('row'),
       columns: [
         {
-          id: `col-${Date.now()}`,
+          id: createLayoutNodeId('col'),
           width: { desktop: 12, tablet: 12, mobile: 12 },
           components: [
             {
-              id: `cmp-${Date.now()}`,
+              id: createLayoutNodeId('cmp'),
               key: getDefaultComponentKey(pageType),
               props: pageType === 'home' || isWizardPolicyPageType(pageType) ? {} : { note: 'Varsayılan içerik bloğu' },
               visibility: { desktop: true, tablet: true, mobile: true },
@@ -930,12 +1106,13 @@ const deepClone = (value) => JSON.parse(JSON.stringify(value));
 
 const normalizePayload = (rawPayload, pageType) => {
   if (!rawPayload || typeof rawPayload !== 'object' || !Array.isArray(rawPayload.rows)) {
-    return createEmptyPayload(pageType);
+    const emptyPayload = createEmptyPayload(pageType);
+    return toDeterministicLayoutPayload(emptyPayload, pageType);
   }
-  return rawPayload;
+  return toDeterministicLayoutPayload(rawPayload, pageType);
 };
 
-const createPresetNodeId = (prefix) => `${prefix}-${Date.now()}-${Math.round(Math.random() * 1000)}`;
+const createPresetNodeId = (prefix) => createLayoutNodeId(prefix);
 
 const createPresetComponent = (key, props = {}) => ({
   id: createPresetNodeId('cmp'),
@@ -1453,6 +1630,7 @@ export default function AdminContentBuilder() {
   const [selectedComponentId, setSelectedComponentId] = useState('');
   const [propLocaleTabs, setPropLocaleTabs] = useState({});
   const [draggingRowId, setDraggingRowId] = useState('');
+  const [draggingColumn, setDraggingColumn] = useState(null);
   const [draggingComponentId, setDraggingComponentId] = useState('');
   const [draggingLibraryComponentKey, setDraggingLibraryComponentKey] = useState('');
   const [dragOverRowId, setDragOverRowId] = useState('');
@@ -2115,16 +2293,16 @@ export default function AdminContentBuilder() {
   };
 
   const updatePayload = (nextPayload) => {
-    setPayloadJson(nextPayload);
+    setPayloadJson(toDeterministicLayoutPayload(nextPayload, pageType));
   };
 
   const addRow = () => {
     const next = deepClone(payloadJson);
     if (!Array.isArray(next.rows)) next.rows = [];
     next.rows.push({
-      id: `row-${Date.now()}`,
+      id: createLayoutNodeId('row'),
       columns: [{
-        id: `col-${Date.now()}`,
+        id: createLayoutNodeId('col'),
         width: { desktop: 12, tablet: 12, mobile: 12 },
         components: [],
       }],
@@ -2163,7 +2341,7 @@ export default function AdminContentBuilder() {
     if (!row) return;
     if (!Array.isArray(row.columns)) row.columns = [];
     row.columns.push({
-      id: `col-${Date.now()}`,
+      id: createLayoutNodeId('col'),
       width: { desktop: 6, tablet: 12, mobile: 12 },
       components: [],
     });
@@ -2232,7 +2410,7 @@ export default function AdminContentBuilder() {
     }
 
     if (!Array.isArray(column.components)) column.components = [];
-    const nextComponentId = `cmp-${Date.now()}-${Math.round(Math.random() * 100)}`;
+    const nextComponentId = createLayoutNodeId('cmp');
     column.components.push({
       id: nextComponentId,
       key,
@@ -2321,6 +2499,29 @@ export default function AdminContentBuilder() {
     refreshPreviewAfterInteraction();
     setDraggingRowId('');
     setDragOverRowId('');
+  };
+
+  const handleColumnDrop = (targetRowId, targetColumnId) => {
+    if (!draggingColumn?.columnId) return false;
+
+    const sourceRowId = draggingColumn.rowId;
+    const sourceColumnId = draggingColumn.columnId;
+    if (sourceRowId !== targetRowId) return false;
+    if (sourceColumnId === targetColumnId) return false;
+
+    const next = deepClone(payloadJson);
+    const row = (next.rows || []).find((item) => item.id === targetRowId);
+    if (!row || !Array.isArray(row.columns)) return false;
+
+    const fromIndex = row.columns.findIndex((item) => item.id === sourceColumnId);
+    const toIndex = row.columns.findIndex((item) => item.id === targetColumnId);
+    if (fromIndex < 0 || toIndex < 0) return false;
+
+    const [moved] = row.columns.splice(fromIndex, 1);
+    row.columns.splice(toIndex, 0, moved);
+    updatePayload(next);
+    refreshPreviewAfterInteraction();
+    return true;
   };
 
   const handleComponentDrop = (targetRowId, targetColumnId) => {
@@ -2993,7 +3194,7 @@ export default function AdminContentBuilder() {
                   {(row.columns || []).map((column) => (
                     <div
                       key={column.id}
-                      className={`rounded-md border p-3 transition ${selectedColumnId === column.id ? 'border-sky-600 ring-2 ring-sky-300 bg-sky-50/40' : 'border-slate-200'} ${dragOverColumnId === column.id ? 'bg-amber-50 border-amber-400' : ''} ${layoutDiff.changedColumnIds.has(column.id) ? 'ring-1 ring-amber-500' : ''}`}
+                      className={`rounded-md border p-3 transition ${selectedColumnId === column.id ? 'border-sky-600 ring-2 ring-sky-300 bg-sky-50/40' : 'border-slate-200'} ${dragOverColumnId === column.id ? 'bg-amber-50 border-amber-400' : ''} ${layoutDiff.changedColumnIds.has(column.id) ? 'ring-1 ring-amber-500' : ''} ${draggingColumn?.columnId && draggingColumn?.columnId !== column.id ? 'cursor-move' : ''}`}
                       onClick={() => {
                         setSelectedRowId(row.id);
                         setSelectedColumnId(column.id);
@@ -3006,11 +3207,36 @@ export default function AdminContentBuilder() {
                       onDragLeave={() => {
                         if (dragOverColumnId === column.id) setDragOverColumnId('');
                       }}
-                      onDrop={() => handleComponentDrop(row.id, column.id)}
+                      onDrop={() => {
+                        const moved = handleColumnDrop(row.id, column.id);
+                        if (moved) {
+                          setDraggingColumn(null);
+                          setDragOverColumnId('');
+                          return;
+                        }
+                        handleComponentDrop(row.id, column.id);
+                      }}
                       data-testid={`admin-content-builder-column-${column.id}`}
                     >
                       <div className="mb-2 flex flex-wrap items-center gap-2" data-testid={`admin-content-builder-column-header-${column.id}`}>
                         <span className="text-xs font-medium" data-testid={`admin-content-builder-column-label-${column.id}`}>Column</span>
+                        <button
+                          type="button"
+                          draggable
+                          className="rounded border px-2 py-1 text-[11px]"
+                          onDragStart={(event) => {
+                            event.stopPropagation();
+                            setDraggingColumn({ rowId: row.id, columnId: column.id });
+                          }}
+                          onDragEnd={(event) => {
+                            event.stopPropagation();
+                            setDraggingColumn(null);
+                            if (dragOverColumnId === column.id) setDragOverColumnId('');
+                          }}
+                          data-testid={`admin-content-builder-drag-column-handle-${column.id}`}
+                        >
+                          ↔ Sürükle
+                        </button>
                         <label className="text-[11px]" data-testid={`admin-content-builder-width-desktop-wrap-${column.id}`}>D
                           <select className="ml-1 rounded border px-1" value={column.width?.desktop || 12} onChange={(e) => updateColumnWidth(row.id, column.id, 'desktop', e.target.value)} data-testid={`admin-content-builder-width-desktop-${column.id}`}>
                             {Array.from({ length: 12 }).map((_, index) => <option key={index + 1} value={index + 1}>{index + 1}/12</option>)}
@@ -3039,7 +3265,9 @@ export default function AdminContentBuilder() {
 
                       {dragOverColumnId === column.id ? (
                         <div className="mb-2 rounded border border-dashed border-amber-500 bg-amber-100 px-2 py-1 text-[11px] text-amber-700" data-testid={`admin-content-builder-column-drop-indicator-${column.id}`}>
-                          {draggingLibraryComponentKey
+                          {draggingColumn?.columnId
+                            ? 'Sütunu bu konuma bırak'
+                            : draggingLibraryComponentKey
                             ? `${draggingLibraryComponentName || 'Seçili bileşen'} bu sütuna eklenecek`
                             : 'Bileşeni bu sütuna bırak'}
                         </div>
