@@ -8,6 +8,7 @@ export default function IndividualListingApplications() {
       dataTestId="individual-listing-applications-page"
       applicantType="individual"
       applicationsMode
+      showAllDopingTab={false}
     />
   );
 }

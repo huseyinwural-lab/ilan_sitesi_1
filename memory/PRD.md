@@ -18,6 +18,34 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ---
 
+## 2026-03-05 (P0 — İlan & Moderasyon Menü Konsolidasyonu)
+
+### Kullanıcı Talebi (Uygulandı)
+- İlan & Moderasyon menüsünde dağınık alt menüler tek ana akışta toplandı.
+- `Tüm İlanlar` menü etiketi `Onaylı Tüm İlanlar` olarak değiştirildi.
+- Ücretli/Vitrin/Acil menü öğeleri sidebar’dan kaldırılıp ilgili ana sayfaların içine (tab) taşındı.
+
+### Uygulananlar
+- **Sidebar sadeleştirme** (`Layout.js`):
+  - `Onaylı Tüm İlanlar`
+  - `Bireysel İlan Başvuruları`
+  - `Kurumsal İlan Başvuruları`
+  - Ayrı görünen `/paid`, `/featured`, `/urgent` menüleri kaldırıldı.
+- **Sayfa davranışı** (`AdminListings.js`):
+  - `showAllDopingTab={false}` ile iç tablar: `Ücretsiz`, `Ücretli`, `Vitrin`, `Acil`.
+  - `lockedStatus` desteği eklendi.
+- **Route düzeni** (`BackofficePortalApp.jsx`):
+  - `/admin/listings` artık `Onaylı Tüm İlanlar` + `lockedStatus="published"` ile yalnız onaylı ilanları gösteriyor.
+  - Eski alt route’lar (`/paid`, `/featured`, `/urgent`) ana sayfalara redirect edildi.
+  - Bireysel/Kurumsal başvuru sayfaları pending moderasyon odağında ve 4 doping sekmesiyle çalışıyor.
+
+### Test Durumu
+- Playwright smoke doğrulaması PASS:
+  - Sidebar’da eski alt menüler görünmüyor.
+  - `Onaylı Tüm İlanlar` etiketi görünür.
+  - Üç ana sayfada yalnızca 4 sekme (`Ücretsiz/Ücretli/Vitrin/Acil`) görünür.
+  - Onaylı tüm ilanlar ekranında status filtresi gizli ve akış kilitli.
+
 ## 2026-03-05 (P0 — 15 Standart Sayfa Tipi Entegrasyonu Tamamlandı)
 
 ### Uygulananlar

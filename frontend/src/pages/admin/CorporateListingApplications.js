@@ -8,6 +8,7 @@ export default function CorporateListingApplications() {
       dataTestId="corporate-listing-applications-page"
       applicantType="corporate"
       applicationsMode
+      showAllDopingTab={false}
     />
   );
 }

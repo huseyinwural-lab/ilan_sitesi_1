@@ -97,41 +97,47 @@ export default function BackofficePortalApp() {
       <Route path="/reports" element={<AdminLayout><AdminReportsPage /></AdminLayout>} />
       <Route
         path="/listings/featured"
-        element={<AdminLayout><AdminListingsPage title="Vitrin İlanlar" dataTestId="admin-listings-featured-page" initialDopingType="showcase" /></AdminLayout>}
+        element={<Navigate to="/admin/listings" replace />}
       />
       <Route
         path="/listings/urgent"
-        element={<AdminLayout><AdminListingsPage title="Acil İlanlar" dataTestId="admin-listings-urgent-page" initialDopingType="urgent" /></AdminLayout>}
+        element={<Navigate to="/admin/listings" replace />}
       />
       <Route
         path="/listings/paid"
-        element={<AdminLayout><AdminListingsPage title="Ücretli İlanlar" dataTestId="admin-listings-paid-page" initialDopingType="paid" /></AdminLayout>}
+        element={<Navigate to="/admin/listings" replace />}
       />
-      <Route path="/individual-listing-applications" element={<AdminLayout><IndividualListingApplicationsPage /></AdminLayout>} />
+      <Route
+        path="/individual-listing-applications"
+        element={<AdminLayout><IndividualListingApplicationsPage /></AdminLayout>}
+      />
       <Route
         path="/individual-listing-applications/paid"
-        element={<AdminLayout><AdminListingsPage title="Bireysel Ücretli İlan Başvuruları" dataTestId="individual-listing-applications-paid-page" applicantType="individual" applicationsMode initialDopingType="paid" /></AdminLayout>}
+        element={<Navigate to="/admin/individual-listing-applications" replace />}
       />
       <Route
         path="/individual-listing-applications/featured"
-        element={<AdminLayout><AdminListingsPage title="Bireysel Vitrin İlan Başvuruları" dataTestId="individual-listing-applications-featured-page" applicantType="individual" applicationsMode initialDopingType="showcase" /></AdminLayout>}
+        element={<Navigate to="/admin/individual-listing-applications" replace />}
       />
       <Route
         path="/individual-listing-applications/urgent"
-        element={<AdminLayout><AdminListingsPage title="Bireysel Onaylı Acil İlanlar" dataTestId="individual-listing-applications-urgent-page" applicantType="individual" applicationsMode initialDopingType="urgent" initialStatus="published" /></AdminLayout>}
+        element={<Navigate to="/admin/individual-listing-applications" replace />}
       />
-      <Route path="/corporate-listing-applications" element={<AdminLayout><CorporateListingApplicationsPage /></AdminLayout>} />
+      <Route
+        path="/corporate-listing-applications"
+        element={<AdminLayout><CorporateListingApplicationsPage /></AdminLayout>}
+      />
       <Route
         path="/corporate-listing-applications/paid"
-        element={<AdminLayout><AdminListingsPage title="Kurumsal Ücretli İlan Başvuruları" dataTestId="corporate-listing-applications-paid-page" applicantType="corporate" applicationsMode initialDopingType="paid" /></AdminLayout>}
+        element={<Navigate to="/admin/corporate-listing-applications" replace />}
       />
       <Route
         path="/corporate-listing-applications/featured"
-        element={<AdminLayout><AdminListingsPage title="Kurumsal Vitrin İlan Başvuruları" dataTestId="corporate-listing-applications-featured-page" applicantType="corporate" applicationsMode initialDopingType="showcase" /></AdminLayout>}
+        element={<Navigate to="/admin/corporate-listing-applications" replace />}
       />
       <Route
         path="/corporate-listing-applications/urgent"
-        element={<AdminLayout><AdminListingsPage title="Kurumsal Onaylı Acil İlanlar" dataTestId="corporate-listing-applications-urgent-page" applicantType="corporate" applicationsMode initialDopingType="urgent" initialStatus="published" /></AdminLayout>}
+        element={<Navigate to="/admin/corporate-listing-applications" replace />}
       />
       <Route path="/ads" element={<AdminLayout><AdminAdsManagement /></AdminLayout>} />
       <Route path="/ads/campaigns" element={<AdminLayout><AdminAdsCampaigns /></AdminLayout>} />
@@ -259,7 +265,20 @@ export default function BackofficePortalApp() {
       } />
       <Route path="/system-settings" element={<AdminLayout><AdminSystemSettingsPage /></AdminLayout>} />
       <Route path="/system-settings/listing-flow-settings" element={<Navigate to="/admin/site-design/listing-flow-settings?focus=listing-create" replace />} />
-      <Route path="/listings" element={<AdminLayout><AdminListingsPage /></AdminLayout>} />
+      <Route
+        path="/listings"
+        element={
+          <AdminLayout>
+            <AdminListingsPage
+              title="Onaylı Tüm İlanlar"
+              dataTestId="admin-listings-approved-page"
+              initialStatus="published"
+              showAllDopingTab={false}
+              lockedStatus="published"
+            />
+          </AdminLayout>
+        }
+      />
       <Route path="/invoices" element={<AdminLayout><AdminInvoicesPage /></AdminLayout>} />
       <Route path="/payments" element={<AdminLayout><AdminPaymentsPage /></AdminLayout>} />
       <Route path="/finance-overview" element={<AdminLayout><AdminFinanceOverviewPage /></AdminLayout>} />

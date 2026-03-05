@@ -34,7 +34,7 @@ const statusOptions = [
   { value: 'archived', label: 'archived' },
 ];
 
-const dopingTabs = [
+const fullDopingTabs = [
   { value: 'all', label: 'Tümü' },
   { value: 'free', label: 'Ücretsiz İlan' },
   { value: 'paid', label: 'Ücretli İlan' },
@@ -42,7 +42,13 @@ const dopingTabs = [
   { value: 'urgent', label: 'Acil İlan' },
 ];
 
-const dopingTabValues = new Set(dopingTabs.map((tab) => tab.value));
+const focusedDopingTabs = [
+  { value: 'free', label: 'Ücretsiz İlan' },
+  { value: 'paid', label: 'Ücretli İlan' },
+  { value: 'showcase', label: 'Vitrin İlan' },
+  { value: 'urgent', label: 'Acil İlan' },
+];
+
 const quickPromoteEligibleTypes = new Set(['free', 'paid']);
 const dopingLabelMap = {
   free: 'Ücretsiz',
@@ -51,7 +57,10 @@ const dopingLabelMap = {
   urgent: 'Acil',
 };
 
-const normalizeDopingType = (value) => (dopingTabValues.has(value) ? value : 'all');
+const normalizeDopingType = (value, tabs, fallback = 'all') => {
+  const availableValues = new Set(tabs.map((tab) => tab.value));
+  return availableValues.has(value) ? value : fallback;
+};
 
 const formatDateTimeTR = (value) => {
   if (!value) return '—';
@@ -111,6 +120,8 @@ export default function AdminListingsPage({
   applicationsMode = false,
   initialDopingType = 'all',
   initialStatus = null,
+  showAllDopingTab = true,
+  lockedStatus = null,
 }) {
   const [searchParams] = useSearchParams();
   const urlCountry = (searchParams.get('country') || '').toUpperCase();
@@ -120,12 +131,21 @@ export default function AdminListingsPage({
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
 
-  const defaultStatus = initialStatus ?? (applicationsMode ? 'pending_moderation' : '');
+  const availableDopingTabs = useMemo(
+    () => (showAllDopingTab ? fullDopingTabs : focusedDopingTabs),
+    [showAllDopingTab]
+  );
+  const defaultDopingType = useMemo(
+    () => normalizeDopingType(initialDopingType, availableDopingTabs, showAllDopingTab ? 'all' : 'free'),
+    [initialDopingType, availableDopingTabs, showAllDopingTab]
+  );
+
+  const defaultStatus = lockedStatus ?? initialStatus ?? (applicationsMode ? 'pending_moderation' : '');
   const [status, setStatus] = useState(defaultStatus);
   const [search, setSearch] = useState('');
   const [dealerOnly, setDealerOnly] = useState(false);
   const [categoryId, setCategoryId] = useState('');
-  const [dopingType, setDopingType] = useState(() => normalizeDopingType(initialDopingType));
+  const [dopingType, setDopingType] = useState(defaultDopingType);
   const [dopingCounts, setDopingCounts] = useState({ free: 0, paid: 0, showcase: 0, urgent: 0 });
   const [dopingConfig, setDopingConfig] = useState({});
   const [dopingBusyId, setDopingBusyId] = useState('');
@@ -201,9 +221,9 @@ export default function AdminListingsPage({
   }, [status, search, dealerOnly, categoryId, page, urlCountry, applicantType, dopingType, applicationsMode]);
 
   useEffect(() => {
-    setDopingType(normalizeDopingType(initialDopingType));
+    setDopingType(defaultDopingType);
     setPage(0);
-  }, [initialDopingType]);
+  }, [defaultDopingType]);
 
   useEffect(() => {
     setStatus(defaultStatus);
@@ -343,20 +363,8 @@ export default function AdminListingsPage({
     setSearch('');
     setDealerOnly(false);
     setCategoryId('');
-    setDopingType(normalizeDopingType(initialDopingType));
+    setDopingType(defaultDopingType);
     setPage(0);
-  };
-
-  const openApprovedUrgentInNewWindow = () => {
-    if (!(applicationsMode && (applicantType === 'individual' || applicantType === 'corporate'))) return false;
-    const basePath = applicantType === 'individual'
-      ? '/admin/individual-listing-applications/urgent'
-      : '/admin/corporate-listing-applications/urgent';
-    const params = new URLSearchParams();
-    if (urlCountry) params.set('country', urlCountry);
-    const target = `${basePath}${params.toString() ? `?${params.toString()}` : ''}`;
-    window.open(target, '_blank', 'noopener,noreferrer');
-    return true;
   };
 
   const resolveCategoryLabel = (key) => {
@@ -388,7 +396,7 @@ export default function AdminListingsPage({
           className="h-9 px-3 rounded-md border bg-background text-sm"
           data-testid="listings-search-input"
         />
-        {!applicationsMode ? (
+        {!applicationsMode && !lockedStatus ? (
           <Select
             value={statusValue}
             onValueChange={(value) => { setStatus(value === 'all' ? '' : value); setPage(0); }}
@@ -455,7 +463,7 @@ export default function AdminListingsPage({
       </div>
 
       <div className="flex flex-wrap items-center gap-2" data-testid="listings-doping-tabs">
-        {dopingTabs.map((tab) => {
+        {availableDopingTabs.map((tab) => {
           const count = tab.value === 'all'
             ? (Number(dopingCounts.free || 0) + Number(dopingCounts.paid || 0) + Number(dopingCounts.showcase || 0) + Number(dopingCounts.urgent || 0))
             : Number(dopingCounts[tab.value] || 0);
@@ -465,7 +473,6 @@ export default function AdminListingsPage({
               key={tab.value}
               type="button"
               onClick={() => {
-                if (tab.value === 'urgent' && openApprovedUrgentInNewWindow()) return;
                 setDopingType(tab.value);
                 setPage(0);
               }}
