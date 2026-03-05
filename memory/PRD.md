@@ -20,6 +20,31 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ## 2026-03-05 (P1 — Reklam Yönetimi Formu: Firma Adı + İletişim)
 
+## 2026-03-05 (P0 — Content Builder Component Veri Kaynağı Tanımlama)
+
+### Kullanıcı Talebi (Uygulandı)
+- Content Builder içinde component bazlı veri kaynağı tanımları sabitlendi (çağırdığı menü + veri kaynağı + API + kullanım).
+- Verilen görev emrine göre Component Data Source matrisi eklendi ve component kartlarında kaynak bilgisi gösterildi.
+
+### Uygulananlar
+- **AdminContentBuilder.js**
+  - `Component Veri Kaynağı Matrisi` paneli eklendi (Container/Row/Column dahil 10 görev satırı).
+  - Library kartlarına `Menü / Kaynak / API / Source` bilgi bloğu eklendi.
+  - Arama/filter haystack’i veri kaynağı alanlarını da kapsayacak şekilde genişletildi.
+  - Yeni/standardize component key seti eklendi:
+    - `category.navigator`, `cta.block`, `listing.grid`, `listing.list`, `listing.card`, `category.sub-category-block`, `ad.slot`, `media.hero-banner`, `media.carousel`, `media.image`, `media.video`, `map.block`
+- **ExtendedRuntimeBlocks.jsx**
+  - Yeni key’ler için runtime registry alias/renderer desteği eklendi.
+  - Ad placement token normalizasyonu eklendi (`home_top`, `category_top`, vb. -> mevcut ad token formatı).
+
+### Test Durumu
+- Frontend smoke (`screenshot_tool`) PASS:
+  - Veri kaynağı matrisi görünür.
+  - `listing.grid` library kartında kaynak bilgileri görünür.
+  - `listing.grid` canvas’a ekleme akışı PASS.
+- `auto_frontend_testing_agent` PASS:
+  - 6/6 kapsam başarılı (matris, 12 yeni key görünürlüğü, kaynak kartları, 3 component ekleme, runtime uyumu, backward compatibility).
+
 ## 2026-03-05 (P0 — Content Builder Temizliği: Test/Dealer/Developer Araçları Kaldırıldı)
 
 ### Kullanıcı Talebi (Uygulandı)
