@@ -1699,6 +1699,9 @@ async def _ensure_fixture_category_schema(session: AsyncSession):
     category = Category(
         name=name,
         slug=slug_json,
+        title_i18n=_normalize_i18n_triplet(name),
+        description_i18n=_normalize_i18n_triplet(""),
+        label_i18n=_normalize_i18n_triplet(name),
         path=slug,
         module="vehicle",
         country_code=country_code,
@@ -1812,6 +1815,7 @@ async def lifespan(app: FastAPI):
                 await _ensure_listing_doping_columns(conn)
                 await _ensure_pricing_campaign_item_columns(conn)
                 await _ensure_finance_v2_columns(conn)
+                await _ensure_i18n_jsonb_columns(conn)
 
         await asyncio.wait_for(_bootstrap_sql_init(), timeout=45)
     except Exception as exc:
@@ -2404,6 +2408,19 @@ async def _ensure_finance_v2_columns(conn) -> None:
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_user_subscriptions_status ON user_subscriptions (status)"))
     except Exception as exc:
         logging.getLogger("sql_config").warning("Finance v2 columns check failed: %s", exc)
+
+
+async def _ensure_i18n_jsonb_columns(conn) -> None:
+    try:
+        await conn.execute(text("ALTER TABLE layout_pages ADD COLUMN IF NOT EXISTS title_i18n JSONB NOT NULL DEFAULT '{}'::jsonb"))
+        await conn.execute(text("ALTER TABLE layout_pages ADD COLUMN IF NOT EXISTS description_i18n JSONB NOT NULL DEFAULT '{}'::jsonb"))
+        await conn.execute(text("ALTER TABLE layout_pages ADD COLUMN IF NOT EXISTS label_i18n JSONB NOT NULL DEFAULT '{}'::jsonb"))
+
+        await conn.execute(text("ALTER TABLE categories ADD COLUMN IF NOT EXISTS title_i18n JSONB NOT NULL DEFAULT '{}'::jsonb"))
+        await conn.execute(text("ALTER TABLE categories ADD COLUMN IF NOT EXISTS description_i18n JSONB NOT NULL DEFAULT '{}'::jsonb"))
+        await conn.execute(text("ALTER TABLE categories ADD COLUMN IF NOT EXISTS label_i18n JSONB NOT NULL DEFAULT '{}'::jsonb"))
+    except Exception as exc:
+        logging.getLogger("sql_config").warning("i18n jsonb columns check failed: %s", exc)
 
 
 async def _seed_finance_defaults(session: AsyncSession) -> None:
@@ -10258,6 +10275,7 @@ async def list_categories(
     result = await session.execute(query)
     categories = result.scalars().all()
 
+    preferred_lang = _resolve_public_request_locale(request, current_user=current_user)
     filtered: list[Category] = []
     for category in categories:
         if category.country_code and category.country_code != code:
@@ -10267,11 +10285,11 @@ async def list_categories(
             continue
         filtered.append(category)
 
-    filtered.sort(key=lambda c: (c.sort_order or 0, _pick_category_name(list(c.translations or []), _pick_category_slug(c.slug))))
-    return [_serialize_category_sql(cat, include_schema=False, include_translations=True) for cat in filtered]
+    filtered.sort(key=lambda c: (c.sort_order or 0, _pick_category_name(list(c.translations or []), _pick_category_slug(c.slug), preferred_lang)))
+    return [_serialize_category_sql(cat, include_schema=False, include_translations=True, preferred_lang=preferred_lang) for cat in filtered]
 
 
-def _filter_categories_for_country(categories: list[Category], code: str) -> list[Category]:
+def _filter_categories_for_country(categories: list[Category], code: str, preferred_lang: str = "tr") -> list[Category]:
     filtered: list[Category] = []
     for category in categories:
         if category.country_code and category.country_code != code:
@@ -10280,12 +10298,12 @@ def _filter_categories_for_country(categories: list[Category], code: str) -> lis
         if allowed and code not in allowed:
             continue
         filtered.append(category)
-    filtered.sort(key=lambda c: (c.sort_order or 0, _pick_category_name(list(c.translations or []), _pick_category_slug(c.slug))))
+    filtered.sort(key=lambda c: (c.sort_order or 0, _pick_category_name(list(c.translations or []), _pick_category_slug(c.slug), preferred_lang)))
     return filtered
 
 
 def _pick_category_translation_for_lang(translations: list[CategoryTranslation], lang: Optional[str]) -> Optional[CategoryTranslation]:
-    normalized_lang = (lang or "").strip().lower()
+    normalized_lang = _normalize_public_locale(lang)
     if normalized_lang:
         exact = next((t for t in translations if (t.language or "").lower() == normalized_lang), None)
         if exact:
@@ -10331,8 +10349,9 @@ async def list_category_children(
 
     result = await session.execute(query)
     categories = result.scalars().all()
-    filtered = _filter_categories_for_country(categories, code)
-    return [_serialize_category_sql(cat, include_schema=False, include_translations=True) for cat in filtered]
+    preferred_lang = _resolve_public_request_locale(request)
+    filtered = _filter_categories_for_country(categories, code, preferred_lang=preferred_lang)
+    return [_serialize_category_sql(cat, include_schema=False, include_translations=True, preferred_lang=preferred_lang) for cat in filtered]
 
 
 @api_router.get("/categories/search")
@@ -10362,7 +10381,8 @@ async def search_categories(
         stmt = stmt.where(Category.module == module)
 
     result = await session.execute(stmt)
-    categories = _filter_categories_for_country(result.scalars().all(), code)
+    preferred_lang = _resolve_public_request_locale(request)
+    categories = _filter_categories_for_country(result.scalars().all(), code, preferred_lang=preferred_lang)
     category_map = {cat.id: cat for cat in categories}
 
     def build_path(category: Category) -> list[Category]:
@@ -10377,16 +10397,16 @@ async def search_categories(
 
     items = []
     for category in categories:
-        name_value = _pick_category_name(list(category.translations or []), _pick_category_slug(category.slug)) or ""
+        name_value = _pick_category_name(list(category.translations or []), _pick_category_slug(category.slug), preferred_lang) or ""
         slug_value = _pick_category_slug(category.slug) or ""
         if search_value in name_value.lower() or search_value in slug_value.lower():
             path_nodes = build_path(category)
             items.append({
-                "category": _serialize_category_sql(category, include_schema=False, include_translations=False),
+                "category": _serialize_category_sql(category, include_schema=False, include_translations=False, preferred_lang=preferred_lang),
                 "path": [
                     {
                         "id": str(node.id),
-                        "name": _pick_category_name(list(node.translations or []), _pick_category_slug(node.slug)),
+                        "name": _pick_category_name(list(node.translations or []), _pick_category_slug(node.slug), preferred_lang),
                         "slug": _pick_category_slug(node.slug),
                     }
                     for node in path_nodes
@@ -10400,6 +10420,7 @@ async def search_categories(
 @api_router.get("/v2/categories/{slug}")
 async def get_category_by_slug_v2(
     slug: str,
+    request: Request,
     country: Optional[str] = None,
     lang: Optional[str] = None,
     response: Response = None,
@@ -10416,9 +10437,10 @@ async def get_category_by_slug_v2(
     )
     category_rows = (await session.execute(category_query)).scalars().all()
 
+    preferred_lang = _resolve_public_request_locale(request, explicit_lang=lang)
     code = (country or "").upper().strip()
     if code:
-        category_rows = _filter_categories_for_country(category_rows, code)
+        category_rows = _filter_categories_for_country(category_rows, code, preferred_lang=preferred_lang)
 
     target = None
     for category in category_rows:
@@ -10439,7 +10461,7 @@ async def get_category_by_slug_v2(
         ]
         preferred = None
         for cat in top_level_real_estate:
-            name_value = (_pick_category_name(list(cat.translations or []), _pick_category_slug(cat.slug)) or "").strip().lower()
+            name_value = (_pick_category_name(list(cat.translations or []), _pick_category_slug(cat.slug), preferred_lang) or "").strip().lower()
             slug_value = (_pick_category_slug(cat.slug) or "").strip().lower()
             if slug_value in {"emlak", "real-estate", "gayrimenkul", "konut"} or "emlak" in name_value:
                 preferred = cat
@@ -10452,8 +10474,8 @@ async def get_category_by_slug_v2(
     if not target:
         raise HTTPException(status_code=404, detail="Category not found")
 
-    target_name = _pick_category_name(list(target.translations or []), _pick_category_slug(target.slug))
-    selected_translation = _pick_category_translation_for_lang(list(target.translations or []), lang)
+    target_name = _pick_category_name(list(target.translations or []), _pick_category_slug(target.slug), preferred_lang)
+    selected_translation = _pick_category_translation_for_lang(list(target.translations or []), preferred_lang)
     description_value = selected_translation.description if selected_translation and selected_translation.description else None
 
     children_query = (
@@ -10468,14 +10490,14 @@ async def get_category_by_slug_v2(
     )
     children_rows = (await session.execute(children_query)).scalars().all()
     if code:
-        children_rows = _filter_categories_for_country(children_rows, code)
+        children_rows = _filter_categories_for_country(children_rows, code, preferred_lang=preferred_lang)
 
     children_payload = []
     for child in children_rows:
         children_payload.append(
             {
                 "id": str(child.id),
-                "name": _pick_category_name(list(child.translations or []), _pick_category_slug(child.slug)),
+                "name": _pick_category_name(list(child.translations or []), _pick_category_slug(child.slug), preferred_lang),
                 "icon": child.icon,
                 "listing_count": int(child.listing_count or 0),
             }
@@ -10498,6 +10520,7 @@ async def get_category_by_slug_v2(
             "title": seo_title,
             "description": seo_description,
         },
+        "lang": preferred_lang,
     }
 
 
@@ -15354,10 +15377,100 @@ def _serialize_category_translation(translation: CategoryTranslation) -> dict:
     }
 
 
-def _pick_category_name(translations: list[CategoryTranslation], slug_value: Optional[str]) -> str:
+CATEGORY_I18N_LANGS = ("tr", "de", "fr")
+
+
+def _normalize_public_locale(value: Optional[str]) -> str:
+    normalized = str(value or "").strip().lower()
+    if normalized in CATEGORY_I18N_LANGS:
+        return normalized
+    return "tr"
+
+
+def _extract_public_locale_from_path(pathname: Optional[str]) -> Optional[str]:
+    path = str(pathname or "").strip()
+    if not path.startswith("/"):
+        return None
+    parts = [segment for segment in path.split("/") if segment]
+    if not parts:
+        return None
+    first = parts[0].lower()
+    return first if first in CATEGORY_I18N_LANGS else None
+
+
+def _extract_current_user_locale(current_user: Any) -> Optional[str]:
+    if not current_user:
+        return None
+    raw_locale = None
+    if isinstance(current_user, dict):
+        raw_locale = (
+            current_user.get("preferred_language")
+            or current_user.get("language")
+            or current_user.get("locale")
+        )
+    else:
+        raw_locale = (
+            getattr(current_user, "preferred_language", None)
+            or getattr(current_user, "language", None)
+            or getattr(current_user, "locale", None)
+        )
+
+    if not raw_locale:
+        return None
+    return _normalize_public_locale(raw_locale)
+
+
+def _resolve_public_request_locale(
+    request: Optional[Request],
+    *,
+    current_user: Any = None,
+    explicit_lang: Optional[str] = None,
+) -> str:
+    if explicit_lang:
+        return _normalize_public_locale(explicit_lang)
+
+    path_locale = _extract_public_locale_from_path(request.url.path if request else None)
+    if path_locale:
+        return path_locale
+
+    user_locale = _extract_current_user_locale(current_user)
+    if user_locale:
+        return user_locale
+
+    accept_language = (request.headers.get("accept-language") if request else None) or ""
+    for item in str(accept_language).split(","):
+        code = item.split(";", 1)[0].strip().lower().split("-", 1)[0]
+        if code in CATEGORY_I18N_LANGS:
+            return code
+
+    return "tr"
+
+
+def _normalize_i18n_triplet(value: Any, fallback: str = "") -> dict:
+    if isinstance(value, dict):
+        tr_value = str(value.get("tr") or "").strip()
+        de_value = str(value.get("de") or "").strip()
+        fr_value = str(value.get("fr") or "").strip()
+        seed = tr_value or de_value or fr_value or str(fallback or "").strip()
+        return {
+            "tr": tr_value or seed,
+            "de": de_value or seed,
+            "fr": fr_value or seed,
+        }
+
+    seed = str(value or fallback).strip()
+    return {"tr": seed, "de": seed, "fr": seed}
+
+
+def _pick_category_name(
+    translations: list[CategoryTranslation],
+    slug_value: Optional[str],
+    preferred_lang: Optional[str] = None,
+) -> str:
     preferred = None
-    for lang in ("tr", "de", "fr", "en"):
-        preferred = next((t for t in translations if t.language == lang), None)
+    normalized = _normalize_public_locale(preferred_lang)
+    for lang in (normalized, "tr", "de", "fr", "en"):
+        preferred = next((t for t in translations if (t.language or "").lower() == lang), None)
         if preferred:
             break
     if not preferred and translations:
@@ -15675,9 +15788,33 @@ async def _reindex_category_siblings(
     await session.commit()
 
 
-def _serialize_category_sql(category: Category, include_schema: bool = False, include_translations: bool = True) -> dict:
+def _serialize_category_sql(
+    category: Category,
+    include_schema: bool = False,
+    include_translations: bool = True,
+    preferred_lang: str = "tr",
+) -> dict:
     translations = list(category.translations or [])
     slug_value = _pick_category_slug(category.slug)
+    normalized_lang = _normalize_public_locale(preferred_lang)
+
+    if translations:
+        title_i18n = _normalize_i18n_triplet(
+            {t.language: t.name for t in translations if getattr(t, "language", None)}
+            or getattr(category, "title_i18n", {}),
+            fallback=slug_value or "",
+        )
+        description_i18n = _normalize_i18n_triplet(
+            {t.language: t.description for t in translations if getattr(t, "language", None)}
+            or getattr(category, "description_i18n", {}),
+            fallback="",
+        )
+    else:
+        title_i18n = _normalize_i18n_triplet(getattr(category, "title_i18n", {}), fallback=slug_value or "")
+        description_i18n = _normalize_i18n_triplet(getattr(category, "description_i18n", {}), fallback="")
+
+    label_i18n = _normalize_i18n_triplet(getattr(category, "label_i18n", {}) or title_i18n, fallback=title_i18n.get("tr") or "")
+
     form_schema = category.form_schema if isinstance(category.form_schema, dict) else {}
     category_meta = form_schema.get("category_meta") if isinstance(form_schema.get("category_meta"), dict) else {}
     segment_key = _normalize_segment_key(category_meta.get("vehicle_segment"))
@@ -15685,7 +15822,7 @@ def _serialize_category_sql(category: Category, include_schema: bool = False, in
     payload = {
         "id": str(category.id),
         "parent_id": str(category.parent_id) if category.parent_id else None,
-        "name": _pick_category_name(translations, slug_value),
+        "name": _pick_category_name(translations, slug_value, normalized_lang),
         "slug": slug_value,
         "country_code": category.country_code,
         "active_flag": category.is_enabled,
@@ -15698,6 +15835,12 @@ def _serialize_category_sql(category: Category, include_schema: bool = False, in
         "icon_svg": icon_svg,
         "image_url": category.image_url,
         "listing_count": category.listing_count,
+        "title_i18n": title_i18n,
+        "description_i18n": description_i18n,
+        "label_i18n": label_i18n,
+        "title": title_i18n.get(normalized_lang) or title_i18n.get("tr") or slug_value,
+        "description": description_i18n.get(normalized_lang) or description_i18n.get("tr") or "",
+        "label": label_i18n.get(normalized_lang) or label_i18n.get("tr") or (slug_value or ""),
         "vehicle_segment": VEHICLE_SEGMENT_ALIASES.get(segment_key, segment_key),
         "vehicle_master_linked": bool(category_meta.get("master_data_linked")),
         "created_at": category.created_at.isoformat() if category.created_at else None,
@@ -28637,6 +28780,9 @@ async def _ensure_category_node(
         sort_order=sort_order,
         module=module_value,
         slug={"tr": candidate_slug, "en": candidate_slug, "de": candidate_slug},
+        title_i18n=_normalize_i18n_triplet(name),
+        description_i18n=_normalize_i18n_triplet(""),
+        label_i18n=_normalize_i18n_triplet(name),
         icon=None,
         image_url=None,
         is_enabled=True,
@@ -30089,6 +30235,9 @@ async def admin_create_category(
         sort_order=sort_order,
         module=module_value,
         slug=slug_json,
+        title_i18n=_normalize_i18n_triplet(payload.name.strip()),
+        description_i18n=_normalize_i18n_triplet(getattr(payload, "description", "") or ""),
+        label_i18n=_normalize_i18n_triplet(payload.name.strip()),
         icon=None,
         image_url=image_url,
         is_enabled=payload.active_flag if payload.active_flag is not None else True,
@@ -31182,6 +31331,9 @@ async def admin_import_categories_commit(
                     sort_order=row.get("sort_order") or 0,
                     module=row.get("module") or "vehicle",
                     slug=slug_map,
+                    title_i18n=_normalize_i18n_triplet(row.get("name_tr") or row.get("name_de") or row.get("name_fr") or slug_key),
+                    description_i18n=_normalize_i18n_triplet(""),
+                    label_i18n=_normalize_i18n_triplet(row.get("name_tr") or row.get("name_de") or row.get("name_fr") or slug_key),
                     icon=None,
                     image_url=None,
                     is_enabled=row.get("is_active") if row.get("is_active") is not None else True,

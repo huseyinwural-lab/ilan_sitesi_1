@@ -440,6 +440,55 @@ const SEARCH_TEMPLATE_PAGE_TYPES = new Set([
   'category_showcase',
 ]);
 
+const I18N_LOCALES = ['tr', 'de', 'fr'];
+const TRANSLATABLE_PROP_KEYWORDS = ['title', 'description', 'label', 'body', 'text', 'headline', 'subtitle', 'cta'];
+
+const isTranslatablePropKey = (propKey = '') => {
+  const lowered = String(propKey || '').trim().toLowerCase();
+  return TRANSLATABLE_PROP_KEYWORDS.some((token) => lowered.includes(token));
+};
+
+const toI18nMap = (rawValue) => {
+  if (rawValue && typeof rawValue === 'object' && !Array.isArray(rawValue)) {
+    const trValue = String(rawValue.tr ?? '').trim();
+    const deValue = String(rawValue.de ?? '').trim();
+    const frValue = String(rawValue.fr ?? '').trim();
+    const seed = trValue || deValue || frValue || '';
+    return {
+      tr: trValue || seed,
+      de: deValue || seed,
+      fr: frValue || seed,
+    };
+  }
+  const seed = String(rawValue ?? '').trim();
+  return { tr: seed, de: seed, fr: seed };
+};
+
+const getLocalizedText = (rawValue, locale = 'tr') => {
+  if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) {
+    return String(rawValue ?? '');
+  }
+  const map = toI18nMap(rawValue);
+  return map[locale] || map.tr || map.de || map.fr || '';
+};
+
+const normalizeI18nProps = (props = {}) => {
+  if (!props || typeof props !== 'object' || Array.isArray(props)) return props;
+  const next = {};
+  Object.entries(props).forEach(([key, value]) => {
+    if (typeof value === 'string' && isTranslatablePropKey(key)) {
+      next[key] = toI18nMap(value);
+      return;
+    }
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      next[key] = normalizeI18nProps(value);
+      return;
+    }
+    next[key] = value;
+  });
+  return next;
+};
+
 const isWizardPolicyPageType = (pageType) => WIZARD_POLICY_PAGE_TYPES.has(pageType);
 
 const createEmptyPayload = (pageType) => ({
@@ -478,7 +527,7 @@ const createPresetNodeId = (prefix) => `${prefix}-${Date.now()}-${Math.round(Mat
 const createPresetComponent = (key, props = {}) => ({
   id: createPresetNodeId('cmp'),
   key,
-  props,
+  props: normalizeI18nProps(props),
   visibility: { desktop: true, tablet: true, mobile: true },
 });
 
@@ -1013,8 +1062,24 @@ const computeLayoutDiff = (publishedPayload, draftPayload) => {
 };
 
 export default function AdminContentBuilder() {
+  const resolveRequestLocale = () => {
+    const pathLocale = String(window.location.pathname || '').split('/').filter(Boolean)[0]?.toLowerCase();
+    if (I18N_LOCALES.includes(pathLocale)) return pathLocale;
+    const stored = String(localStorage.getItem('language') || '').toLowerCase();
+    if (I18N_LOCALES.includes(stored)) return stored;
+    return 'tr';
+  };
+
   const authHeaders = useMemo(
-    () => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` }),
+    () => {
+      const locale = resolveRequestLocale();
+      const pathLocale = String(window.location.pathname || '').split('/').filter(Boolean)[0]?.toLowerCase();
+      return {
+        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        'Accept-Language': locale,
+        'X-URL-Locale': I18N_LOCALES.includes(pathLocale) ? pathLocale : locale,
+      };
+    },
     [],
   );
 
@@ -1044,6 +1109,7 @@ export default function AdminContentBuilder() {
   const [selectedRowId, setSelectedRowId] = useState('');
   const [selectedColumnId, setSelectedColumnId] = useState('');
   const [selectedComponentId, setSelectedComponentId] = useState('');
+  const [propLocaleTabs, setPropLocaleTabs] = useState({});
   const [draggingRowId, setDraggingRowId] = useState('');
   const [draggingComponentId, setDraggingComponentId] = useState('');
   const [draggingLibraryComponentKey, setDraggingLibraryComponentKey] = useState('');
@@ -1406,6 +1472,18 @@ export default function AdminContentBuilder() {
   const refreshPreviewAfterInteraction = () => {
     setPreviewRefreshToken(Date.now());
   };
+
+  const getPropLocaleTab = useCallback(
+    (componentId, propPath) => propLocaleTabs[`${componentId}:${propPath}`] || 'tr',
+    [propLocaleTabs],
+  );
+
+  const setPropLocaleTab = useCallback((componentId, propPath, locale) => {
+    setPropLocaleTabs((prev) => ({
+      ...prev,
+      [`${componentId}:${propPath}`]: I18N_LOCALES.includes(locale) ? locale : 'tr',
+    }));
+  }, []);
 
   const autoFocusPreviewIfVisible = () => {
     if (!showPreviewComparison) return;
@@ -2793,15 +2871,53 @@ export default function AdminContentBuilder() {
                                               return (
                                                 <label key={nestedKey} className="block text-[11px]">
                                                   {nestedTitle}
-                                                  <input
-                                                    type="text"
-                                                    className="mt-1 h-8 w-full rounded border px-2 text-[11px]"
-                                                    value={nestedValue ?? ''}
-                                                    onChange={(e) => updateComponentPropValue(row.id, column.id, component.id, propKey, {
-                                                      ...objectValue,
-                                                      [nestedKey]: e.target.value,
-                                                    })}
-                                                  />
+                                                  {isTranslatablePropKey(nestedKey) ? (
+                                                    <div className="mt-1 space-y-1" data-testid={`admin-content-builder-i18n-wrap-${component.id}-${propKey}-${nestedKey}`}>
+                                                      <div className="flex items-center gap-1" data-testid={`admin-content-builder-i18n-tabs-${component.id}-${propKey}-${nestedKey}`}>
+                                                        {I18N_LOCALES.map((locale) => {
+                                                          const isActive = getPropLocaleTab(component.id, `${propKey}.${nestedKey}`) === locale;
+                                                          return (
+                                                            <button
+                                                              key={`${component.id}-${propKey}-${nestedKey}-${locale}`}
+                                                              type="button"
+                                                              onClick={() => setPropLocaleTab(component.id, `${propKey}.${nestedKey}`, locale)}
+                                                              className={`rounded border px-1.5 py-0.5 text-[10px] uppercase ${isActive ? 'border-slate-700 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-600'}`}
+                                                              data-testid={`admin-content-builder-i18n-tab-${component.id}-${propKey}-${nestedKey}-${locale}`}
+                                                            >
+                                                              {locale}
+                                                            </button>
+                                                          );
+                                                        })}
+                                                      </div>
+                                                      <input
+                                                        type="text"
+                                                        className="h-8 w-full rounded border px-2 text-[11px]"
+                                                        value={getLocalizedText(nestedValue, getPropLocaleTab(component.id, `${propKey}.${nestedKey}`))}
+                                                        onChange={(e) => {
+                                                          const activeLocale = getPropLocaleTab(component.id, `${propKey}.${nestedKey}`);
+                                                          const nextMap = toI18nMap(nestedValue);
+                                                          updateComponentPropValue(row.id, column.id, component.id, propKey, {
+                                                            ...objectValue,
+                                                            [nestedKey]: {
+                                                              ...nextMap,
+                                                              [activeLocale]: e.target.value,
+                                                            },
+                                                          });
+                                                        }}
+                                                        data-testid={`admin-content-builder-i18n-input-${component.id}-${propKey}-${nestedKey}`}
+                                                      />
+                                                    </div>
+                                                  ) : (
+                                                    <input
+                                                      type="text"
+                                                      className="mt-1 h-8 w-full rounded border px-2 text-[11px]"
+                                                      value={nestedValue ?? ''}
+                                                      onChange={(e) => updateComponentPropValue(row.id, column.id, component.id, propKey, {
+                                                        ...objectValue,
+                                                        [nestedKey]: e.target.value,
+                                                      })}
+                                                    />
+                                                  )}
                                                 </label>
                                               );
                                             })}
@@ -2855,13 +2971,48 @@ export default function AdminContentBuilder() {
                                     return (
                                       <label key={propKey} className="block text-[11px]" data-testid={`admin-content-builder-prop-wrap-${component.id}-${propKey}`}>
                                         {fieldTitle}
-                                        <input
-                                          type="text"
-                                          className="mt-1 h-8 w-full rounded border px-2 text-[11px]"
-                                          value={value ?? ''}
-                                          onChange={(e) => updateComponentPropValue(row.id, column.id, component.id, propKey, e.target.value)}
-                                          data-testid={`admin-content-builder-prop-input-${component.id}-${propKey}`}
-                                        />
+                                        {isTranslatablePropKey(propKey) ? (
+                                          <div className="mt-1 space-y-1" data-testid={`admin-content-builder-i18n-wrap-${component.id}-${propKey}`}>
+                                            <div className="flex items-center gap-1" data-testid={`admin-content-builder-i18n-tabs-${component.id}-${propKey}`}>
+                                              {I18N_LOCALES.map((locale) => {
+                                                const isActive = getPropLocaleTab(component.id, propKey) === locale;
+                                                return (
+                                                  <button
+                                                    key={`${component.id}-${propKey}-${locale}`}
+                                                    type="button"
+                                                    onClick={() => setPropLocaleTab(component.id, propKey, locale)}
+                                                    className={`rounded border px-1.5 py-0.5 text-[10px] uppercase ${isActive ? 'border-slate-700 bg-slate-700 text-white' : 'border-slate-300 bg-white text-slate-600'}`}
+                                                    data-testid={`admin-content-builder-i18n-tab-${component.id}-${propKey}-${locale}`}
+                                                  >
+                                                    {locale}
+                                                  </button>
+                                                );
+                                              })}
+                                            </div>
+                                            <input
+                                              type="text"
+                                              className="h-8 w-full rounded border px-2 text-[11px]"
+                                              value={getLocalizedText(value, getPropLocaleTab(component.id, propKey))}
+                                              onChange={(e) => {
+                                                const activeLocale = getPropLocaleTab(component.id, propKey);
+                                                const nextMap = toI18nMap(value);
+                                                updateComponentPropValue(row.id, column.id, component.id, propKey, {
+                                                  ...nextMap,
+                                                  [activeLocale]: e.target.value,
+                                                });
+                                              }}
+                                              data-testid={`admin-content-builder-i18n-input-${component.id}-${propKey}`}
+                                            />
+                                          </div>
+                                        ) : (
+                                          <input
+                                            type="text"
+                                            className="mt-1 h-8 w-full rounded border px-2 text-[11px]"
+                                            value={value ?? ''}
+                                            onChange={(e) => updateComponentPropValue(row.id, column.id, component.id, propKey, e.target.value)}
+                                            data-testid={`admin-content-builder-prop-input-${component.id}-${propKey}`}
+                                          />
+                                        )}
                                       </label>
                                     );
                                   })}

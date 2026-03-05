@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 
 import AccountLayout from './layouts/AccountLayout';
@@ -64,9 +64,46 @@ import ListingDoping from '@/pages/listing/ListingDoping';
 import ListingEditEntry from '@/pages/listing/ListingEditEntry';
 
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
-import { LanguageProvider } from '@/contexts/LanguageContext';
+import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 import { CountryProvider } from '@/contexts/CountryContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+
+const SUPPORTED_PUBLIC_LOCALES = ['tr', 'de', 'fr'];
+
+const getPathLocale = (pathname = '/') => {
+  const first = String(pathname || '/').split('/').filter(Boolean)[0]?.toLowerCase();
+  return SUPPORTED_PUBLIC_LOCALES.includes(first) ? first : null;
+};
+
+const stripPathLocale = (pathname = '/') => {
+  const locale = getPathLocale(pathname);
+  if (!locale) return pathname || '/';
+  const stripped = String(pathname).replace(new RegExp(`^/${locale}`), '') || '/';
+  return stripped.startsWith('/') ? stripped : `/${stripped}`;
+};
+
+const shouldEmitHreflangForPath = (pathname = '/') => {
+  const cleanPath = stripPathLocale(pathname);
+  return cleanPath === '/' || cleanPath.startsWith('/search') || cleanPath.startsWith('/ilan/');
+};
+
+const LocaleAwareMainLayout = () => {
+  const { locale } = useParams();
+  const { setLanguage } = useLanguage();
+  const normalizedLocale = String(locale || '').toLowerCase();
+
+  useEffect(() => {
+    if (SUPPORTED_PUBLIC_LOCALES.includes(normalizedLocale)) {
+      setLanguage(normalizedLocale);
+    }
+  }, [normalizedLocale, setLanguage]);
+
+  if (!SUPPORTED_PUBLIC_LOCALES.includes(normalizedLocale)) {
+    return <NotFoundPage />;
+  }
+
+  return <MainLayout />;
+};
 
 const ProtectedRoute = ({ children, roles = [], portalScope = null }) => {
   const { user, loading } = useAuth();
@@ -139,11 +176,28 @@ const CanonicalRouteSync = () => {
     if (pathname !== '/' && pathname.endsWith('/')) {
       pathname = pathname.slice(0, -1);
     }
-    const canonicalHref = `${window.location.origin}${pathname || '/'}`;
+    const activeLocale = getPathLocale(pathname) || 'tr';
+    const normalizedPath = stripPathLocale(pathname);
+    const localizedCanonicalPath = `/${activeLocale}${normalizedPath === '/' ? '' : normalizedPath}`;
+    const canonicalHref = `${window.location.origin}${localizedCanonicalPath}`;
     canonicalElement.setAttribute('href', canonicalHref);
 
     if (!canonicalElement.parentNode) {
       document.head.appendChild(canonicalElement);
+    }
+
+    document.querySelectorAll('link[data-i18n-hreflang="true"]').forEach((node) => node.remove());
+    if (shouldEmitHreflangForPath(pathname)) {
+      const alternatePath = normalizedPath === '/' ? '' : normalizedPath;
+      [...SUPPORTED_PUBLIC_LOCALES, 'x-default'].forEach((localeCode) => {
+        const localeForHref = localeCode === 'x-default' ? 'tr' : localeCode;
+        const alternateLink = document.createElement('link');
+        alternateLink.setAttribute('rel', 'alternate');
+        alternateLink.setAttribute('hreflang', localeCode);
+        alternateLink.setAttribute('href', `${window.location.origin}/${localeForHref}${alternatePath}`);
+        alternateLink.setAttribute('data-i18n-hreflang', 'true');
+        document.head.appendChild(alternateLink);
+      });
     }
   }, [location.pathname]);
 
@@ -162,7 +216,7 @@ function App() {
                 <Routes>
                   {/* Public Routes */}
                   <Route element={<MainLayout />}>
-                    <Route path="/" element={<HomePageRefreshed />} />
+                    <Route path="/" element={<Navigate to="/tr" replace />} />
                     <Route path="/search" element={<SearchPage />} />
                     <Route path="/kategori/:slug" element={<CategoryLandingPage />} />
                     <Route path="/ilan/:id" element={<ErrorBoundary><DetailPage /></ErrorBoundary>} />
@@ -181,6 +235,26 @@ function App() {
                     <Route path="/seo" element={<SeoHubPage />} />
                     <Route path="/500" element={<ServerErrorPage />} />
                     <Route path="/maintenance" element={<MaintenancePage />} />
+                    <Route path="*" element={<NotFoundPage />} />
+                  </Route>
+
+                  <Route path="/:locale" element={<LocaleAwareMainLayout />}>
+                    <Route index element={<HomePageRefreshed />} />
+                    <Route path="search" element={<SearchPage />} />
+                    <Route path="kategori/:slug" element={<CategoryLandingPage />} />
+                    <Route path="ilan/:id" element={<ErrorBoundary><DetailPage /></ErrorBoundary>} />
+                    <Route path="vasita/otomobil/:make/:model" element={<VehicleMakeModelPage />} />
+                    <Route path=":country/vasita/otomobil/:make/:model" element={<VehicleMakeModelPage />} />
+                    <Route path=":country/vasita" element={<VehicleLandingPage />} />
+                    <Route path=":country/vasita/:segment" element={<VehicleSegmentPage />} />
+                    <Route path="vasita" element={<RedirectToCountry to="/{country}/vasita" />} />
+                    <Route path="info/:slug" element={<InfoPage />} />
+                    <Route path="bilgi/:slug" element={<InfoPage />} />
+                    <Route path="trust" element={<TrustCenterPage />} />
+                    <Route path="kurumsal" element={<CorporateHubPage />} />
+                    <Route path="seo" element={<SeoHubPage />} />
+                    <Route path="500" element={<ServerErrorPage />} />
+                    <Route path="maintenance" element={<MaintenancePage />} />
                     <Route path="*" element={<NotFoundPage />} />
                   </Route>
 

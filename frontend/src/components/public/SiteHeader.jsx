@@ -10,7 +10,7 @@ const API = `${BACKEND_URL}/api`;
 
 export default function SiteHeader({ mode, refreshToken }) {
   const { user, logout } = useAuth();
-  const { t, language, setLanguage, supportedLanguages = ['tr', 'de', 'fr'] } = useLanguage();
+  const { t, language, setLanguage, toLocalizedPath, supportedLanguages = ['tr', 'de', 'fr'] } = useLanguage();
   const navigate = useNavigate();
   const [headerData, setHeaderData] = useState({ logo_url: null, items: [] });
   const [searchOpen, setSearchOpen] = useState(false);
@@ -96,14 +96,14 @@ export default function SiteHeader({ mode, refreshToken }) {
     const target = query.trim();
     if (!target) return;
     setSuggestions([]);
-    navigate(`/search?q=${encodeURIComponent(target)}`);
+    navigate(`${toLocalizedPath('/search')}?q=${encodeURIComponent(target)}`);
     setSearchOpen(false);
   };
 
   const handleLogout = () => {
     logout();
     setProfileOpen(false);
-    navigate('/');
+    navigate(toLocalizedPath('/'));
   };
 
   useEffect(() => {
@@ -132,7 +132,7 @@ export default function SiteHeader({ mode, refreshToken }) {
     if (!normalized) return;
     setQuery(normalized);
     setSuggestions([]);
-    navigate(`/search?q=${encodeURIComponent(normalized)}`);
+    navigate(`${toLocalizedPath('/search')}?q=${encodeURIComponent(normalized)}`);
   };
 
   const handleDynamicItemClick = (item) => {
@@ -143,7 +143,7 @@ export default function SiteHeader({ mode, refreshToken }) {
       window.open(href, '_blank', 'noopener,noreferrer');
       return;
     }
-    navigate(href);
+    navigate(toLocalizedPath(href));
     setMenuOpen(false);
   };
 
@@ -193,7 +193,7 @@ export default function SiteHeader({ mode, refreshToken }) {
   return (
     <header className="sticky top-0 z-40 border-b bg-[var(--header-bg)] text-[var(--header-text)]" data-testid="site-header">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3" data-testid="site-header-container">
-        <Link to="/" className="flex items-center gap-2" data-testid="site-header-logo">
+        <Link to={toLocalizedPath('/')} className="flex items-center gap-2" data-testid="site-header-logo">
           {logoUrl ? (
             <img src={logoUrl} alt="Logo" className="h-8 object-contain" data-testid="site-header-logo-image" />
           ) : (

@@ -142,6 +142,9 @@ async def create_layout_page(
     country: str,
     module: str,
     category_id: str | None,
+    title_i18n: dict | None = None,
+    description_i18n: dict | None = None,
+    label_i18n: dict | None = None,
     actor_user_id: str | None,
 ) -> LayoutPage:
     now_dt = datetime.now(timezone.utc)
@@ -150,6 +153,9 @@ async def create_layout_page(
         country=(country or "").upper(),
         module=(module or "").strip(),
         category_id=_safe_uuid(category_id),
+        title_i18n=title_i18n or {},
+        description_i18n=description_i18n or {},
+        label_i18n=label_i18n or {},
         created_at=now_dt,
         updated_at=now_dt,
     )
@@ -171,6 +177,9 @@ async def create_layout_page(
             "country": row.country,
             "module": row.module,
             "category_id": str(row.category_id) if row.category_id else None,
+            "title_i18n": row.title_i18n or {},
+            "description_i18n": row.description_i18n or {},
+            "label_i18n": row.label_i18n or {},
         },
     )
     return row

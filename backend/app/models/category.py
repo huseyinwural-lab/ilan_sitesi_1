@@ -1,9 +1,9 @@
 """
 P0-1: Category System with N-level hierarchy using Materialized Path
 """
-from sqlalchemy import String, Boolean, DateTime, JSON, Integer, Text, ForeignKey, Index
+from sqlalchemy import String, Boolean, DateTime, JSON, Integer, Text, ForeignKey, Index, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
 from datetime import datetime, timezone
 from typing import Optional, List
 import uuid
@@ -28,6 +28,11 @@ class Category(Base):
 
     # Slug per language for URLs
     slug: Mapped[dict] = mapped_column(JSON, nullable=False)  # {"tr": "emlak", "de": "immobilien", "fr": "immobilier"}
+
+    # JSONB i18n fields (TR/DE/FR)
+    title_i18n: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"))
+    description_i18n: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"))
+    label_i18n: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"))
     
     # Icon and image
     icon: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)

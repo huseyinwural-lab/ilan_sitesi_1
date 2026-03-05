@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import axios from 'axios';
+import { useAuth } from '@/contexts/AuthContext';
 
 const SUPPORTED_LANGUAGES = ['tr', 'de', 'fr'];
 const FALLBACK_LANGUAGE = 'tr';
@@ -9,6 +11,7 @@ const ROUTE_CHANGE_EVENT = 'emergent:route-change';
 const APP_ENV = String(process.env.REACT_APP_ENVIRONMENT || process.env.NODE_ENV || 'development').toLowerCase();
 const IS_PRODUCTION_ENV = APP_ENV === 'production';
 const STRICT_MISSING_KEY_MODE = String(process.env.REACT_APP_I18N_STRICT_MODE || '').toLowerCase() === 'true';
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const localeLoaders = {
   tr: {
@@ -41,6 +44,28 @@ const normalizeLanguage = (value) => {
   return SUPPORTED_LANGUAGES.includes(normalized) ? normalized : FALLBACK_LANGUAGE;
 };
 
+const getPathLocale = (pathname) => {
+  const firstSegment = String(pathname || '').split('/').filter(Boolean)[0]?.toLowerCase();
+  return SUPPORTED_LANGUAGES.includes(firstSegment) ? firstSegment : null;
+};
+
+const stripPathLocale = (pathname) => {
+  const path = String(pathname || '/');
+  const locale = getPathLocale(path);
+  if (!locale) return path || '/';
+  const stripped = path.replace(new RegExp(`^/${locale}`), '') || '/';
+  return stripped.startsWith('/') ? stripped : `/${stripped}`;
+};
+
+const readBrowserLanguage = () => {
+  try {
+    const browserLang = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+    return normalizeLanguage(String(browserLang).split('-')[0]);
+  } catch {
+    return FALLBACK_LANGUAGE;
+  }
+};
+
 const normalizeNamespace = (value) => {
   const normalized = String(value || '').trim().toLowerCase();
   return AVAILABLE_NAMESPACES.includes(normalized) ? normalized : 'common';
@@ -48,9 +73,11 @@ const normalizeNamespace = (value) => {
 
 const readStoredLanguage = () => {
   try {
-    return normalizeLanguage(window.localStorage.getItem('language'));
+    const stored = window.localStorage.getItem('language');
+    if (!stored) return null;
+    return normalizeLanguage(stored);
   } catch {
-    return FALLBACK_LANGUAGE;
+    return null;
   }
 };
 
@@ -63,7 +90,7 @@ const readCurrentPathname = () => {
 };
 
 const resolveRouteNamespaces = (pathname) => {
-  const path = String(pathname || '').trim().toLowerCase();
+  const path = stripPathLocale(String(pathname || '').trim().toLowerCase());
   if (
     path === '/login'
     || path === '/register'
@@ -80,6 +107,23 @@ const resolveRouteNamespaces = (pathname) => {
     return ['common', 'admin'];
   }
   return ['common'];
+};
+
+const isLocalizablePublicPath = (pathname) => {
+  const path = stripPathLocale(pathname || '/');
+  const blockedPrefixes = [
+    '/admin',
+    '/dealer',
+    '/account',
+    '/login',
+    '/register',
+    '/verify-email',
+    '/auth',
+    '/support',
+    '/ilan-ver',
+    '/ilan-duzenle',
+  ];
+  return !blockedPrefixes.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
 };
 
 const inferNamespaceFromKey = (key) => {
@@ -145,7 +189,7 @@ const patchHistoryForRouteEvents = () => {
   historyPatched = true;
 };
 
-const initialLanguage = readStoredLanguage();
+const initialLanguage = getPathLocale(readCurrentPathname()) || readStoredLanguage() || readBrowserLanguage() || FALLBACK_LANGUAGE;
 
 if (!i18n.isInitialized) {
   i18n
@@ -215,11 +259,13 @@ const preloadNamespacesForRoute = async (pathname, language) => {
 const LanguageContext = createContext(null);
 
 export function LanguageProvider({ children }) {
+  const { user } = useAuth();
   const [language, setLanguageState] = useState(initialLanguage);
   const [pathname, setPathname] = useState(readCurrentPathname());
   const [ready, setReady] = useState(false);
   const [bundleVersion, setBundleVersion] = useState(0);
   const activeLoadRef = useRef(new Set());
+  const languageSyncRef = useRef('');
 
   useEffect(() => {
     patchHistoryForRouteEvents();
@@ -240,6 +286,25 @@ export function LanguageProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    const urlLocale = getPathLocale(pathname);
+    if (!urlLocale) return;
+    if (urlLocale !== language) {
+      setLanguageState(urlLocale);
+    }
+  }, [pathname, language]);
+
+  useEffect(() => {
+    const urlLocale = getPathLocale(pathname);
+    if (urlLocale) return;
+    const rawUserLocale = user?.preferred_language || user?.locale || user?.language;
+    if (!rawUserLocale) return;
+    const userPreferred = normalizeLanguage(rawUserLocale);
+    if (userPreferred !== language) {
+      setLanguageState(userPreferred);
+    }
+  }, [user?.id, user?.preferred_language, user?.locale, user?.language, pathname, language]);
+
+  useEffect(() => {
     let active = true;
 
     const bootstrap = async () => {
@@ -252,6 +317,10 @@ export function LanguageProvider({ children }) {
       } catch {
         // noop
       }
+
+      axios.defaults.headers.common['Accept-Language'] = targetLanguage;
+      window.__emergentI18nLanguage = targetLanguage;
+      window.__emergentI18nUrlLocale = getPathLocale(pathname) || targetLanguage;
 
       document.documentElement.lang = targetLanguage;
 
@@ -273,6 +342,30 @@ export function LanguageProvider({ children }) {
   }, [language, pathname]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.__emergentI18nFetchPatched) return;
+
+    const originalFetch = window.fetch.bind(window);
+    window.__emergentI18nOriginalFetch = originalFetch;
+    window.fetch = (input, init = {}) => {
+      const nextInit = { ...init };
+      const headers = new Headers(nextInit.headers || (input instanceof Request ? input.headers : undefined));
+
+      if (!headers.has('Accept-Language')) {
+        headers.set('Accept-Language', window.__emergentI18nLanguage || FALLBACK_LANGUAGE);
+      }
+      if (!headers.has('X-URL-Locale')) {
+        headers.set('X-URL-Locale', window.__emergentI18nUrlLocale || window.__emergentI18nLanguage || FALLBACK_LANGUAGE);
+      }
+
+      nextInit.headers = headers;
+      return originalFetch(input, nextInit);
+    };
+
+    window.__emergentI18nFetchPatched = true;
+  }, []);
+
+  useEffect(() => {
     const handleLanguageChange = (nextLanguage) => {
       const normalized = normalizeLanguage(nextLanguage);
       setLanguageState((prev) => (prev === normalized ? prev : normalized));
@@ -284,9 +377,62 @@ export function LanguageProvider({ children }) {
     };
   }, []);
 
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId) return;
+
+    const syncKey = `${userId}:${language}`;
+    if (languageSyncRef.current === syncKey) return;
+
+    languageSyncRef.current = syncKey;
+
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+
+    axios.put(
+      `${API}/users/me`,
+      { locale: language },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Accept-Language': language,
+          'X-URL-Locale': getPathLocale(pathname) || language,
+        },
+      },
+    ).catch(() => {
+      // account scope olmayan kullanıcılar için 403 gelebilir; sessiz geç.
+    });
+  }, [user?.id, language, pathname]);
+
   const setLanguage = useCallback((nextLanguage) => {
-    setLanguageState(normalizeLanguage(nextLanguage));
+    const normalized = normalizeLanguage(nextLanguage);
+    setLanguageState(normalized);
+
+    try {
+      const currentPath = readCurrentPathname();
+      const currentLocale = getPathLocale(currentPath);
+      const strippedPath = stripPathLocale(currentPath);
+      const shouldLocalizePath = Boolean(currentLocale) || isLocalizablePublicPath(currentPath);
+
+      if (shouldLocalizePath) {
+        const localizedPath = `/${normalized}${strippedPath === '/' ? '' : strippedPath}`;
+        const nextUrl = `${localizedPath}${window.location.search || ''}${window.location.hash || ''}`;
+        window.history.replaceState({}, '', nextUrl);
+        window.dispatchEvent(new Event(ROUTE_CHANGE_EVENT));
+      }
+    } catch {
+      // noop
+    }
   }, []);
+
+  const toLocalizedPath = useCallback((targetPath, nextLanguage = language) => {
+    const normalizedLang = normalizeLanguage(nextLanguage);
+    const rawPath = String(targetPath || '/').trim();
+    if (!rawPath || !rawPath.startsWith('/')) return rawPath;
+    if (!isLocalizablePublicPath(rawPath)) return rawPath;
+    const stripped = stripPathLocale(rawPath);
+    return `/${normalizedLang}${stripped === '/' ? '' : stripped}`;
+  }, [language]);
 
   const lazyLoadNamespace = useCallback((namespaceKey) => {
     const namespace = normalizeNamespace(namespaceKey);
@@ -352,11 +498,12 @@ export function LanguageProvider({ children }) {
     () => ({
       language,
       setLanguage,
+      toLocalizedPath,
       t,
       ready,
       supportedLanguages: SUPPORTED_LANGUAGES,
     }),
-    [language, ready, setLanguage, t, bundleVersion],
+    [language, ready, setLanguage, toLocalizedPath, t, bundleVersion],
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

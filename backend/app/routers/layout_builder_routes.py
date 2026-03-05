@@ -127,6 +127,149 @@ WIZARD_POLICY_PAGE_TYPES: set[LayoutPageType] = {
     LayoutPageType.LISTING_CREATE_STEPX,
 }
 
+SUPPORTED_I18N_LANGS: tuple[str, ...] = ("tr", "de", "fr")
+TRANSLATABLE_PROP_KEYS = {
+    "title",
+    "description",
+    "label",
+    "body",
+    "text",
+    "headline",
+    "subtitle",
+    "cta_label",
+    "campaign_label",
+    "primary_label",
+    "secondary_label",
+    "note",
+}
+
+
+def _normalize_i18n_lang(raw_lang: Optional[str]) -> str:
+    normalized = str(raw_lang or "").strip().lower()
+    return normalized if normalized in SUPPORTED_I18N_LANGS else "tr"
+
+
+def _extract_user_preferred_lang(current_user: Any) -> Optional[str]:
+    if not current_user:
+        return None
+
+    candidates: list[str] = []
+    if isinstance(current_user, dict):
+        candidates.extend([
+            current_user.get("preferred_language"),
+            current_user.get("language"),
+            current_user.get("locale"),
+        ])
+    else:
+        candidates.extend([
+            getattr(current_user, "preferred_language", None),
+            getattr(current_user, "language", None),
+            getattr(current_user, "locale", None),
+        ])
+
+    for candidate in candidates:
+        if not candidate:
+            continue
+        normalized = _normalize_i18n_lang(candidate)
+        if normalized in SUPPORTED_I18N_LANGS:
+            return normalized
+    return None
+
+
+def _extract_lang_from_accept_header(accept_language: Optional[str]) -> Optional[str]:
+    raw = str(accept_language or "").strip()
+    if not raw:
+        return None
+    for item in raw.split(","):
+        part = item.split(";", 1)[0].strip().lower()
+        if not part:
+            continue
+        primary = part.split("-", 1)[0]
+        if primary in SUPPORTED_I18N_LANGS:
+            return primary
+    return None
+
+
+def _resolve_request_i18n_lang(request: Optional[Request], current_user: Any = None) -> str:
+    raw_url_lang = str(request.headers.get("x-url-locale") if request else "").strip().lower()
+    if raw_url_lang in SUPPORTED_I18N_LANGS:
+        return raw_url_lang
+
+    user_lang = _extract_user_preferred_lang(current_user)
+    if user_lang:
+        return user_lang
+
+    header_lang = _extract_lang_from_accept_header(request.headers.get("accept-language") if request else None)
+    if header_lang:
+        return header_lang
+
+    return "tr"
+
+
+def _is_i18n_value_map(value: Any) -> bool:
+    if not isinstance(value, dict) or not value:
+        return False
+    keys = {str(key).strip().lower() for key in value.keys()}
+    return bool(keys) and keys.issubset(set(SUPPORTED_I18N_LANGS))
+
+
+def _normalize_i18n_text_map(value: Any, *, fallback_value: str = "") -> dict[str, str]:
+    fallback = str(fallback_value or "")
+    if _is_i18n_value_map(value):
+        normalized = {lang: str(value.get(lang) or "").strip() for lang in SUPPORTED_I18N_LANGS}
+        seed = normalized.get("tr") or normalized.get("de") or normalized.get("fr") or fallback
+        return {
+            "tr": normalized.get("tr") or seed,
+            "de": normalized.get("de") or seed,
+            "fr": normalized.get("fr") or seed,
+        }
+
+    seed = str(value or fallback).strip()
+    return {"tr": seed, "de": seed, "fr": seed}
+
+
+def _resolve_i18n_text(value: Any, lang: str) -> Any:
+    if not _is_i18n_value_map(value):
+        return value
+    normalized_lang = _normalize_i18n_lang(lang)
+    localized = value.get(normalized_lang)
+    if isinstance(localized, str) and localized.strip():
+        return localized
+    for fallback_lang in SUPPORTED_I18N_LANGS:
+        fallback_value = value.get(fallback_lang)
+        if isinstance(fallback_value, str) and fallback_value.strip():
+            return fallback_value
+    return ""
+
+
+def _localize_payload_values(value: Any, lang: str) -> Any:
+    if isinstance(value, list):
+        return [_localize_payload_values(item, lang) for item in value]
+    if isinstance(value, dict):
+        if _is_i18n_value_map(value):
+            return _resolve_i18n_text(value, lang)
+        return {key: _localize_payload_values(item, lang) for key, item in value.items()}
+    return value
+
+
+def _normalize_seed_props_i18n(props: Optional[dict[str, Any]]) -> dict[str, Any]:
+    normalized_props: dict[str, Any] = {}
+    for key, value in (props or {}).items():
+        if isinstance(value, str) and key in TRANSLATABLE_PROP_KEYS:
+            normalized_props[key] = _normalize_i18n_text_map(value)
+            continue
+        if isinstance(value, dict):
+            normalized_props[key] = _normalize_seed_props_i18n(value)
+            continue
+        if isinstance(value, list):
+            normalized_props[key] = [
+                _normalize_seed_props_i18n(item) if isinstance(item, dict) else item
+                for item in value
+            ]
+            continue
+        normalized_props[key] = value
+    return normalized_props
+
 
 def _is_transient_db_error(exc: Exception) -> bool:
     if isinstance(exc, SQLAlchemyError):
@@ -442,12 +585,18 @@ class LayoutPageCreatePayload(BaseModel):
     country: str = Field(min_length=2, max_length=5)
     module: str = Field(min_length=2, max_length=64)
     category_id: Optional[str] = None
+    title_i18n: Optional[dict[str, str]] = None
+    description_i18n: Optional[dict[str, str]] = None
+    label_i18n: Optional[dict[str, str]] = None
 
 
 class LayoutPagePatchPayload(BaseModel):
     country: Optional[str] = Field(default=None, min_length=2, max_length=5)
     module: Optional[str] = Field(default=None, min_length=2, max_length=64)
     category_id: Optional[str] = None
+    title_i18n: Optional[dict[str, str]] = None
+    description_i18n: Optional[dict[str, str]] = None
+    label_i18n: Optional[dict[str, str]] = None
 
 
 class LayoutDraftPayload(BaseModel):
@@ -488,9 +637,9 @@ class LayoutSeedDefaultsPayload(BaseModel):
     overwrite_existing_draft: bool = True
 
 
-def _cache_key(country: str, module: str, page_type: LayoutPageType, category_id: Optional[str]) -> str:
+def _cache_key(country: str, module: str, page_type: LayoutPageType, category_id: Optional[str], lang: str = "tr") -> str:
     normalized_category = str(category_id or "").strip().lower()
-    return f"{country.upper()}|{module.strip().lower()}|{page_type.value}|{normalized_category}"
+    return f"{country.upper()}|{module.strip().lower()}|{page_type.value}|{normalized_category}|{_normalize_i18n_lang(lang)}"
 
 
 def _invalidate_resolve_cache() -> None:
@@ -527,12 +676,21 @@ def _serialize_component(row: LayoutComponentDefinition) -> dict[str, Any]:
 
 
 def _serialize_layout_page(row: LayoutPage) -> dict[str, Any]:
+    title_i18n = _normalize_i18n_text_map(getattr(row, "title_i18n", {}) or {})
+    description_i18n = _normalize_i18n_text_map(getattr(row, "description_i18n", {}) or {})
+    label_i18n = _normalize_i18n_text_map(getattr(row, "label_i18n", {}) or {})
     return {
         "id": str(row.id),
         "page_type": row.page_type.value,
         "country": row.country,
         "module": row.module,
         "category_id": str(row.category_id) if row.category_id else None,
+        "title_i18n": title_i18n,
+        "description_i18n": description_i18n,
+        "label_i18n": label_i18n,
+        "title": _resolve_i18n_text(title_i18n, "tr"),
+        "description": _resolve_i18n_text(description_i18n, "tr"),
+        "label": _resolve_i18n_text(label_i18n, "tr"),
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
     }
@@ -607,7 +765,7 @@ def _seed_component(component_key: str, props: Optional[dict[str, Any]] = None) 
     return {
         "id": f"cmp-{uuid.uuid4().hex[:10]}",
         "key": component_key,
-        "props": props or {},
+        "props": _normalize_seed_props_i18n(props),
         "visibility": {"desktop": True, "tablet": True, "mobile": True},
     }
 
@@ -842,6 +1000,35 @@ def _build_standard_page_seed_payload(
     }
 
 
+def _default_layout_page_i18n(page_type: LayoutPageType) -> dict[str, dict[str, str]]:
+    title_map = {
+        LayoutPageType.HOME: "Ana Sayfa",
+        LayoutPageType.CATEGORY_L0_L1: "L0/L1 Kategori",
+        LayoutPageType.SEARCH_LN: "Kategori Listeleme",
+        LayoutPageType.URGENT_LISTINGS: "Acil Ilanlar",
+        LayoutPageType.CATEGORY_SHOWCASE: "Kategori Vitrin",
+        LayoutPageType.LISTING_DETAIL: "Ilan Detay",
+        LayoutPageType.LISTING_DETAIL_PARAMETERS: "Ilan Parametreleri",
+        LayoutPageType.STOREFRONT_PROFILE: "Magaza Profili",
+        LayoutPageType.WIZARD_STEP_L0: "Ilan Ver Adim 1",
+        LayoutPageType.WIZARD_STEP_LN: "Ilan Ver Adim 2",
+        LayoutPageType.WIZARD_STEP_FORM: "Ilan Ver Adim 3",
+        LayoutPageType.WIZARD_PREVIEW: "Ilan Ver Onizleme",
+        LayoutPageType.WIZARD_DOPING_PAYMENT: "Doping ve Odeme",
+        LayoutPageType.WIZARD_RESULT: "Ilan Ver Sonuc",
+        LayoutPageType.USER_DASHBOARD: "Kullanici Paneli",
+        LayoutPageType.SEARCH_L1: "Search L1",
+        LayoutPageType.SEARCH_L2: "Search L2",
+        LayoutPageType.LISTING_CREATE_STEPX: "Ilan Ver",
+    }
+    tr_title = title_map.get(page_type, page_type.value)
+    return {
+        "title_i18n": _normalize_i18n_text_map(tr_title),
+        "description_i18n": _normalize_i18n_text_map(f"{tr_title} sayfasi icin varsayilan yerlesim"),
+        "label_i18n": _normalize_i18n_text_map(tr_title),
+    }
+
+
 def _validate_listing_column_width_or_400(width_payload: Any, *, row_index: int, column_index: int) -> None:
     if not isinstance(width_payload, dict):
         raise HTTPException(status_code=400, detail=f"listing_create_column_width_invalid:r{row_index}:c{column_index}")
@@ -872,14 +1059,22 @@ def _validate_listing_component_props_or_400(component_key: str, props: dict[str
         title = props.get("title")
         body = props.get("body")
         if title is not None:
-            if not isinstance(title, str):
+            if not isinstance(title, (str, dict)):
                 raise HTTPException(status_code=400, detail="listing_create_text_block_title_must_be_string")
-            if len(title.strip()) > LISTING_TEXT_TITLE_MAX:
+            if isinstance(title, dict):
+                title_map = _normalize_i18n_text_map(title)
+                if any(len(str(value or "").strip()) > LISTING_TEXT_TITLE_MAX for value in title_map.values()):
+                    raise HTTPException(status_code=400, detail="listing_create_text_block_title_too_long")
+            elif len(title.strip()) > LISTING_TEXT_TITLE_MAX:
                 raise HTTPException(status_code=400, detail="listing_create_text_block_title_too_long")
         if body is not None:
-            if not isinstance(body, str):
+            if not isinstance(body, (str, dict)):
                 raise HTTPException(status_code=400, detail="listing_create_text_block_body_must_be_string")
-            if len(body.strip()) > LISTING_TEXT_BODY_MAX:
+            if isinstance(body, dict):
+                body_map = _normalize_i18n_text_map(body)
+                if any(len(str(value or "").strip()) > LISTING_TEXT_BODY_MAX for value in body_map.values()):
+                    raise HTTPException(status_code=400, detail="listing_create_text_block_body_too_long")
+            elif len(body.strip()) > LISTING_TEXT_BODY_MAX:
                 raise HTTPException(status_code=400, detail="listing_create_text_block_body_too_long")
 
     if component_key == "shared.ad-slot":
@@ -1267,8 +1462,23 @@ def _autofix_listing_payload(payload_json: dict[str, Any]) -> tuple[dict[str, An
                 if component_key == "shared.text-block":
                     title = cleaned_props.get("title")
                     body = cleaned_props.get("body")
-                    cleaned_props["title"] = str(title or "Bilgilendirme")[:LISTING_TEXT_TITLE_MAX]
-                    cleaned_props["body"] = str(body or "")[:LISTING_TEXT_BODY_MAX]
+                    if isinstance(title, dict):
+                        title_map = _normalize_i18n_text_map(title, fallback_value="Bilgilendirme")
+                        cleaned_props["title"] = {
+                            lang: str(text or "")[:LISTING_TEXT_TITLE_MAX]
+                            for lang, text in title_map.items()
+                        }
+                    else:
+                        cleaned_props["title"] = str(title or "Bilgilendirme")[:LISTING_TEXT_TITLE_MAX]
+
+                    if isinstance(body, dict):
+                        body_map = _normalize_i18n_text_map(body)
+                        cleaned_props["body"] = {
+                            lang: str(text or "")[:LISTING_TEXT_BODY_MAX]
+                            for lang, text in body_map.items()
+                        }
+                    else:
+                        cleaned_props["body"] = str(body or "")[:LISTING_TEXT_BODY_MAX]
 
                 if component_key == "shared.ad-slot":
                     placement = str(cleaned_props.get("placement") or "").strip()
@@ -1670,6 +1880,9 @@ async def create_layout_page_admin(
                 country=payload.country,
                 module=payload.module,
                 category_id=payload.category_id,
+                title_i18n=_normalize_i18n_text_map(payload.title_i18n or {}, fallback_value=payload.page_type.value),
+                description_i18n=_normalize_i18n_text_map(payload.description_i18n or {}, fallback_value=""),
+                label_i18n=_normalize_i18n_text_map(payload.label_i18n or {}, fallback_value=payload.page_type.value),
                 actor_user_id=current_user.get("id"),
             )
             await session.commit()
@@ -1706,6 +1919,12 @@ async def patch_layout_page_admin(
         row.module = payload.module.strip()
     if payload.category_id is not None:
         row.category_id = _as_uuid_or_400(payload.category_id, field_name="category_id")
+    if payload.title_i18n is not None:
+        row.title_i18n = _normalize_i18n_text_map(payload.title_i18n, fallback_value=row.page_type.value)
+    if payload.description_i18n is not None:
+        row.description_i18n = _normalize_i18n_text_map(payload.description_i18n)
+    if payload.label_i18n is not None:
+        row.label_i18n = _normalize_i18n_text_map(payload.label_i18n, fallback_value=row.page_type.value)
     row.updated_at = datetime.now(timezone.utc)
 
     try:
@@ -1773,6 +1992,7 @@ async def seed_standard_layout_pages_admin(
             page_row = page_result.scalar_one_or_none()
 
             page_created = False
+            page_i18n = _default_layout_page_i18n(page_type)
             if not page_row:
                 page_row = await create_layout_page(
                     session,
@@ -1780,10 +2000,26 @@ async def seed_standard_layout_pages_admin(
                     country=normalized_country,
                     module=normalized_module,
                     category_id=None,
+                    title_i18n=page_i18n["title_i18n"],
+                    description_i18n=page_i18n["description_i18n"],
+                    label_i18n=page_i18n["label_i18n"],
                     actor_user_id=current_user.get("id"),
                 )
                 page_created = True
                 summary["created_pages"] += 1
+            else:
+                has_mutation = False
+                if not isinstance(page_row.title_i18n, dict) or not page_row.title_i18n:
+                    page_row.title_i18n = page_i18n["title_i18n"]
+                    has_mutation = True
+                if not isinstance(page_row.description_i18n, dict) or not page_row.description_i18n:
+                    page_row.description_i18n = page_i18n["description_i18n"]
+                    has_mutation = True
+                if not isinstance(page_row.label_i18n, dict) or not page_row.label_i18n:
+                    page_row.label_i18n = page_i18n["label_i18n"]
+                    has_mutation = True
+                if has_mutation:
+                    page_row.updated_at = datetime.now(timezone.utc)
 
             seed_payload = _build_standard_page_seed_payload(
                 page_type,
@@ -2490,6 +2726,7 @@ async def resolve_content_layout(
     page_type: LayoutPageType,
     category_id: Optional[str] = None,
     layout_preview: str = Query(default="published"),
+    request: Request = None,
     current_user=Depends(get_current_user_optional),
     session: AsyncSession = Depends(get_db),
 ):
@@ -2502,8 +2739,10 @@ async def resolve_content_layout(
         if not current_user or current_user.get("role") not in ADMIN_ROLES:
             raise HTTPException(status_code=403, detail="Draft preview requires admin role")
 
+    requested_lang = _resolve_request_i18n_lang(request, current_user=current_user)
+
     _METRICS["resolve_requests"] += 1
-    key = _cache_key(normalized_country, normalized_module, page_type, category_id)
+    key = _cache_key(normalized_country, normalized_module, page_type, category_id, requested_lang)
     now_ts = time.time()
     cached = _RESOLVE_CACHE.get(key) if preview_mode == "published" else None
     if cached and cached[0] > now_ts:
@@ -2511,7 +2750,7 @@ async def resolve_content_layout(
         elapsed_ms = (time.perf_counter() - started_at) * 1000
         _METRICS["resolve_total_latency_ms"] += elapsed_ms
         logger.info("layout_resolve source=cache key=%s latency_ms=%.2f", key, elapsed_ms)
-        return {**cached[1], "source": "cache"}
+        return {**cached[1], "source": "cache", "lang": requested_lang}
 
     _METRICS["resolve_cache_misses"] += 1
     payload = await _resolve_effective_layout(
@@ -2522,18 +2761,26 @@ async def resolve_content_layout(
         category_id=category_id,
         preview_mode=preview_mode,
     )
+    localized_payload = {
+        **payload,
+        "layout_page": _localize_payload_values(payload.get("layout_page"), requested_lang),
+        "revision": _localize_payload_values(payload.get("revision"), requested_lang),
+        "comparison": _localize_payload_values(payload.get("comparison"), requested_lang),
+        "lang": requested_lang,
+    }
+
     if preview_mode == "published":
-        _RESOLVE_CACHE[key] = (now_ts + RESOLVE_CACHE_TTL_SECONDS, payload)
+        _RESOLVE_CACHE[key] = (now_ts + RESOLVE_CACHE_TTL_SECONDS, localized_payload)
     elapsed_ms = (time.perf_counter() - started_at) * 1000
     _METRICS["resolve_total_latency_ms"] += elapsed_ms
     logger.info(
         "layout_resolve source=db key=%s strategy=%s preview=%s latency_ms=%.2f",
         key,
-        payload.get("source"),
+        localized_payload.get("source"),
         preview_mode,
         elapsed_ms,
     )
-    return payload
+    return localized_payload
 
 
 @router.get("/admin/site/content-layout/metrics")
