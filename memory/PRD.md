@@ -220,6 +220,40 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - **P1 (devam):** menü bileşenlerini Component Library’e alma (#665), canvas UX ince iyileştirmeler
 - **P2:** ilan-ver controlled runtime ileri fazları ve ek hardening
 
+## 2026-03-05 (P1 #665 + Canvas UX + P2 Guard Hardening)
+
+### Uygulananlar
+- **#665 tamamlandı:** Component Library artık gerçek menü verisiyle besleniyor.
+  - Kaynak önceliği: `/api/admin/menu-items` (feature açıksa)
+  - Fallback kaynakları: `/api/admin/dealer-portal/config` ve `/api/menu/top-items`
+  - Sonuç: `menu.snapshot.*` anahtarları ile menü/sub-menü bileşenleri kütüphanede üretildi.
+- **Canvas UX iyileştirmeleri:**
+  - Daha belirgin selected-state (row/column/component ring + vurgular)
+  - Seçim özeti paneli eklendi (`Seçili: Row • Column • Component`)
+  - Drag-over indicator metni sürüklenen bileşen adına göre dinamik hale getirildi.
+- **Runtime renderer genişletmesi:**
+  - `LayoutRenderer` wildcard resolver desteği (`menu.snapshot.*`)
+  - Yeni `MenuSnapshotBlock` eklendi ve Home/Search runtime registry’ye bağlandı.
+- **P2 Listing guard hardening genişletildi (backend):**
+  - Tek `listing.create.default-content` zorunluluğu
+  - Width breakpoint doğrulama (`desktop/tablet/mobile`, 1..12)
+  - Component id tekrar ve yapı kontrolleri
+  - `shared.text-block` uzunluk/type kontrolleri
+  - `shared.ad-slot` placement whitelist kontrolü
+- **P2 frontend guard (Wizard) güçlendirildi:**
+  - Step bazlı allowed component + prop sanitization
+  - Tek default component enforcement
+  - Geçersiz ad placement fallback’i.
+
+### Test Durumu
+- Testing agent raporu: `/app/test_reports/iteration_126.json`
+  - Backend: **100% PASS**
+  - Frontend: **100% PASS**
+- Doğrulanan başlıklar: menü library (14 adet `menu.snapshot.*`), drawer, selected-state, drag-drop UX, wildcard renderer, listing hardening kuralları.
+
+### Notlar / Bilinen Durum
+- Bu ortamda `/api/admin/menu-items` endpointi `403 feature_disabled` dönebiliyor; bu durum için fallback tasarımı aktif.
+
 ### P0 — Google Autocomplete Real Mode (manuel key destekli)
 - Backend eklendi:
   - `GET /api/places/config`
