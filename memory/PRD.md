@@ -305,6 +305,46 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Bilinen Not
 - Bu ortamda `/api/admin/menu-items` endpointi `403 feature_disabled` dönebiliyor; library otomatik fallback (`/api/admin/dealer-portal/config`, `/api/menu/top-items`) ile çalışır.
 
+## 2026-03-05 (Canlı Veri Derinliği + Policy Fix Suggestions + Preset Packs)
+
+### Tamamlanan İşler
+- **Runtime canlı veri derinliği artırıldı (Home + Search + Detail-odaklı + Create):**
+  - `LayoutRenderer` artık `runtimeContext` geçiriyor.
+  - `ExtendedRuntimeBlocks` içinde canlı veri katmanı eklendi:
+    - `data.price-title-block`, `data.seller-card`, `interactive.similar-listings-slider`, `interactive.interactive-map` canlı listing verisiyle besleniyor.
+    - Kaynak önceliği: `runtimeContext` -> `props.listing_id` -> URL `/ilan/{id}` -> fallback aday listing.
+    - Detay/similar endpoint entegrasyonları: `/api/v1/listings/vehicle/{id}` ve `/api/v1/listings/vehicle/{id}/similar`.
+  - Harita katmanı **OpenStreetMap embed** ile key gerektirmeden çalışacak şekilde tutuldu.
+- **Policy report fix suggestion genişletmesi (Ayrı liste + satır içi):**
+  - Backend `policy-report` çıktısına `checks[].fix_suggestion` ve `suggested_fixes[]` eklendi.
+  - Frontend panelde:
+    - Her FAIL/PASS check satırında öneri gösterimi
+    - Ayrı “Önerilen Düzeltmeler” listesi render
+- **Preset Packs (hızlı kurulum) eklendi:**
+  - `home-default-pack`
+  - `search-l1-pack`
+  - `search-l2-pack`
+  - `listing-detail-pack`
+  - `listing-create-stepx-pack`
+  - UI: Preset select + “Preset Uygula” aksiyonu + açıklama bandı
+- **Ek UX iyileştirmeleri:**
+  - Drag/drop sonrası component auto-focus
+  - Preview açıkken auto-scroll
+  - Preview URL refresh token ile güncel render tetikleme
+
+### Test Durumu
+- Testing agent: `/app/test_reports/iteration_128.json`
+  - Backend: **94%** (major featureler PASS, tek düşük öncelik: transient DB_ERROR 503)
+  - Frontend: **100% PASS**
+- Özellikle doğrulananlar:
+  - Preset pack’lerin uygulanması
+  - Policy report fix_suggestion alanları
+  - Publish guard davranışı (FAIL engelleme / PASS yayın)
+  - Grouped library + filtreler
+
+### Bilinen Not
+- Ortamda aralıklı olarak `draft creation` sırasında düşük öncelikli transient `DB_ERROR 503` gözlenebiliyor (arka plan Meili worker timeout kaynaklı); işlevsel akışların tamamı tekrar denemede PASS.
+
 ### P0 — Google Autocomplete Real Mode (manuel key destekli)
 - Backend eklendi:
   - `GET /api/places/config`
