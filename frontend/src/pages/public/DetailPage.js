@@ -66,6 +66,15 @@ const SellerCard = ({
         <div className="text-sm text-gray-600" data-testid={`${cardIdPrefix}-listing-count`}>
           Toplam ilan: {Number(seller.total_listings || 0)}
         </div>
+        <div className="text-sm text-gray-600" data-testid={`${cardIdPrefix}-rating`}>
+          Puan: {Number(seller.rating || 0).toFixed(1)}
+        </div>
+        <div className="text-sm text-gray-600" data-testid={`${cardIdPrefix}-reviews`}>
+          Yorum: {Number(seller.reviews_count || 0)}
+        </div>
+        <div className="text-sm text-gray-600" data-testid={`${cardIdPrefix}-response-rate`}>
+          Yanıt oranı: %{Number(seller.response_rate || 0)}
+        </div>
         <div className="text-sm text-gray-600" data-testid={`${cardIdPrefix}-member-since`}>
           Üyelik: {formatMemberSince(seller.member_since)}
         </div>
