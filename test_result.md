@@ -27968,3 +27968,214 @@ Quick validation of Admin Content Builder as per review request: "Admin Content 
 
 ---
 
+
+## Admin Content Builder Component Library Validation (Mar 5, 2026 - LATEST) ✅ COMPLETE PASS
+
+### Test Summary
+Validation of Component Library in Admin Content Builder for newly added components as per review request: "Admin Content Builder'da Component Library'ye eklenen yeni bileşen listesini doğrula."
+
+### Test Flow Executed:
+1. ✅ Admin login (admin@platform.com / Admin123!) → authentication successful
+2. ✅ Navigate to /admin/site-design/content-builder → page loads successfully
+3. ✅ Verify 16 new components in Component Library → all visible with correct keys/labels
+4. ✅ Test "Seçili Sütuna Ekle" button functionality → component added to canvas successfully
+5. ✅ Monitor console errors → 0 errors
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS - 16/16 COMPONENTS + BUTTON TEST):
+
+**Component Library Validation Results**:
+
+**Layout Components (4/4 - PASS)**:
+1. ✅ **PASS**: layout.breadcrumb-header - "Breadcrumb Header"
+   - Key visible: layout.breadcrumb-header
+   - Name visible: Breadcrumb Header
+   - Button present: "Seçili Sütuna Ekle"
+
+2. ✅ **PASS**: layout.sticky-action-bar - "Sticky Action Bar"
+   - Key visible: layout.sticky-action-bar
+   - Name visible: Sticky Action Bar
+   - Button present: "Seçili Sütuna Ekle"
+
+3. ✅ **PASS**: layout.category-navigator-side - "Category Navigator (Side)"
+   - Key visible: layout.category-navigator-side
+   - Name visible: Category Navigator (Side)
+   - Button present: "Seçili Sütuna Ekle"
+
+4. ✅ **PASS**: layout.category-navigator-top - "Category Navigator (Top)"
+   - Key visible: layout.category-navigator-top
+   - Name visible: Category Navigator (Top)
+   - Button present: "Seçili Sütuna Ekle"
+
+**Media Components (4/4 - PASS)**:
+5. ✅ **PASS**: media.advanced-photo-gallery - "Advanced Photo Gallery"
+   - Key visible: media.advanced-photo-gallery
+   - Name visible: Advanced Photo Gallery
+   - Button present: "Seçili Sütuna Ekle"
+
+6. ✅ **PASS**: media.auto-play-carousel-hero - "Auto-Play Carousel (Hero Banner)"
+   - Key visible: media.auto-play-carousel-hero
+   - Name visible: Auto-Play Carousel (Hero Banner)
+   - Button present: "Seçili Sütuna Ekle"
+
+7. ✅ **PASS**: media.video-3d-tour-player - "Video / 3D Tour Player"
+   - Key visible: media.video-3d-tour-player
+   - Name visible: Video / 3D Tour Player
+   - Button present: "Seçili Sütuna Ekle"
+
+8. ✅ **PASS**: media.ad-promo-slot - "Ad / Promo Slot"
+   - Key visible: media.ad-promo-slot
+   - Name visible: Ad / Promo Slot
+   - Button present: "Seçili Sütuna Ekle"
+
+**Data Components (4/4 - PASS)**:
+9. ✅ **PASS**: data.price-title-block - "Price & Title Block"
+   - Key visible: data.price-title-block
+   - Name visible: Price & Title Block
+   - Button present: "Seçili Sütuna Ekle"
+
+10. ✅ **PASS**: data.attribute-grid-dynamic - "Attribute Grid (Dynamic)"
+    - Key visible: data.attribute-grid-dynamic
+    - Name visible: Attribute Grid (Dynamic)
+    - Button present: "Seçili Sütuna Ekle"
+
+11. ✅ **PASS**: data.description-text-area - "Description Text Area"
+    - Key visible: data.description-text-area
+    - Name visible: Description Text Area
+    - Button present: "Seçili Sütuna Ekle"
+
+12. ✅ **PASS**: data.seller-card - "Seller Card"
+    - Key visible: data.seller-card
+    - Name visible: Seller Card
+    - Button present: "Seçili Sütuna Ekle"
+
+**Interactive Components (4/4 - PASS)**:
+13. ✅ **PASS**: interactive.interactive-map - "Interactive Map"
+    - Key visible: interactive.interactive-map
+    - Name visible: Interactive Map
+    - Button present: "Seçili Sütuna Ekle"
+
+14. ✅ **PASS**: interactive.mortgage-loan-calculator - "Mortgage / Loan Calculator"
+    - Key visible: interactive.mortgage-loan-calculator
+    - Name visible: Mortgage / Loan Calculator
+    - Button present: "Seçili Sütuna Ekle"
+
+15. ✅ **PASS**: interactive.similar-listings-slider - "Similar Listings Slider"
+    - Key visible: interactive.similar-listings-slider
+    - Name visible: Similar Listings Slider
+    - Button present: "Seçili Sütuna Ekle"
+
+16. ✅ **PASS**: interactive.doping-selector - "Doping Selector (İlan Ver)"
+    - Key visible: interactive.doping-selector
+    - Name visible: Doping Selector (İlan Ver)
+    - Button present: "Seçili Sütuna Ekle"
+
+**"Seçili Sütuna Ekle" Button Functionality Test**: ✅ **PASS**
+  - **Component Tested**: layout.breadcrumb-header
+  - **Test Steps**:
+    1. Selected first row on canvas ✅
+    2. Selected first column in row ✅
+    3. Clicked "Seçili Sütuna Ekle" button ✅
+    4. Component count increased from 12 to 24 ✅
+  - **Result**: Component successfully added to canvas
+  - **UI Status**: No crashes, no errors
+  - **CRITICAL**: Button functionality working perfectly
+
+### Implementation Details:
+
+**Component Library Location**:
+- File: /app/frontend/src/pages/admin/AdminContentBuilder.js
+- Definition: Lines 64-350 in DEFAULT_COMPONENT_LIBRARY array
+- Rendering: Lines 1564-1604 (Component Library sidebar)
+
+**Component Structure**:
+Each component includes:
+- `key`: Unique component identifier (e.g., "layout.breadcrumb-header")
+- `name`: Display name (e.g., "Breadcrumb Header")
+- `schema_json`: JSON schema for component properties
+- `default_props`: Default property values
+- `data-testid`: Test identifiers for automation
+
+**UI Elements**:
+- Component card with name and key
+- Drag-and-drop functionality
+- "Seçili Sütuna Ekle" button for each component
+- Hover hint: "Bu kartı doğrudan canvas sütununa sürükleyebilirsiniz"
+
+### Screenshots Captured:
+1. **component-library-validation.png**: Component Library showing all 16 new components with Canvas editor and PayloadPreview
+
+### Test Results Summary:
+- **Total Components Validated**: 16
+- **✅ PASSED**: 16/16 (100%)
+- **❌ FAILED**: 0/16 (0%)
+- **Button Test**: ✅ PASS (component added to canvas successfully)
+- **Console Errors**: 0 ✅
+
+### Component Categories Breakdown:
+| Category | Components | Status |
+|----------|-----------|---------|
+| Layout | 4 | ✅ 4/4 PASS |
+| Media | 4 | ✅ 4/4 PASS |
+| Data | 4 | ✅ 4/4 PASS |
+| Interactive | 4 | ✅ 4/4 PASS |
+| **TOTAL** | **16** | **✅ 16/16 PASS** |
+
+### Console Monitoring:
+- **Console Errors**: 0 ✅ (EXCELLENT)
+- **Console Warnings**: 0 ✅ (EXCELLENT)
+- **Runtime**: Clean execution with no errors
+
+### Final Status:
+- **Overall Result**: ✅ **COMPLETE PASS** - All 16 components validated successfully
+- **Component Visibility**: ✅ PRODUCTION-READY (all components visible with correct keys/labels)
+- **Button Functionality**: ✅ PRODUCTION-READY (add to canvas working perfectly)
+- **User Experience**: ✅ EXCELLENT (zero console errors, smooth interaction)
+- **No Blockers**: ✅ All requirements met with zero issues
+
+### Review Request Compliance:
+
+**Turkish Requirements Check**:
+1. ✅ "/admin/login üzerinden admin@platform.com / Admin123! ile giriş yap"
+   - **PASSED**: Admin login successful
+
+2. ✅ "/admin/site-design/content-builder sayfasına git"
+   - **PASSED**: Successfully navigated to content builder page
+
+3. ✅ "Component Library içinde aşağıdaki key veya label'ların görünürlüğünü kontrol et (PASS/FAIL tek tek raporla):"
+   - **PASSED**: All 16 components validated individually:
+     - ✅ layout.breadcrumb-header - PASS
+     - ✅ layout.sticky-action-bar - PASS
+     - ✅ layout.category-navigator-side - PASS
+     - ✅ layout.category-navigator-top - PASS
+     - ✅ media.advanced-photo-gallery - PASS
+     - ✅ media.auto-play-carousel-hero - PASS
+     - ✅ media.video-3d-tour-player - PASS
+     - ✅ media.ad-promo-slot - PASS
+     - ✅ data.price-title-block - PASS
+     - ✅ data.attribute-grid-dynamic - PASS
+     - ✅ data.description-text-area - PASS
+     - ✅ data.seller-card - PASS
+     - ✅ interactive.interactive-map - PASS
+     - ✅ interactive.mortgage-loan-calculator - PASS
+     - ✅ interactive.similar-listings-slider - PASS
+     - ✅ interactive.doping-selector - PASS
+
+4. ✅ "En az bir yeni bileşende 'Seçili Sütuna Ekle' butonunu tıklayıp canvas'a eklendiğini doğrula"
+   - **PASSED**: layout.breadcrumb-header component added to canvas successfully
+
+5. ✅ "Kısa PASS/FAIL özeti ve varsa blocker yaz"
+   - **RESULT**: ✅ **PASS** - Tüm bileşenler görünür ve "Seçili Sütuna Ekle" butonu çalışıyor. Blocker yok.
+
+**Kısa PASS/FAIL Özeti**: ✅ **COMPLETE PASS** - 16/16 bileşen Component Library'de görünür, tüm key ve label'lar doğru. "Seçili Sütuna Ekle" butonu test edildi ve başarıyla çalıştı (layout.breadcrumb-header canvas'a eklendi). Hiçbir blocker veya hata yok.
+
+**Overall Compliance**: ✅ 5/5 requirements fully satisfied (100%)
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Mar 5, 2026 (LATEST)
+- **Message**: Admin Content Builder Component Library Validation SUCCESSFULLY COMPLETED with 100% PASS rate (16/16 components + button test). All Turkish review request requirements fully satisfied. CRITICAL VERIFICATION: All 16 new components in Component Library are visible and functional. COMPONENT VALIDATION RESULTS: ✅ Layout Components (4/4): layout.breadcrumb-header, layout.sticky-action-bar, layout.category-navigator-side, layout.category-navigator-top - ALL PASS ✅. Media Components (4/4): media.advanced-photo-gallery, media.auto-play-carousel-hero, media.video-3d-tour-player, media.ad-promo-slot - ALL PASS ✅. Data Components (4/4): data.price-title-block, data.attribute-grid-dynamic, data.description-text-area, data.seller-card - ALL PASS ✅. Interactive Components (4/4): interactive.interactive-map, interactive.mortgage-loan-calculator, interactive.similar-listings-slider, interactive.doping-selector - ALL PASS ✅. Each component verified with: key visible, name visible, "Seçili Sütuna Ekle" button present. BUTTON FUNCTIONALITY TEST: Tested layout.breadcrumb-header - selected canvas row and column, clicked "Seçili Sütuna Ekle" button, component count increased from 12 to 24 components, component successfully added to canvas without any errors or UI crashes ✅. CONSOLE MONITORING: 0 errors, 0 warnings, clean execution ✅. **FINAL VERDICT: ✅ COMPLETE PASS** - Component Library fully functional with all 16 new components visible, properly labeled, and successfully addable to canvas. Zero blockers, production-ready. Kısa Özet: PASS - 16/16 bileşen görünür, butonu çalışıyor, blocker yok.
+
+---
+

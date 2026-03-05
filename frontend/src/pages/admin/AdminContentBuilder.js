@@ -60,6 +60,294 @@ const DEFAULT_COMPONENT_LIBRARY = [
       additionalProperties: false,
     },
   },
+  {
+    key: 'layout.breadcrumb-header',
+    name: 'Breadcrumb Header',
+    schema_json: {
+      type: 'object',
+      properties: {
+        separator: { type: 'string', title: 'Ayırıcı' },
+        show_home: { type: 'boolean', title: 'Ana Sayfa Göster' },
+        max_depth: { type: 'integer', title: 'Maksimum Derinlik' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      separator: ' > ',
+      show_home: true,
+      max_depth: 8,
+    },
+  },
+  {
+    key: 'layout.sticky-action-bar',
+    name: 'Sticky Action Bar',
+    schema_json: {
+      type: 'object',
+      properties: {
+        position: { type: 'string', title: 'Pozisyon', enum: ['bottom', 'right'] },
+        primary_label: { type: 'string', title: 'Birincil Buton Metni' },
+        secondary_label: { type: 'string', title: 'İkincil Buton Metni' },
+        phone_number: { type: 'string', title: 'Telefon Numarası' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      position: 'bottom',
+      primary_label: 'Hemen Ara',
+      secondary_label: 'Mesaj Gönder',
+      phone_number: '',
+    },
+  },
+  {
+    key: 'layout.category-navigator-side',
+    name: 'Category Navigator (Side)',
+    schema_json: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', title: 'Başlık' },
+        show_counts: { type: 'boolean', title: 'İlan Sayıları Göster' },
+        max_levels: { type: 'integer', title: 'Maksimum Seviye' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      title: 'Kategoriler',
+      show_counts: true,
+      max_levels: 6,
+    },
+  },
+  {
+    key: 'layout.category-navigator-top',
+    name: 'Category Navigator (Top)',
+    schema_json: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', title: 'Başlık' },
+        show_counts: { type: 'boolean', title: 'İlan Sayıları Göster' },
+        max_levels: { type: 'integer', title: 'Maksimum Seviye' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      title: 'Kırılımlar',
+      show_counts: true,
+      max_levels: 6,
+    },
+  },
+  {
+    key: 'media.advanced-photo-gallery',
+    name: 'Advanced Photo Gallery',
+    schema_json: {
+      type: 'object',
+      properties: {
+        enable_fullscreen: { type: 'boolean', title: 'Fullscreen' },
+        enable_zoom: { type: 'boolean', title: 'Zoom' },
+        show_thumbnails: { type: 'boolean', title: 'Küçük Görseller' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      enable_fullscreen: true,
+      enable_zoom: true,
+      show_thumbnails: true,
+    },
+  },
+  {
+    key: 'media.auto-play-carousel-hero',
+    name: 'Auto-Play Carousel (Hero Banner)',
+    schema_json: {
+      type: 'object',
+      properties: {
+        auto_play_seconds: { type: 'integer', title: 'Otomatik Dönüş (sn)' },
+        show_overlay_text: { type: 'boolean', title: 'Üst Yazı Göster' },
+        cta_label: { type: 'string', title: 'CTA Metni' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      auto_play_seconds: 5,
+      show_overlay_text: true,
+      cta_label: 'Detayları İncele',
+    },
+  },
+  {
+    key: 'media.video-3d-tour-player',
+    name: 'Video / 3D Tour Player',
+    schema_json: {
+      type: 'object',
+      properties: {
+        provider: { type: 'string', title: 'Sağlayıcı', enum: ['youtube', 'vimeo', 'tour360', 'custom_url'] },
+        source_url: { type: 'string', title: 'Kaynak URL' },
+        auto_play: { type: 'boolean', title: 'Otomatik Oynat' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      provider: 'youtube',
+      source_url: '',
+      auto_play: false,
+    },
+  },
+  {
+    key: 'media.ad-promo-slot',
+    name: 'Ad / Promo Slot',
+    schema_json: {
+      type: 'object',
+      properties: {
+        placement: { type: 'string', title: 'Placement', enum: ['AD_HOME_TOP', 'AD_SEARCH_TOP', 'AD_LOGIN_1'] },
+        campaign_label: { type: 'string', title: 'Kampanya Etiketi' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      placement: 'AD_HOME_TOP',
+      campaign_label: 'Kampanya',
+    },
+  },
+  {
+    key: 'data.price-title-block',
+    name: 'Price & Title Block',
+    schema_json: {
+      type: 'object',
+      properties: {
+        show_currency_switcher: { type: 'boolean', title: 'Kur Çevirici' },
+        show_favorite_button: { type: 'boolean', title: 'Favori Butonu' },
+        show_location: { type: 'boolean', title: 'Konum Göster' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      show_currency_switcher: true,
+      show_favorite_button: true,
+      show_location: true,
+    },
+  },
+  {
+    key: 'data.attribute-grid-dynamic',
+    name: 'Attribute Grid (Dynamic)',
+    schema_json: {
+      type: 'object',
+      properties: {
+        include_modules: {
+          type: 'array',
+          title: 'Modül Grupları',
+          items: { type: 'string' },
+        },
+        compact_mode: { type: 'boolean', title: 'Kompakt Mod' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      include_modules: ['core_fields', 'parameter_fields', 'detail_groups', 'address', 'photo', 'contact', 'payment', 'preview'],
+      compact_mode: false,
+    },
+  },
+  {
+    key: 'data.description-text-area',
+    name: 'Description Text Area',
+    schema_json: {
+      type: 'object',
+      properties: {
+        rich_text_enabled: { type: 'boolean', title: 'Zengin Metin' },
+        max_length: { type: 'integer', title: 'Maksimum Uzunluk' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      rich_text_enabled: true,
+      max_length: 5000,
+    },
+  },
+  {
+    key: 'data.seller-card',
+    name: 'Seller Card',
+    schema_json: {
+      type: 'object',
+      properties: {
+        show_rating: { type: 'boolean', title: 'Puan Göster' },
+        show_membership: { type: 'boolean', title: 'Üyelik Bilgisi' },
+        show_all_listings_link: { type: 'boolean', title: 'Tüm İlanları Linki' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      show_rating: true,
+      show_membership: true,
+      show_all_listings_link: true,
+    },
+  },
+  {
+    key: 'interactive.interactive-map',
+    name: 'Interactive Map',
+    schema_json: {
+      type: 'object',
+      properties: {
+        default_zoom: { type: 'integer', title: 'Varsayılan Zoom' },
+        show_nearby_layers: { type: 'boolean', title: 'Yakındakiler Katmanı' },
+        map_style: { type: 'string', title: 'Harita Stili', enum: ['standard', 'satellite'] },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      default_zoom: 14,
+      show_nearby_layers: true,
+      map_style: 'standard',
+    },
+  },
+  {
+    key: 'interactive.mortgage-loan-calculator',
+    name: 'Mortgage / Loan Calculator',
+    schema_json: {
+      type: 'object',
+      properties: {
+        currency: { type: 'string', title: 'Para Birimi', enum: ['TRY', 'EUR', 'USD'] },
+        default_months: { type: 'integer', title: 'Varsayılan Vade (Ay)' },
+        show_interest_table: { type: 'boolean', title: 'Faiz Tablosu' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      currency: 'TRY',
+      default_months: 120,
+      show_interest_table: true,
+    },
+  },
+  {
+    key: 'interactive.similar-listings-slider',
+    name: 'Similar Listings Slider',
+    schema_json: {
+      type: 'object',
+      properties: {
+        source: { type: 'string', title: 'Kaynak', enum: ['similar', 'seller_other'] },
+        max_items: { type: 'integer', title: 'Maksimum Kart' },
+        auto_scroll: { type: 'boolean', title: 'Otomatik Kaydırma' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      source: 'similar',
+      max_items: 12,
+      auto_scroll: false,
+    },
+  },
+  {
+    key: 'interactive.doping-selector',
+    name: 'Doping Selector (İlan Ver)',
+    schema_json: {
+      type: 'object',
+      properties: {
+        available_dopings: { type: 'array', title: 'Doping Paketleri', items: { type: 'string' } },
+        show_prices: { type: 'boolean', title: 'Fiyatları Göster' },
+        default_selected: { type: 'string', title: 'Varsayılan Seçim' },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      available_dopings: ['Vitrin', 'Acil', 'Anasayfa'],
+      show_prices: true,
+      default_selected: 'Vitrin',
+    },
+  },
 ];
 
 const getDefaultComponentKey = (pageType) => {
