@@ -1500,3 +1500,36 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - kategori link navigasyonu çalışıyor
   - admin modalda hem textarea hem upload input mevcut
   - upload input ile görsel yükleme sonrası textarea’da SVG oluşuyor
+
+## 2026-03-05 (P3.1 + P3.2 + P3.3)
+
+### P3.1 — Component-level Schema Form Editor
+- `AdminContentBuilder` içinde component props düzenleme JSON textarea’dan type-safe schema forma geçirildi.
+- Desteklenen input tipleri: `string`, `number/integer`, `boolean`, `enum`.
+- `Gelişmiş JSON` fallback korunarak ileri seviye düzenleme desteği sürdürüldü.
+
+### P3.2 — Draft vs Published Görsel Diff
+- Canvas üzerinde diff summary eklendi (row/column/component değişim sayısı).
+- Değişen satır/sütun/component öğeleri görsel olarak highlight ediliyor.
+- Draft/Published canlı kıyas için preview paneli (link + çift iframe) eklendi.
+
+### P3.3 — Listing Wizard Step Visibility Rules
+- `WizardContainer` içinde step bazlı component görünürlük kuralları eklendi:
+  - Step 1-4: `listing.create.default-content`, `shared.text-block`
+  - Step 5-7: ek olarak `shared.ad-slot`
+- Runtime payload step’e göre filtreleniyor (`filterListingRuntimePayloadByStep`).
+- `listing.create.default-content` eksikse otomatik enjekte edilerek form akışının kaybolması engellendi.
+
+### Backend Destekleri
+- `listing_create_stepX` için component/props whitelist guard genişletildi.
+- `layout_preview=draft` endpoint davranışı:
+  - Admin auth ile erişim
+  - Unauth erişimde 403
+  - Draft yoksa published fallback (kırılma yerine kontrollü dönüş)
+- Startup stabilitesi için SQL bootstrap adımları timeout ile çevrelendi.
+
+### Test Sonucu
+- `testing_agent` PASS: `/app/test_reports/iteration_124.json`
+  - P3.1/P3.2/P3.3 doğrulandı
+  - regresyon bulunmadı
+- `deep_testing_backend_v2` PASS (guard + draft preview auth + resolve/binding sanity)
