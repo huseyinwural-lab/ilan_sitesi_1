@@ -12,6 +12,34 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import LayoutRenderer from '@/components/layout-builder/LayoutRenderer';
 import { useContentLayoutResolve } from '@/hooks/useContentLayoutResolve';
 
+const STEP_COMPONENT_RULES = {
+  1: new Set(['listing.create.default-content', 'shared.text-block']),
+  2: new Set(['listing.create.default-content', 'shared.text-block']),
+  3: new Set(['listing.create.default-content', 'shared.text-block']),
+  4: new Set(['listing.create.default-content', 'shared.text-block']),
+  5: new Set(['listing.create.default-content', 'shared.text-block', 'shared.ad-slot']),
+  6: new Set(['listing.create.default-content', 'shared.text-block', 'shared.ad-slot']),
+  7: new Set(['listing.create.default-content', 'shared.text-block', 'shared.ad-slot']),
+};
+
+const filterListingRuntimePayloadByStep = (payload, step) => {
+  const allowedKeys = STEP_COMPONENT_RULES[step] || STEP_COMPONENT_RULES[7];
+  const rows = Array.isArray(payload?.rows) ? payload.rows : [];
+  return {
+    rows: rows.map((row) => ({
+      ...row,
+      columns: Array.isArray(row?.columns)
+        ? row.columns.map((column) => ({
+            ...column,
+            components: Array.isArray(column?.components)
+              ? column.components.filter((component) => allowedKeys.has(component?.key))
+              : [],
+          }))
+        : [],
+    })),
+  };
+};
+
 const WizardContent = () => {
   const { step, loading, editLoading, autosaveStatus, trackWizardEvent } = useWizard();
   const badgeEventRef = useRef("");
@@ -77,16 +105,19 @@ const WizardContent = () => {
 
   const safeListingRuntimePayload = useMemo(() => {
     if (!hasListingRuntimeRows) return null;
-    const rawRows = Array.isArray(listingRuntimeLayout?.revision?.payload_json?.rows)
-      ? listingRuntimeLayout.revision.payload_json.rows
-      : [];
+    const filteredPayload = filterListingRuntimePayloadByStep(
+      listingRuntimeLayout?.revision?.payload_json || { rows: [] },
+      step,
+    );
+    const rawRows = Array.isArray(filteredPayload?.rows) ? filteredPayload.rows : [];
+
     const hasDefaultComponent = rawRows.some((row) =>
       (row?.columns || []).some((column) =>
         (column?.components || []).some((component) => component?.key === 'listing.create.default-content'),
       ),
     );
     if (hasDefaultComponent) {
-      return listingRuntimeLayout?.revision?.payload_json || null;
+      return filteredPayload;
     }
     return {
       rows: [
@@ -109,7 +140,7 @@ const WizardContent = () => {
         },
       ],
     };
-  }, [hasListingRuntimeRows, listingRuntimeLayout]);
+  }, [hasListingRuntimeRows, listingRuntimeLayout, step]);
 
   const runtimeRegistry = {
     'listing.create.default-content': () => renderDefaultWizardSteps(),
@@ -118,6 +149,13 @@ const WizardContent = () => {
         <h2 className="text-sm font-semibold" data-testid="wizard-runtime-text-title">{props?.title || 'İlan Ver Bilgilendirme'}</h2>
         <p className="text-xs text-slate-600 mt-1" data-testid="wizard-runtime-text-body">{props?.body || ''}</p>
       </section>
+    ),
+    'shared.ad-slot': ({ props }) => (
+      <div className="rounded-xl border bg-white p-3" data-testid="wizard-runtime-ad-slot">
+        <div className="text-xs text-slate-500" data-testid="wizard-runtime-ad-slot-label">
+          Reklam Alanı ({props?.placement || 'AD_LOGIN_1'})
+        </div>
+      </div>
     ),
   };
 

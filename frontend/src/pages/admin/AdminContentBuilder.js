@@ -11,12 +11,53 @@ const PAGE_TYPE_OPTIONS = [
 ];
 
 const DEFAULT_COMPONENT_LIBRARY = [
-  { key: 'home.default-content', name: 'Home Varsayılan İçerik' },
-  { key: 'search.l1.default-content', name: 'Search L1 Varsayılan İçerik' },
-  { key: 'search.l2.default-content', name: 'Search L2 Varsayılan İçerik' },
-  { key: 'listing.create.default-content', name: 'İlan Ver Varsayılan İçerik' },
-  { key: 'shared.text-block', name: 'Metin Bloğu' },
-  { key: 'shared.ad-slot', name: 'Reklam Slotu' },
+  {
+    key: 'home.default-content',
+    name: 'Home Varsayılan İçerik',
+    schema_json: { type: 'object', properties: {}, additionalProperties: false },
+  },
+  {
+    key: 'search.l1.default-content',
+    name: 'Search L1 Varsayılan İçerik',
+    schema_json: { type: 'object', properties: {}, additionalProperties: false },
+  },
+  {
+    key: 'search.l2.default-content',
+    name: 'Search L2 Varsayılan İçerik',
+    schema_json: { type: 'object', properties: {}, additionalProperties: false },
+  },
+  {
+    key: 'listing.create.default-content',
+    name: 'İlan Ver Varsayılan İçerik',
+    schema_json: { type: 'object', properties: {}, additionalProperties: false },
+  },
+  {
+    key: 'shared.text-block',
+    name: 'Metin Bloğu',
+    schema_json: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', title: 'Başlık' },
+        body: { type: 'string', title: 'Metin' },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    key: 'shared.ad-slot',
+    name: 'Reklam Slotu',
+    schema_json: {
+      type: 'object',
+      properties: {
+        placement: {
+          type: 'string',
+          title: 'Placement',
+          enum: ['AD_HOME_TOP', 'AD_SEARCH_TOP', 'AD_LOGIN_1'],
+        },
+      },
+      additionalProperties: false,
+    },
+  },
 ];
 
 const getDefaultComponentKey = (pageType) => {
@@ -88,6 +129,86 @@ const buildCategoryTreeOptions = (items) => {
   return flattened;
 };
 
+const computeLayoutDiff = (publishedPayload, draftPayload) => {
+  const publishedRows = Array.isArray(publishedPayload?.rows) ? publishedPayload.rows : [];
+  const draftRows = Array.isArray(draftPayload?.rows) ? draftPayload.rows : [];
+
+  const publishedRowMap = new Map(publishedRows.map((row) => [row.id, row]));
+  const draftRowMap = new Map(draftRows.map((row) => [row.id, row]));
+
+  const changedRowIds = new Set();
+  const changedColumnIds = new Set();
+  const changedComponentIds = new Set();
+
+  const allRowIds = new Set([...publishedRowMap.keys(), ...draftRowMap.keys()]);
+  allRowIds.forEach((rowId) => {
+    const beforeRow = publishedRowMap.get(rowId);
+    const afterRow = draftRowMap.get(rowId);
+    if (!beforeRow || !afterRow) {
+      changedRowIds.add(rowId);
+      return;
+    }
+
+    const beforeColumns = Array.isArray(beforeRow.columns) ? beforeRow.columns : [];
+    const afterColumns = Array.isArray(afterRow.columns) ? afterRow.columns : [];
+    const beforeColumnMap = new Map(beforeColumns.map((column) => [column.id, column]));
+    const afterColumnMap = new Map(afterColumns.map((column) => [column.id, column]));
+    const allColumnIds = new Set([...beforeColumnMap.keys(), ...afterColumnMap.keys()]);
+
+    allColumnIds.forEach((columnId) => {
+      const beforeColumn = beforeColumnMap.get(columnId);
+      const afterColumn = afterColumnMap.get(columnId);
+      if (!beforeColumn || !afterColumn) {
+        changedRowIds.add(rowId);
+        changedColumnIds.add(columnId);
+        return;
+      }
+
+      const beforeWidth = JSON.stringify(beforeColumn.width || {});
+      const afterWidth = JSON.stringify(afterColumn.width || {});
+      if (beforeWidth !== afterWidth) {
+        changedRowIds.add(rowId);
+        changedColumnIds.add(columnId);
+      }
+
+      const beforeComponents = Array.isArray(beforeColumn.components) ? beforeColumn.components : [];
+      const afterComponents = Array.isArray(afterColumn.components) ? afterColumn.components : [];
+      const beforeComponentMap = new Map(beforeComponents.map((component) => [component.id, component]));
+      const afterComponentMap = new Map(afterComponents.map((component) => [component.id, component]));
+      const allComponentIds = new Set([...beforeComponentMap.keys(), ...afterComponentMap.keys()]);
+
+      allComponentIds.forEach((componentId) => {
+        const beforeComponent = beforeComponentMap.get(componentId);
+        const afterComponent = afterComponentMap.get(componentId);
+        if (!beforeComponent || !afterComponent) {
+          changedRowIds.add(rowId);
+          changedColumnIds.add(columnId);
+          changedComponentIds.add(componentId);
+          return;
+        }
+        const beforeSnapshot = JSON.stringify({ key: beforeComponent.key, props: beforeComponent.props || {} });
+        const afterSnapshot = JSON.stringify({ key: afterComponent.key, props: afterComponent.props || {} });
+        if (beforeSnapshot !== afterSnapshot) {
+          changedRowIds.add(rowId);
+          changedColumnIds.add(columnId);
+          changedComponentIds.add(componentId);
+        }
+      });
+    });
+  });
+
+  return {
+    changedRowIds,
+    changedColumnIds,
+    changedComponentIds,
+    summary: {
+      rows: changedRowIds.size,
+      columns: changedColumnIds.size,
+      components: changedComponentIds.size,
+    },
+  };
+};
+
 export default function AdminContentBuilder() {
   const authHeaders = useMemo(
     () => ({ Authorization: `Bearer ${localStorage.getItem('access_token')}` }),
@@ -140,10 +261,18 @@ export default function AdminContentBuilder() {
       const normalized = fetchedItems.map((item) => ({
         key: item.key,
         name: item.name || item.key,
+        schema_json: item.schema_json && typeof item.schema_json === 'object'
+          ? item.schema_json
+          : { type: 'object', properties: {}, additionalProperties: true },
       }));
       const merged = [...DEFAULT_COMPONENT_LIBRARY];
       normalized.forEach((item) => {
-        if (!merged.some((existing) => existing.key === item.key)) merged.push(item);
+        const index = merged.findIndex((existing) => existing.key === item.key);
+        if (index >= 0) {
+          merged[index] = { ...merged[index], ...item };
+        } else {
+          merged.push(item);
+        }
       });
       setComponentLibrary(merged);
     } catch (_err) {
@@ -212,6 +341,34 @@ export default function AdminContentBuilder() {
     const separator = previewBasePath.includes('?') ? '&' : '?';
     return `${window.location.origin}${previewBasePath}${separator}layout_preview=draft`;
   }, [previewBasePath]);
+
+  const publishedRevisionPayload = useMemo(() => {
+    const published = revisionList.find((revision) => revision.status === 'published');
+    return published?.payload_json || { rows: [] };
+  }, [revisionList]);
+
+  const layoutDiff = useMemo(
+    () => computeLayoutDiff(publishedRevisionPayload, payloadJson),
+    [publishedRevisionPayload, payloadJson],
+  );
+
+  const getComponentSchema = (componentKey) => {
+    const componentDef = componentLibrary.find((item) => item.key === componentKey);
+    return componentDef?.schema_json && typeof componentDef.schema_json === 'object'
+      ? componentDef.schema_json
+      : { type: 'object', properties: {}, additionalProperties: true };
+  };
+
+  const updateComponentPropValue = (rowId, columnId, componentId, propKey, propValue) => {
+    const next = deepClone(payloadJson);
+    const row = (next.rows || []).find((item) => item.id === rowId);
+    const column = (row?.columns || []).find((item) => item.id === columnId);
+    const component = (column?.components || []).find((item) => item.id === componentId);
+    if (!component) return;
+    if (!component.props || typeof component.props !== 'object') component.props = {};
+    component.props[propKey] = propValue;
+    updatePayload(next);
+  };
 
   const getRevisionsForPage = async (targetPageId, targetPageType) => {
     const res = await axios.get(`${API}/admin/site/content-layout/pages/${targetPageId}/revisions`, {
@@ -747,11 +904,19 @@ export default function AdminContentBuilder() {
             <button type="button" className="h-9 rounded border px-3 text-xs" onClick={addRow} data-testid="admin-content-builder-add-row-button">Satır Ekle</button>
           </div>
 
+          <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs" data-testid="admin-content-builder-diff-summary">
+            <span data-testid="admin-content-builder-diff-rows">Row değişimi: <strong>{layoutDiff.summary.rows}</strong></span>
+            <span className="mx-2">•</span>
+            <span data-testid="admin-content-builder-diff-columns">Column değişimi: <strong>{layoutDiff.summary.columns}</strong></span>
+            <span className="mx-2">•</span>
+            <span data-testid="admin-content-builder-diff-components">Component değişimi: <strong>{layoutDiff.summary.components}</strong></span>
+          </div>
+
           <div className="space-y-4" data-testid="admin-content-builder-rows">
             {(payloadJson.rows || []).map((row, rowIndex) => (
               <article
                 key={row.id}
-                className={`rounded-lg border p-3 transition ${dragOverRowId === row.id ? 'border-slate-900 bg-slate-50' : 'border-slate-200'}`}
+                className={`rounded-lg border p-3 transition ${dragOverRowId === row.id ? 'border-slate-900 bg-slate-50' : 'border-slate-200'} ${layoutDiff.changedRowIds.has(row.id) ? 'ring-1 ring-amber-500' : ''}`}
                 draggable
                 onDragStart={() => setDraggingRowId(row.id)}
                 onDragEnd={() => {
@@ -786,7 +951,7 @@ export default function AdminContentBuilder() {
                   {(row.columns || []).map((column) => (
                     <div
                       key={column.id}
-                      className={`rounded-md border p-3 transition ${selectedColumnId === column.id ? 'border-slate-900' : 'border-slate-200'} ${dragOverColumnId === column.id ? 'bg-amber-50 border-amber-400' : ''}`}
+                      className={`rounded-md border p-3 transition ${selectedColumnId === column.id ? 'border-slate-900' : 'border-slate-200'} ${dragOverColumnId === column.id ? 'bg-amber-50 border-amber-400' : ''} ${layoutDiff.changedColumnIds.has(column.id) ? 'ring-1 ring-amber-500' : ''}`}
                       onClick={() => {
                         setSelectedRowId(row.id);
                         setSelectedColumnId(column.id);
@@ -839,7 +1004,7 @@ export default function AdminContentBuilder() {
                         {(column.components || []).map((component, componentIndex) => (
                           <div
                             key={component.id}
-                            className="rounded border bg-slate-50 p-2"
+                            className={`rounded border bg-slate-50 p-2 ${layoutDiff.changedComponentIds.has(component.id) ? 'border-amber-500 bg-amber-50' : ''}`}
                             draggable
                             onDragStart={() => setDraggingComponentId(component.id)}
                             onDragEnd={() => {
@@ -861,23 +1026,102 @@ export default function AdminContentBuilder() {
                               <button type="button" className="h-8 rounded border px-2 text-xs" onClick={() => moveComponent(row.id, column.id, component.id, 'down')} data-testid={`admin-content-builder-component-down-${component.id}`}>↓</button>
                               <button type="button" className="h-8 rounded border border-rose-300 px-2 text-xs text-rose-700" onClick={() => removeComponent(row.id, column.id, component.id)} data-testid={`admin-content-builder-component-remove-${component.id}`}>Sil</button>
                             </div>
-                            <label className="mt-2 block text-[11px]" data-testid={`admin-content-builder-component-props-${component.id}`}>
-                              Props JSON
-                              <textarea
-                                className="mt-1 min-h-[76px] w-full rounded border p-2 font-mono text-[11px]"
-                                value={JSON.stringify(component.props || {}, null, 2)}
-                                onChange={(e) => {
-                                  try {
-                                    const parsed = JSON.parse(e.target.value || '{}');
-                                    updateComponentField(row.id, column.id, component.id, 'props', parsed);
-                                    setError('');
-                                  } catch (_err) {
-                                    setError('Props JSON geçersiz');
-                                  }
-                                }}
-                                data-testid={`admin-content-builder-component-props-input-${component.id}`}
-                              />
-                            </label>
+                            <div className="mt-2 rounded border bg-white p-2" data-testid={`admin-content-builder-component-props-${component.id}`}>
+                              <div className="mb-1 text-[11px] font-semibold text-slate-700" data-testid={`admin-content-builder-component-props-title-${component.id}`}>
+                                Schema Form Editor
+                              </div>
+                              {Object.entries(getComponentSchema(component.key)?.properties || {}).length === 0 ? (
+                                <div className="text-[11px] text-slate-500" data-testid={`admin-content-builder-component-props-empty-${component.id}`}>
+                                  Bu bileşenin düzenlenebilir prop alanı yok.
+                                </div>
+                              ) : (
+                                <div className="space-y-2" data-testid={`admin-content-builder-component-props-fields-${component.id}`}>
+                                  {Object.entries(getComponentSchema(component.key)?.properties || {}).map(([propKey, propSchema]) => {
+                                    const fieldType = propSchema?.type || 'string';
+                                    const fieldTitle = propSchema?.title || propKey;
+                                    const value = component.props?.[propKey];
+
+                                    if (Array.isArray(propSchema?.enum)) {
+                                      return (
+                                        <label key={propKey} className="block text-[11px]" data-testid={`admin-content-builder-prop-wrap-${component.id}-${propKey}`}>
+                                          {fieldTitle}
+                                          <select
+                                            className="mt-1 h-8 w-full rounded border px-2 text-[11px]"
+                                            value={value ?? propSchema.enum[0]}
+                                            onChange={(e) => updateComponentPropValue(row.id, column.id, component.id, propKey, e.target.value)}
+                                            data-testid={`admin-content-builder-prop-input-${component.id}-${propKey}`}
+                                          >
+                                            {propSchema.enum.map((option) => (
+                                              <option key={`${propKey}-${option}`} value={option}>{option}</option>
+                                            ))}
+                                          </select>
+                                        </label>
+                                      );
+                                    }
+
+                                    if (fieldType === 'boolean') {
+                                      return (
+                                        <label key={propKey} className="inline-flex items-center gap-2 text-[11px]" data-testid={`admin-content-builder-prop-wrap-${component.id}-${propKey}`}>
+                                          <input
+                                            type="checkbox"
+                                            checked={Boolean(value)}
+                                            onChange={(e) => updateComponentPropValue(row.id, column.id, component.id, propKey, e.target.checked)}
+                                            data-testid={`admin-content-builder-prop-input-${component.id}-${propKey}`}
+                                          />
+                                          {fieldTitle}
+                                        </label>
+                                      );
+                                    }
+
+                                    if (fieldType === 'number' || fieldType === 'integer') {
+                                      return (
+                                        <label key={propKey} className="block text-[11px]" data-testid={`admin-content-builder-prop-wrap-${component.id}-${propKey}`}>
+                                          {fieldTitle}
+                                          <input
+                                            type="number"
+                                            className="mt-1 h-8 w-full rounded border px-2 text-[11px]"
+                                            value={Number.isFinite(Number(value)) ? Number(value) : ''}
+                                            onChange={(e) => updateComponentPropValue(row.id, column.id, component.id, propKey, Number(e.target.value || 0))}
+                                            data-testid={`admin-content-builder-prop-input-${component.id}-${propKey}`}
+                                          />
+                                        </label>
+                                      );
+                                    }
+
+                                    return (
+                                      <label key={propKey} className="block text-[11px]" data-testid={`admin-content-builder-prop-wrap-${component.id}-${propKey}`}>
+                                        {fieldTitle}
+                                        <input
+                                          type="text"
+                                          className="mt-1 h-8 w-full rounded border px-2 text-[11px]"
+                                          value={value ?? ''}
+                                          onChange={(e) => updateComponentPropValue(row.id, column.id, component.id, propKey, e.target.value)}
+                                          data-testid={`admin-content-builder-prop-input-${component.id}-${propKey}`}
+                                        />
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              <details className="mt-2" data-testid={`admin-content-builder-component-raw-json-${component.id}`}>
+                                <summary className="cursor-pointer text-[11px] text-slate-500">Gelişmiş JSON</summary>
+                                <textarea
+                                  className="mt-1 min-h-[70px] w-full rounded border p-2 font-mono text-[11px]"
+                                  value={JSON.stringify(component.props || {}, null, 2)}
+                                  onChange={(e) => {
+                                    try {
+                                      const parsed = JSON.parse(e.target.value || '{}');
+                                      updateComponentField(row.id, column.id, component.id, 'props', parsed);
+                                      setError('');
+                                    } catch (_err) {
+                                      setError('Props JSON geçersiz');
+                                    }
+                                  }}
+                                  data-testid={`admin-content-builder-component-props-input-${component.id}`}
+                                />
+                              </details>
+                            </div>
                             <div className="mt-1 text-[11px] text-slate-500" data-testid={`admin-content-builder-component-order-${component.id}`}>
                               Sıra: {componentIndex + 1}
                             </div>
