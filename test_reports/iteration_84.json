@@ -61,41 +61,41 @@
       "prod_total_urls": "1213"
     },
     "CANONICAL_DETERMINISTIC": {
-      "home_page": "PASS - https://content-canvas-17.preview.emergentagent.com/",
-      "category_page": "PASS - https://content-canvas-17.preview.emergentagent.com/kategori/{slug}",
-      "info_page": "PASS - https://content-canvas-17.preview.emergentagent.com/bilgi/{slug}",
-      "trust_page": "PASS - https://content-canvas-17.preview.emergentagent.com/trust",
+      "home_page": "PASS - https://panel-manual-tr.preview.emergentagent.com/",
+      "category_page": "PASS - https://panel-manual-tr.preview.emergentagent.com/kategori/{slug}",
+      "info_page": "PASS - https://panel-manual-tr.preview.emergentagent.com/bilgi/{slug}",
+      "trust_page": "PASS - https://panel-manual-tr.preview.emergentagent.com/trust",
       "trailing_slash_standard": "PASS - No trailing slashes except root"
     }
   },
   "verification_evidence": {
     "sitemap_index_sample": {
       "sections": [
-        "https://content-canvas-17.preview.emergentagent.com/sitemaps/core.xml",
-        "https://content-canvas-17.preview.emergentagent.com/sitemaps/categories.xml",
-        "https://content-canvas-17.preview.emergentagent.com/sitemaps/listings.xml",
-        "https://content-canvas-17.preview.emergentagent.com/sitemaps/info.xml"
+        "https://panel-manual-tr.preview.emergentagent.com/sitemaps/core.xml",
+        "https://panel-manual-tr.preview.emergentagent.com/sitemaps/categories.xml",
+        "https://panel-manual-tr.preview.emergentagent.com/sitemaps/listings.xml",
+        "https://panel-manual-tr.preview.emergentagent.com/sitemaps/info.xml"
       ]
     },
     "core_xml_sample_urls": [
-      "https://content-canvas-17.preview.emergentagent.com/",
-      "https://content-canvas-17.preview.emergentagent.com/search",
-      "https://content-canvas-17.preview.emergentagent.com/trust",
-      "https://content-canvas-17.preview.emergentagent.com/kurumsal",
-      "https://content-canvas-17.preview.emergentagent.com/DE/vasita"
+      "https://panel-manual-tr.preview.emergentagent.com/",
+      "https://panel-manual-tr.preview.emergentagent.com/search",
+      "https://panel-manual-tr.preview.emergentagent.com/trust",
+      "https://panel-manual-tr.preview.emergentagent.com/kurumsal",
+      "https://panel-manual-tr.preview.emergentagent.com/DE/vasita"
     ],
     "categories_xml_sample_urls": [
-      "https://content-canvas-17.preview.emergentagent.com/kategori/tarla",
-      "https://content-canvas-17.preview.emergentagent.com/kategori/konut",
-      "https://content-canvas-17.preview.emergentagent.com/kategori/ticari"
+      "https://panel-manual-tr.preview.emergentagent.com/kategori/tarla",
+      "https://panel-manual-tr.preview.emergentagent.com/kategori/konut",
+      "https://panel-manual-tr.preview.emergentagent.com/kategori/ticari"
     ],
     "listings_xml_sample_urls": [
-      "https://content-canvas-17.preview.emergentagent.com/ilan/5d2a45b9-51c4-4c25-9bc5-51493975f203"
+      "https://panel-manual-tr.preview.emergentagent.com/ilan/5d2a45b9-51c4-4c25-9bc5-51493975f203"
     ],
     "info_xml_sample_urls": [
-      "https://content-canvas-17.preview.emergentagent.com/trust",
-      "https://content-canvas-17.preview.emergentagent.com/kurumsal",
-      "https://content-canvas-17.preview.emergentagent.com/bilgi/gizlilik-politikasi"
+      "https://panel-manual-tr.preview.emergentagent.com/trust",
+      "https://panel-manual-tr.preview.emergentagent.com/kurumsal",
+      "https://panel-manual-tr.preview.emergentagent.com/bilgi/gizlilik-politikasi"
     ]
   }
 }

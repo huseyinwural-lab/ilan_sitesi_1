@@ -14,7 +14,7 @@ import uuid
 from datetime import datetime
 from typing import Dict, List, Any
 
-BASE_URL = "https://content-canvas-17.preview.emergentagent.com/api"
+BASE_URL = "https://panel-manual-tr.preview.emergentagent.com/api"
 
 # Test credentials
 USER_CREDENTIALS = {"email": "user@platform.com", "password": "User123!"}

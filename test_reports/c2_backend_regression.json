@@ -1,5 +1,5 @@
 {
-  "base_url": "https://content-canvas-17.preview.emergentagent.com",
+  "base_url": "https://panel-manual-tr.preview.emergentagent.com",
   "suite": "c2_backend_regression",
   "checks": [
     {
