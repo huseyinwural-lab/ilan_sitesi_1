@@ -18,6 +18,30 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ---
 
+## 2026-03-05 (P1 — Reklam Yönetimi Formu: Firma Adı + İletişim)
+
+### Kullanıcı Talebi (Uygulandı)
+- Admin > Reklam Yönetimi > Yeni Reklam formuna `Firma Adı` ve `İletişim` alanları eklendi.
+
+### Uygulananlar
+- **Frontend** (`AdminAdsManagement.js`):
+  - Yeni reklam formuna `admin-ads-company-name` ve `admin-ads-contact-info` alanları eklendi.
+  - Mevcut reklam kartı düzenleme alanlarına `admin-ads-item-company-name-{id}` ve `admin-ads-item-contact-info-{id}` inputları eklendi.
+  - Create/Patch payload’larına `company_name` ve `contact_info` gönderimi eklendi.
+- **Backend** (`server.py`, `app/models/advertisement.py`):
+  - `Advertisement` modeline `company_name` ve `contact_info` alanları eklendi.
+  - `AdCreatePayload` / `AdUpdatePayload` genişletildi.
+  - `/api/admin/ads` listesinde bu alanlar dönülür hale getirildi.
+  - Startup SQL bootstrap’a `advertisements` tablosu için `company_name` ve `contact_info` kolonu auto-ensure eklendi.
+
+### Test Durumu
+- Backend self-test (API):
+  - Login + `POST /api/admin/ads` (company_name/contact_info ile) PASS
+  - `GET /api/admin/ads` ile alanların geri dönmesi PASS
+  - `PATCH /api/admin/ads/{id}` güncelleme + persistence PASS
+- Frontend smoke (`screenshot_tool`): yeni alanlar görünür ve input alınabiliyor PASS.
+- `auto_frontend_testing_agent`: 5/5 senaryo PASS (görünürlük, input, edit mode, save ve persistence).
+
 ## 2026-03-05 (P0 — İlan & Moderasyon Menü Konsolidasyonu)
 
 ### Kullanıcı Talebi (Uygulandı)
