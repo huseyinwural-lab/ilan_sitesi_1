@@ -300,6 +300,50 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Yeni 2 navigator mevcut
   - Eski 3 navigator görünmüyor
 
+## 2026-03-06 (Builder-Only Render Zinciri — 12 Sayfa + Publish Guard)
+
+### Hedef (Onaylı)
+- TR/DE/FR x 4 page_type (`home`, `urgent_listings`, `category_l0_l1`, `search_ln`) tamamen Content Builder’dan beslenecek.
+- Geçmiş statik/elle yazılmış fallback HTML temizlenecek.
+- Layout yoksa sadece temiz empty-state gösterilecek.
+- Publish Guard ile hatalı yayınlar engellenecek.
+
+### Uygulanan Refactor
+- `HomePageRefreshed.js` tamamen builder-only hale getirildi.
+  - Render kaynağı: `useContentLayoutResolve + LayoutRenderer`
+  - Statik section/fallback kodları kaldırıldı.
+  - Layout yoksa `home-runtime-layout-empty-state` gösteriliyor.
+
+- `SearchPage.js` tamamen builder-only hale getirildi.
+  - Route/page_type eşlemesi:
+    - `/acil` -> `urgent_listings`
+    - L1 -> `category_l0_l1`
+    - diğer arama/kategori -> `search_ln`
+  - Statik template/fallback HTML kaldırıldı.
+  - Layout yoksa `search-runtime-layout-empty-state` gösteriliyor.
+
+- `CategoryLandingPage.js` statik içerik yerine redirect’e çevrildi:
+  - `/[locale]/kategori/:slug` -> `/[locale]/search?category=:slug`
+
+- `useContentLayoutResolve.js`
+  - 8sn abort timeout eklendi (sonsuz loading önleme).
+
+- Backend `layout_builder_routes.py` Publish Guard:
+  - Deprecated key bloklama:
+    - `category.navigator`
+    - `layout.category-navigator-side`
+    - `layout.category-navigator-top`
+    - `home.default-content`, `search.l1.default-content`, `search.l2.default-content`
+  - Unknown/inactive component key bloklama.
+  - Guard publish akışlarına bağlandı (`publish`, `copy+publish`, seed publish akışları).
+
+### Test Sonuçları
+- Testing agent raporu: `/app/test_reports/iteration_151.json`
+  - Frontend: **100% PASS**
+  - Backend: **22/25 PASS** (3 transient timeout; işlevsel bug değil)
+  - 12 sayfa builder-driven doğrulandı (layout varsa render, yoksa empty-state)
+  - Publish Guard deprecated + unknown key bloklama PASS
+
 ## 2026-03-06 (P0 — Sayfa Tasarım Fazı Başlangıcı: Home / Acil / Kategori / Liste Kompozisyonları)
 
 ## 2026-03-06 (P0 — Kapanış Görevleri Tamamlandı: Kalıcılaştırma + İçerik + QA + Final Smoke)

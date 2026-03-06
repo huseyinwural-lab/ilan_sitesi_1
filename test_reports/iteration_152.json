@@ -1,0 +1,77 @@
+{
+  "summary": "Final verification of builder-only refactor completed. All 12 page scopes (TR/DE/FR x 4 page_types: home, search_ln, urgent_listings, category_l0_l1) are builder-driven with layout render or clean empty-state only. No static HTML fallback. Publish guard correctly blocks deprecated and unknown component keys.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_151_builder_pages.py",
+    "/app/test_reports/pytest/pytest_results_152.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (25/25 passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Builder-only refactor verified complete. HomePageRefreshed.js and SearchPage.js use useContentLayoutResolve hook with 8s timeout. Pages show builder layout or clean empty-state - no static HTML fallback exists.",
+  "verification_results": {
+    "home_page_builder_driven": {
+      "tr_home": "PASS - Shows builder layout with Vitrin İlanları grid",
+      "de_home": "PASS - Shows builder layout",
+      "fr_home": "PASS - Shows builder layout"
+    },
+    "search_page_builder_driven": {
+      "tr_search": "PASS - Shows clean empty-state (page_type=search_ln)",
+      "de_search": "PASS - Shows clean empty-state",
+      "fr_search": "PASS - Shows clean empty-state"
+    },
+    "urgent_page_builder_driven": {
+      "tr_acil": "PASS - Shows clean empty-state (page_type=urgent_listings)",
+      "de_acil": "PASS - Shows clean empty-state",
+      "fr_acil": "PASS - Shows clean empty-state"
+    },
+    "category_l0_l1_builder_driven": {
+      "tr": "PASS - API returns 200/404/409",
+      "de": "PASS - API returns 200/404/409",
+      "fr": "PASS - API returns 200/404/409"
+    },
+    "category_landing_redirect": {
+      "test": "/tr/kategori/test-slug → /tr/search?category=test-slug",
+      "status": "PASS"
+    },
+    "publish_guard": {
+      "blocks_deprecated_keys": {
+        "category.navigator": "BLOCKED (publish_guard_blocked_components)",
+        "layout.category-navigator-side": "BLOCKED",
+        "layout.category-navigator-top": "BLOCKED"
+      },
+      "blocks_unknown_keys": "PASS (publish_guard_unknown_or_inactive_components)"
+    },
+    "admin_component_definitions": {
+      "deprecated_excluded": [
+        "category.navigator",
+        "layout.category-navigator-side",
+        "layout.category-navigator-top"
+      ],
+      "new_navigators_present": [
+        "layout.category-navigator-main-side",
+        "layout.category-navigator-category-side"
+      ],
+      "status": "PASS"
+    }
+  },
+  "mocked_apis": {
+    "academy.modules": "MOCKED as per handoff"
+  }
+}
