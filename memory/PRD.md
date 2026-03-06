@@ -121,6 +121,38 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - `/app/test_reports/iteration_144.json` → **Backend 10/10 PASS + Frontend 100% PASS**
   - Core verify: `ready_rows=12 / total_rows=12 / ready_ratio=100%`
 
+## 2026-03-06 (Kategori Navigasyonu Tasarım Güncellemesi — Ana Sayfa + Acil)
+
+### Kullanıcı Tercihleri
+- Kapsam: **Ana sayfa + Acil ilanlar sayfası**
+- Sayaç: **gerçek API listing_count verisi**
+- Varsayılan durum: **expanded**
+- Tıklama kuralı: 
+  - Ana kategori: normal kategori sayfası
+  - Alt kategori: **ana kategori sayfasına yönlendir**
+- Stil: **klasik/birebir liste görünümü** (mavi link tonu, minimal çizgiler, üst başlık)
+
+### Uygulama
+- `frontend/src/components/search/CategorySidebar.js`
+  - Klasik kategori sidebar görünümü uygulandı.
+  - Alt kategori click davranışı parent root tokena bağlandı.
+  - Sayaçlar için recursive count fallback eklendi.
+
+- `frontend/src/components/layout-builder/ExtendedRuntimeBlocks.jsx`
+  - `CategoryNavigatorBase (side)` için home/urgent route’larda klasik görünüm aktif edildi.
+  - Alt kategori click davranışı klasik modda parent kategoriye yönlendirilecek şekilde güncellendi.
+  - Sayaçlar için recursive count fallback eklendi.
+
+- `frontend/src/pages/public/HomePageRefreshed.js`
+  - Static fallback kategori listesi klasik sınır/çizgi/link stiliyle uyumlandı.
+  - Alt kategori linkleri parent kategori URL’sine yönlendirildi.
+
+### Testler
+- Self smoke: `/tr` + `/tr/acil` PASS
+- Testing agent: `/app/test_reports/iteration_145.json`
+  - Frontend **100% PASS** (5/5)
+  - Alt kategori click → parent kategori paramı doğrulandı.
+
 ## 2026-03-06 (P0 — Sayfa Tasarım Fazı Başlangıcı: Home / Acil / Kategori / Liste Kompozisyonları)
 
 ## 2026-03-06 (P0 — Kapanış Görevleri Tamamlandı: Kalıcılaştırma + İçerik + QA + Final Smoke)
