@@ -3004,17 +3004,18 @@ async def install_standard_template_pack(
     normalized_persona = _normalize_standard_persona_or_400(payload.persona)
     normalized_variant = _normalize_standard_variant_or_400(payload.variant)
 
-    async def _op():
-        bundle_results: list[dict[str, Any]] = []
-        aggregate_summary = {
-            "created_pages": 0,
-            "created_drafts": 0,
-            "updated_drafts": 0,
-            "skipped_drafts": 0,
-            "published_revisions": 0,
-        }
+    aggregate_summary = {
+        "created_pages": 0,
+        "created_drafts": 0,
+        "updated_drafts": 0,
+        "skipped_drafts": 0,
+        "published_revisions": 0,
+    }
+    results: list[dict[str, Any]] = []
+    failed_countries: list[dict[str, Any]] = []
 
-        for country_code in normalized_countries:
+    for country_code in normalized_countries:
+        async def _country_op():
             summary, items = await _seed_standard_pages_for_scope(
                 session,
                 actor_user_id=current_user.get("id"),
@@ -3025,9 +3026,14 @@ async def install_standard_template_pack(
                 overwrite_existing_draft=bool(payload.overwrite_existing_draft),
                 publish_after_seed=bool(payload.publish_after_seed),
             )
+            await session.commit()
+            return summary, items
+
+        try:
+            summary, items = await _run_with_db_retry(session, _country_op, retries=6)
             for key in aggregate_summary:
                 aggregate_summary[key] += int(summary.get(key, 0))
-            bundle_results.append(
+            results.append(
                 {
                     "country": country_code,
                     "module": normalized_module,
@@ -3035,33 +3041,33 @@ async def install_standard_template_pack(
                     "items": items,
                 }
             )
-
-        await session.commit()
-        return aggregate_summary, bundle_results
-
-    try:
-        aggregate_summary, results = None, None
-        for attempt in range(3):
-            try:
-                aggregate_summary, results = await _run_with_db_retry(session, _op)
-                break
-            except HTTPException as exc:
-                await session.rollback()
-                if exc.status_code == 503 and attempt < 2:
-                    await asyncio.sleep(0.6 * (attempt + 1))
-                    continue
-                raise
-        if aggregate_summary is None or results is None:
-            raise HTTPException(status_code=503, detail="Database connection error")
-    except ValueError as exc:
-        await session.rollback()
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except IntegrityError as exc:
-        await session.rollback()
-        raise HTTPException(status_code=409, detail="preset_install_conflict") from exc
+        except ValueError as exc:
+            await session.rollback()
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except IntegrityError as exc:
+            await session.rollback()
+            failed_countries.append(
+                {
+                    "country": country_code,
+                    "error": "preset_install_conflict",
+                    "detail": str(exc),
+                }
+            )
+        except Exception as exc:
+            await session.rollback()
+            if _is_transient_db_error(exc):
+                failed_countries.append(
+                    {
+                        "country": country_code,
+                        "error": "db_error",
+                        "detail": str(exc),
+                    }
+                )
+                continue
+            raise
 
     return {
-        "ok": True,
+        "ok": len(failed_countries) == 0,
         "module": normalized_module,
         "countries": normalized_countries,
         "persona": normalized_persona,
@@ -3069,6 +3075,7 @@ async def install_standard_template_pack(
         "publish_after_seed": bool(payload.publish_after_seed),
         "summary": aggregate_summary,
         "results": results,
+        "failed_countries": failed_countries,
     }
 
 

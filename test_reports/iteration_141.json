@@ -1,0 +1,92 @@
+{
+  "summary": "Tested install-standard-pack resiliency update. The endpoint code has been refactored with country-level processing and failed_countries output, but it STILL returns 503 DB_ERROR because global FastAPI exception handlers intercept SQLAlchemy exceptions before the endpoint code can handle them. verify-standard-pack works correctly.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "POST /api/admin/site/content-layout/preset/install-standard-pack",
+        "issue": "Still returns 503 'Database connection error' with error_code='DB_ERROR'. The refactored code at lines 2994-3079 has country-level processing and failed_countries support, but the _run_with_db_retry internal function raises exceptions that are caught by global FastAPI exception handlers (server.py:2268-2305) before the endpoint's try-except block can catch them.",
+        "priority": "HIGH",
+        "root_cause": "Global exception handlers for DBAPIError, SATimeoutError, OperationalError in server.py return JSONResponse with 503 directly. The endpoint's except Exception block never executes because the global handlers intercept first.",
+        "suggested_fix": "Wrap the entire endpoint body in a try-except for SQLAlchemyError BEFORE calling _run_with_db_retry, or use a custom middleware/decorator that catches SQLAlchemy exceptions at the request level and converts them to the expected failed_countries format."
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_141_install_pack_resilience.py",
+    "/app/test_reports/pytest/pytest_results_141.xml"
+  ],
+  "action_items": [
+    "Fix install-standard-pack to catch SQLAlchemy exceptions at the endpoint level BEFORE global handlers intercept - consider wrapping with try-except for SQLAlchemyError at the top of the endpoint function",
+    "Alternative: Remove or modify the global exception handlers in server.py to not handle certain routes, allowing endpoint-specific handling",
+    "Alternative: Use a custom dependency or decorator that wraps DB operations and converts exceptions to the expected response format"
+  ],
+  "critical_code_review_comments": [
+    "The refactored code at lines 2994-3079 has the correct structure (country-level loop, failed_countries list, ok boolean) but it never gets executed because SQLAlchemy exceptions bubble up to global handlers first",
+    "The _run_with_db_retry function (lines 519-535) does retry transient errors, but when all retries fail, it raises the exception which is then caught by global handlers",
+    "The endpoint's except IntegrityError and except Exception blocks (lines 3044-3067) are correct but unreachable for DB connection errors"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_141_install_pack_resilience.py"
+  ],
+  "success_rate": {
+    "backend": "67% - verify-standard-pack (100%), validation tests (100%), install-standard-pack (0% - still 503)",
+    "frontend": "N/A - backend-only testing requested"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The install-standard-pack endpoint has been refactored with country-level processing and failed_countries support, but the global FastAPI exception handlers in server.py intercept SQLAlchemy exceptions before the endpoint can handle them. verify-standard-pack works correctly. Validation tests all pass.",
+  "features_verified": {
+    "install_standard_pack": {
+      "status": "FAIL",
+      "endpoint": "POST /api/admin/site/content-layout/preset/install-standard-pack",
+      "expected_behavior": "Return 200 with {ok, summary, results, failed_countries} structure",
+      "actual_behavior": "Returns 503 with {detail: 'Database connection error', error_code: 'DB_ERROR'}",
+      "root_cause": "Global exception handlers intercept SQLAlchemy exceptions before endpoint code"
+    },
+    "verify_standard_pack": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/site/content-layout/preset/verify-standard-pack?countries=TR,DE,FR&module=global",
+      "response_structure": "{ok, module, countries, summary: {ready_rows, total_rows, ready_ratio}, items: [...]}",
+      "details": "Returns 200 with ready_rows=12, total_rows=45, ready_ratio=26.67%"
+    },
+    "validation_tests": {
+      "status": "PASS",
+      "tests": [
+        "invalid_country -> 400",
+        "empty_countries -> 422",
+        "invalid_persona -> 400",
+        "invalid_variant -> 400"
+      ]
+    }
+  },
+  "mocked_apis": {
+    "academy.modules": "MOCKED"
+  },
+  "rca_of_the_issue": {
+    "problem": "install-standard-pack still returns 503 despite refactoring",
+    "root_cause": "The exception handling flow is: _country_op() -> _run_with_db_retry() -> raises exception -> caught by global FastAPI exception handlers in server.py (DBAPIError, SATimeoutError, OperationalError handlers at lines 2268-2305) -> returns 503 JSONResponse. The endpoint's except blocks (lines 3044-3067) never execute.",
+    "code_analysis": {
+      "endpoint_try_except": "Lines 3032-3067 have proper try-except for IntegrityError and Exception",
+      "global_handlers": "Lines 2268-2305 in server.py catch DBAPIError/SATimeoutError/OperationalError globally",
+      "conflict": "Global handlers have higher priority than endpoint-level handlers"
+    },
+    "reproduction_steps": [
+      "POST to /api/admin/site/content-layout/preset/install-standard-pack with valid payload",
+      "Observe 503 response with error_code: DB_ERROR",
+      "The endpoint code never reaches the failed_countries.append() calls"
+    ],
+    "mitigation_options": [
+      "Option 1: Wrap entire endpoint in try-except for SQLAlchemyError BEFORE any async DB operations",
+      "Option 2: Use a custom route class that overrides exception handling for this endpoint",
+      "Option 3: Remove/modify global handlers to exclude layout builder routes"
+    ]
+  }
+}
