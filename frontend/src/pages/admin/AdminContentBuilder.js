@@ -2483,34 +2483,8 @@ export default function AdminContentBuilder() {
     }
 
     const published = revisions.find((item) => item.status === 'published');
-    const publishedPayload = normalizePayload(published?.payload_json, targetPageType);
-    const fallbackPayload = normalizePayload(createEmptyPayload(targetPageType), targetPageType);
-
-    let draftCreateRes = null;
-    try {
-      draftCreateRes = await withRetries(
-        () => axios.post(
-          `${API}/admin/site/content-layout/pages/${targetPageId}/revisions/draft`,
-          { payload_json: publishedPayload },
-          { headers: authHeaders, timeout: 45000 },
-        ),
-        3,
-        1200,
-      );
-    } catch (_firstError) {
-      draftCreateRes = await withRetries(
-        () => axios.post(
-          `${API}/admin/site/content-layout/pages/${targetPageId}/revisions/draft`,
-          { payload_json: fallbackPayload },
-          { headers: authHeaders, timeout: 45000 },
-        ),
-        3,
-        1500,
-      );
-    }
-    const newDraft = draftCreateRes.data?.item;
-    setActiveDraftId(newDraft?.id || '');
-    setPayloadJson(normalizePayload(newDraft?.payload_json, targetPageType));
+    setActiveDraftId('');
+    setPayloadJson(normalizePayload(published?.payload_json, targetPageType));
   };
 
   const loadOrCreatePage = async () => {
@@ -2568,31 +2542,48 @@ export default function AdminContentBuilder() {
   };
 
   const saveDraft = async () => {
-    if (!activeDraftId) {
-      setError('Aktif draft bulunamadı. Önce “Sayfayı Yükle/Oluştur” yapın.');
-      return false;
+    if (!pageId) {
+      setError('Aktif sayfa bulunamadı. Önce “Sayfayı Yükle/Oluştur” yapın.');
+      return null;
     }
     setSaving(true);
     setError('');
     setStatus('');
     try {
-      await withRetries(
-        () => axios.patch(
-          `${API}/admin/site/content-layout/revisions/${activeDraftId}/draft`,
-          { payload_json: payloadJson },
-          { headers: authHeaders, timeout: 45000 },
-        ),
-        5,
-        1200,
-      );
+      let currentDraftId = activeDraftId;
+      if (!currentDraftId) {
+        const draftCreateRes = await withRetries(
+          () => axios.post(
+            `${API}/admin/site/content-layout/pages/${pageId}/revisions/draft`,
+            { payload_json: payloadJson },
+            { headers: authHeaders, timeout: 45000 },
+          ),
+          5,
+          1500,
+        );
+        const createdDraft = draftCreateRes.data?.item;
+        if (!createdDraft?.id) throw new Error('Draft oluşturulamadı');
+        currentDraftId = createdDraft.id;
+        setActiveDraftId(currentDraftId);
+      } else {
+        await withRetries(
+          () => axios.patch(
+            `${API}/admin/site/content-layout/revisions/${currentDraftId}/draft`,
+            { payload_json: payloadJson },
+            { headers: authHeaders, timeout: 45000 },
+          ),
+          5,
+          1200,
+        );
+      }
       setStatus('Draft kaydedildi.');
       toast.success('Draft kaydedildi.');
       refreshPreviewAfterInteraction();
-      return true;
+      return currentDraftId;
     } catch (err) {
       setError(err?.response?.data?.detail || 'Draft kaydedilemedi');
       toast.error('Draft kaydedilemedi.');
-      return false;
+      return null;
     } finally {
       setSaving(false);
     }
@@ -2635,16 +2626,12 @@ export default function AdminContentBuilder() {
   }, [pageType, activeDraftId]);
 
   const publishDraft = async () => {
-    if (!activeDraftId) {
-      setError('Yayınlanacak draft bulunamadı.');
-      return;
-    }
     setSaving(true);
     setError('');
     setStatus('');
     try {
-      const saveOk = await saveDraft();
-      if (!saveOk) {
+      const savedDraftId = await saveDraft();
+      if (!savedDraftId) {
         setStatus('Publish durduruldu: Draft kaydedilemedi.');
         return;
       }
@@ -2660,7 +2647,7 @@ export default function AdminContentBuilder() {
       }
 
       await withRetries(
-        () => axios.post(`${API}/admin/site/content-layout/revisions/${activeDraftId}/publish`, {}, { headers: authHeaders, timeout: 45000 }),
+        () => axios.post(`${API}/admin/site/content-layout/revisions/${savedDraftId}/publish`, {}, { headers: authHeaders, timeout: 45000 }),
         5,
         1500,
       );
