@@ -2681,23 +2681,26 @@ async def patch_draft_revision_admin(
     row.payload_json = payload.payload_json or {}
     after_payload = row.payload_json or {}
 
-    await write_layout_audit_log(
-        session,
-        actor_user_id=current_user.get("id"),
-        action=LayoutAuditAction.CREATE_REVISION,
-        entity_type="layout_revision",
-        entity_id=str(row.id),
-        before_json=before,
-        after_json={
-            "id": str(row.id),
-            "status": row.status.value,
-            "version": int(row.version),
-            "row_count": len(after_payload.get("rows") or []) if isinstance(after_payload, dict) else 0,
-            "component_count": _count_components(after_payload),
-        },
-        ip=request.client.host if request and request.client else None,
-        user_agent=request.headers.get("user-agent") if request else None,
-    )
+    try:
+        await write_layout_audit_log(
+            session,
+            actor_user_id=current_user.get("id"),
+            action=LayoutAuditAction.CREATE_REVISION,
+            entity_type="layout_revision",
+            entity_id=str(row.id),
+            before_json=before,
+            after_json={
+                "id": str(row.id),
+                "status": row.status.value,
+                "version": int(row.version),
+                "row_count": len(after_payload.get("rows") or []) if isinstance(after_payload, dict) else 0,
+                "component_count": _count_components(after_payload),
+            },
+            ip=request.client.host if request and request.client else None,
+            user_agent=request.headers.get("user-agent") if request else None,
+        )
+    except Exception:
+        logger.warning("layout_draft_audit_skipped", exc_info=True)
 
     async def _op():
         await session.commit()
