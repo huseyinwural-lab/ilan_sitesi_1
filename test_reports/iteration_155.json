@@ -1,0 +1,79 @@
+{
+  "summary": "Bug fix verified: Content List > Tek Tık Kurulum (Preset) error handling now works correctly. Errors display in preset error area instead of crashing UI with generic 'Bir hata oluştu' screen. Frontend normalizeErrorText/extractApiErrorText functions properly parse and display backend error responses including failed_countries details.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_155.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Preset error handling verified working. AdminContentList.js has normalizeErrorText() and extractApiErrorText() helpers that properly parse backend errors. The three preset workflows tested: (1) install-standard-pack (2) verify-standard-pack (3) reset-and-seed-home-wireframe all handle ok=false responses gracefully without UI crashes.",
+  "verification_results": {
+    "install_preset_error_handling": {
+      "empty_countries": {
+        "result": "PASS",
+        "error_displayed": "En az bir ülke giriniz. Örn: TR,DE,FR",
+        "ui_crashed": false
+      },
+      "invalid_countries_XX_YY": {
+        "result": "PASS",
+        "error_displayed": "Template pack kurulumu kısmi/başarısız tamamlandı | XX: operation_error | YY: operation_error",
+        "ui_crashed": false,
+        "summary_displayed": true
+      }
+    },
+    "verify_preset": {
+      "valid_countries": {
+        "result": "PASS",
+        "status_displayed": "TR/DE/FR publish doğrulaması güncellendi. Hazır oran: 25%",
+        "ui_crashed": false
+      },
+      "invalid_countries": {
+        "result": "PASS",
+        "ui_crashed": false,
+        "shows_0_ready_rows": true
+      }
+    },
+    "backend_api_tests": {
+      "install_with_invalid_countries": {
+        "returns_ok_false": true,
+        "includes_failed_countries_detail": true,
+        "error_type": "operation_error"
+      },
+      "verify_standard_pack": {
+        "returns_ok_true": true,
+        "returns_summary_with_ratio": true
+      }
+    },
+    "no_global_crash_screen": true
+  },
+  "bug_fix_confirmed": {
+    "issue": "Content List > Tek Tık Kurulum Başlat (Preset) was giving generic error screen",
+    "fix_verified": true,
+    "fix_details": [
+      "normalizeErrorText() function parses various error formats (string, array, object with message/detail/code)",
+      "extractApiErrorText() extracts error from axios response.data.detail",
+      "summarizeFailedCountries() formats failed_countries array with country:reason pairs",
+      "ok=false response path in handleInstallStandardPack sets presetError state instead of crashing"
+    ]
+  },
+  "mocked_apis": {
+    "academy.modules": "MOCKED as per handoff"
+  }
+}

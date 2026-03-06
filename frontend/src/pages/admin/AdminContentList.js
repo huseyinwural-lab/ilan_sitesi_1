@@ -69,6 +69,46 @@ const parseCountriesInput = (value) => (
     .filter(Boolean)
 );
 
+const normalizeErrorText = (value, fallback = 'Beklenmeyen bir hata oluştu') => {
+  if (typeof value === 'string' && value.trim()) return value;
+  if (Array.isArray(value)) {
+    const merged = value.map((item) => normalizeErrorText(item, '')).filter(Boolean).join(' | ');
+    return merged || fallback;
+  }
+  if (value && typeof value === 'object') {
+    if (typeof value.message === 'string' && value.message.trim()) return value.message;
+    if (typeof value.detail === 'string' && value.detail.trim()) return value.detail;
+    if (typeof value.code === 'string' && value.code.trim()) {
+      const blocked = Array.isArray(value.blocked_keys) ? ` blocked_keys=${value.blocked_keys.join(', ')}` : '';
+      const keys = Array.isArray(value.keys) ? ` keys=${value.keys.join(', ')}` : '';
+      return `${value.code}${blocked}${keys}`.trim();
+    }
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
+};
+
+const extractApiErrorText = (error, fallback) => {
+  const responseData = error?.response?.data;
+  const detail = responseData?.detail;
+  return normalizeErrorText(detail ?? responseData ?? error?.message, fallback);
+};
+
+const summarizeFailedCountries = (failedCountries) => {
+  if (!Array.isArray(failedCountries) || failedCountries.length === 0) return '';
+  return failedCountries
+    .map((item) => {
+      const country = String(item?.country || '-').toUpperCase();
+      const reason = normalizeErrorText(item?.error || item?.detail || 'failed', 'failed');
+      return `${country}: ${reason}`;
+    })
+    .join(' | ');
+};
+
 export default function AdminContentList() {
   const navigate = useNavigate();
 
@@ -136,8 +176,9 @@ export default function AdminContentList() {
       setContentListError('');
     } catch (err) {
       setContentListRows([]);
-      setContentListError(err?.response?.data?.detail || 'Content list yüklenemedi');
-      if (!silent) toast.error('Content list yüklenemedi.');
+      const message = extractApiErrorText(err, 'Content list yüklenemedi');
+      setContentListError(message);
+      if (!silent) toast.error(message);
     } finally {
       setContentListLoading(false);
     }
@@ -185,8 +226,9 @@ export default function AdminContentList() {
       toast.success('Revision soft-delete edildi.');
       await fetchContentList({ silent: true });
     } catch (err) {
-      setContentListError(err?.response?.data?.detail || 'Soft-delete başarısız');
-      toast.error('Soft-delete başarısız.');
+      const message = extractApiErrorText(err, 'Soft-delete başarısız');
+      setContentListError(message);
+      toast.error(message);
     }
   };
 
@@ -219,8 +261,9 @@ export default function AdminContentList() {
       setStatusMessage('Sayfa bire bir kopyalandı. Düzenlemek için Edit ile Content Builder’a geçebilirsiniz.');
       toast.success('Bire bir kopyalama tamamlandı.');
     } catch (err) {
-      setContentListError(err?.response?.data?.detail || 'Kopyalama başarısız');
-      toast.error('Kopyalama başarısız.');
+      const message = extractApiErrorText(err, 'Kopyalama başarısız');
+      setContentListError(message);
+      toast.error(message);
     }
   };
 
@@ -239,8 +282,9 @@ export default function AdminContentList() {
       toast.success(`Revision ${nextActive ? 'aktif' : 'pasif'} olarak güncellendi.`);
       await fetchContentList({ silent: true });
     } catch (err) {
-      setContentListError(err?.response?.data?.detail || 'Aktif/pasif güncellemesi başarısız');
-      toast.error('Aktif/pasif güncellemesi başarısız.');
+      const message = extractApiErrorText(err, 'Aktif/pasif güncellemesi başarısız');
+      setContentListError(message);
+      toast.error(message);
     }
   };
 
@@ -265,8 +309,9 @@ export default function AdminContentList() {
       await fetchContentList({ silent: true });
       setContentListView('active');
     } catch (err) {
-      setContentListError(err?.response?.data?.detail || 'Revision geri yükleme başarısız');
-      toast.error('Revision geri yükleme başarısız.');
+      const message = extractApiErrorText(err, 'Revision geri yükleme başarısız');
+      setContentListError(message);
+      toast.error(message);
     }
   };
 
@@ -291,15 +336,27 @@ export default function AdminContentList() {
         { headers: authHeaders },
       );
 
-      setPresetInstallResult(response.data || null);
+      const payload = response.data || {};
+      setPresetInstallResult(payload);
+
+      if (payload.ok === false) {
+        const failedSummary = summarizeFailedCountries(payload.failed_countries);
+        const message = normalizeErrorText(payload.detail, 'Toplu pasifleştirme/wireframe işlemi tamamlanamadı');
+        const fullMessage = failedSummary ? `${message} | ${failedSummary}` : message;
+        setPresetError(fullMessage);
+        toast.error(fullMessage);
+        return;
+      }
+
       setPresetStatus('Tüm sayfalar pasife alındı ve yeni ana sayfa wireframe’i TR/DE/FR için oluşturuldu.');
       setStatusMessage('Toplu pasifleştirme + yeni ana sayfa oluşturma tamamlandı.');
       toast.success('Yeni ana sayfa wireframe operasyonu tamamlandı.');
       await fetchContentList({ silent: true });
       setContentListView('active');
     } catch (err) {
-      setPresetError(err?.response?.data?.detail || 'Toplu pasifleştirme/wireframe işlemi başarısız');
-      toast.error('Toplu pasifleştirme/wireframe işlemi başarısız.');
+      const message = extractApiErrorText(err, 'Toplu pasifleştirme/wireframe işlemi başarısız');
+      setPresetError(message);
+      toast.error(message);
     } finally {
       setPresetLoading(false);
     }
@@ -334,13 +391,25 @@ export default function AdminContentList() {
         },
         { headers: authHeaders },
       );
-      setPresetInstallResult(response.data || null);
+      const payload = response.data || {};
+      setPresetInstallResult(payload);
+
+      if (payload.ok === false) {
+        const failedSummary = summarizeFailedCountries(payload.failed_countries);
+        const message = normalizeErrorText(payload.detail, 'Template pack kurulumu kısmi/başarısız tamamlandı');
+        const fullMessage = failedSummary ? `${message} | ${failedSummary}` : message;
+        setPresetError(fullMessage);
+        toast.error(fullMessage);
+        return;
+      }
+
       setPresetStatus('Standart template pack kurulumu tamamlandı.');
       toast.success('Standart template pack kuruldu.');
       await fetchContentList({ silent: true });
     } catch (err) {
-      setPresetError(err?.response?.data?.detail || 'Template pack kurulumu başarısız');
-      toast.error('Template pack kurulumu başarısız.');
+      const message = extractApiErrorText(err, 'Template pack kurulumu başarısız');
+      setPresetError(message);
+      toast.error(message);
     } finally {
       setPresetLoading(false);
     }
@@ -369,13 +438,25 @@ export default function AdminContentList() {
           include_extended_templates: presetIncludeExtendedTemplates,
         },
       });
-      setPresetVerifyResult(response.data || null);
-      const ratio = response.data?.summary?.ready_ratio;
+      const payload = response.data || {};
+      setPresetVerifyResult(payload);
+
+      if (payload.ok === false) {
+        const failedSummary = summarizeFailedCountries(payload.failed_countries);
+        const message = normalizeErrorText(payload.detail, 'Template pack doğrulaması kısmi/başarısız tamamlandı');
+        const fullMessage = failedSummary ? `${message} | ${failedSummary}` : message;
+        setPresetError(fullMessage);
+        toast.error(fullMessage);
+        return;
+      }
+
+      const ratio = payload?.summary?.ready_ratio;
       setPresetStatus(`TR/DE/FR publish doğrulaması güncellendi. Hazır oran: ${ratio ?? 0}%`);
       toast.success('Standart pack doğrulaması tamamlandı.');
     } catch (err) {
-      setPresetError(err?.response?.data?.detail || 'Template pack doğrulaması başarısız');
-      toast.error('Template pack doğrulaması başarısız.');
+      const message = extractApiErrorText(err, 'Template pack doğrulaması başarısız');
+      setPresetError(message);
+      toast.error(message);
     } finally {
       setPresetLoading(false);
     }
