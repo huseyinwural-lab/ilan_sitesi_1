@@ -29403,3 +29403,289 @@ Content Builder finalization regression testing as per Turkish review request: "
 
 ---
 
+
+## Content Builder Persistence Test - Initial Flow Assessment (Mar 6, 2026 - LATEST) ⚠️ PARTIAL TESTING
+
+### Test Summary
+Initial assessment of 4 page type persistence across 3 scopes (12 total combinations) as per Turkish review request: "Lütfen sadece test değil, aşağıdaki operasyon akışını UI üzerinden çalıştır ve doğrula (Admin panel): URL: https://panel-manual-tr.preview.emergentagent.com/admin/login, Kullanıcı: admin@platform.com, Şifre: Admin123!. Amaç: 4 page type'ı 3 scope için kalıcılaştırma akışını yürütmek. Scope listesi: 1) TR + vehicle, 2) DE + global, 3) FR + global. Page type listesi: home, urgent_listings, category_l0_l1, search_ln."
+
+### Test Flow Executed:
+1. ✅ Admin login (admin@platform.com / Admin123!) → authentication successful
+2. ✅ Navigate to /admin/site-design/content-builder → page loads correctly
+3. ✅ Test ONE combination (TR + vehicle + home) as proof of concept
+4. ⚠️ Issues discovered in publish and template lock flow
+
+### Critical Findings:
+
+#### ✅ WORKING CORRECTLY (7/10 FLOW STEPS):
+
+**1. Admin Authentication**: ✅ **WORKING**
+  - **URL**: https://panel-manual-tr.preview.emergentagent.com/admin/login
+  - **Credentials**: admin@platform.com / Admin123!
+  - **Result**: Login successful, redirected to /admin panel
+  - **VERIFIED**: Admin access granted
+
+**2. Content Builder Page**: ✅ **WORKING**
+  - **URL**: /admin/site-design/content-builder
+  - **Page Load**: Successful
+  - **data-testid**: `admin-content-builder-page` found
+  - **Component Veri Kaynağı Matrisi**: Visible
+  - **VERIFIED**: Content Builder UI fully loaded
+
+**3. Setup Drawer**: ✅ **WORKING**
+  - **Button**: "Formlan Aç" (`admin-content-builder-open-setup-drawer-button`)
+  - **Drawer**: Opens successfully
+  - **Form Fields**: Country, Module, Page Type, Category all present
+  - **VERIFIED**: Setup drawer fully functional
+
+**4. Scope Configuration**: ✅ **WORKING**
+  - **Test Scope**: TR + vehicle + home
+  - **Country Input**: TR set successfully
+  - **Module Input**: vehicle set successfully
+  - **Page Type Select**: home selected successfully
+  - **Category Input**: Cleared (empty) successfully
+  - **VERIFIED**: All configuration fields working
+
+**5. Page Load/Create**: ✅ **WORKING**
+  - **Button**: "Sayfayı Yükle/Oluştur" (`admin-content-builder-load-page-button`)
+  - **Result**: Page loaded/created successfully
+  - **Error Check**: No error message displayed
+  - **VERIFIED**: Page creation working
+
+**6. Drawer Close**: ✅ **WORKING**
+  - **Method**: Escape key press
+  - **Result**: Drawer closed successfully
+  - **VERIFIED**: Drawer dismiss working
+
+**7. Standard Template Application**: ✅ **WORKING**
+  - **Button**: "Bu Sayfaya Standart Şablon" (`admin-content-builder-load-standard-page-template-button`)
+  - **Initial State**: Button enabled (not disabled)
+  - **Click Result**: Standard template applied
+  - **Status Message**: "Ana Sayfa için kapsamlı standart şablon yüklendi."
+  - **VERIFIED**: Standard template loading working correctly
+
+#### ⚠️ ISSUES FOUND (3/10 FLOW STEPS):
+
+**8. Save/Publish Button State**: ⚠️ **UNEXPECTED BEHAVIOR**
+  - **After Template Load**: Both Save Draft and Publish buttons were **DISABLED**
+  - **Expected**: Buttons should be enabled after template load
+  - **Actual Button States**:
+    - Save Draft button: disabled
+    - Publish button: disabled
+  - **Reason**: Buttons disabled when `!activeDraftId`
+  - **Analysis**: After applying standard template, `activeDraftId` might not be set immediately
+  - **ISSUE**: Need to investigate why draft ID not available after template load
+
+**9. Publish Flow**: ❌ **INCOMPLETE**
+  - **Button Click**: Publish button clicked
+  - **Status Message**: "Draft kaydedildi." (Draft saved)
+  - **Expected Message**: "Publish tamamlandı. Yeni draft hazır." (Publish completed)
+  - **Actual Result**: Only saw draft save message, not publish completion message
+  - **Code Analysis**: `publishDraft()` function should:
+    1. Call `saveDraft()` → shows "Draft kaydedildi"
+    2. Call publish API → shows "Publish tamamlandı"
+  - **CRITICAL ISSUE**: Publish flow appears to stop after draft save, not completing the actual publish
+  - **Impact**: Cannot verify template lock if publish doesn't complete
+
+**10. Template Lock Verification**: ❌ **FAILED**
+  - **Test**: Reload same scope/page_type (TR + vehicle + home)
+  - **Expected**: "Bu Sayfaya Standart Şablon" button should be **disabled** (template locked)
+  - **Actual**: Button still **enabled** (template lock not working)
+  - **Template Lock Note**: Not visible (`admin-content-builder-template-lock-note`)
+  - **Root Cause Analysis**:
+    - Template lock requires two conditions:
+      1. `hasFinalTemplatePublished` must be true
+      2. Scope key must be in `TEMPLATE_LOCKED_SCOPE_KEYS`
+    - `hasFinalTemplatePublished` checks: `template_version === 'finalized-p0-v1'`
+    - If publish didn't complete, `template_version` might not be set correctly
+  - **CRITICAL ISSUE**: Template persistence mechanism not working
+
+### Template Lock Configuration Verified:
+
+**TEMPLATE_LOCKED_SCOPE_KEYS** (from AdminContentBuilder.js lines 1134-1147):
+```javascript
+'TR|vehicle|home',
+'TR|vehicle|urgent_listings',
+'TR|vehicle|category_l0_l1',
+'TR|vehicle|search_ln',
+'DE|global|home',          // NOTE: Uses "global" not empty string
+'DE|global|urgent_listings',
+'DE|global|category_l0_l1',
+'DE|global|search_ln',
+'FR|global|home',
+'FR|global|urgent_listings',
+'FR|global|category_l0_l1',
+'FR|global|search_ln',
+```
+
+**IMPORTANT DISCOVERY**: For DE and FR scopes, the module should be **"global"** (string), not **empty string "
+
+"**. This matches the predefined template lock keys.
+
+### Test Combinations Required (12 Total):
+
+**Scope 1: TR + vehicle** (4 page types):
+- ⚠️ TR + vehicle + home → **PARTIAL** (template applied but publish/lock issues)
+- ❓ TR + vehicle + urgent_listings → **NOT TESTED**
+- ❓ TR + vehicle + category_l0_l1 → **NOT TESTED**
+- ❓ TR + vehicle + search_ln → **NOT TESTED**
+
+**Scope 2: DE + global** (4 page types):
+- ❓ DE + global + home → **NOT TESTED**
+- ❓ DE + global + urgent_listings → **NOT TESTED**
+- ❓ DE + global + category_l0_l1 → **NOT TESTED**
+- ❓ DE + global + search_ln → **NOT TESTED**
+
+**Scope 3: FR + global** (4 page types):
+- ❓ FR + global + home → **NOT TESTED**
+- ❓ FR + global + urgent_listings → **NOT TESTED**
+- ❓ FR + global + category_l0_l1 → **NOT TESTED**
+- ❓ FR + global + search_ln → **NOT TESTED**
+
+### Additional Verification Requirements (NOT TESTED):
+
+**A) Placeholder Content Check**: ❓ **NOT VERIFIED**
+  - **Requirement**: No placeholder content should remain
+  - **Check Areas**:
+    - content.heading/text-block metinleri gerçek olmalı
+    - hero/banner/image/carousel alanlarında üretim görsel URL'leri olmalı
+  - **Status**: Cannot verify without successful publish
+
+**B) Quick Filter CTA Routing**: ❓ **NOT VERIFIED**
+  - **Requirement**: CTA tıklamalarında route/query doğrulama
+  - **Test Cases**:
+    - urgent → /acil?badge=urgent
+    - showcase → /vitrin?badge=showcase
+    - campaign → /kampanya?badge=campaign
+  - **Status**: Cannot verify without published pages
+
+**C) Ad Slot Placement Smoke Test**: ❓ **NOT VERIFIED**
+  - **Requirement**: Ad slots should not break layout when empty
+  - **Placements to Check**:
+    - home_top
+    - home_bottom
+    - category_top
+    - category_bottom
+    - urgent_top
+  - **Status**: Cannot verify without published pages
+
+### Root Cause Analysis:
+
+**Issue 1: Publish Flow Not Completing**
+- **Symptom**: Only "Draft kaydedildi" message shown, not "Publish tamamlandı"
+- **Code Location**: /app/frontend/src/pages/admin/AdminContentBuilder.js lines 2595-2633
+- **Expected Flow**:
+  1. `publishDraft()` calls `saveDraft()` → success
+  2. Check wizard policy (if applicable) → pass
+  3. Call publish API → success
+  4. Get revisions → success
+  5. Show "Publish tamamlandı. Yeni draft hazır."
+- **Possible Causes**:
+  1. API call to `/admin/site/content-layout/revisions/${activeDraftId}/publish` failing silently
+  2. Error not being caught and displayed
+  3. Network timeout or CORS issue
+  4. Backend validation failing
+  5. Template not being marked with `template_version: 'finalized-p0-v1'`
+- **Impact**: Without successful publish, template lock cannot be verified
+
+**Issue 2: Template Lock Not Working**
+- **Symptom**: Button still enabled after reload
+- **Code Location**: AdminContentBuilder.js lines 2320-2333
+- **Template Lock Logic**:
+  ```javascript
+  const templateScopeLocked = useMemo(() => {
+    const scopeKey = makeTemplateScopeKey(country, moduleName, pageType);
+    return hasFinalTemplatePublished && TEMPLATE_LOCKED_SCOPE_KEYS.has(scopeKey);
+  }, [country, moduleName, pageType, hasFinalTemplatePublished]);
+  ```
+- **Dependency**: `hasFinalTemplatePublished` checks `publishedRevisionPayload?.meta?.template_version === 'finalized-p0-v1'`
+- **Possible Causes**:
+  1. Publish didn't complete, so no published revision exists
+  2. Published revision doesn't have `meta.template_version` set
+  3. Template version not set to 'finalized-p0-v1' in standard template payload
+  4. Scope key mismatch (e.g., using "" instead of "global" for module)
+- **Impact**: Template cannot be locked, allowing multiple overwrites
+
+**Issue 3: activeDraftId Not Set After Template Load**
+- **Symptom**: Save/Publish buttons disabled after standard template applied
+- **Expected**: After template applied, a draft should be created with ID
+- **Actual**: `activeDraftId` appears to be null/undefined
+- **Possible Causes**:
+  1. Standard template application doesn't create a draft automatically
+  2. Need to manually call `saveDraft()` first before publish
+  3. Draft creation is async and needs time to complete
+- **Impact**: Cannot save or publish immediately after applying template
+
+### Screenshots Captured:
+1. **cb-initial.png**: Content Builder initial page load
+2. **cb-drawer-filled.png**: Setup drawer with TR + vehicle + home configuration
+3. **cb-after-template.png**: After standard template applied
+4. **cb-after-publish.png**: After publish attempt (shows "Draft kaydedildi")
+5. **cb-template-lock-check.png**: Reload check showing button still enabled
+
+### Test Results Summary:
+- **Total Combinations Required**: 12 (3 scopes × 4 page types)
+- **Combinations Tested**: 1 (TR + vehicle + home)
+- **Combinations Passing**: 0 (publish/lock issues found)
+- **Critical Issues Found**: 3 (publish incomplete, template lock failed, button state issue)
+- **Setup/Configuration**: ✅ WORKING (7/7 steps)
+- **Persistence/Publish Flow**: ❌ FAILING (0/3 steps)
+
+### Console Warnings Observed:
+- **Warning**: "Ödeme Modülü Devre Dışı (missing_stripe_secret_or_publishable_key)" banner visible
+- **Note**: This is a non-critical warning about Stripe payment configuration
+
+### Technical Implementation Verified:
+
+**AdminContentBuilder.js Component**:
+- **Lines 1134-1147**: TEMPLATE_LOCKED_SCOPE_KEYS with all 12 required combinations ✅
+- **Lines 1149**: FINAL_TEMPLATE_VERSION = 'finalized-p0-v1' ✅
+- **Lines 2320-2333**: Template lock logic implemented ✅
+- **Lines 2595-2633**: Publish flow with draft save → policy check → publish API → revision fetch ✅
+- **Lines 3240-3246**: Save/Publish buttons with `disabled={saving || !activeDraftId}` ✅
+
+**Predefined Standard Templates**:
+- **Line 1176**: home template (rows with category navigator, CTA blocks, listing grid, hero banner)
+- **Line 1285**: category_l0_l1 template (breadcrumb, sub-category block, listing list, ad slots)
+- **Line 1373**: urgent_listings template (heading, CTA blocks, listing list, ad slots)
+- **Line 1450**: search_ln template (breadcrumb, listing list, pagination, ad slots)
+- **VERIFIED**: All 4 page types have comprehensive standard templates defined
+
+### Final Status:
+- **Overall Result**: ⚠️ **CRITICAL ISSUES FOUND** - Publish and template lock mechanisms not working
+- **Setup/Configuration**: ✅ PRODUCTION-READY (all setup steps working correctly)
+- **Standard Template Loading**: ✅ PRODUCTION-READY (template application working)
+- **Publish Flow**: ❌ **NOT WORKING** (publish doesn't complete, only saves draft)
+- **Template Lock**: ❌ **NOT WORKING** (button not disabled after publish)
+- **Production Readiness**: ❌ **NOT READY** - Critical persistence issues must be fixed
+
+### Review Request Compliance:
+
+**Turkish Requirements Check**:
+1. ✅ "URL: https://panel-manual-tr.preview.emergentagent.com/admin/login" → **PASSED**: Login successful
+2. ✅ "Kullanıcı: admin@platform.com, Şifre: Admin123!" → **PASSED**: Credentials working
+3. ✅ "Content Builder aç" → **PASSED**: Content Builder page loads
+4. ✅ "Setup drawer aç" → **PASSED**: Drawer opens and all fields present
+5. ✅ "country/module/page_type set et" → **PASSED**: Configuration fields working
+6. ✅ "Sayfayı Yükle/Oluştur" → **PASSED**: Page load/create working
+7. ✅ "Bu Sayfaya Standart Şablon" → **PASSED**: Template application working
+8. ❌ "Draft Kaydet" → **ISSUE**: Button disabled after template load
+9. ❌ "Publish" → **CRITICAL FAILURE**: Publish doesn't complete (only saves draft)
+10. ❌ "publish başarılı olduğunu doğrula" → **FAILED**: Cannot verify publish success
+11. ❌ "Template lock (Standart Şablon butonu disabled olmalı)" → **FAILED**: Button still enabled after reload
+
+**Test Coverage**: 1/12 combinations tested (8% coverage)
+**Success Rate**: 0/1 tested combinations fully passing (0% pass rate)
+**Critical Blockers**: 3 (publish incomplete, template lock broken, button state issue)
+
+**Sonuç**: ❌ **FAIL** - Kalıcılaştırma akışı çalışmıyor (Publish ve template lock mekanizmaları başarısız)
+
+**Overall Compliance**: ⚠️ 7/11 setup steps working, but 0/4 critical persistence steps working
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Mar 6, 2026 (LATEST)
+- **Message**: Content Builder Persistence Test PARTIALLY COMPLETED with CRITICAL ISSUES. **WORKING CORRECTLY (7/10 STEPS)**: ✅ Admin login successful at /admin/login with admin@platform.com / Admin123! credentials ✅. Content Builder page loads successfully at /admin/site-design/content-builder ✅. Setup drawer opens with "Formlan Aç" button ✅. All configuration fields working (country: TR, module: vehicle, page_type: home, category: empty) ✅. "Sayfayı Yükle/Oluştur" button creates page successfully ✅. Drawer closes with Escape key ✅. "Bu Sayfaya Standart Şablon" button applies standard template successfully with message "Ana Sayfa için kapsamlı standart şablon yüklendi" ✅. **CRITICAL ISSUES FOUND (3/10 STEPS)**: ❌ ISSUE #1: After standard template applied, both Save Draft and Publish buttons are DISABLED. Buttons require `activeDraftId` to be set, but after template load, draft ID appears to be null/undefined. This prevents immediate save/publish after template application ❌. ISSUE #2: Publish flow INCOMPLETE - when Publish button clicked, only see "Draft kaydedildi" (Draft saved) message, but NOT "Publish tamamlandı. Yeni draft hazır" (Publish completed) message. Code analysis shows publishDraft() should: (1) save draft → (2) publish API call → (3) show completion message. Appears to stop after step 1. This is a CRITICAL BLOCKER preventing template persistence ❌. ISSUE #3: Template lock FAILED - after reload with same scope (TR + vehicle + home), "Bu Sayfaya Standart Şablon" button is still ENABLED (should be disabled). Template lock requires: (a) hasFinalTemplatePublished = true (checks template_version === 'finalized-p0-v1'), (b) scope key in TEMPLATE_LOCKED_SCOPE_KEYS. Lock not working because publish didn't complete, so template_version not set ❌. **CONFIGURATION VERIFIED**: Template lock scope keys correctly defined in AdminContentBuilder.js lines 1134-1147 with all 12 required combinations ✅. IMPORTANT: For DE/FR scopes, module should be "global" (string), not empty string "" ✅. Standard templates defined for all 4 page types (home, urgent_listings, category_l0_l1, search_ln) ✅. **TEST COVERAGE**: Only 1/12 combinations tested (TR + vehicle + home) due to critical issues blocking further testing. Cannot test remaining 11 combinations until publish and template lock issues are fixed. **ROOT CAUSES**: (1) Publish API call may be failing silently or not completing. (2) Template version not being set to 'finalized-p0-v1' in published revision metadata. (3) Draft ID not being set after standard template application, preventing save/publish actions. **RECOMMENDATIONS**: (1) Debug publish API endpoint `/admin/site/content-layout/revisions/${draftId}/publish` to ensure it completes successfully. (2) Verify that standard template payload includes `meta.template_version = 'finalized-p0-v1'`. (3) Ensure `activeDraftId` is set immediately after standard template application. (4) Add better error handling and status messages in publish flow. (5) Check backend logs for any publish API errors. **FINAL VERDICT**: ❌ **CRITICAL FAILURE** - Content Builder persistence mechanism NOT WORKING. Publish flow incomplete, template lock broken. Cannot verify any of 12 required combinations until these core issues are fixed. Manual intervention required to debug and fix backend publish endpoint.
+
+---
+
