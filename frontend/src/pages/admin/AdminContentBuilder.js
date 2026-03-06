@@ -1950,7 +1950,9 @@ export default function AdminContentBuilder() {
   const [isSetupDrawerOpen, setIsSetupDrawerOpen] = useState(false);
   const [pendingFocusComponentId, setPendingFocusComponentId] = useState('');
 
-  const [componentLibrary, setComponentLibrary] = useState([]);
+  const [componentLibrary, setComponentLibrary] = useState(() => DEFAULT_COMPONENT_LIBRARY
+    .filter((item) => !isBlockedBuilderLibraryItem(item))
+    .map(attachComponentSourceSpec));
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [categorySearch, setCategorySearch] = useState('');
   const [categoriesLoading, setCategoriesLoading] = useState(false);
@@ -2027,7 +2029,17 @@ export default function AdminContentBuilder() {
       }));
 
       const defaultByKey = Object.fromEntries(DEFAULT_COMPONENT_LIBRARY.map((item) => [item.key, item]));
-      const mergedMap = new Map();
+      const mergedMap = new Map(
+        DEFAULT_COMPONENT_LIBRARY.map((item) => [
+          item.key,
+          {
+            ...item,
+            schema_json: item?.schema_json && typeof item.schema_json === 'object'
+              ? item.schema_json
+              : { type: 'object', properties: {}, additionalProperties: true },
+          },
+        ]),
+      );
 
       [...normalized, ...menuLibraryItems].forEach((item) => {
         const base = defaultByKey[item.key] || null;
@@ -2060,7 +2072,11 @@ export default function AdminContentBuilder() {
           .map(attachComponentSourceSpec),
       );
     } catch (_err) {
-      setComponentLibrary([]);
+      setComponentLibrary(
+        DEFAULT_COMPONENT_LIBRARY
+          .filter((item) => !isBlockedBuilderLibraryItem(item))
+          .map(attachComponentSourceSpec),
+      );
       setMenuManagementHealth(null);
     }
   }, [authHeaders, country]);
