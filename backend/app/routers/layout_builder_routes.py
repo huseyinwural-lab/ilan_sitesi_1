@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import unicodedata
 from datetime import datetime, timedelta, timezone
 import logging
 import time
@@ -554,6 +555,16 @@ def _count_components(payload_json: dict[str, Any]) -> int:
             if isinstance(comps, list):
                 total += len(comps)
     return total
+
+
+def _sanitize_payload_for_sql_ascii(value: Any) -> Any:
+    if isinstance(value, str):
+        return unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    if isinstance(value, list):
+        return [_sanitize_payload_for_sql_ascii(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _sanitize_payload_for_sql_ascii(val) for key, val in value.items()}
+    return value
 
 
 def _build_generic_layout_policy_report(payload_json: dict[str, Any], *, page_type: Optional[str] = None) -> dict[str, Any]:
@@ -2627,12 +2638,14 @@ async def create_draft_revision_admin(
     if _is_wizard_policy_page_type(page_row.page_type):
         _validate_listing_runtime_guard_or_400(payload.payload_json)
 
+    safe_payload = _sanitize_payload_for_sql_ascii(payload.payload_json)
+
     try:
         async def _op():
             created_row = await create_draft_revision(
                 session,
                 layout_page_id=page_id,
-                payload_json=payload.payload_json,
+                payload_json=safe_payload,
                 actor_user_id=current_user.get("id"),
             )
             await session.commit()
@@ -2678,7 +2691,7 @@ async def patch_draft_revision_admin(
         "row_count": len(before_payload.get("rows") or []) if isinstance(before_payload, dict) else 0,
         "component_count": _count_components(before_payload),
     }
-    row.payload_json = payload.payload_json or {}
+    row.payload_json = _sanitize_payload_for_sql_ascii(payload.payload_json or {})
     after_payload = row.payload_json or {}
 
     try:
