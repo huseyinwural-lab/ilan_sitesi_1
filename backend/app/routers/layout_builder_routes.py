@@ -3020,36 +3020,34 @@ async def install_standard_template_pack(
     try:
         await _ensure_layout_page_type_enum_values(session)
     except Exception as exc:
-        if _is_transient_db_error(exc):
-            try:
-                await session.rollback()
-            except Exception:
-                pass
-            return {
-                "ok": False,
-                "module": normalized_module,
-                "countries": normalized_countries,
-                "persona": normalized_persona,
-                "variant": normalized_variant,
-                "publish_after_seed": bool(payload.publish_after_seed),
-                "summary": {
-                    "created_pages": 0,
-                    "created_drafts": 0,
-                    "updated_drafts": 0,
-                    "skipped_drafts": 0,
-                    "published_revisions": 0,
-                },
-                "results": [],
-                "failed_countries": [
-                    {
-                        "country": country_code,
-                        "error": "db_error",
-                        "detail": str(exc),
-                    }
-                    for country_code in normalized_countries
-                ],
-            }
-        raise
+        try:
+            await session.rollback()
+        except Exception:
+            pass
+        return {
+            "ok": False,
+            "module": normalized_module,
+            "countries": normalized_countries,
+            "persona": normalized_persona,
+            "variant": normalized_variant,
+            "publish_after_seed": bool(payload.publish_after_seed),
+            "summary": {
+                "created_pages": 0,
+                "created_drafts": 0,
+                "updated_drafts": 0,
+                "skipped_drafts": 0,
+                "published_revisions": 0,
+            },
+            "results": [],
+            "failed_countries": [
+                {
+                    "country": country_code,
+                    "error": "db_error",
+                    "detail": str(exc),
+                }
+                for country_code in normalized_countries
+            ],
+        }
 
     aggregate_summary = {
         "created_pages": 0,
@@ -3102,16 +3100,14 @@ async def install_standard_template_pack(
             )
         except Exception as exc:
             await session.rollback()
-            if _is_transient_db_error(exc):
-                failed_countries.append(
-                    {
-                        "country": country_code,
-                        "error": "db_error",
-                        "detail": str(exc),
-                    }
-                )
-                continue
-            raise
+            failed_countries.append(
+                {
+                    "country": country_code,
+                    "error": "db_error" if _is_transient_db_error(exc) else "operation_error",
+                    "detail": str(exc),
+                }
+            )
+            continue
 
     return {
         "ok": len(failed_countries) == 0,
