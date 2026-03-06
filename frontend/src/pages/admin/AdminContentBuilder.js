@@ -1150,6 +1150,10 @@ const PRODUCTION_MEDIA_ASSETS = {
 };
 
 const TEMPLATE_LOCKED_SCOPE_KEYS = new Set([
+  'TR|global|home',
+  'TR|global|urgent_listings',
+  'TR|global|category_l0_l1',
+  'TR|global|search_ln',
   'TR|vehicle|home',
   'TR|vehicle|urgent_listings',
   'TR|vehicle|category_l0_l1',

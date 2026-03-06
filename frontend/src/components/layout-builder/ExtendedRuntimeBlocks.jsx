@@ -695,18 +695,21 @@ export const AutoPlayCarouselHeroBlock = ({ props, runtimeContext }) => {
   const slides = dynamicSlides.length
     ? dynamicSlides.map((item, index) => ({ id: item.id || `dynamic-${index}`, label: props?.title || 'Banner', url: item.target_url || '#', image: item.image_url || FALLBACK_IMAGES[index % FALLBACK_IMAGES.length] }))
     : staticSlides;
+  const safeSlides = slides.length > 0
+    ? slides
+    : [{ id: 'fallback-hero', label: props?.title || 'Vitrin', url: '#', image: FALLBACK_IMAGES[0] }];
   const [activeIndex, setActiveIndex] = useState(0);
   const autoPlaySeconds = Math.max(2, Math.min(15, toNumber(props?.auto_play_seconds, 5)));
 
   useEffect(() => {
-    if (slides.length <= 1) return undefined;
+    if (safeSlides.length <= 1) return undefined;
     const timer = window.setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % slides.length);
+      setActiveIndex((prev) => (prev + 1) % safeSlides.length);
     }, autoPlaySeconds * 1000);
     return () => window.clearInterval(timer);
-  }, [slides.length, autoPlaySeconds]);
+  }, [safeSlides.length, autoPlaySeconds]);
 
-  const activeSlide = slides[activeIndex];
+  const activeSlide = safeSlides[activeIndex] || safeSlides[0];
   return (
     <section className="overflow-hidden rounded-2xl border" data-testid="runtime-auto-play-hero">
       <div className="relative aspect-[16/6] bg-slate-900">
