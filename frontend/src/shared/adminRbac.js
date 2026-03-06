@@ -50,6 +50,7 @@ export const ADMIN_ROUTE_RULES = [
   { pattern: /^\/admin\/site-design\/home-category$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
   { pattern: /^\/admin\/site-design\/listing$/, roles: ADMIN_ROLE_GROUPS.adminOnly },
   { pattern: /^\/admin\/site-design\/content-builder$/, roles: ['super_admin', 'country_admin'] },
+  { pattern: /^\/admin\/site-design\/content-list$/, roles: ['super_admin', 'country_admin'] },
   { pattern: /^\/admin\/site-design\/listing-flow-settings$/, roles: ['super_admin', 'country_admin'] },
   { pattern: /^\/admin\/user-interface-design$/, roles: ADMIN_ROLE_GROUPS.uiDesigner },
   { pattern: /^\/admin\/ops\/publish-health$/, roles: ADMIN_ROLE_GROUPS.opsReliability },

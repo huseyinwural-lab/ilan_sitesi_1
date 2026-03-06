@@ -491,6 +491,8 @@ export default function Layout({ children }) {
   { path: '/admin/pricing/packages', icon: Package, label: 'Kurumsal Kampanyalar', roles: roles.pricingManager, testId: 'pricing-corporate-campaigns' },
 
     { divider: true, label: 'Site İç Tasarımı', roles: roles.adminOnly },
+    { path: '/admin/site-design/content-builder', icon: Layers, label: 'Content Builder', roles: roles.adminOnly, testId: 'site-design-content-builder' },
+    { path: '/admin/site-design/content-list', icon: FileText, label: 'Content List', roles: roles.adminOnly, testId: 'site-design-content-list' },
     { path: '/admin/site-design/header', icon: PanelTop, label: 'Header Yönetimi', roles: roles.adminOnly, testId: 'site-design-header-management' },
     { path: '/admin/site-design/footer', icon: PanelTop, label: 'Footer Yönetimi', roles: roles.adminOnly, testId: 'site-design-footer-management' },
     { path: '/admin/site-design/theme', icon: Palette, label: 'Tema Yönetimi', roles: roles.adminOnly, testId: 'site-design-theme-management' },
@@ -498,7 +500,6 @@ export default function Layout({ children }) {
     { path: '/admin/site-design/home-category', icon: Layers, label: 'Ana Site Kategorisi', roles: roles.adminOnly, testId: 'site-design-home-category' },
     { path: '/admin/site-design/listing', icon: Layers, label: 'İlan Tasarım', roles: roles.adminOnly, testId: 'site-design-listing-design' },
     { path: '/admin/site-design/listing-flow-settings?focus=listing-create', icon: Settings, label: 'İlan Ver Akış Ayarları', roles: roles.adminOnly, testId: 'site-design-listing-flow-settings' },
-    { path: '/admin/site-design/content-builder', icon: Layers, label: 'Content Builder', roles: roles.adminOnly, testId: 'site-design-content-builder' },
     { path: '/admin/user-interface-design', icon: Layers, label: 'Kullanıcı Tasarım', roles: roles.uiDesigner, testId: 'site-design-user-interface-design' },
 
     { divider: true, label: 'Operasyon', roles: roles.opsReliability },
@@ -636,6 +637,7 @@ export default function Layout({ children }) {
       '/admin/site-design/listing',
       '/admin/site-design/listing-flow-settings',
       '/admin/site-design/content-builder',
+      '/admin/site-design/content-list',
       '/admin/user-interface-design',
       '/admin/ops/publish-health',
       '/admin/info-pages',

@@ -1,0 +1,55 @@
+{
+  "summary": "Tested Content List menu item relocation and route access. Found and fixed critical RBAC rule missing bug - Content List page was showing 403 due to missing route pattern in adminRbac.js.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/frontend/src/shared/adminRbac.js"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "FIXED: Missing RBAC route rule for /admin/site-design/content-list in adminRbac.js causing 403 error"
+  ],
+  "updated_files": [
+    "/app/frontend/src/shared/adminRbac.js"
+  ],
+  "success_rate": {
+    "backend": "N/A - frontend only test",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Content List page now accessible after adding RBAC route rule. Menu order verified: Content Builder 1st, Content List 2nd in Site İç Tasarımı section. Table columns verified: page_type, country, module, category/scope, status, version, updated_at, actions. Edit, Delete, Kopyala buttons visible in actions column.",
+  "test_results": {
+    "menu_order_verification": {
+      "status": "PASS",
+      "details": "Content Builder is 1st, Content List is 2nd in Site İç Tasarımı sidebar menu"
+    },
+    "content_list_route": {
+      "status": "PASS",
+      "details": "/admin/site-design/content-list now accessible after RBAC fix"
+    },
+    "content_list_table_columns": {
+      "status": "PASS",
+      "details": "Columns found: page_type, country, module, category / scope, status, version, updated_at, actions"
+    },
+    "content_list_actions": {
+      "status": "PASS",
+      "details": "Edit, Delete, Kopyala buttons visible in actions column"
+    }
+  },
+  "fix_applied": {
+    "file": "/app/frontend/src/shared/adminRbac.js",
+    "change": "Added missing route rule: { pattern: /^\\/admin\\/site-design\\/content-list$/, roles: ['super_admin', 'country_admin'] }"
+  },
+  "mocked_apis": {
+    "academy.modules": "MOCKED"
+  }
+}
