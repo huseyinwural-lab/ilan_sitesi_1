@@ -1,0 +1,99 @@
+{
+  "summary": "Tested install-standard-pack DB transient fallback improvement. The endpoint STILL returns 503 with error_code='DB_ERROR' instead of the expected controlled 200 response with failed_countries. The transient DB fallback added in lines 3020-3052 is NOT catching the exception - global FastAPI exception handlers intercept it first. verify-standard-pack works correctly.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "POST /api/admin/site/content-layout/preset/install-standard-pack",
+        "issue": "Still returns 503 'Database connection error' with error_code='DB_ERROR' instead of controlled 200 response with failed_countries",
+        "priority": "HIGH",
+        "root_cause": "The transient DB fallback in lines 3020-3052 wraps _ensure_layout_page_type_enum_values() with try-except that checks _is_transient_db_error(exc). However, the exception is being caught by global FastAPI exception handlers (@app.exception_handler(DBAPIError)) in server.py before the endpoint's try-except can process it.",
+        "expected_behavior": "Return 200 with {ok: false, summary, results: [], failed_countries: [{country, error: 'db_error', detail}]}",
+        "actual_behavior": "Returns 503 with {detail: 'Database connection error', error_code: 'DB_ERROR'}",
+        "suggested_fix": "The exception flow needs to be revised. Options: (1) Catch SQLAlchemyError explicitly at a higher level before global handlers, (2) Use a route-specific middleware, (3) Move the DB operation to a separate try-catch that doesn't propagate to global handlers"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_142_db_fallback.py",
+    "/app/test_reports/pytest/pytest_results_142.xml"
+  ],
+  "action_items": [
+    "CRITICAL: The current transient DB fallback implementation at lines 3020-3052 is not effective because global exception handlers in server.py (lines 2268-2305) intercept SQLAlchemy exceptions first",
+    "Option 1: Wrap the entire endpoint body in a route-specific exception handler decorator that catches SQLAlchemyError before global handlers",
+    "Option 2: Exclude layout_builder routes from global exception handlers and handle DB errors explicitly in each endpoint",
+    "Option 3: Use a custom APIRoute class that overrides exception handling for this router"
+  ],
+  "critical_code_review_comments": [
+    "The transient fallback code at lines 3020-3052 has correct structure but never executes because exceptions are intercepted by global handlers",
+    "Global handlers @app.exception_handler(DBAPIError/SATimeoutError/OperationalError) at server.py:2268-2305 return 503 before endpoint code can catch errors",
+    "_is_transient_db_error() function includes 'db_error' marker which should match, but exception never reaches the check"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_142_db_fallback.py"
+  ],
+  "success_rate": {
+    "backend": "25% - verify-standard-pack (100%), validation tests (100%), install-standard-pack (0% - still 503)",
+    "frontend": "N/A - backend-only testing requested"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The install-standard-pack endpoint still returns 503 DB_ERROR despite the transient fallback code at lines 3020-3052. The issue is that FastAPI global exception handlers intercept SQLAlchemy exceptions before the endpoint's try-except can catch them. verify-standard-pack works correctly. The _LAYOUT_ENUM_SYNCED global flag and _ensure_layout_page_type_enum_values function are the entry point where DB errors occur.",
+  "features_verified": {
+    "install_standard_pack_db_fallback": {
+      "status": "FAIL",
+      "endpoint": "POST /api/admin/site/content-layout/preset/install-standard-pack",
+      "expected_behavior": "Return 200 with {ok, summary, results, failed_countries} on DB error",
+      "actual_behavior": "Returns 503 with {detail: 'Database connection error', error_code: 'DB_ERROR'}",
+      "root_cause": "Global FastAPI exception handlers intercept DB exceptions before endpoint try-except",
+      "code_location": "layout_builder_routes.py lines 3020-3052"
+    },
+    "verify_standard_pack": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/site/content-layout/preset/verify-standard-pack?countries=TR,DE,FR&module=global",
+      "response_structure": "{ok, module, countries, summary: {ready_rows, total_rows, ready_ratio}, items}",
+      "result": "200 OK with ready_rows=12, total_rows=45"
+    },
+    "validation_tests": {
+      "status": "PASS",
+      "tests": ["invalid_persona -> 400"]
+    }
+  },
+  "mocked_apis": {
+    "academy.modules": "MOCKED"
+  },
+  "rca_of_the_issue": {
+    "problem": "install-standard-pack still returns 503 despite transient DB fallback",
+    "exception_flow": [
+      "1. Endpoint called with payload",
+      "2. _ensure_layout_page_type_enum_values(session) called in try block",
+      "3. session.execute() or session.commit() fails with DBAPIError",
+      "4. Exception bubbles up from async operation",
+      "5. FastAPI's @app.exception_handler(DBAPIError) intercepts exception",
+      "6. Global handler returns 503 JSONResponse",
+      "7. Endpoint's except block at line 3022 NEVER executes"
+    ],
+    "code_analysis": {
+      "endpoint_fallback": "Lines 3020-3052 have try-except with _is_transient_db_error check",
+      "global_handlers": "Lines 2268-2305 in server.py catch DBAPIError/SATimeoutError/OperationalError",
+      "conflict": "Global handlers registered with @app.exception_handler have priority over route-level try-except for dependency exceptions"
+    },
+    "reproduction_steps": [
+      "POST to /api/admin/site/content-layout/preset/install-standard-pack with valid payload",
+      "Observe 503 response with error_code: DB_ERROR",
+      "Check logs: INFO:database.error:db_error confirms global handler caught it"
+    ],
+    "mitigation_approaches": [
+      "Approach 1: Use a custom APIRoute subclass that catches SQLAlchemy errors for this router",
+      "Approach 2: Move DB error handling to a middleware specific to layout_builder routes",
+      "Approach 3: Refactor _ensure_layout_page_type_enum_values to not raise but return status"
+    ]
+  }
+}

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="4" tests="8" time="40.563" timestamp="2026-03-06T15:46:19.378461+00:00" hostname="agent-env-042f9997-a6db-4162-a3ad-08e8ff7f84af"><testcase classname="backend.tests.test_iteration_142_db_fallback.TestInstallStandardPackDBFallback" name="test_install_standard_pack_should_not_return_503" time="4.031"><failure message="Failed: install-standard-pack still returns 503 with error_code=DB_ERROR. The DB transient fallback should have caught this and returned a controlled 200 response.">self = &lt;test_iteration_142_db_fallback.TestInstallStandardPackDBFallback object at 0xfd77916ec110&gt;
+
+    def test_install_standard_pack_should_not_return_503(self):
+        """
+        Test that install-standard-pack returns controlled response instead of 503.
+    
+        Expected behavior after DB fallback improvement:
+        - If DB error occurs during _ensure_layout_page_type_enum_values,
+          endpoint should return 200 with ok=False and failed_countries populated
+        - Should NOT return 503 with error_code: DB_ERROR
+        """
+        payload = {
+            "countries": ["TR", "DE", "FR"],
+            "module": "global",
+            "persona": "individual",
+            "variant": "A",
+            "overwrite_existing_draft": True,
+            "publish_after_seed": True,
+        }
+    
+        response = self.session.post(
+            f"{BASE_URL}/api/admin/site/content-layout/preset/install-standard-pack",
+            json=payload,
+        )
+    
+        print(f"Response status: {response.status_code}")
+        print(f"Response body: {response.text[:2000]}")
+    
+        # Key assertion: Should NOT return 503
+        if response.status_code == 503:
+            data = response.json()
+            error_code = data.get("error_code", "unknown")
+            print(f"ERROR: Still getting 503 with error_code={error_code}")
+            print(f"This means the DB fallback improvement is NOT working")
+&gt;           pytest.fail(f"install-standard-pack still returns 503 with error_code={error_code}. "
+                       f"The DB transient fallback should have caught this and returned a controlled 200 response.")
+E           Failed: install-standard-pack still returns 503 with error_code=DB_ERROR. The DB transient fallback should have caught this and returned a controlled 200 response.
+
+backend/tests/test_iteration_142_db_fallback.py:67: Failed</failure></testcase><testcase classname="backend.tests.test_iteration_142_db_fallback.TestInstallStandardPackDBFallback" name="test_verify_standard_pack_unaffected" time="13.469" /><testcase classname="backend.tests.test_iteration_142_db_fallback.TestInstallStandardPackDBFallback" name="test_install_validation_errors_still_work" time="2.713" /><testcase classname="backend.tests.test_iteration_142_db_fallback.TestInstallStandardPackDBFallback" name="test_install_with_single_country" time="4.310"><failure message="Failed: Single country install also returns 503: {'detail': 'Database connection error', 'error_code': 'DB_ERROR'}">self = &lt;test_iteration_142_db_fallback.TestInstallStandardPackDBFallback object at 0xfd77916eda10&gt;
+
+    def test_install_with_single_country(self):
+        """Test with single country to simplify debugging"""
+        payload = {
+            "countries": ["TR"],
+            "module": "global",
+            "persona": "individual",
+            "variant": "A",
+            "overwrite_existing_draft": True,
+            "publish_after_seed": False,
+        }
+    
+        response = self.session.post(
+            f"{BASE_URL}/api/admin/site/content-layout/preset/install-standard-pack",
+            json=payload,
+        )
+    
+        print(f"Single country test - Status: {response.status_code}")
+        print(f"Response: {response.text[:1000]}")
+    
+        if response.status_code == 503:
+            data = response.json()
+&gt;           pytest.fail(f"Single country install also returns 503: {data}")
+E           Failed: Single country install also returns 503: {'detail': 'Database connection error', 'error_code': 'DB_ERROR'}
+
+backend/tests/test_iteration_142_db_fallback.py:165: Failed</failure></testcase><testcase classname="backend.tests.test_iteration_142_db_fallback.TestExpectedResponseStructure" name="test_response_should_have_ok_boolean" time="3.982"><skipped type="pytest.skip" message="Endpoint returning 503 - DB fallback not working">/app/backend/tests/test_iteration_142_db_fallback.py:209: Endpoint returning 503 - DB fallback not working</skipped></testcase><testcase classname="backend.tests.test_iteration_142_db_fallback.TestExpectedResponseStructure" name="test_response_should_have_summary_dict" time="3.986"><skipped type="pytest.skip" message="Endpoint returning 503 - DB fallback not working">/app/backend/tests/test_iteration_142_db_fallback.py:231: Endpoint returning 503 - DB fallback not working</skipped></testcase><testcase classname="backend.tests.test_iteration_142_db_fallback.TestExpectedResponseStructure" name="test_response_should_have_results_list" time="3.973"><skipped type="pytest.skip" message="Endpoint returning 503 - DB fallback not working">/app/backend/tests/test_iteration_142_db_fallback.py:256: Endpoint returning 503 - DB fallback not working</skipped></testcase><testcase classname="backend.tests.test_iteration_142_db_fallback.TestExpectedResponseStructure" name="test_response_should_have_failed_countries_list" time="4.013"><skipped type="pytest.skip" message="Endpoint returning 503 - DB fallback not working">/app/backend/tests/test_iteration_142_db_fallback.py:278: Endpoint returning 503 - DB fallback not working</skipped></testcase></testsuite></testsuites>

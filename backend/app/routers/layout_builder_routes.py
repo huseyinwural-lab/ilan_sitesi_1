@@ -65,12 +65,27 @@ _LAYOUT_ENUM_SYNCED = False
 TRANSIENT_DB_ERROR_MARKERS = (
     "timeout",
     "timed out",
+    "connection timeout",
     "connection reset",
     "connection aborted",
+    "connection refused",
+    "connection is closed",
     "server closed the connection",
     "could not connect",
+    "could not receive data",
+    "lost connection",
+    "ssl syscall",
+    "eof detected",
+    "terminating connection",
+    "remaining connection slots",
     "too many connections",
+    "queuepool",
+    "pool",
     "deadlock",
+    "statement timeout",
+    "network is unreachable",
+    "temporary failure",
+    "name or service not known",
     "db_error",
 )
 
@@ -2997,12 +3012,44 @@ async def install_standard_template_pack(
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
 ):
-    await _ensure_layout_page_type_enum_values(session)
-
     normalized_countries = _normalize_countries_or_400(payload.countries)
     normalized_module = payload.module.strip()
     normalized_persona = _normalize_standard_persona_or_400(payload.persona)
     normalized_variant = _normalize_standard_variant_or_400(payload.variant)
+
+    try:
+        await _ensure_layout_page_type_enum_values(session)
+    except Exception as exc:
+        if _is_transient_db_error(exc):
+            try:
+                await session.rollback()
+            except Exception:
+                pass
+            return {
+                "ok": False,
+                "module": normalized_module,
+                "countries": normalized_countries,
+                "persona": normalized_persona,
+                "variant": normalized_variant,
+                "publish_after_seed": bool(payload.publish_after_seed),
+                "summary": {
+                    "created_pages": 0,
+                    "created_drafts": 0,
+                    "updated_drafts": 0,
+                    "skipped_drafts": 0,
+                    "published_revisions": 0,
+                },
+                "results": [],
+                "failed_countries": [
+                    {
+                        "country": country_code,
+                        "error": "db_error",
+                        "detail": str(exc),
+                    }
+                    for country_code in normalized_countries
+                ],
+            }
+        raise
 
     aggregate_summary = {
         "created_pages": 0,
