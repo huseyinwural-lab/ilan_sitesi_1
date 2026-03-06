@@ -62,6 +62,13 @@ const resolveLayoutScopeLabel = (item) => {
   return item.scope || `${item.country || '-'} / ${item.module || '-'} / global`;
 };
 
+const parseCountriesInput = (value) => (
+  String(value || '')
+    .split(',')
+    .map((token) => token.trim().toUpperCase())
+    .filter(Boolean)
+);
+
 export default function AdminContentList() {
   const navigate = useNavigate();
 
@@ -97,6 +104,18 @@ export default function AdminContentList() {
   const [copyTargetModule, setCopyTargetModule] = useState('global');
   const [copyTargetCategoryId, setCopyTargetCategoryId] = useState('');
   const [copyPublishAfterCopy, setCopyPublishAfterCopy] = useState(false);
+
+  const [presetCountriesInput, setPresetCountriesInput] = useState('TR,DE,FR');
+  const [presetModule, setPresetModule] = useState('global');
+  const [presetPersona, setPresetPersona] = useState('individual');
+  const [presetVariant, setPresetVariant] = useState('A');
+  const [presetOverwriteDraft, setPresetOverwriteDraft] = useState(true);
+  const [presetPublishAfterSeed, setPresetPublishAfterSeed] = useState(true);
+  const [presetLoading, setPresetLoading] = useState(false);
+  const [presetError, setPresetError] = useState('');
+  const [presetStatus, setPresetStatus] = useState('');
+  const [presetInstallResult, setPresetInstallResult] = useState(null);
+  const [presetVerifyResult, setPresetVerifyResult] = useState(null);
 
   const fetchContentList = useCallback(async ({ silent = false } = {}) => {
     setContentListLoading(true);
@@ -194,6 +213,100 @@ export default function AdminContentList() {
     }
   };
 
+  const handleSetRevisionActive = async (item, nextActive) => {
+    if (!item?.revision_id || item.is_deleted) return;
+
+    setStatusMessage('');
+    setContentListError('');
+    try {
+      await axios.patch(
+        `${API}/admin/layouts/${item.revision_id}/active`,
+        { is_active: nextActive },
+        { headers: authHeaders },
+      );
+      setStatusMessage(`Revision ${nextActive ? 'aktif' : 'pasif'} olarak güncellendi.`);
+      toast.success(`Revision ${nextActive ? 'aktif' : 'pasif'} olarak güncellendi.`);
+      await fetchContentList({ silent: true });
+    } catch (err) {
+      setContentListError(err?.response?.data?.detail || 'Aktif/pasif güncellemesi başarısız');
+      toast.error('Aktif/pasif güncellemesi başarısız.');
+    }
+  };
+
+  const handleInstallStandardPack = async () => {
+    const countries = parseCountriesInput(presetCountriesInput);
+    if (!countries.length) {
+      setPresetError('En az bir ülke giriniz. Örn: TR,DE,FR');
+      return;
+    }
+    const normalizedModule = String(presetModule || '').trim();
+    if (!normalizedModule) {
+      setPresetError('Module zorunludur.');
+      return;
+    }
+
+    setPresetLoading(true);
+    setPresetError('');
+    setPresetStatus('');
+    try {
+      const response = await axios.post(
+        `${API}/admin/site/content-layout/preset/install-standard-pack`,
+        {
+          countries,
+          module: normalizedModule,
+          persona: presetPersona,
+          variant: presetVariant,
+          overwrite_existing_draft: presetOverwriteDraft,
+          publish_after_seed: presetPublishAfterSeed,
+        },
+        { headers: authHeaders },
+      );
+      setPresetInstallResult(response.data || null);
+      setPresetStatus('Standart template pack kurulumu tamamlandı.');
+      toast.success('Standart template pack kuruldu.');
+      await fetchContentList({ silent: true });
+    } catch (err) {
+      setPresetError(err?.response?.data?.detail || 'Template pack kurulumu başarısız');
+      toast.error('Template pack kurulumu başarısız.');
+    } finally {
+      setPresetLoading(false);
+    }
+  };
+
+  const handleVerifyStandardPack = async () => {
+    const countries = parseCountriesInput(presetCountriesInput);
+    if (!countries.length) {
+      setPresetError('En az bir ülke giriniz. Örn: TR,DE,FR');
+      return;
+    }
+    const normalizedModule = String(presetModule || '').trim();
+    if (!normalizedModule) {
+      setPresetError('Module zorunludur.');
+      return;
+    }
+
+    setPresetLoading(true);
+    setPresetError('');
+    try {
+      const response = await axios.get(`${API}/admin/site/content-layout/preset/verify-standard-pack`, {
+        headers: authHeaders,
+        params: {
+          countries: countries.join(','),
+          module: normalizedModule,
+        },
+      });
+      setPresetVerifyResult(response.data || null);
+      const ratio = response.data?.summary?.ready_ratio;
+      setPresetStatus(`TR/DE/FR publish doğrulaması güncellendi. Hazır oran: ${ratio ?? 0}%`);
+      toast.success('Standart pack doğrulaması tamamlandı.');
+    } catch (err) {
+      setPresetError(err?.response?.data?.detail || 'Template pack doğrulaması başarısız');
+      toast.error('Template pack doğrulaması başarısız.');
+    } finally {
+      setPresetLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-5" data-testid="admin-content-list-page">
       <section className="rounded-xl border bg-white p-4" data-testid="admin-content-list-panel">
@@ -201,7 +314,7 @@ export default function AdminContentList() {
           <div>
             <h1 className="text-sm font-semibold" data-testid="admin-content-list-title">Content List</h1>
             <p className="text-xs text-slate-500" data-testid="admin-content-list-subtitle">
-              Filtre: draft + published • Silinen kayıtlar kırmızı gösterilir.
+              Filtre: draft + published • Silinen kayıtlar kırmızı gösterilir • Aktif/Pasif durumları yönetilebilir.
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs" data-testid="admin-content-list-header-actions">
@@ -283,6 +396,131 @@ export default function AdminContentList() {
           </div>
         </div>
 
+        <div className="mt-3 rounded-lg border bg-white p-3" data-testid="admin-content-list-template-pack-panel">
+          <div className="flex flex-wrap items-center justify-between gap-2" data-testid="admin-content-list-template-pack-header">
+            <div>
+              <h2 className="text-xs font-semibold" data-testid="admin-content-list-template-pack-title">#612 + P1 Başlangıç: Standart Template Pack</h2>
+              <p className="text-xs text-slate-500" data-testid="admin-content-list-template-pack-subtitle">TR/DE/FR için publish doğrulama ve tek tık preset kurulum akışı</p>
+            </div>
+            <div className="flex gap-2" data-testid="admin-content-list-template-pack-header-actions">
+              <button
+                type="button"
+                className="h-8 rounded border px-3 text-xs"
+                onClick={handleVerifyStandardPack}
+                disabled={presetLoading}
+                data-testid="admin-content-list-template-pack-verify-button"
+              >
+                Publish Doğrula
+              </button>
+              <button
+                type="button"
+                className="h-8 rounded border border-blue-300 px-3 text-xs text-blue-700"
+                onClick={handleInstallStandardPack}
+                disabled={presetLoading}
+                data-testid="admin-content-list-template-pack-install-button"
+              >
+                Tek Tık Kurulum Başlat
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-6" data-testid="admin-content-list-template-pack-form-grid">
+            <label className="text-xs" data-testid="admin-content-list-template-pack-countries-wrap">
+              Countries (CSV)
+              <input
+                className="mt-1 h-8 w-full rounded border px-2"
+                value={presetCountriesInput}
+                onChange={(event) => setPresetCountriesInput(event.target.value.toUpperCase())}
+                placeholder="TR,DE,FR"
+                data-testid="admin-content-list-template-pack-countries-input"
+              />
+            </label>
+
+            <label className="text-xs" data-testid="admin-content-list-template-pack-module-wrap">
+              Module
+              <input
+                className="mt-1 h-8 w-full rounded border px-2"
+                value={presetModule}
+                onChange={(event) => setPresetModule(event.target.value)}
+                data-testid="admin-content-list-template-pack-module-input"
+              />
+            </label>
+
+            <label className="text-xs" data-testid="admin-content-list-template-pack-persona-wrap">
+              Persona
+              <select
+                className="mt-1 h-8 w-full rounded border px-2"
+                value={presetPersona}
+                onChange={(event) => setPresetPersona(event.target.value)}
+                data-testid="admin-content-list-template-pack-persona-select"
+              >
+                <option value="individual">individual</option>
+                <option value="corporate">corporate</option>
+              </select>
+            </label>
+
+            <label className="text-xs" data-testid="admin-content-list-template-pack-variant-wrap">
+              Variant
+              <select
+                className="mt-1 h-8 w-full rounded border px-2"
+                value={presetVariant}
+                onChange={(event) => setPresetVariant(event.target.value)}
+                data-testid="admin-content-list-template-pack-variant-select"
+              >
+                <option value="A">A</option>
+                <option value="B">B</option>
+              </select>
+            </label>
+
+            <label className="mt-6 inline-flex items-center gap-2 text-xs" data-testid="admin-content-list-template-pack-overwrite-wrap">
+              <input
+                type="checkbox"
+                checked={presetOverwriteDraft}
+                onChange={(event) => setPresetOverwriteDraft(event.target.checked)}
+                data-testid="admin-content-list-template-pack-overwrite-input"
+              />
+              Draft üzerine yaz
+            </label>
+
+            <label className="mt-6 inline-flex items-center gap-2 text-xs" data-testid="admin-content-list-template-pack-publish-wrap">
+              <input
+                type="checkbox"
+                checked={presetPublishAfterSeed}
+                onChange={(event) => setPresetPublishAfterSeed(event.target.checked)}
+                data-testid="admin-content-list-template-pack-publish-input"
+              />
+              Seed sonrası publish
+            </label>
+          </div>
+
+          {presetStatus ? (
+            <p className="mt-2 text-xs text-emerald-700" data-testid="admin-content-list-template-pack-status-message">{presetStatus}</p>
+          ) : null}
+          {presetError ? (
+            <p className="mt-2 text-xs text-rose-700" data-testid="admin-content-list-template-pack-error-message">{presetError}</p>
+          ) : null}
+
+          {presetInstallResult?.summary ? (
+            <div className="mt-2 rounded border bg-slate-50 p-2 text-xs" data-testid="admin-content-list-template-pack-install-summary">
+              <span data-testid="admin-content-list-template-pack-install-created-pages">created_pages: {presetInstallResult.summary.created_pages ?? 0}</span>
+              {' · '}
+              <span data-testid="admin-content-list-template-pack-install-updated-drafts">updated_drafts: {presetInstallResult.summary.updated_drafts ?? 0}</span>
+              {' · '}
+              <span data-testid="admin-content-list-template-pack-install-published">published_revisions: {presetInstallResult.summary.published_revisions ?? 0}</span>
+            </div>
+          ) : null}
+
+          {presetVerifyResult?.summary ? (
+            <div className="mt-2 rounded border bg-slate-50 p-2 text-xs" data-testid="admin-content-list-template-pack-verify-summary">
+              <span data-testid="admin-content-list-template-pack-verify-ready-rows">ready_rows: {presetVerifyResult.summary.ready_rows ?? 0}</span>
+              {' / '}
+              <span data-testid="admin-content-list-template-pack-verify-total-rows">total_rows: {presetVerifyResult.summary.total_rows ?? 0}</span>
+              {' · '}
+              <span data-testid="admin-content-list-template-pack-verify-ratio">ready_ratio: {presetVerifyResult.summary.ready_ratio ?? 0}%</span>
+            </div>
+          ) : null}
+        </div>
+
         <div className="mt-3 overflow-x-auto" data-testid="admin-content-list-table-wrap">
           <table className="min-w-full text-left text-xs" data-testid="admin-content-list-table">
             <thead>
@@ -292,6 +530,7 @@ export default function AdminContentList() {
                 <th className="px-2 py-2">module</th>
                 <th className="px-2 py-2">category / scope</th>
                 <th className="px-2 py-2">status</th>
+                <th className="px-2 py-2">active_state</th>
                 <th className="px-2 py-2">version</th>
                 <th className="px-2 py-2">updated_at</th>
                 <th className="px-2 py-2">actions</th>
@@ -300,16 +539,17 @@ export default function AdminContentList() {
             <tbody data-testid="admin-content-list-table-body">
               {contentListLoading ? (
                 <tr data-testid="admin-content-list-loading-row">
-                  <td className="px-2 py-3 text-slate-500" colSpan={8} data-testid="admin-content-list-loading-cell">İçerik listesi yükleniyor...</td>
+                  <td className="px-2 py-3 text-slate-500" colSpan={9} data-testid="admin-content-list-loading-cell">İçerik listesi yükleniyor...</td>
                 </tr>
               ) : contentListRows.length === 0 ? (
                 <tr data-testid="admin-content-list-empty-row">
-                  <td className="px-2 py-3 text-slate-500" colSpan={8} data-testid="admin-content-list-empty-cell">Kayıt bulunamadı.</td>
+                  <td className="px-2 py-3 text-slate-500" colSpan={9} data-testid="admin-content-list-empty-cell">Kayıt bulunamadı.</td>
                 </tr>
               ) : (
                 contentListRows.map((item) => {
                   const rowKey = item.revision_id || item.id;
                   const deleted = Boolean(item.is_deleted);
+                  const active = !deleted && Boolean(item.is_active);
                   return (
                     <tr
                       key={rowKey}
@@ -325,6 +565,15 @@ export default function AdminContentList() {
                       <td className="px-2 py-2" data-testid={`admin-content-list-status-${rowKey}`}>
                         <span className={`inline-flex rounded border px-2 py-1 text-[11px] ${deleted ? 'border-rose-300 bg-rose-100 text-rose-700' : 'border-slate-200 bg-slate-100 text-slate-700'}`}>
                           {deleted ? 'deleted' : item.status}
+                        </span>
+                      </td>
+                      <td className="px-2 py-2" data-testid={`admin-content-list-active-state-${rowKey}`}>
+                        <span className="inline-flex items-center gap-1">
+                          <span
+                            className={`h-2.5 w-2.5 rounded-full ${active ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                            data-testid={`admin-content-list-active-dot-${rowKey}`}
+                          />
+                          <span data-testid={`admin-content-list-active-label-${rowKey}`}>{active ? 'aktif' : 'pasif'}</span>
                         </span>
                       </td>
                       <td className="px-2 py-2" data-testid={`admin-content-list-version-${rowKey}`}>{item.version ?? '-'}</td>
@@ -357,6 +606,24 @@ export default function AdminContentList() {
                             data-testid={`admin-content-list-copy-button-${rowKey}`}
                           >
                             Kopyala
+                          </button>
+                          <button
+                            type="button"
+                            className="h-8 rounded border border-emerald-300 px-2 text-[11px] text-emerald-700"
+                            onClick={() => handleSetRevisionActive(item, true)}
+                            disabled={deleted || active}
+                            data-testid={`admin-content-list-activate-button-${rowKey}`}
+                          >
+                            Aktif Et
+                          </button>
+                          <button
+                            type="button"
+                            className="h-8 rounded border border-rose-300 px-2 text-[11px] text-rose-700"
+                            onClick={() => handleSetRevisionActive(item, false)}
+                            disabled={deleted || !active}
+                            data-testid={`admin-content-list-deactivate-button-${rowKey}`}
+                          >
+                            Pasif Et
                           </button>
                         </div>
                       </td>

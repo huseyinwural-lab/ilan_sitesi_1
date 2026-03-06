@@ -214,6 +214,7 @@ async def create_draft_revision(
         status=LayoutRevisionStatus.DRAFT,
         payload_json=payload_json or {},
         version=next_version,
+        is_active=True,
         created_by=_safe_uuid(actor_user_id),
         created_at=datetime.now(timezone.utc),
     )
@@ -266,7 +267,7 @@ async def publish_revision(
                 LayoutRevision.status == LayoutRevisionStatus.PUBLISHED,
             )
         )
-        .values(status=LayoutRevisionStatus.ARCHIVED, published_at=None)
+        .values(status=LayoutRevisionStatus.ARCHIVED, published_at=None, is_active=False)
     )
 
     next_version = await _next_revision_version(session, draft.layout_page_id)
@@ -277,6 +278,7 @@ async def publish_revision(
         version=next_version,
         published_at=now_dt,
         created_by=_safe_uuid(actor_user_id),
+        is_active=True,
         created_at=now_dt,
     )
     session.add(published)
@@ -288,6 +290,7 @@ async def publish_revision(
 
     draft.status = LayoutRevisionStatus.ARCHIVED
     draft.published_at = None
+    draft.is_active = False
 
     await write_layout_audit_log(
         session,
@@ -329,6 +332,7 @@ async def archive_revision(
     }
     row.status = LayoutRevisionStatus.ARCHIVED
     row.published_at = None
+    row.is_active = False
     await session.flush()
 
     await write_layout_audit_log(
@@ -470,6 +474,7 @@ async def get_latest_published_revision_for_page(
                 LayoutRevision.layout_page_id == layout_page_id,
                 LayoutRevision.status == LayoutRevisionStatus.PUBLISHED,
                 LayoutRevision.is_deleted.is_(False),
+                LayoutRevision.is_active.is_(True),
             )
         )
         .order_by(desc(LayoutRevision.version))

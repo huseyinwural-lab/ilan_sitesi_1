@@ -914,6 +914,19 @@ class LayoutRevisionCopyPayload(BaseModel):
     publish_after_copy: bool = False
 
 
+class LayoutRevisionActivePayload(BaseModel):
+    is_active: bool
+
+
+class StandardTemplatePackInstallPayload(BaseModel):
+    countries: list[str] = Field(min_length=1, max_length=20)
+    module: str = Field(min_length=2, max_length=64)
+    persona: str = Field(default="individual", min_length=2, max_length=32)
+    variant: str = Field(default="A", min_length=1, max_length=16)
+    overwrite_existing_draft: bool = True
+    publish_after_seed: bool = True
+
+
 def _cache_key(country: str, module: str, page_type: LayoutPageType, category_id: Optional[str], lang: str = "tr") -> str:
     normalized_category = str(category_id or "").strip().lower()
     return f"{country.upper()}|{module.strip().lower()}|{page_type.value}|{normalized_category}|{_normalize_i18n_lang(lang)}"
@@ -990,6 +1003,7 @@ def _serialize_layout_revision(row: LayoutRevision) -> dict[str, Any]:
         "payload_json": row.payload_json,
         "version": int(row.version),
         "is_deleted": bool(getattr(row, "is_deleted", False)),
+        "is_active": bool(getattr(row, "is_active", True)),
         "published_at": row.published_at.isoformat() if row.published_at else None,
         "created_by": str(row.created_by) if row.created_by else None,
         "created_at": row.created_at.isoformat() if row.created_at else None,
@@ -1035,11 +1049,43 @@ def _serialize_admin_layout_item(revision: LayoutRevision, page: LayoutPage) -> 
         "status": revision_item["status"],
         "version": revision_item["version"],
         "is_deleted": revision_item["is_deleted"],
+        "is_active": bool(revision_item.get("is_active", True)),
         "updated_at": updated_at,
         "published_at": revision_item["published_at"],
         "created_at": revision_item["created_at"],
         "payload_json": revision_item["payload_json"],
     }
+
+
+def _normalize_standard_persona_or_400(raw_persona: str) -> str:
+    normalized_persona = str(raw_persona or "individual").strip().lower()
+    if normalized_persona not in {"individual", "corporate"}:
+        raise HTTPException(status_code=400, detail="persona_must_be_individual_or_corporate")
+    return normalized_persona
+
+
+def _normalize_standard_variant_or_400(raw_variant: str) -> str:
+    normalized_variant = str(raw_variant or "A").strip().upper()
+    if normalized_variant not in {"A", "B"}:
+        raise HTTPException(status_code=400, detail="variant_must_be_A_or_B")
+    return normalized_variant
+
+
+def _normalize_countries_or_400(countries: list[str]) -> list[str]:
+    normalized: list[str] = []
+    for value in countries:
+        token = str(value or "").strip().upper()
+        if len(token) < 2 or len(token) > 5:
+            raise HTTPException(status_code=400, detail=f"invalid_country: {value}")
+        if token not in normalized:
+            normalized.append(token)
+    if not normalized:
+        raise HTTPException(status_code=400, detail="countries_required")
+    return normalized
+
+
+def _parse_countries_csv_or_400(raw_countries: str) -> list[str]:
+    return _normalize_countries_or_400([token for token in str(raw_countries or "").split(",") if token.strip()])
 
 
 def _serialize_binding(row: LayoutBinding) -> dict[str, Any]:
@@ -2501,14 +2547,57 @@ async def soft_delete_admin_layout(
         return {"ok": True, "already_deleted": True, "item": _serialize_layout_revision(row)}
 
     row.is_deleted = True
+    row.is_active = False
     await write_layout_audit_log(
         session,
         actor_user_id=current_user.get("id"),
         action=LayoutAuditAction.ARCHIVE,
         entity_type="layout_revision",
         entity_id=str(row.id),
-        before_json={"is_deleted": False, "status": row.status.value},
-        after_json={"is_deleted": True, "status": row.status.value},
+        before_json={"is_deleted": False, "is_active": True, "status": row.status.value},
+        after_json={"is_deleted": True, "is_active": False, "status": row.status.value},
+        ip=request.client.host if request and request.client else None,
+        user_agent=request.headers.get("user-agent") if request else None,
+    )
+    await session.commit()
+    _invalidate_resolve_cache()
+    return {"ok": True, "item": _serialize_layout_revision(row)}
+
+
+@router.patch("/admin/layouts/{revision_id}/active")
+async def set_admin_layout_active_state(
+    revision_id: str,
+    payload: LayoutRevisionActivePayload,
+    request: Request,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    revision_uuid = _as_uuid_or_400(revision_id, field_name="revision_id")
+    row = await session.get(LayoutRevision, revision_uuid)
+    if not row:
+        raise HTTPException(status_code=404, detail="Layout revision not found")
+    if bool(getattr(row, "is_deleted", False)):
+        raise HTTPException(status_code=400, detail="deleted_revision_cannot_be_toggled")
+
+    before = {
+        "is_active": bool(getattr(row, "is_active", True)),
+        "is_deleted": bool(getattr(row, "is_deleted", False)),
+        "status": row.status.value,
+    }
+    row.is_active = bool(payload.is_active)
+
+    await write_layout_audit_log(
+        session,
+        actor_user_id=current_user.get("id"),
+        action=LayoutAuditAction.CREATE_REVISION,
+        entity_type="layout_revision",
+        entity_id=str(row.id),
+        before_json=before,
+        after_json={
+            "is_active": bool(row.is_active),
+            "is_deleted": bool(getattr(row, "is_deleted", False)),
+            "status": row.status.value,
+        },
         ip=request.client.host if request and request.client else None,
         user_agent=request.headers.get("user-agent") if request else None,
     )
@@ -2592,6 +2681,7 @@ async def copy_admin_layout_revision(
         }
         target_revision.payload_json = copied_payload
         target_revision.is_deleted = False
+        target_revision.is_active = bool(getattr(source_revision, "is_active", True))
         await write_layout_audit_log(
             session,
             actor_user_id=current_user.get("id"),
@@ -2616,6 +2706,7 @@ async def copy_admin_layout_revision(
             payload_json=copied_payload,
             actor_user_id=current_user.get("id"),
         )
+        target_revision.is_active = bool(getattr(source_revision, "is_active", True))
 
     if payload.publish_after_copy:
         target_revision = await publish_revision(
@@ -2721,6 +2812,138 @@ async def patch_layout_page_admin(
     return {"ok": True, "item": _serialize_layout_page(row)}
 
 
+async def _seed_standard_pages_for_scope(
+    session: AsyncSession,
+    *,
+    actor_user_id: Optional[str],
+    country: str,
+    module: str,
+    persona: str,
+    variant: str,
+    overwrite_existing_draft: bool,
+    publish_after_seed: bool,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    summary = {
+        "created_pages": 0,
+        "created_drafts": 0,
+        "updated_drafts": 0,
+        "skipped_drafts": 0,
+        "published_revisions": 0,
+    }
+    seeded_items: list[dict[str, Any]] = []
+
+    for page_type in STANDARD_LAYOUT_PAGE_TYPES:
+        page_result = await session.execute(
+            select(LayoutPage)
+            .where(
+                and_(
+                    LayoutPage.page_type == page_type,
+                    LayoutPage.country == country,
+                    LayoutPage.module == module,
+                    LayoutPage.category_id.is_(None),
+                )
+            )
+            .order_by(desc(LayoutPage.updated_at), desc(LayoutPage.created_at))
+            .limit(1)
+        )
+        page_row = page_result.scalar_one_or_none()
+
+        page_created = False
+        page_i18n = _default_layout_page_i18n(page_type)
+        if not page_row:
+            page_row = await create_layout_page(
+                session,
+                page_type=page_type,
+                country=country,
+                module=module,
+                category_id=None,
+                title_i18n=page_i18n["title_i18n"],
+                description_i18n=page_i18n["description_i18n"],
+                label_i18n=page_i18n["label_i18n"],
+                actor_user_id=actor_user_id,
+            )
+            page_created = True
+            summary["created_pages"] += 1
+        else:
+            has_mutation = False
+            if not isinstance(page_row.title_i18n, dict) or not page_row.title_i18n:
+                page_row.title_i18n = page_i18n["title_i18n"]
+                has_mutation = True
+            if not isinstance(page_row.description_i18n, dict) or not page_row.description_i18n:
+                page_row.description_i18n = page_i18n["description_i18n"]
+                has_mutation = True
+            if not isinstance(page_row.label_i18n, dict) or not page_row.label_i18n:
+                page_row.label_i18n = page_i18n["label_i18n"]
+                has_mutation = True
+            if has_mutation:
+                page_row.updated_at = datetime.now(timezone.utc)
+
+        seed_payload = _build_standard_page_seed_payload(
+            page_type,
+            persona=persona,
+            variant=variant,
+            module=module,
+        )
+
+        draft_result = await session.execute(
+            select(LayoutRevision)
+            .where(
+                and_(
+                    LayoutRevision.layout_page_id == page_row.id,
+                    LayoutRevision.status == LayoutRevisionStatus.DRAFT,
+                    LayoutRevision.is_deleted.is_(False),
+                )
+            )
+            .order_by(desc(LayoutRevision.version), desc(LayoutRevision.created_at))
+            .limit(1)
+        )
+        draft_row = draft_result.scalar_one_or_none()
+
+        draft_action = "skipped"
+        if draft_row:
+            if overwrite_existing_draft:
+                draft_row.payload_json = seed_payload
+                draft_row.is_active = True
+                draft_action = "updated"
+                summary["updated_drafts"] += 1
+            else:
+                summary["skipped_drafts"] += 1
+        else:
+            draft_row = await create_draft_revision(
+                session,
+                layout_page_id=str(page_row.id),
+                payload_json=seed_payload,
+                actor_user_id=actor_user_id,
+            )
+            draft_row.is_active = True
+            draft_action = "created"
+            summary["created_drafts"] += 1
+
+        published_revision_id: Optional[str] = None
+        if publish_after_seed and draft_row and draft_row.status == LayoutRevisionStatus.DRAFT:
+            published_row = await publish_revision(
+                session,
+                revision_id=str(draft_row.id),
+                actor_user_id=actor_user_id,
+            )
+            published_row.is_active = True
+            published_revision_id = str(published_row.id)
+            summary["published_revisions"] += 1
+
+        seeded_items.append(
+            {
+                "page_type": page_type.value,
+                "layout_page_id": str(page_row.id),
+                "layout_page_created": page_created,
+                "draft_revision_id": str(draft_row.id) if draft_row else None,
+                "draft_action": draft_action,
+                "published_revision_id": published_revision_id,
+            }
+        )
+
+    return summary, seeded_items
+
+
 @router.post("/admin/site/content-layout/pages/seed-defaults")
 async def seed_standard_layout_pages_admin(
     payload: LayoutSeedDefaultsPayload,
@@ -2731,117 +2954,20 @@ async def seed_standard_layout_pages_admin(
 
     normalized_country = payload.country.upper().strip()
     normalized_module = payload.module.strip()
-    normalized_persona = payload.persona.strip().lower()
-    normalized_variant = payload.variant.strip().upper()
-    if normalized_persona not in {"individual", "corporate"}:
-        raise HTTPException(status_code=400, detail="persona_must_be_individual_or_corporate")
-    if normalized_variant not in {"A", "B"}:
-        raise HTTPException(status_code=400, detail="variant_must_be_A_or_B")
+    normalized_persona = _normalize_standard_persona_or_400(payload.persona)
+    normalized_variant = _normalize_standard_variant_or_400(payload.variant)
 
     async def _op():
-        summary = {
-            "created_pages": 0,
-            "created_drafts": 0,
-            "updated_drafts": 0,
-            "skipped_drafts": 0,
-        }
-        seeded_items: list[dict[str, Any]] = []
-
-        for page_type in STANDARD_LAYOUT_PAGE_TYPES:
-            page_result = await session.execute(
-                select(LayoutPage)
-                .where(
-                    and_(
-                        LayoutPage.page_type == page_type,
-                        LayoutPage.country == normalized_country,
-                        LayoutPage.module == normalized_module,
-                        LayoutPage.category_id.is_(None),
-                    )
-                )
-                .order_by(desc(LayoutPage.updated_at), desc(LayoutPage.created_at))
-                .limit(1)
-            )
-            page_row = page_result.scalar_one_or_none()
-
-            page_created = False
-            page_i18n = _default_layout_page_i18n(page_type)
-            if not page_row:
-                page_row = await create_layout_page(
-                    session,
-                    page_type=page_type,
-                    country=normalized_country,
-                    module=normalized_module,
-                    category_id=None,
-                    title_i18n=page_i18n["title_i18n"],
-                    description_i18n=page_i18n["description_i18n"],
-                    label_i18n=page_i18n["label_i18n"],
-                    actor_user_id=current_user.get("id"),
-                )
-                page_created = True
-                summary["created_pages"] += 1
-            else:
-                has_mutation = False
-                if not isinstance(page_row.title_i18n, dict) or not page_row.title_i18n:
-                    page_row.title_i18n = page_i18n["title_i18n"]
-                    has_mutation = True
-                if not isinstance(page_row.description_i18n, dict) or not page_row.description_i18n:
-                    page_row.description_i18n = page_i18n["description_i18n"]
-                    has_mutation = True
-                if not isinstance(page_row.label_i18n, dict) or not page_row.label_i18n:
-                    page_row.label_i18n = page_i18n["label_i18n"]
-                    has_mutation = True
-                if has_mutation:
-                    page_row.updated_at = datetime.now(timezone.utc)
-
-            seed_payload = _build_standard_page_seed_payload(
-                page_type,
-                persona=normalized_persona,
-                variant=normalized_variant,
-                module=normalized_module,
-            )
-
-            draft_result = await session.execute(
-                select(LayoutRevision)
-                .where(
-                    and_(
-                        LayoutRevision.layout_page_id == page_row.id,
-                        LayoutRevision.status == LayoutRevisionStatus.DRAFT,
-                        LayoutRevision.is_deleted.is_(False),
-                    )
-                )
-                .order_by(desc(LayoutRevision.version), desc(LayoutRevision.created_at))
-                .limit(1)
-            )
-            draft_row = draft_result.scalar_one_or_none()
-
-            draft_action = "skipped"
-            if draft_row:
-                if payload.overwrite_existing_draft:
-                    draft_row.payload_json = seed_payload
-                    draft_action = "updated"
-                    summary["updated_drafts"] += 1
-                else:
-                    summary["skipped_drafts"] += 1
-            else:
-                draft_row = await create_draft_revision(
-                    session,
-                    layout_page_id=str(page_row.id),
-                    payload_json=seed_payload,
-                    actor_user_id=current_user.get("id"),
-                )
-                draft_action = "created"
-                summary["created_drafts"] += 1
-
-            seeded_items.append(
-                {
-                    "page_type": page_type.value,
-                    "layout_page_id": str(page_row.id),
-                    "layout_page_created": page_created,
-                    "draft_revision_id": str(draft_row.id) if draft_row else None,
-                    "draft_action": draft_action,
-                }
-            )
-
+        summary, seeded_items = await _seed_standard_pages_for_scope(
+            session,
+            actor_user_id=current_user.get("id"),
+            country=normalized_country,
+            module=normalized_module,
+            persona=normalized_persona,
+            variant=normalized_variant,
+            overwrite_existing_draft=bool(payload.overwrite_existing_draft),
+            publish_after_seed=False,
+        )
         await session.commit()
         return summary, seeded_items
 
@@ -2862,6 +2988,152 @@ async def seed_standard_layout_pages_admin(
         "variant": normalized_variant,
         "summary": summary,
         "items": items,
+    }
+
+
+@router.post("/admin/site/content-layout/preset/install-standard-pack")
+async def install_standard_template_pack(
+    payload: StandardTemplatePackInstallPayload,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    await _ensure_layout_page_type_enum_values(session)
+
+    normalized_countries = _normalize_countries_or_400(payload.countries)
+    normalized_module = payload.module.strip()
+    normalized_persona = _normalize_standard_persona_or_400(payload.persona)
+    normalized_variant = _normalize_standard_variant_or_400(payload.variant)
+
+    async def _op():
+        bundle_results: list[dict[str, Any]] = []
+        aggregate_summary = {
+            "created_pages": 0,
+            "created_drafts": 0,
+            "updated_drafts": 0,
+            "skipped_drafts": 0,
+            "published_revisions": 0,
+        }
+
+        for country_code in normalized_countries:
+            summary, items = await _seed_standard_pages_for_scope(
+                session,
+                actor_user_id=current_user.get("id"),
+                country=country_code,
+                module=normalized_module,
+                persona=normalized_persona,
+                variant=normalized_variant,
+                overwrite_existing_draft=bool(payload.overwrite_existing_draft),
+                publish_after_seed=bool(payload.publish_after_seed),
+            )
+            for key in aggregate_summary:
+                aggregate_summary[key] += int(summary.get(key, 0))
+            bundle_results.append(
+                {
+                    "country": country_code,
+                    "module": normalized_module,
+                    "summary": summary,
+                    "items": items,
+                }
+            )
+
+        await session.commit()
+        return aggregate_summary, bundle_results
+
+    try:
+        aggregate_summary, results = await _run_with_db_retry(session, _op)
+    except ValueError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except IntegrityError as exc:
+        await session.rollback()
+        raise HTTPException(status_code=409, detail="preset_install_conflict") from exc
+
+    return {
+        "ok": True,
+        "module": normalized_module,
+        "countries": normalized_countries,
+        "persona": normalized_persona,
+        "variant": normalized_variant,
+        "publish_after_seed": bool(payload.publish_after_seed),
+        "summary": aggregate_summary,
+        "results": results,
+    }
+
+
+@router.get("/admin/site/content-layout/preset/verify-standard-pack")
+async def verify_standard_template_pack(
+    countries: str = Query(..., min_length=2),
+    module: str = Query(..., min_length=2, max_length=64),
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    normalized_countries = _parse_countries_csv_or_400(countries)
+    normalized_module = module.strip()
+
+    matrix: list[dict[str, Any]] = []
+    ready_rows = 0
+    total_rows = len(normalized_countries) * len(STANDARD_LAYOUT_PAGE_TYPES)
+
+    for country_code in normalized_countries:
+        for page_type in STANDARD_LAYOUT_PAGE_TYPES:
+            page_result = await session.execute(
+                select(LayoutPage)
+                .where(
+                    and_(
+                        LayoutPage.page_type == page_type,
+                        LayoutPage.country == country_code,
+                        LayoutPage.module == normalized_module,
+                        LayoutPage.category_id.is_(None),
+                    )
+                )
+                .order_by(desc(LayoutPage.updated_at), desc(LayoutPage.created_at))
+                .limit(1)
+            )
+            page_row = page_result.scalar_one_or_none()
+
+            published_revision = None
+            if page_row:
+                published_result = await session.execute(
+                    select(LayoutRevision)
+                    .where(
+                        and_(
+                            LayoutRevision.layout_page_id == page_row.id,
+                            LayoutRevision.status == LayoutRevisionStatus.PUBLISHED,
+                            LayoutRevision.is_deleted.is_(False),
+                        )
+                    )
+                    .order_by(desc(LayoutRevision.version), desc(LayoutRevision.created_at))
+                    .limit(1)
+                )
+                published_revision = published_result.scalar_one_or_none()
+
+            is_ready = bool(page_row and published_revision and bool(getattr(published_revision, "is_active", False)))
+            if is_ready:
+                ready_rows += 1
+
+            matrix.append(
+                {
+                    "country": country_code,
+                    "module": normalized_module,
+                    "page_type": page_type.value,
+                    "layout_page_id": str(page_row.id) if page_row else None,
+                    "published_revision_id": str(published_revision.id) if published_revision else None,
+                    "published_revision_active": bool(getattr(published_revision, "is_active", False)) if published_revision else False,
+                    "published_at": published_revision.published_at.isoformat() if published_revision and published_revision.published_at else None,
+                    "is_ready": is_ready,
+                }
+            )
+
+    return {
+        "ok": True,
+        "module": normalized_module,
+        "countries": normalized_countries,
+        "summary": {
+            "ready_rows": ready_rows,
+            "total_rows": total_rows,
+            "ready_ratio": round((ready_rows / total_rows) * 100, 2) if total_rows else 0,
+        },
+        "items": matrix,
     }
 
 
