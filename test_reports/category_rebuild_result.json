@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-03-06T18:57:10.033439+00:00",
+  "hard_deleted_layout_revisions": 21,
+  "module_mapping": {
+    "immobilien": "real_estate",
+    "fahrzeuge": "vehicle",
+    "diger": "other"
+  },
+  "country_results": {
+    "TR": {
+      "soft_deleted_old_categories": 0,
+      "created_categories": 111,
+      "active_counts": {
+        "real_estate": 3,
+        "vehicle": 9,
+        "other": 99
+      }
+    },
+    "DE": {
+      "soft_deleted_old_categories": 149,
+      "created_categories": 111,
+      "active_counts": {
+        "real_estate": 3,
+        "vehicle": 9,
+        "other": 99
+      }
+    },
+    "FR": {
+      "soft_deleted_old_categories": 0,
+      "created_categories": 111,
+      "active_counts": {
+        "real_estate": 3,
+        "vehicle": 9,
+        "other": 99
+      }
+    }
+  }
+}

@@ -456,6 +456,7 @@ const CategoryNavigatorBase = ({ props, mode, runtimeContext }) => {
   const placement = String(props?.placement || mode || 'side').toLowerCase() === 'top' ? 'top' : 'side';
   const country = resolveRuntimeCountry(runtimeContext, props);
   const moduleName = String(props?.module || runtimeContext?.module || 'vehicle').trim();
+  const normalizedModuleParam = ['global', 'all', '*', ''].includes(moduleName.toLowerCase()) ? '' : moduleName;
   const selectedToken = normalizeToken(runtimeContext?.activeCategorySlug);
   const pathname = typeof window !== 'undefined' ? String(window.location.pathname || '').toLowerCase() : '';
   const pathSegments = pathname.split('/').filter(Boolean);
@@ -473,7 +474,7 @@ const CategoryNavigatorBase = ({ props, mode, runtimeContext }) => {
     const params = new URLSearchParams();
     params.set('country', country);
     params.set('depth', depthToken);
-    if (moduleName) params.set('module', moduleName);
+    if (normalizedModuleParam) params.set('module', normalizedModuleParam);
     fetch(`${API}/categories/tree?${params.toString()}`, { cache: 'no-store' })
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
@@ -490,7 +491,7 @@ const CategoryNavigatorBase = ({ props, mode, runtimeContext }) => {
     return () => {
       alive = false;
     };
-  }, [country, depthToken, moduleName]);
+  }, [country, depthToken, normalizedModuleParam]);
 
   const triggerCategoryChange = (categoryItem, tokenSource = null) => {
     const source = tokenSource || categoryItem;
