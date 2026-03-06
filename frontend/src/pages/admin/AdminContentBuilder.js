@@ -3270,11 +3270,11 @@ export default function AdminContentBuilder() {
 
           </div>
 
-          <button type="button" className="h-10 rounded border px-4 text-sm" onClick={saveDraft} disabled={saving || !activeDraftId} data-testid="admin-content-builder-save-draft-button">
+          <button type="button" className="h-10 rounded border px-4 text-sm" onClick={saveDraft} disabled={saving || !pageId} data-testid="admin-content-builder-save-draft-button">
             Draft Kaydet
           </button>
 
-          <button type="button" className="h-10 rounded bg-emerald-600 px-4 text-sm text-white" onClick={publishDraft} disabled={saving || !activeDraftId} data-testid="admin-content-builder-publish-button">
+          <button type="button" className="h-10 rounded bg-emerald-600 px-4 text-sm text-white" onClick={publishDraft} disabled={saving || !pageId} data-testid="admin-content-builder-publish-button">
             Publish
           </button>
 
