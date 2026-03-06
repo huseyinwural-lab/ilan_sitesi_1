@@ -1,0 +1,33 @@
+{
+  "timestamp": "2026-03-06T22:06:16.735448+00:00",
+  "notes": "restored_requested_category_list_ascii_safe",
+  "country": {
+    "TR": {
+      "soft_deleted_previous_active": 0,
+      "created_new_categories": 111,
+      "active_counts": {
+        "real_estate": 3,
+        "vehicle": 9,
+        "other": 99
+      }
+    },
+    "DE": {
+      "soft_deleted_previous_active": 149,
+      "created_new_categories": 111,
+      "active_counts": {
+        "real_estate": 3,
+        "vehicle": 9,
+        "other": 99
+      }
+    },
+    "FR": {
+      "soft_deleted_previous_active": 0,
+      "created_new_categories": 111,
+      "active_counts": {
+        "real_estate": 3,
+        "vehicle": 9,
+        "other": 99
+      }
+    }
+  }
+}
