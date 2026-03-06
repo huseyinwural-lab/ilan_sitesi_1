@@ -85,11 +85,11 @@ const buildCategoryRoute = (category) => {
   const localePrefix = resolveLocalePrefix();
   const slug = String(category?.slug || '').trim();
   const id = String(category?.id || '').trim();
-  const base = slug ? `${localePrefix}/kategori/${encodeURIComponent(slug)}` : `${localePrefix}/search`;
-  if (slug) return base;
-  if (!id) return `${localePrefix}/search`;
+  const base = `${localePrefix}/kategori`;
+  if (!id && !slug) return base;
   const params = new URLSearchParams();
-  params.set('category_id', id);
+  if (id) params.set('category_id', id);
+  if (slug) params.set('slug', slug);
   if (category?.parent_id) params.set('parent_id', String(category.parent_id));
   return `${base}?${params.toString()}`;
 };

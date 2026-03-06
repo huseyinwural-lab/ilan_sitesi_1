@@ -1121,6 +1121,35 @@ const createPresetComponent = (key, props = {}) => ({
   visibility: { desktop: true, tablet: true, mobile: true },
 });
 
+const PRODUCTION_MEDIA_ASSETS = {
+  heroSlides: [
+    'https://images.unsplash.com/photo-1760263137609-25926f9bd8d9?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzJ8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBjYXIlMjBvbiUyMHJvYWQlMjBzdW5zZXR8ZW58MHx8fHwxNzcyNzkyMDQ2fDA&ixlib=rb-4.1.0&q=85',
+    'https://images.unsplash.com/photo-1758499692478-13f7e297cd9f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA0MTJ8MHwxfHNlYXJjaHw0fHxsdXh1cnklMjBjYXIlMjBkcml2aW5nJTIwcm9hZHxlbnwwfHx8fDE3NzI3OTIxMjd8MA&ixlib=rb-4.1.0&q=85',
+    'https://images.unsplash.com/photo-1764013290141-63b13e311906?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MjJ8MHwxfHNlYXJjaHw0fHxjYXIlMjBzaG93cm9vbSUyMGludGVyaW9yJTIwd2lkZXxlbnwwfHx8fDE3NzI3OTIxMzh8MA&ixlib=rb-4.1.0&q=85',
+  ],
+  promoBanner: 'https://images.unsplash.com/photo-1643142314913-0cf633d9bbb5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjd8MHwxfHNlYXJjaHwxfHxjYXIlMjBkZWFsZXJzaGlwJTIwc2hvd3Jvb218ZW58MHx8fHwxNzcyNzkyMDM3fDA&ixlib=rb-4.1.0&q=85',
+  categoryBanner: 'https://images.unsplash.com/photo-1763092262677-4fad66d03134?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MjJ8MHwxfHNlYXJjaHwxfHxjYXIlMjBzaG93cm9vbSUyMGludGVyaW9yJTIwd2lkZXxlbnwwfHx8fDE3NzI3OTIxMzh8MA&ixlib=rb-4.1.0&q=85',
+};
+
+const TEMPLATE_LOCKED_SCOPE_KEYS = new Set([
+  'TR|vehicle|home',
+  'TR|vehicle|urgent_listings',
+  'TR|vehicle|category_l0_l1',
+  'TR|vehicle|search_ln',
+  'DE|global|home',
+  'DE|global|urgent_listings',
+  'DE|global|category_l0_l1',
+  'DE|global|search_ln',
+  'FR|global|home',
+  'FR|global|urgent_listings',
+  'FR|global|category_l0_l1',
+  'FR|global|search_ln',
+]);
+
+const FINAL_TEMPLATE_VERSION = 'finalized-p0-v1';
+
+const makeTemplateScopeKey = (country, moduleName, pageType) => `${String(country || '').toUpperCase()}|${String(moduleName || '').trim().toLowerCase()}|${String(pageType || '').trim()}`;
+
 const createPresetColumn = (desktopWidth, components = []) => ({
   id: createPresetNodeId('col'),
   width: { desktop: desktopWidth, tablet: 12, mobile: 12 },
@@ -1132,13 +1161,20 @@ const createPresetRow = (columns = []) => ({
   columns,
 });
 
-const buildStandardPageTypePayload = (pageType, { persona = 'individual', variant = 'A' } = {}) => {
+const buildStandardPageTypePayload = (pageType, { persona = 'individual', variant = 'A', module = 'vehicle' } = {}) => {
   const personaKey = persona === 'corporate' ? 'corporate' : 'individual';
   const variantKey = variant === 'B' ? 'B' : 'A';
+  const moduleKey = String(module || 'vehicle').trim() || 'vehicle';
+  const withTemplateMeta = (rows) => ({
+    meta: {
+      template_version: FINAL_TEMPLATE_VERSION,
+      template_locked_after_publish: true,
+    },
+    rows,
+  });
 
   if (pageType === 'home') {
-    return {
-      rows: [
+    return withTemplateMeta([
         createPresetRow([createPresetColumn(12, [
           createPresetComponent('content.heading', {
             text: 'Ana Sayfa',
@@ -1153,9 +1189,22 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
             alignment: 'left',
           }),
           createPresetComponent('media.hero-banner', {
-            mode: 'dynamic',
+            mode: 'static',
             placement: 'home_top',
             title: 'Günün Vitrini',
+            image_url: PRODUCTION_MEDIA_ASSETS.heroSlides[0],
+          }),
+          createPresetComponent('media.carousel', {
+            mode: 'static',
+            placement: 'home_top',
+            auto_play_seconds: 5,
+            show_overlay_text: true,
+            slides: [
+              { label: 'Bugünün Fırsatları', url: '/vitrin?badge=showcase' },
+              { label: 'Acil İlanlara Git', url: '/acil?badge=urgent' },
+              { label: 'Kampanya Alanı', url: '/kampanya?badge=campaign' },
+            ],
+            images: PRODUCTION_MEDIA_ASSETS.heroSlides,
           }),
         ])]),
         createPresetRow([
@@ -1165,7 +1214,7 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
               start_level: 'L0',
               depth: 'L1',
               placement: 'side',
-              module: 'vehicle',
+              module: moduleKey,
               show_counts: true,
             }),
           ]),
@@ -1218,19 +1267,23 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
           })]),
         ]),
         createPresetRow([createPresetColumn(12, [
+          createPresetComponent('media.image', {
+            mode: 'static',
+            placement: 'home_bottom',
+            image_url: PRODUCTION_MEDIA_ASSETS.promoBanner,
+            alt: 'Ana sayfa kampanya banner',
+          }),
           createPresetComponent('ad.slot', {
             placement: 'home_bottom',
             size: 'horizontal',
             rotation: 'on',
           }),
         ])]),
-      ],
-    };
+    ]);
   }
 
   if (pageType === 'category_l0_l1') {
-    return {
-      rows: [
+    return withTemplateMeta([
         createPresetRow([createPresetColumn(12, [
           createPresetComponent('content.heading', {
             text: 'Kategori Sayfası',
@@ -1239,12 +1292,18 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
             alignment: 'left',
           }),
           createPresetComponent('layout.breadcrumb-header'),
+          createPresetComponent('media.image', {
+            mode: 'static',
+            placement: 'category_top',
+            image_url: PRODUCTION_MEDIA_ASSETS.categoryBanner,
+            alt: 'Kategori üst banner',
+          }),
           createPresetComponent('category.navigator', {
             title: 'Kategori Gezinme',
             start_level: 'L0',
             depth: 'L1',
             placement: 'top',
-            module: 'vehicle',
+            module: moduleKey,
             show_counts: true,
           }),
         ])]),
@@ -1296,19 +1355,23 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
           ]),
         ]),
         createPresetRow([createPresetColumn(12, [
+          createPresetComponent('media.image', {
+            mode: 'static',
+            placement: 'category_bottom',
+            image_url: PRODUCTION_MEDIA_ASSETS.heroSlides[2],
+            alt: 'Kategori alt banner',
+          }),
           createPresetComponent('ad.slot', {
             placement: 'category_bottom',
             size: 'horizontal',
             rotation: 'off',
           }),
         ])]),
-      ],
-    };
+    ]);
   }
 
   if (pageType === 'urgent_listings') {
-    return {
-      rows: [
+    return withTemplateMeta([
         createPresetRow([createPresetColumn(12, [
           createPresetComponent('content.heading', {
             text: 'Acil İlanlar',
@@ -1321,6 +1384,12 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
             font_size: 15,
             font_weight: '400',
             alignment: 'left',
+          }),
+          createPresetComponent('media.image', {
+            mode: 'static',
+            placement: 'urgent_top',
+            image_url: PRODUCTION_MEDIA_ASSETS.heroSlides[1],
+            alt: 'Acil ilan banner',
           }),
           createPresetComponent('cta.block', {
             mode: 'quick_filter',
@@ -1345,6 +1414,12 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
             }),
           ]),
           createPresetColumn(4, [
+            createPresetComponent('media.image', {
+              mode: 'static',
+              placement: 'urgent_top',
+              image_url: PRODUCTION_MEDIA_ASSETS.promoBanner,
+              alt: 'Acil sağ kolon banner',
+            }),
             createPresetComponent('ad.slot', {
               placement: 'urgent_top',
               size: 'horizontal',
@@ -1355,7 +1430,7 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
               start_level: 'L0',
               depth: 'Lall',
               placement: 'side',
-              module: 'vehicle',
+              module: moduleKey,
               show_counts: true,
             }),
           ]),
@@ -1369,14 +1444,12 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
             order: 'newest',
           }),
         ])]),
-      ],
-    };
+    ]);
   }
 
   if (['search_ln', 'category_showcase', 'search_l1', 'search_l2'].includes(pageType)) {
     const pageTitle = pageType === 'category_showcase' ? 'Vitrin Liste' : 'Liste Sayfası';
-    return {
-      rows: [
+    return withTemplateMeta([
         createPresetRow([createPresetColumn(12, [
           createPresetComponent('content.heading', {
             text: pageTitle,
@@ -1390,6 +1463,12 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
             font_weight: '400',
             alignment: 'left',
           }),
+          createPresetComponent('media.image', {
+            mode: 'static',
+            placement: 'category_top',
+            image_url: PRODUCTION_MEDIA_ASSETS.heroSlides[0],
+            alt: 'Liste üst banner',
+          }),
         ])]),
         createPresetRow([
           createPresetColumn(3, [
@@ -1398,7 +1477,7 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
               start_level: 'L0',
               depth: 'Lall',
               placement: 'side',
-              module: 'vehicle',
+              module: moduleKey,
               show_counts: true,
             }),
             createPresetComponent('category.sub-category-block', {
@@ -1424,14 +1503,24 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
             auto_refresh: 'off',
             order: pageType === 'category_showcase' ? 'newest' : 'random',
           }),
+          createPresetComponent('media.carousel', {
+            mode: 'static',
+            placement: 'category_bottom',
+            auto_play_seconds: 6,
+            show_overlay_text: true,
+            slides: [
+              { label: 'Vitrin İlanlar', url: '/vitrin?badge=showcase' },
+              { label: 'Kampanyalar', url: '/kampanya?badge=campaign' },
+            ],
+            images: [PRODUCTION_MEDIA_ASSETS.categoryBanner, PRODUCTION_MEDIA_ASSETS.heroSlides[1]],
+          }),
           createPresetComponent('ad.slot', {
             placement: 'category_bottom',
             size: 'horizontal',
             rotation: 'off',
           }),
         ])]),
-      ],
-    };
+    ]);
   }
 
   if (pageType === 'listing_detail') {
@@ -1552,7 +1641,7 @@ const PRESET_PACK_OPTIONS = [
     description: `${PAGE_TYPE_LABEL_MAP[pageType]} için kapsamlı varsayılan düzen`,
     personas: ['individual', 'corporate'],
     variants: ['A', 'B'],
-    buildPayload: ({ persona = 'individual', variant = 'A' } = {}) => buildStandardPageTypePayload(pageType, { persona, variant }),
+    buildPayload: ({ persona = 'individual', variant = 'A', module = 'vehicle' } = {}) => buildStandardPageTypePayload(pageType, { persona, variant, module }),
   })),
   {
     id: 'legacy-listing-create-stepx-pack',
@@ -1561,7 +1650,7 @@ const PRESET_PACK_OPTIONS = [
     description: 'Geriye dönük uyumluluk için legacy page type şablonu',
     personas: ['individual', 'corporate'],
     variants: ['A', 'B'],
-    buildPayload: ({ persona = 'individual', variant = 'A' } = {}) => buildStandardPageTypePayload('listing_create_stepX', { persona, variant }),
+    buildPayload: ({ persona = 'individual', variant = 'A', module = 'vehicle' } = {}) => buildStandardPageTypePayload('listing_create_stepX', { persona, variant, module }),
   },
 ];
 
@@ -2228,6 +2317,21 @@ export default function AdminContentBuilder() {
     return published?.payload_json || { rows: [] };
   }, [revisionList]);
 
+  const hasFinalTemplatePublished = useMemo(
+    () => String(publishedRevisionPayload?.meta?.template_version || '') === FINAL_TEMPLATE_VERSION,
+    [publishedRevisionPayload],
+  );
+
+  const hasPublishedRevision = useMemo(
+    () => revisionList.some((revision) => revision.status === 'published'),
+    [revisionList],
+  );
+
+  const templateScopeLocked = useMemo(() => {
+    const scopeKey = makeTemplateScopeKey(country, moduleName, pageType);
+    return hasFinalTemplatePublished && TEMPLATE_LOCKED_SCOPE_KEYS.has(scopeKey);
+  }, [country, moduleName, pageType, hasFinalTemplatePublished]);
+
   const layoutDiff = useMemo(
     () => computeLayoutDiff(publishedRevisionPayload, payloadJson),
     [publishedRevisionPayload, payloadJson],
@@ -2310,6 +2414,7 @@ export default function AdminContentBuilder() {
     const nextPayload = selectedPresetPack.buildPayload({
       persona: presetPersona,
       variant: presetVariant,
+      module: moduleName,
       pageType,
     });
     setPayloadJson(normalizePayload(nextPayload, selectedPresetPack.targetPageType || pageType));
@@ -3109,18 +3214,26 @@ export default function AdminContentBuilder() {
 
             <button
               type="button"
-              className="h-10 rounded border border-indigo-300 bg-indigo-50 px-3 text-xs font-semibold text-indigo-700"
+              className={`h-10 rounded border px-3 text-xs font-semibold ${templateScopeLocked ? 'border-slate-300 bg-slate-100 text-slate-500' : 'border-indigo-300 bg-indigo-50 text-indigo-700'}`}
               onClick={() => {
-                const nextPayload = buildStandardPageTypePayload(pageType, { persona: presetPersona, variant: presetVariant });
+                if (templateScopeLocked) return;
+                const nextPayload = buildStandardPageTypePayload(pageType, { persona: presetPersona, variant: presetVariant, module: moduleName });
                 setPayloadJson(normalizePayload(nextPayload, pageType));
                 setStatus(`${PAGE_TYPE_LABEL_MAP[pageType] || pageType} için kapsamlı standart şablon yüklendi.`);
                 refreshPreviewAfterInteraction();
                 toast.success('Sayfa tipi için standart şablon yüklendi.');
               }}
+              disabled={templateScopeLocked}
               data-testid="admin-content-builder-load-standard-page-template-button"
             >
               Bu Sayfaya Standart Şablon
             </button>
+
+            {templateScopeLocked ? (
+              <span className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-700" data-testid="admin-content-builder-template-lock-note">
+                Bu scope/page-type publish sonrası kilitli. Standart şablon tekrar uygulanamaz.
+              </span>
+            ) : null}
 
           </div>
 

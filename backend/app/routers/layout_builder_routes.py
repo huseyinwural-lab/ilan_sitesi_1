@@ -1036,70 +1036,313 @@ def _build_standard_page_seed_payload(
     *,
     persona: str = "individual",
     variant: str = "A",
+    module: str = "vehicle",
 ) -> dict[str, Any]:
     persona_key = "corporate" if str(persona).strip().lower() == "corporate" else "individual"
     variant_key = "B" if str(variant).strip().upper() == "B" else "A"
+    module_key = str(module or "vehicle").strip() or "vehicle"
+    media_assets = {
+        "hero_slides": [
+            "https://images.unsplash.com/photo-1760263137609-25926f9bd8d9?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzJ8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBjYXIlMjBvbiUyMHJvYWQlMjBzdW5zZXR8ZW58MHx8fHwxNzcyNzkyMDQ2fDA&ixlib=rb-4.1.0&q=85",
+            "https://images.unsplash.com/photo-1758499692478-13f7e297cd9f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA0MTJ8MHwxfHNlYXJjaHw0fHxsdXh1cnklMjBjYXIlMjBkcml2aW5nJTIwcm9hZHxlbnwwfHx8fDE3NzI3OTIxMjd8MA&ixlib=rb-4.1.0&q=85",
+            "https://images.unsplash.com/photo-1764013290141-63b13e311906?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MjJ8MHwxfHNlYXJjaHw0fHxjYXIlMjBzaG93cm9vbSUyMGludGVyaW9yJTIwd2lkZXxlbnwwfHx8fDE3NzI3OTIxMzh8MA&ixlib=rb-4.1.0&q=85",
+        ],
+        "promo_banner": "https://images.unsplash.com/photo-1643142314913-0cf633d9bbb5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjd8MHwxfHNlYXJjaHwxfHxjYXIlMjBkZWFsZXJzaGlwJTIwc2hvd3Jvb218ZW58MHx8fHwxNzcyNzkyMDM3fDA&ixlib=rb-4.1.0&q=85",
+        "category_banner": "https://images.unsplash.com/photo-1763092262677-4fad66d03134?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MjJ8MHwxfHNlYXJjaHwxfHxjYXIlMjBzaG93cm9vbSUyMGludGVyaW9yJTIwd2lkZXxlbnwwfHx8fDE3NzI3OTIxMzh8MA&ixlib=rb-4.1.0&q=85",
+    }
 
     if page_type == LayoutPageType.HOME:
         return {
+            "meta": {
+                "template_version": "finalized-p0-v1",
+                "template_locked_after_publish": True,
+            },
             "rows": [
                 _seed_row([
                     _seed_column(12, [
-                        _seed_component("home.default-content"),
-                        _seed_component("media.auto-play-carousel-hero", {"auto_play_seconds": 5, "show_overlay_text": True, "cta_label": "Create Free Listing"}),
+                        _seed_component("content.heading", {"text": "Ana Sayfa", "font_size": 40, "font_weight": "800", "alignment": "left"}),
+                        _seed_component("content.text-block", {"text": "Vitrin, kategori keşfi ve hızlı aksiyon alanları.", "font_size": 15, "font_weight": "400", "alignment": "left"}),
+                        _seed_component("media.hero-banner", {
+                            "mode": "static",
+                            "placement": "home_top",
+                            "title": "Günün Vitrini",
+                            "image_url": media_assets["hero_slides"][0],
+                        }),
+                        _seed_component("media.carousel", {
+                            "mode": "static",
+                            "placement": "home_top",
+                            "auto_play_seconds": 5,
+                            "show_overlay_text": True,
+                            "slides": [
+                                {"label": "Bugünün Fırsatları", "url": "/vitrin?badge=showcase"},
+                                {"label": "Acil İlanlara Git", "url": "/acil?badge=urgent"},
+                                {"label": "Kampanya Alanı", "url": "/kampanya?badge=campaign"},
+                            ],
+                            "images": media_assets["hero_slides"],
+                        }),
                     ])
                 ]),
                 _seed_row([
-                    _seed_column(4 if persona_key == "individual" else 5, [
-                        _seed_component("layout.category-navigator-side", {"title": "Categories", "show_counts": True, "tree_behavior": "expanded", "max_levels": 6}),
+                    _seed_column(3 if persona_key == "individual" else 4, [
+                        _seed_component("category.navigator", {
+                            "title": "Kategoriler",
+                            "start_level": "L0",
+                            "depth": "L1",
+                            "placement": "side",
+                            "module": module_key,
+                            "show_counts": True,
+                        }),
                     ]),
-                    _seed_column(8 if persona_key == "individual" else 7, [
-                        _seed_component("interactive.similar-listings-slider", {"source": "similar", "max_items": 10 if variant_key == "B" else 8}),
-                        _seed_component("media.ad-promo-slot", {"placement": "AD_HOME_TOP", "campaign_label": "Home Showcase"}),
+                    _seed_column(9 if persona_key == "individual" else 8, [
+                        _seed_component("listing.grid", {
+                            "source": "showcase",
+                            "columns": 3 if variant_key == "B" else 4,
+                            "rows": 2,
+                            "auto_refresh": "30s",
+                            "order": "newest",
+                        }),
                     ]),
+                ]),
+                _seed_row([
+                    _seed_column(4, [_seed_component("cta.block", {
+                        "mode": "quick_filter",
+                        "quick_filter": "urgent",
+                        "title": "ACİL",
+                        "style": "danger",
+                        "target": "same",
+                        "font_size": 15,
+                        "font_weight": "700",
+                        "font_style": "normal",
+                        "text_color": "#ffffff",
+                        "bg_color": "#dc2626",
+                    })]),
+                    _seed_column(4, [_seed_component("cta.block", {
+                        "mode": "quick_filter",
+                        "quick_filter": "showcase",
+                        "title": "VİTRİN",
+                        "style": "primary",
+                        "target": "same",
+                        "font_size": 15,
+                        "font_weight": "700",
+                        "font_style": "normal",
+                        "text_color": "#ffffff",
+                        "bg_color": "#1d4ed8",
+                    })]),
+                    _seed_column(4, [_seed_component("cta.block", {
+                        "mode": "quick_filter",
+                        "quick_filter": "campaign",
+                        "title": "KAMPANYA / DOPING",
+                        "style": "outline",
+                        "target": "same",
+                        "font_size": 14,
+                        "font_weight": "700",
+                        "font_style": "normal",
+                        "text_color": "#0f172a",
+                        "bg_color": "#f8fafc",
+                    })]),
+                ]),
+                _seed_row([
+                    _seed_column(12, [
+                        _seed_component("media.image", {
+                            "mode": "static",
+                            "placement": "home_bottom",
+                            "image_url": media_assets["promo_banner"],
+                            "alt": "Ana sayfa kampanya banner",
+                        }),
+                        _seed_component("ad.slot", {
+                            "placement": "home_bottom",
+                            "size": "horizontal",
+                            "rotation": "on",
+                        }),
+                    ])
                 ]),
             ]
         }
 
     if page_type == LayoutPageType.CATEGORY_L0_L1:
         return {
+            "meta": {
+                "template_version": "finalized-p0-v1",
+                "template_locked_after_publish": True,
+            },
             "rows": [
                 _seed_row([
                     _seed_column(12, [
-                        _seed_component("search.l1.default-content"),
+                        _seed_component("content.heading", {"text": "Kategori Sayfası", "font_size": 34, "font_weight": "800", "alignment": "left"}),
                         _seed_component("layout.breadcrumb-header"),
-                        _seed_component("layout.category-navigator-top", {"title": "Sub Categories", "show_counts": True, "tree_behavior": "expanded", "max_levels": 4}),
+                        _seed_component("media.image", {
+                            "mode": "static",
+                            "placement": "category_top",
+                            "image_url": media_assets["category_banner"],
+                            "alt": "Kategori üst banner",
+                        }),
+                        _seed_component("category.navigator", {
+                            "title": "Kategori Gezinme",
+                            "start_level": "L0",
+                            "depth": "L1",
+                            "placement": "top",
+                            "module": module_key,
+                            "show_counts": True,
+                        }),
                     ])
                 ]),
                 _seed_row([
-                    _seed_column(4, [_seed_component("layout.category-navigator-side", {"title": "Category Tree", "show_counts": True, "tree_behavior": "expanded", "max_levels": 6})]),
+                    _seed_column(4, [_seed_component("category.sub-category-block", {"columns": 1, "show_count": True, "depth": 2})]),
                     _seed_column(8, [
-                        _seed_component("interactive.similar-listings-slider", {"source": "similar", "max_items": 12}),
-                        _seed_component("shared.ad-slot", {"placement": "AD_SEARCH_TOP"}),
+                        _seed_component("listing.grid", {
+                            "source": "category",
+                            "columns": 4,
+                            "rows": 2,
+                            "auto_refresh": "30s",
+                            "order": "newest",
+                        }),
                     ]),
+                ]),
+                _seed_row([
+                    _seed_column(8, [_seed_component("listing.list", {"source": "category", "pagination": True, "per_page": 24, "order": "newest"})]),
+                    _seed_column(4, [
+                        _seed_component("ad.slot", {"placement": "category_top", "size": "horizontal", "rotation": "on"}),
+                        _seed_component("cta.block", {
+                            "mode": "quick_filter",
+                            "quick_filter": "campaign",
+                            "title": "KATEGORİ KAMPANYALARI",
+                            "style": "outline",
+                            "target": "same",
+                            "font_size": 13,
+                            "font_weight": "700",
+                            "font_style": "normal",
+                            "text_color": "#0f172a",
+                            "bg_color": "#f8fafc",
+                        }),
+                    ]),
+                ]),
+                _seed_row([
+                    _seed_column(12, [
+                        _seed_component("media.image", {
+                            "mode": "static",
+                            "placement": "category_bottom",
+                            "image_url": media_assets["hero_slides"][2],
+                            "alt": "Kategori alt banner",
+                        }),
+                        _seed_component("ad.slot", {"placement": "category_bottom", "size": "horizontal", "rotation": "off"}),
+                    ])
                 ]),
             ]
         }
 
-    if page_type in {LayoutPageType.SEARCH_LN, LayoutPageType.CATEGORY_SHOWCASE, LayoutPageType.URGENT_LISTINGS}:
-        header_text = "Category Listing" if page_type == LayoutPageType.SEARCH_LN else "Category Showcase"
-        if page_type == LayoutPageType.URGENT_LISTINGS:
-            header_text = "Urgent Listings"
+    if page_type == LayoutPageType.URGENT_LISTINGS:
         return {
+            "meta": {
+                "template_version": "finalized-p0-v1",
+                "template_locked_after_publish": True,
+            },
             "rows": [
                 _seed_row([
                     _seed_column(12, [
-                        _seed_component("search.l1.default-content"),
-                        _seed_component("layout.breadcrumb-header"),
-                        _seed_component("shared.text-block", {"title": header_text, "body": "This area was generated by the standard page-type seed template."}),
+                        _seed_component("content.heading", {"text": "Acil İlanlar", "font_size": 36, "font_weight": "800", "alignment": "left"}),
+                        _seed_component("content.text-block", {"text": "Acil badge taşıyan ilanların canlı listesi.", "font_size": 15, "font_weight": "400", "alignment": "left"}),
+                        _seed_component("media.image", {
+                            "mode": "static",
+                            "placement": "urgent_top",
+                            "image_url": media_assets["hero_slides"][1],
+                            "alt": "Acil ilan banner",
+                        }),
+                        _seed_component("cta.block", {
+                            "mode": "quick_filter",
+                            "quick_filter": "urgent",
+                            "title": "ACİL FİLTRESİ",
+                            "style": "danger",
+                            "target": "same",
+                            "font_size": 14,
+                            "font_weight": "700",
+                            "font_style": "normal",
+                            "text_color": "#ffffff",
+                            "bg_color": "#dc2626",
+                        }),
                     ])
                 ]),
                 _seed_row([
-                    _seed_column(8, [_seed_component("interactive.similar-listings-slider", {"source": "similar", "max_items": 12 if page_type == LayoutPageType.SEARCH_LN else 10})]),
+                    _seed_column(8, [_seed_component("listing.list", {"source": "urgent", "pagination": True, "per_page": 20, "order": "newest"})]),
                     _seed_column(4, [
-                        _seed_component("layout.category-navigator-side", {"title": "Filters and Categories", "show_counts": True, "tree_behavior": "expanded", "max_levels": 5}),
-                        _seed_component("shared.ad-slot", {"placement": "AD_SEARCH_TOP"}),
+                        _seed_component("media.image", {
+                            "mode": "static",
+                            "placement": "urgent_top",
+                            "image_url": media_assets["promo_banner"],
+                            "alt": "Acil sağ kolon banner",
+                        }),
+                        _seed_component("ad.slot", {"placement": "urgent_top", "size": "horizontal", "rotation": "on"}),
+                        _seed_component("category.navigator", {
+                            "title": "Hızlı Kategori",
+                            "start_level": "L0",
+                            "depth": "Lall",
+                            "placement": "side",
+                            "module": module_key,
+                            "show_counts": True,
+                        }),
                     ]),
+                ]),
+                _seed_row([
+                    _seed_column(12, [_seed_component("listing.grid", {"source": "urgent", "columns": 3 if variant_key == "B" else 4, "rows": 2, "auto_refresh": "30s", "order": "newest"})])
+                ]),
+            ]
+        }
+
+    if page_type in {LayoutPageType.SEARCH_LN, LayoutPageType.CATEGORY_SHOWCASE}:
+        header_text = "Vitrin Liste" if page_type == LayoutPageType.CATEGORY_SHOWCASE else "Liste Sayfası"
+        return {
+            "meta": {
+                "template_version": "finalized-p0-v1",
+                "template_locked_after_publish": True,
+            },
+            "rows": [
+                _seed_row([
+                    _seed_column(12, [
+                        _seed_component("content.heading", {"text": header_text, "font_size": 34, "font_weight": "800", "alignment": "left"}),
+                        _seed_component("content.text-block", {"text": "Arama/kategori sorgusuna göre liste görünümü.", "font_size": 15, "font_weight": "400", "alignment": "left"}),
+                        _seed_component("media.image", {
+                            "mode": "static",
+                            "placement": "category_top",
+                            "image_url": media_assets["hero_slides"][0],
+                            "alt": "Liste üst banner",
+                        }),
+                    ])
+                ]),
+                _seed_row([
+                    _seed_column(3, [
+                        _seed_component("category.navigator", {
+                            "title": "Kategori Ağacı",
+                            "start_level": "L0",
+                            "depth": "Lall",
+                            "placement": "side",
+                            "module": module_key,
+                            "show_counts": True,
+                        }),
+                        _seed_component("category.sub-category-block", {"columns": 1, "show_count": True, "depth": 2}),
+                    ]),
+                    _seed_column(9, [_seed_component("listing.list", {"source": "search", "pagination": True, "per_page": 20, "order": "newest"})]),
+                ]),
+                _seed_row([
+                    _seed_column(12, [
+                        _seed_component("listing.grid", {
+                            "source": "showcase" if page_type == LayoutPageType.CATEGORY_SHOWCASE else "latest",
+                            "columns": 4,
+                            "rows": 2,
+                            "auto_refresh": "off",
+                            "order": "newest" if page_type == LayoutPageType.CATEGORY_SHOWCASE else "random",
+                        }),
+                        _seed_component("media.carousel", {
+                            "mode": "static",
+                            "placement": "category_bottom",
+                            "auto_play_seconds": 6,
+                            "show_overlay_text": True,
+                            "slides": [
+                                {"label": "Vitrin İlanlar", "url": "/vitrin?badge=showcase"},
+                                {"label": "Kampanyalar", "url": "/kampanya?badge=campaign"},
+                            ],
+                            "images": [media_assets["category_banner"], media_assets["hero_slides"][1]],
+                        }),
+                        _seed_component("ad.slot", {"placement": "category_bottom", "size": "horizontal", "rotation": "off"}),
+                    ])
                 ]),
             ]
         }
@@ -2281,6 +2524,7 @@ async def seed_standard_layout_pages_admin(
                 page_type,
                 persona=normalized_persona,
                 variant=normalized_variant,
+                module=normalized_module,
             )
 
             draft_result = await session.execute(
