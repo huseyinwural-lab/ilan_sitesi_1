@@ -276,6 +276,30 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Frontend: **100% PASS**
   - Yeni navigator keyleri görünür, deprecated keyler görünmez.
 
+## 2026-03-06 (Hotfix — Component Library Geri Yükleme, Deprecated Navigatorlar Kapalı)
+
+### İstek
+- Component Library’de eski standart componentler geri gelsin.
+- Yeni 2 navigator korunsun.
+- Eski 3 navigator geri gelmesin:
+  - `category.navigator`
+  - `layout.category-navigator-side`
+  - `layout.category-navigator-top`
+
+### Uygulama
+- `AdminContentBuilder.js` içinde library merge/fallback akışı düzeltildi:
+  - Başlangıçta `DEFAULT_COMPONENT_LIBRARY` yüklenir
+  - API + menu payload defaultlarla merge edilir
+  - API hata/boş durumda default fallback korunur
+- Deprecated navigator keyleri block listede tutuldu; yeni 2 navigator görünür kaldı.
+
+### Test
+- Testing agent raporu: `/app/test_reports/iteration_150.json`
+  - Frontend **100% PASS**
+  - Standart componentler geri geldi (28+)
+  - Yeni 2 navigator mevcut
+  - Eski 3 navigator görünmüyor
+
 ## 2026-03-06 (P0 — Sayfa Tasarım Fazı Başlangıcı: Home / Acil / Kategori / Liste Kompozisyonları)
 
 ## 2026-03-06 (P0 — Kapanış Görevleri Tamamlandı: Kalıcılaştırma + İçerik + QA + Final Smoke)
