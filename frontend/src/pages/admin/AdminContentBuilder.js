@@ -100,15 +100,12 @@ const DEFAULT_COMPONENT_LIBRARY = [
     },
   },
   {
-    key: 'category.navigator',
-    name: 'Category Navigator',
+    key: 'layout.category-navigator-main-side',
+    name: 'Category Navigator (Ana Side)',
     schema_json: {
       type: 'object',
       properties: {
         title: { type: 'string', title: 'Başlık' },
-        start_level: { type: 'string', title: 'Start Level', enum: ['L0'] },
-        depth: { type: 'string', title: 'Depth', enum: ['L1', 'Lall'] },
-        placement: { type: 'string', title: 'Placement', enum: ['side', 'top'] },
         module: { type: 'string', title: 'Module' },
         show_counts: { type: 'boolean', title: 'İlan Sayısı Göster' },
       },
@@ -116,11 +113,26 @@ const DEFAULT_COMPONENT_LIBRARY = [
     },
     default_props: {
       title: 'Kategoriler',
-      start_level: 'L0',
-      depth: 'L1',
-      placement: 'side',
-      module: 'vehicle',
+      module: 'global',
       show_counts: true,
+    },
+  },
+  {
+    key: 'layout.category-navigator-category-side',
+    name: 'Category Navigator (Kategori Side)',
+    schema_json: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', title: 'Başlık' },
+        module: { type: 'string', title: 'Module' },
+        max_visible_items: { type: 'integer', title: 'Maksimum Görünür Satır', minimum: 4, maximum: 40 },
+      },
+      additionalProperties: false,
+    },
+    default_props: {
+      title: 'Kategori Side',
+      module: 'global',
+      max_visible_items: 12,
     },
   },
   {
@@ -440,46 +452,6 @@ const DEFAULT_COMPONENT_LIBRARY = [
     },
   },
   {
-    key: 'layout.category-navigator-side',
-    name: 'Category Navigator (Side)',
-    schema_json: {
-      type: 'object',
-      properties: {
-        title: { type: 'string', title: 'Başlık' },
-        show_counts: { type: 'boolean', title: 'İlan Sayıları Göster' },
-        tree_behavior: { type: 'string', title: 'Ağaç Davranışı', enum: ['expanded', 'accordion'] },
-        max_levels: { type: 'integer', title: 'Maksimum Seviye' },
-      },
-      additionalProperties: false,
-    },
-    default_props: {
-      title: 'Kategoriler',
-      show_counts: true,
-      tree_behavior: 'expanded',
-      max_levels: 6,
-    },
-  },
-  {
-    key: 'layout.category-navigator-top',
-    name: 'Category Navigator (Top)',
-    schema_json: {
-      type: 'object',
-      properties: {
-        title: { type: 'string', title: 'Başlık' },
-        show_counts: { type: 'boolean', title: 'İlan Sayıları Göster' },
-        tree_behavior: { type: 'string', title: 'Ağaç Davranışı', enum: ['expanded', 'accordion'] },
-        max_levels: { type: 'integer', title: 'Maksimum Seviye' },
-      },
-      additionalProperties: false,
-    },
-    default_props: {
-      title: 'Kırılımlar',
-      show_counts: true,
-      tree_behavior: 'expanded',
-      max_levels: 6,
-    },
-  },
-  {
     key: 'media.advanced-photo-gallery',
     name: 'Advanced Photo Gallery',
     schema_json: {
@@ -722,6 +694,7 @@ const isBlockedBuilderLibraryItem = (item) => {
   const haystack = `${key} ${name} ${menuLabel} ${menuSlug}`;
 
   if (key.startsWith('menu.snapshot.dealer.')) return true;
+  if (['category.navigator', 'layout.category-navigator-side', 'layout.category-navigator-top'].includes(key)) return true;
   if (haystack.includes('dealer.quick.')) return true;
   if (haystack.includes('dealer.nav.')) return true;
   if (key.startsWith('test.') || key.includes('.test')) return true;
@@ -732,14 +705,16 @@ const isBlockedBuilderLibraryItem = (item) => {
 const COMPONENT_SOURCE_SPEC_RULES = [
   {
     id: 'category-navigator',
-    match: (key, name) => key.startsWith('layout.category-navigator') || name.includes('category navigator'),
+    match: (key, name) => key.startsWith('layout.category-navigator-main-side')
+      || key.startsWith('layout.category-navigator-category-side')
+      || name.includes('category navigator'),
     spec: {
-      component: 'Category Navigator',
+      component: 'Category Navigator (Admin Kategori Kaynağı)',
       menu_path: 'Admin Panel → Katalog & İçerik → Kategoriler',
-      data_source: 'Kategori ağacı (L0 / L1 / Ln)',
-      api: 'GET /api/categories/tree?country=...&depth=L1|all',
-      source_options: 'start_level=L0, depth=L1|Lall, placement=side|top',
-      usage: 'Ana sayfa sol menü, acil sayfası, kategori sayfaları',
+      data_source: 'Kategori ağacı (L0/L1 veya L0/Lall)',
+      api: 'GET /api/categories/tree?country=...&module=...&depth=L1|Lall',
+      source_options: 'module, show_counts, max_visible_items',
+      usage: 'Ana side ve kategori side görünümleri',
       click_behavior: '/kategori/{slug}',
       rbac_visibility: ['super_admin', 'country_admin', 'moderator'],
     },
@@ -1231,11 +1206,8 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
         ])]),
         createPresetRow([
           createPresetColumn(personaKey === 'corporate' ? 4 : 3, [
-            createPresetComponent('category.navigator', {
+            createPresetComponent('layout.category-navigator-main-side', {
               title: 'Kategoriler',
-              start_level: 'L0',
-              depth: 'L1',
-              placement: 'side',
               module: moduleKey,
               show_counts: true,
             }),
@@ -1320,13 +1292,10 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
             image_url: PRODUCTION_MEDIA_ASSETS.categoryBanner,
             alt: 'Kategori üst banner',
           }),
-          createPresetComponent('category.navigator', {
+          createPresetComponent('layout.category-navigator-category-side', {
             title: 'Kategori Gezinme',
-            start_level: 'L0',
-            depth: 'L1',
-            placement: 'top',
             module: moduleKey,
-            show_counts: true,
+            max_visible_items: 12,
           }),
         ])]),
         createPresetRow([
@@ -1447,11 +1416,8 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
               size: 'horizontal',
               rotation: 'on',
             }),
-            createPresetComponent('category.navigator', {
+            createPresetComponent('layout.category-navigator-main-side', {
               title: 'Hızlı Kategori',
-              start_level: 'L0',
-              depth: 'Lall',
-              placement: 'side',
               module: moduleKey,
               show_counts: true,
             }),
@@ -1494,13 +1460,10 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
         ])]),
         createPresetRow([
           createPresetColumn(3, [
-            createPresetComponent('category.navigator', {
+            createPresetComponent('layout.category-navigator-category-side', {
               title: 'Kategori Ağacı',
-              start_level: 'L0',
-              depth: 'Lall',
-              placement: 'side',
               module: moduleKey,
-              show_counts: true,
+              max_visible_items: 14,
             }),
             createPresetComponent('category.sub-category-block', {
               columns: 1,
@@ -1987,7 +1950,7 @@ export default function AdminContentBuilder() {
   const [isSetupDrawerOpen, setIsSetupDrawerOpen] = useState(false);
   const [pendingFocusComponentId, setPendingFocusComponentId] = useState('');
 
-  const [componentLibrary, setComponentLibrary] = useState(() => DEFAULT_COMPONENT_LIBRARY.map(attachComponentSourceSpec));
+  const [componentLibrary, setComponentLibrary] = useState([]);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [categorySearch, setCategorySearch] = useState('');
   const [categoriesLoading, setCategoriesLoading] = useState(false);
@@ -2063,39 +2026,41 @@ export default function AdminContentBuilder() {
           : { type: 'object', properties: {}, additionalProperties: true },
       }));
 
-      const merged = [...DEFAULT_COMPONENT_LIBRARY];
-      [...normalized, ...menuLibraryItems].forEach((item) => {
-        const index = merged.findIndex((existing) => existing.key === item.key);
-        if (index >= 0) {
-          const existingItem = merged[index];
-          const existingSchema = existingItem?.schema_json && typeof existingItem.schema_json === 'object' ? existingItem.schema_json : {};
-          const nextSchema = item?.schema_json && typeof item.schema_json === 'object' ? item.schema_json : {};
-          const existingProperties = existingSchema?.properties && typeof existingSchema.properties === 'object' ? existingSchema.properties : {};
-          const nextProperties = nextSchema?.properties && typeof nextSchema.properties === 'object' ? nextSchema.properties : {};
+      const defaultByKey = Object.fromEntries(DEFAULT_COMPONENT_LIBRARY.map((item) => [item.key, item]));
+      const mergedMap = new Map();
 
-          merged[index] = {
-            ...existingItem,
-            ...item,
-            schema_json: {
-              ...existingSchema,
-              ...nextSchema,
-              properties: {
-                ...existingProperties,
-                ...nextProperties,
-              },
+      [...normalized, ...menuLibraryItems].forEach((item) => {
+        const base = defaultByKey[item.key] || null;
+        const existing = mergedMap.get(item.key);
+        const existingSchema = existing?.schema_json && typeof existing.schema_json === 'object' ? existing.schema_json : {};
+        const baseSchema = base?.schema_json && typeof base.schema_json === 'object' ? base.schema_json : {};
+        const nextSchema = item?.schema_json && typeof item.schema_json === 'object' ? item.schema_json : {};
+
+        mergedMap.set(item.key, {
+          ...(base || {}),
+          ...(existing || {}),
+          ...item,
+          schema_json: {
+            ...baseSchema,
+            ...existingSchema,
+            ...nextSchema,
+            properties: {
+              ...(baseSchema?.properties && typeof baseSchema.properties === 'object' ? baseSchema.properties : {}),
+              ...(existingSchema?.properties && typeof existingSchema.properties === 'object' ? existingSchema.properties : {}),
+              ...(nextSchema?.properties && typeof nextSchema.properties === 'object' ? nextSchema.properties : {}),
             },
-          };
-        } else {
-          merged.push(item);
-        }
+          },
+        });
       });
+
+      const merged = Array.from(mergedMap.values());
       setComponentLibrary(
         merged
           .filter((item) => !isBlockedBuilderLibraryItem(item))
           .map(attachComponentSourceSpec),
       );
     } catch (_err) {
-      setComponentLibrary(DEFAULT_COMPONENT_LIBRARY.map(attachComponentSourceSpec));
+      setComponentLibrary([]);
       setMenuManagementHealth(null);
     }
   }, [authHeaders, country]);

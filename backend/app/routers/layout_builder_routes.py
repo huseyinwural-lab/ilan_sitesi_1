@@ -140,6 +140,12 @@ CORE_TEMPLATE_PAGE_TYPES: tuple[LayoutPageType, ...] = (
     LayoutPageType.SEARCH_LN,
 )
 
+DEPRECATED_CATEGORY_NAVIGATOR_KEYS: tuple[str, ...] = (
+    "category.navigator",
+    "layout.category-navigator-side",
+    "layout.category-navigator-top",
+)
+
 WIZARD_POLICY_PAGE_TYPES: set[LayoutPageType] = {
     LayoutPageType.WIZARD_STEP_L0,
     LayoutPageType.WIZARD_STEP_LN,
@@ -167,35 +173,24 @@ TRANSLATABLE_PROP_KEYS = {
 }
 
 LOCKED_COMPONENT_POLICY_BY_KEY: dict[str, dict[str, Any]] = {
-    "category.navigator": {
-        "component": "Category Navigator",
+    "layout.category-navigator-main-side": {
+        "component": "Category Navigator (Ana Side)",
         "menu_path": "Admin Panel → Katalog & İçerik → Kategoriler",
-        "data_source": "Kategori ağacı (L0 / L1 / Ln)",
-        "api": "GET /api/categories/tree?country=...&depth=L1|all",
-        "source_options": "start_level=L0, depth=L1|Lall, placement=side|top",
-        "usage": "Ana sayfa sol menü, acil sayfası, kategori sayfaları",
+        "data_source": "Kategori ağacı (L0 / L1)",
+        "api": "GET /api/categories/tree?country=...&module=...&depth=L1",
+        "source_options": "country, module, show_counts",
+        "usage": "Ana sayfa ve acil sayfası sol kategori ağacı",
         "click_behavior": "/kategori/{slug}",
         "rbac_visibility": ["super_admin", "country_admin", "moderator"],
         "locked": True,
     },
-    "layout.category-navigator-side": {
-        "component": "Category Navigator",
+    "layout.category-navigator-category-side": {
+        "component": "Category Navigator (Kategori Side)",
         "menu_path": "Admin Panel → Katalog & İçerik → Kategoriler",
-        "data_source": "Kategori ağacı (L0 / L1 / Ln)",
-        "api": "GET /api/categories/tree?country=...&depth=L1|all",
-        "source_options": "start_level=L0, depth=L1|Lall, placement=side|top",
-        "usage": "Ana sayfa sol menü, acil sayfası, kategori sayfaları",
-        "click_behavior": "/kategori/{slug}",
-        "rbac_visibility": ["super_admin", "country_admin", "moderator"],
-        "locked": True,
-    },
-    "layout.category-navigator-top": {
-        "component": "Category Navigator",
-        "menu_path": "Admin Panel → Katalog & İçerik → Kategoriler",
-        "data_source": "Kategori ağacı (L0 / L1 / Ln)",
-        "api": "GET /api/categories/tree?country=...&depth=L1|all",
-        "source_options": "start_level=L0, depth=L1|Lall, placement=side|top",
-        "usage": "Ana sayfa sol menü, acil sayfası, kategori sayfaları",
+        "data_source": "Kategori ağacı (L0 / Lall)",
+        "api": "GET /api/categories/tree?country=...&module=...&depth=Lall",
+        "source_options": "country, module, max_visible_items",
+        "usage": "Kategori detay/liste sayfalarında breadcrumb + derin liste",
         "click_behavior": "/kategori/{slug}",
         "rbac_visibility": ["super_admin", "country_admin", "moderator"],
         "locked": True,
@@ -1183,15 +1178,10 @@ def _build_home_wireframe_payload(module: str = "global") -> dict[str, Any]:
                         "text_color": "#ffffff",
                         "bg_color": "#dc2626",
                     }),
-                    _seed_component("category.navigator", {
+                    _seed_component("layout.category-navigator-main-side", {
                         "title": "KATEGORİLER",
-                        "start_level": "L0",
-                        "depth": "L1",
-                        "placement": "side",
                         "module": module_key,
                         "show_counts": True,
-                        "tree_behavior": "expanded",
-                        "style_variant": "classic",
                     }),
                 ]),
                 _seed_column(9, [
@@ -1357,11 +1347,8 @@ def _build_standard_page_seed_payload(
                 ]),
                 _seed_row([
                     _seed_column(3 if persona_key == "individual" else 4, [
-                        _seed_component("category.navigator", {
+                        _seed_component("layout.category-navigator-main-side", {
                             "title": "Kategoriler",
-                            "start_level": "L0",
-                            "depth": "L1",
-                            "placement": "side",
                             "module": module_key,
                             "show_counts": True,
                         }),
@@ -1449,13 +1436,10 @@ def _build_standard_page_seed_payload(
                             "image_url": media_assets["category_banner"],
                             "alt": "Kategori üst banner",
                         }),
-                        _seed_component("category.navigator", {
+                        _seed_component("layout.category-navigator-category-side", {
                             "title": "Kategori Gezinme",
-                            "start_level": "L0",
-                            "depth": "L1",
-                            "placement": "top",
                             "module": module_key,
-                            "show_counts": True,
+                            "max_visible_items": 12,
                         }),
                     ])
                 ]),
@@ -1544,11 +1528,8 @@ def _build_standard_page_seed_payload(
                             "alt": "Acil sağ kolon banner",
                         }),
                         _seed_component("ad.slot", {"placement": "urgent_top", "size": "horizontal", "rotation": "on"}),
-                        _seed_component("category.navigator", {
+                        _seed_component("layout.category-navigator-main-side", {
                             "title": "Hızlı Kategori",
-                            "start_level": "L0",
-                            "depth": "Lall",
-                            "placement": "side",
                             "module": module_key,
                             "show_counts": True,
                         }),
@@ -1582,13 +1563,10 @@ def _build_standard_page_seed_payload(
                 ]),
                 _seed_row([
                     _seed_column(3, [
-                        _seed_component("category.navigator", {
+                        _seed_component("layout.category-navigator-category-side", {
                             "title": "Kategori Ağacı",
-                            "start_level": "L0",
-                            "depth": "Lall",
-                            "placement": "side",
                             "module": module_key,
-                            "show_counts": True,
+                            "max_visible_items": 14,
                         }),
                         _seed_component("category.sub-category-block", {"columns": 1, "show_count": True, "depth": 2}),
                     ]),
@@ -2488,7 +2466,7 @@ async def list_layout_components(
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
 ):
-    query = select(LayoutComponentDefinition)
+    query = select(LayoutComponentDefinition).where(~LayoutComponentDefinition.key.in_(DEPRECATED_CATEGORY_NAVIGATOR_KEYS))
     if key:
         query = query.where(LayoutComponentDefinition.key.ilike(f"%{key.strip()}%"))
     if is_active is not None:

@@ -1,0 +1,67 @@
+{
+  "summary": "Category Navigator cleanup verification - PASSED. Verified deprecated keys removed, new keys added, cleanup reports exist, and category tree API works correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "DE Homepage",
+        "issues": ["No category navigators visible - no published layouts for DE country. This is expected as layouts haven't been published yet after cleanup."]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_category_navigator_cleanup.py",
+    "/app/test_reports/pytest/pytest_results.xml",
+    "/app/test_reports/category_cleanup_revert_result.json",
+    "/app/test_reports/layout_category_navigator_cleanup_result.json",
+    "/app/test_reports/component_definition_sync_result.json"
+  ],
+  "action_items": [
+    "Layouts need to be published for each country to make category navigators visible on public pages"
+  ],
+  "critical_code_review_comments": [
+    "Console hydration warnings on AdminContentBuilder: <span> as child of <option>, <select>, <tbody>, <tr> - should be fixed to improve React SSR/hydration"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_category_navigator_cleanup.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Category navigator cleanup verified. Backend API returns only 2 new keys (layout.category-navigator-main-side, layout.category-navigator-category-side). All deprecated keys removed. Frontend ExtendedRuntimeBlocks.jsx has the new components registered. Cleanup data reports exist. No published layouts exist for any country currently.",
+  "verification_results": {
+    "backend_api_components": {
+      "deprecated_keys_removed": ["category.navigator", "layout.category-navigator-side", "layout.category-navigator-top"],
+      "new_keys_present": ["layout.category-navigator-main-side", "layout.category-navigator-category-side"],
+      "total_navigator_keys": 2,
+      "status": "PASS"
+    },
+    "category_tree_api": {
+      "de_l1_items": 10,
+      "de_lall_nested": true,
+      "status": "PASS"
+    },
+    "cleanup_reports": {
+      "category_cleanup_revert_result": {"deleted_seed_categories": 333, "restored_old_categories": 149},
+      "layout_category_navigator_cleanup_result": {"revisions_updated": 37, "components_removed": 37},
+      "component_definition_sync_result": {"new_upserted": ["layout.category-navigator-main-side", "layout.category-navigator-category-side"]},
+      "status": "PASS"
+    },
+    "frontend_component_library": {
+      "category_navigator_main_side_visible": true,
+      "category_navigator_category_side_visible": true,
+      "deprecated_navigators_visible": false,
+      "status": "PASS"
+    }
+  }
+}

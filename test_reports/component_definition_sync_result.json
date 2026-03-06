@@ -1,0 +1,13 @@
+{
+  "deprecated_deactivated": 0,
+  "new_upserted": [
+    {
+      "key": "layout.category-navigator-main-side",
+      "action": "created"
+    },
+    {
+      "key": "layout.category-navigator-category-side",
+      "action": "created"
+    }
+  ]
+}

@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AdSlot from '@/components/public/AdSlot';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const FALLBACK_IMAGES = ['/homepage/slide-1.jpg', '/homepage/slide-2.jpg', '/homepage/slide-3.jpg'];
@@ -198,13 +197,6 @@ const usePublicListings = ({ props, runtimeContext, defaultSource = 'latest', de
     country,
     requestedLimit: includePagination ? perPage : requestedLimit,
   };
-};
-
-const buildSearchCategoryUrl = (categoryToken) => {
-  const localePrefix = resolveLocalePrefix();
-  const base = `${localePrefix}/search`;
-  if (!categoryToken) return base;
-  return `${base}?category=${encodeURIComponent(categoryToken)}`;
 };
 
 const buildL0L1Categories = (items = []) => {
@@ -446,186 +438,115 @@ export const StickyActionBarBlock = ({ props }) => {
   );
 };
 
-const CategoryNavigatorBase = ({ props, mode, runtimeContext }) => {
-  const title = props?.title || (mode === 'top' ? 'Kırılımlar' : 'Kategoriler');
-  const showCounts = props?.show_counts !== false;
-  const treeBehavior = props?.tree_behavior === 'accordion' ? 'accordion' : 'expanded';
-  const startLevel = 'L0';
-  const depthToken = String(props?.depth || 'L1');
-  const maxLevels = depthToken.toLowerCase() === 'lall' ? 99 : 2;
-  const placement = String(props?.placement || mode || 'side').toLowerCase() === 'top' ? 'top' : 'side';
-  const country = resolveRuntimeCountry(runtimeContext, props);
-  const moduleName = String(props?.module || runtimeContext?.module || 'vehicle').trim();
-  const normalizedModuleParam = ['global', 'all', '*', ''].includes(moduleName.toLowerCase()) ? '' : moduleName;
-  const selectedToken = normalizeToken(runtimeContext?.activeCategorySlug);
-  const pathname = typeof window !== 'undefined' ? String(window.location.pathname || '').toLowerCase() : '';
-  const pathSegments = pathname.split('/').filter(Boolean);
-  const isLocaleRootPath = pathSegments.length === 1 && ['tr', 'de', 'fr'].includes(pathSegments[0]);
-  const isRootPath = pathSegments.length === 0;
-  const isUrgentPath = pathSegments.includes('acil');
-  const forceClassicVariant = ['classic', 'legacy-list'].includes(String(props?.style_variant || '').trim().toLowerCase());
-  const useClassicSideNav = placement === 'side' && (forceClassicVariant || isLocaleRootPath || isRootPath || isUrgentPath);
-  const [apiTree, setApiTree] = useState([]);
-  const [treeLoading, setTreeLoading] = useState(false);
+const useAdminCategoryTree = ({ country, moduleName, depthToken }) => {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let alive = true;
-    setTreeLoading(true);
+    const normalizedModule = String(moduleName || '').trim();
+    const moduleParam = ['global', 'all', '*', ''].includes(normalizedModule.toLowerCase()) ? '' : normalizedModule;
+    setLoading(true);
     const params = new URLSearchParams();
     params.set('country', country);
     params.set('depth', depthToken);
-    if (normalizedModuleParam) params.set('module', normalizedModuleParam);
+    if (moduleParam) params.set('module', moduleParam);
+
     fetch(`${API}/categories/tree?${params.toString()}`, { cache: 'no-store' })
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
         if (!alive) return;
-        const items = Array.isArray(payload?.items) ? payload.items : [];
-        setApiTree(items);
+        setItems(Array.isArray(payload?.items) ? payload.items : []);
       })
       .catch(() => {
-        if (alive) setApiTree([]);
+        if (alive) setItems([]);
       })
       .finally(() => {
-        if (alive) setTreeLoading(false);
+        if (alive) setLoading(false);
       });
+
     return () => {
       alive = false;
     };
-  }, [country, depthToken, normalizedModuleParam]);
+  }, [country, moduleName, depthToken]);
 
-  const triggerCategoryChange = (categoryItem, tokenSource = null) => {
-    const source = tokenSource || categoryItem;
-    const categoryToken = source?.id || source?.slug || null;
-    if (typeof runtimeContext?.onCategoryChange === 'function') {
-      runtimeContext.onCategoryChange(categoryToken || null);
+  return { items, loading };
+};
+
+const resolveCategoryNodeToken = (node) => String(node?.id || node?.slug || '').trim();
+
+const findCategoryPathInTree = (tree, selectedToken) => {
+  const walk = (nodes, trail) => {
+    for (const node of nodes) {
+      const nextTrail = [...trail, node];
+      const isMatch = [node?.id, node?.slug].some((token) => normalizeToken(token) === selectedToken);
+      if (isMatch) return nextTrail;
+      const childPath = walk(Array.isArray(node?.children) ? node.children : [], nextTrail);
+      if (childPath.length) return childPath;
     }
-    if (typeof window !== 'undefined') {
-      window.location.href = buildCategoryRoute(categoryItem || {});
-    }
+    return [];
   };
+  return walk(Array.isArray(tree) ? tree : [], []);
+};
 
+const triggerCategoryNavigation = (runtimeContext, node) => {
+  const token = resolveCategoryNodeToken(node);
+  if (typeof runtimeContext?.onCategoryChange === 'function') {
+    runtimeContext.onCategoryChange(token || null);
+  }
+  if (typeof window !== 'undefined') {
+    window.location.href = buildCategoryRoute(node || {});
+  }
+};
+
+export const CategoryNavigatorMainSideBlock = ({ props, runtimeContext }) => {
+  const title = props?.title || 'Kategoriler';
+  const showCounts = props?.show_counts !== false;
+  const country = resolveRuntimeCountry(runtimeContext, props);
+  const moduleName = String(props?.module || runtimeContext?.module || 'global').trim();
+  const { items: apiTree, loading } = useAdminCategoryTree({ country, moduleName, depthToken: 'L1' });
   const runtimeItems = Array.isArray(runtimeContext?.categories) ? runtimeContext.categories : [];
-  const l0l1Tree = useMemo(() => {
+
+  const tree = useMemo(() => {
     if (apiTree.length > 0) return apiTree;
     if (runtimeItems.length > 0) return buildL0L1Categories(runtimeItems);
-
-    const fallbackItems = normalizeItems(props?.items || props?.menu_snapshot?.children || ['Emlak', 'Vasıta', 'Yedek Parça', 'İkinci El'], `cat-${mode}`);
-    return fallbackItems.map((item, index) => ({
-      id: item.id || `fallback-root-${index}`,
-      name: item.label,
-      slug: item.id || `fallback-root-${index}`,
-      listing_count: item.count,
-      children: [],
-    }));
-  }, [apiTree, runtimeItems, props?.items, props?.menu_snapshot?.children, mode]);
-  const [openRootId, setOpenRootId] = useState('');
-
-  useEffect(() => {
-    if (!selectedToken || !l0l1Tree.length) return;
-    const matchedRoot = l0l1Tree.find((root) => {
-      const rootMatch = [root.id, root.slug].some((token) => normalizeToken(token) === selectedToken);
-      const childMatch = (root.children || []).some((child) => [child.id, child.slug].some((token) => normalizeToken(token) === selectedToken));
-      return rootMatch || childMatch;
-    });
-    if (matchedRoot?.id) setOpenRootId(matchedRoot.id);
-  }, [selectedToken, l0l1Tree]);
-
-  if (placement === 'top') {
-    const chips = l0l1Tree.slice(0, Math.max(1, toNumber(props?.max_levels, 12))).map((root) => ({
-      id: root.id,
-      label: root.name,
-      count: root.listing_count,
-      href: buildSearchCategoryUrl(root.id || root.slug),
-      item: root,
-    }));
-
-    return (
-      <section className="rounded-xl border bg-white p-4" data-testid="runtime-category-navigator-top">
-        <h3 className="text-sm font-semibold" data-testid="runtime-category-navigator-top-title">{title} <span className="text-[11px] text-slate-500">({startLevel} → {depthToken})</span></h3>
-        <div className="mt-3 flex flex-wrap gap-2" data-testid="runtime-category-navigator-top-list">
-          {chips.map((chip) => (
-            <button
-              key={chip.id}
-              type="button"
-              onClick={() => triggerCategoryChange(chip.item)}
-              className="rounded-full border bg-slate-50 px-3 py-1 text-xs hover:bg-slate-100"
-              data-testid={`runtime-category-navigator-top-item-${chip.id}`}
-            >
-              {chip.label}{showCounts ? ` (${Number(chip.count || 0)})` : ''}
-            </button>
-          ))}
-          {treeLoading ? <span className="text-[11px] text-slate-500" data-testid="runtime-category-navigator-top-loading">Yükleniyor...</span> : null}
-        </div>
-      </section>
-    );
-  }
+    return [];
+  }, [apiTree, runtimeItems]);
 
   return (
-    <section className="rounded-xl border bg-white p-4" data-testid="runtime-category-navigator-side">
-      <h3 className={`flex items-center gap-2 ${useClassicSideNav ? 'border-b pb-2 text-xs font-bold uppercase tracking-wide text-slate-700' : 'text-sm font-semibold'}`} data-testid="runtime-category-navigator-side-title">
-        {title}
-        <span className="text-[11px] text-slate-500">({startLevel} → {depthToken})</span>
-      </h3>
-      <div className={`mt-3 ${useClassicSideNav ? 'rounded border border-slate-200 bg-white px-2 py-2' : 'rounded-lg border bg-white p-2'}`} data-testid="runtime-category-navigator-side-tree">
-        {treeLoading ? <div className="rounded border border-dashed px-2 py-2 text-[11px] text-slate-500" data-testid="runtime-category-navigator-side-loading">Kategori ağacı yükleniyor...</div> : null}
-        {l0l1Tree.map((root) => {
-          const rootSelected = [root.id, root.slug].some((token) => normalizeToken(token) === selectedToken);
-          const isOpen = treeBehavior === 'expanded' || openRootId === root.id;
-          const hasChildren = Array.isArray(root.children) && root.children.length > 0;
+    <section className="rounded border border-slate-200 bg-white p-3" data-testid="runtime-category-navigator-main-side">
+      <h3 className="border-b pb-2 text-[13px] font-bold text-slate-700" data-testid="runtime-category-navigator-main-side-title">{title}</h3>
+      <div className="mt-2" data-testid="runtime-category-navigator-main-side-tree">
+        {loading ? <div className="text-xs text-slate-500" data-testid="runtime-category-navigator-main-side-loading">Yükleniyor...</div> : null}
+        {tree.map((root) => {
           const rootCount = resolveCategoryNodeCount(root);
-
+          const rootChildren = Array.isArray(root.children) ? root.children : [];
           return (
-            <div key={root.id} className={`${useClassicSideNav ? 'border-b border-dashed border-slate-200 py-1 last:border-b-0' : 'border-b last:border-b-0'}`} data-testid={`runtime-category-navigator-side-root-${root.id}`}>
-              <div className="flex items-center gap-1 py-1">
-                {hasChildren ? (
-                  <button
-                    type="button"
-                    onClick={() => setOpenRootId((prev) => (prev === root.id ? '' : root.id))}
-                    className="rounded p-1 text-slate-500 hover:bg-slate-100"
-                    data-testid={`runtime-category-navigator-side-toggle-${root.id}`}
-                  >
-                    {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                  </button>
-                ) : <span className="inline-block h-6 w-6" aria-hidden="true" />}
-
-                <button
-                  type="button"
-                  onClick={() => triggerCategoryChange(root)}
-                  className={`flex w-full items-center justify-between text-left text-sm transition ${useClassicSideNav
-                    ? `rounded px-1 py-1 ${rootSelected ? 'bg-slate-50 font-semibold text-blue-800' : 'font-semibold text-blue-700 hover:bg-slate-50'}`
-                    : `rounded-md px-2 py-1.5 ${rootSelected ? 'bg-slate-900 font-semibold text-white' : 'font-semibold text-slate-800 hover:bg-slate-100'}`}`}
-                  data-testid={`runtime-category-navigator-side-root-link-${root.id}`}
-                >
-                  <span className={useClassicSideNav ? 'underline-offset-2 hover:underline' : ''}>{root.name}</span>
-                  {showCounts ? <span className={`text-xs ${useClassicSideNav ? 'text-slate-500' : (rootSelected ? 'text-white/90' : 'text-slate-500')}`}>({rootCount})</span> : null}
-                </button>
+            <div key={root.id || root.slug} className="border-b border-slate-200 py-2 last:border-b-0" data-testid={`runtime-category-navigator-main-side-root-${root.id || root.slug}`}>
+              <button
+                type="button"
+                className="text-left text-[18px] font-bold leading-6 text-blue-700"
+                onClick={() => triggerCategoryNavigation(runtimeContext, root)}
+                data-testid={`runtime-category-navigator-main-side-root-link-${root.id || root.slug}`}
+              >
+                {root.name}{showCounts ? ` (${rootCount})` : ''}
+              </button>
+              <div className="mt-1 space-y-0.5 pl-8" data-testid={`runtime-category-navigator-main-side-children-${root.id || root.slug}`}>
+                {rootChildren.map((child) => {
+                  const childCount = resolveCategoryNodeCount(child);
+                  return (
+                    <button
+                      key={child.id || child.slug}
+                      type="button"
+                      className="block w-full text-left text-[17px] font-semibold leading-6 text-blue-700"
+                      onClick={() => triggerCategoryNavigation(runtimeContext, child)}
+                      data-testid={`runtime-category-navigator-main-side-child-link-${child.id || child.slug}`}
+                    >
+                      {child.name}{showCounts ? ` (${childCount})` : ''}
+                    </button>
+                  );
+                })}
               </div>
-
-              {hasChildren && isOpen && maxLevels > 1 ? (
-                <div className={`${useClassicSideNav ? 'mb-1 ml-7 mt-1 space-y-1' : 'mb-2 ml-7 space-y-1'}`} data-testid={`runtime-category-navigator-side-children-${root.id}`}>
-                  {root.children.map((child) => {
-                    const childSelected = [child.id, child.slug].some((token) => normalizeToken(token) === selectedToken);
-                    const childCount = resolveCategoryNodeCount(child);
-                    return (
-                      <button
-                        key={child.id}
-                        type="button"
-                        onClick={() => triggerCategoryChange(useClassicSideNav ? root : child, useClassicSideNav ? root : child)}
-                        className={`flex items-center justify-between transition ${useClassicSideNav
-                          ? `w-full rounded px-1 py-1 text-left text-[13px] ${childSelected ? 'bg-slate-50 font-medium text-blue-700' : 'text-blue-700 hover:bg-slate-50'}`
-                          : `rounded-md px-2 py-1 text-sm ${childSelected ? 'bg-blue-50 font-medium text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}`}
-                        data-testid={`runtime-category-navigator-side-child-link-${child.id}`}
-                      >
-                        <span className={useClassicSideNav ? 'inline-flex items-center gap-1' : ''}>
-                          {useClassicSideNav ? <span aria-hidden="true" className="text-slate-400">›</span> : null}
-                          <span className={useClassicSideNav ? 'underline-offset-2 hover:underline' : ''}>{child.name}</span>
-                        </span>
-                        {showCounts ? <span className="text-xs text-slate-500">({childCount})</span> : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
             </div>
           );
         })}
@@ -634,8 +555,90 @@ const CategoryNavigatorBase = ({ props, mode, runtimeContext }) => {
   );
 };
 
-export const CategoryNavigatorSideBlock = ({ props, runtimeContext }) => <CategoryNavigatorBase props={props} mode="side" runtimeContext={runtimeContext} />;
-export const CategoryNavigatorTopBlock = ({ props, runtimeContext }) => <CategoryNavigatorBase props={props} mode="top" runtimeContext={runtimeContext} />;
+export const CategoryNavigatorCategorySideBlock = ({ props, runtimeContext }) => {
+  const title = props?.title || 'Kategori Side';
+  const country = resolveRuntimeCountry(runtimeContext, props);
+  const moduleName = String(props?.module || runtimeContext?.module || 'global').trim();
+  const maxVisibleItems = Math.max(4, Math.min(40, toNumber(props?.max_visible_items, 12)));
+  const { items: apiTree, loading } = useAdminCategoryTree({ country, moduleName, depthToken: 'Lall' });
+  const runtimeItems = Array.isArray(runtimeContext?.categories) ? runtimeContext.categories : [];
+  const selectedToken = normalizeToken(runtimeContext?.activeCategorySlug || resolveQueryParam('category_id') || resolveQueryParam('slug'));
+
+  const tree = useMemo(() => {
+    if (apiTree.length > 0) return apiTree;
+    if (runtimeItems.length > 0) return buildL0L1Categories(runtimeItems);
+    return [];
+  }, [apiTree, runtimeItems]);
+
+  const pathNodes = useMemo(() => {
+    if (!tree.length) return [];
+    const matched = selectedToken ? findCategoryPathInTree(tree, selectedToken) : [];
+    return matched.length ? matched : [tree[0]];
+  }, [tree, selectedToken]);
+
+  const contentParentNode = useMemo(() => {
+    if (!pathNodes.length) return null;
+    const last = pathNodes[pathNodes.length - 1];
+    const lastChildren = Array.isArray(last?.children) ? last.children : [];
+    if (lastChildren.length > 0) return last;
+    if (pathNodes.length >= 2) return pathNodes[pathNodes.length - 2];
+    return last;
+  }, [pathNodes]);
+
+  const contentItems = useMemo(() => {
+    const children = Array.isArray(contentParentNode?.children) ? contentParentNode.children : [];
+    return children.slice(0, maxVisibleItems);
+  }, [contentParentNode, maxVisibleItems]);
+
+  const breadcrumbNodes = pathNodes.length ? ['Anasayfa', ...pathNodes.map((node) => node.name)] : ['Anasayfa'];
+  const listHeight = Math.max(220, Math.min(560, maxVisibleItems * 34));
+
+  return (
+    <section className="space-y-2" data-testid="runtime-category-navigator-category-side">
+      <div className="flex flex-wrap items-center gap-2 text-[18px] font-semibold text-blue-700" data-testid="runtime-category-navigator-category-side-breadcrumb">
+        {breadcrumbNodes.map((label, index) => (
+          <React.Fragment key={`${label}-${index}`}>
+            {index > 0 ? <span className="text-slate-400">›</span> : null}
+            <span>{label}</span>
+          </React.Fragment>
+        ))}
+      </div>
+
+      <div className="rounded border border-slate-300 bg-white p-4" data-testid="runtime-category-navigator-category-side-card">
+        <h3 className="mb-2 text-[18px] font-bold text-blue-700" data-testid="runtime-category-navigator-category-side-title">{title}</h3>
+        <div className="space-y-0.5" data-testid="runtime-category-navigator-category-side-path-lines">
+          {pathNodes.map((node, index) => (
+            <button
+              key={node.id || node.slug || `path-${index}`}
+              type="button"
+              className="block text-left text-[17px] font-semibold leading-6 text-blue-700"
+              style={{ paddingLeft: `${index * 22}px` }}
+              onClick={() => triggerCategoryNavigation(runtimeContext, node)}
+              data-testid={`runtime-category-navigator-category-side-path-link-${node.id || node.slug || index}`}
+            >
+              {node.name}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-2 overflow-y-auto pr-2" style={{ maxHeight: `${listHeight}px` }} data-testid="runtime-category-navigator-category-side-scroll-list">
+          {loading ? <div className="text-xs text-slate-500" data-testid="runtime-category-navigator-category-side-loading">Yükleniyor...</div> : null}
+          {contentItems.map((item) => (
+            <button
+              key={item.id || item.slug}
+              type="button"
+              className="block w-full text-left text-[17px] font-semibold leading-7 text-blue-700"
+              onClick={() => triggerCategoryNavigation(runtimeContext, item)}
+              data-testid={`runtime-category-navigator-category-side-item-${item.id || item.slug}`}
+            >
+              {item.name} <span className="text-slate-500">({resolveCategoryNodeCount(item)})</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
 
 export const AdvancedPhotoGalleryBlock = ({ props, runtimeContext }) => {
   const { listing } = useRuntimeListingData(props, runtimeContext);
@@ -1449,11 +1452,6 @@ export const DopingSelectorBlock = ({ props }) => {
 };
 
 export const EXTENDED_RUNTIME_REGISTRY = {
-  'category.navigator': ({ props, runtimeContext }) => (
-    String(props?.placement || 'side').toLowerCase() === 'top'
-      ? <CategoryNavigatorTopBlock props={props} runtimeContext={runtimeContext} />
-      : <CategoryNavigatorSideBlock props={props} runtimeContext={runtimeContext} />
-  ),
   'cta.block': ({ props, runtimeContext }) => <CTABlock props={props} runtimeContext={runtimeContext} />,
   'listing.grid': ({ props, runtimeContext }) => <ListingGridBlock props={props} runtimeContext={runtimeContext} />,
   'listing.list': ({ props, runtimeContext }) => <ListingListBlock props={props} runtimeContext={runtimeContext} />,
@@ -1470,8 +1468,8 @@ export const EXTENDED_RUNTIME_REGISTRY = {
   'map.block': ({ props, runtimeContext }) => <InteractiveMapBlock props={props} runtimeContext={runtimeContext} />,
   'layout.breadcrumb-header': ({ props, runtimeContext }) => <BreadcrumbHeaderBlock props={props} runtimeContext={runtimeContext} />,
   'layout.sticky-action-bar': ({ props, runtimeContext }) => <StickyActionBarBlock props={props} runtimeContext={runtimeContext} />,
-  'layout.category-navigator-side': ({ props, runtimeContext }) => <CategoryNavigatorSideBlock props={props} runtimeContext={runtimeContext} />,
-  'layout.category-navigator-top': ({ props, runtimeContext }) => <CategoryNavigatorTopBlock props={props} runtimeContext={runtimeContext} />,
+  'layout.category-navigator-main-side': ({ props, runtimeContext }) => <CategoryNavigatorMainSideBlock props={props} runtimeContext={runtimeContext} />,
+  'layout.category-navigator-category-side': ({ props, runtimeContext }) => <CategoryNavigatorCategorySideBlock props={props} runtimeContext={runtimeContext} />,
   'media.advanced-photo-gallery': ({ props, runtimeContext }) => <AdvancedPhotoGalleryBlock props={props} runtimeContext={runtimeContext} />,
   'media.auto-play-carousel-hero': ({ props, runtimeContext }) => <AutoPlayCarouselHeroBlock props={props} runtimeContext={runtimeContext} />,
   'media.video-3d-tour-player': ({ props, runtimeContext }) => <Video3DTourPlayerBlock props={props} runtimeContext={runtimeContext} />,
