@@ -133,6 +133,13 @@ STANDARD_LAYOUT_PAGE_TYPES: tuple[LayoutPageType, ...] = (
     LayoutPageType.USER_DASHBOARD,
 )
 
+CORE_TEMPLATE_PAGE_TYPES: tuple[LayoutPageType, ...] = (
+    LayoutPageType.HOME,
+    LayoutPageType.URGENT_LISTINGS,
+    LayoutPageType.CATEGORY_L0_L1,
+    LayoutPageType.SEARCH_LN,
+)
+
 WIZARD_POLICY_PAGE_TYPES: set[LayoutPageType] = {
     LayoutPageType.WIZARD_STEP_L0,
     LayoutPageType.WIZARD_STEP_LN,
@@ -940,6 +947,7 @@ class StandardTemplatePackInstallPayload(BaseModel):
     variant: str = Field(default="A", min_length=1, max_length=16)
     overwrite_existing_draft: bool = True
     publish_after_seed: bool = True
+    include_extended_templates: bool = False
 
 
 def _cache_key(country: str, module: str, page_type: LayoutPageType, category_id: Optional[str], lang: str = "tr") -> str:
@@ -2837,6 +2845,7 @@ async def _seed_standard_pages_for_scope(
     variant: str,
     overwrite_existing_draft: bool,
     publish_after_seed: bool,
+    page_types: Optional[list[LayoutPageType]] = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     summary = {
         "created_pages": 0,
@@ -2847,7 +2856,9 @@ async def _seed_standard_pages_for_scope(
     }
     seeded_items: list[dict[str, Any]] = []
 
-    for page_type in STANDARD_LAYOUT_PAGE_TYPES:
+    target_page_types = page_types or list(STANDARD_LAYOUT_PAGE_TYPES)
+
+    for page_type in target_page_types:
         page_result = await session.execute(
             select(LayoutPage)
             .where(
@@ -3016,6 +3027,7 @@ async def install_standard_template_pack(
     normalized_module = payload.module.strip()
     normalized_persona = _normalize_standard_persona_or_400(payload.persona)
     normalized_variant = _normalize_standard_variant_or_400(payload.variant)
+    target_page_types = list(STANDARD_LAYOUT_PAGE_TYPES if payload.include_extended_templates else CORE_TEMPLATE_PAGE_TYPES)
 
     try:
         await _ensure_layout_page_type_enum_values(session)
@@ -3031,6 +3043,8 @@ async def install_standard_template_pack(
             "persona": normalized_persona,
             "variant": normalized_variant,
             "publish_after_seed": bool(payload.publish_after_seed),
+            "include_extended_templates": bool(payload.include_extended_templates),
+            "template_scope": "extended" if payload.include_extended_templates else "core",
             "summary": {
                 "created_pages": 0,
                 "created_drafts": 0,
@@ -3070,6 +3084,7 @@ async def install_standard_template_pack(
                 variant=normalized_variant,
                 overwrite_existing_draft=bool(payload.overwrite_existing_draft),
                 publish_after_seed=bool(payload.publish_after_seed),
+                page_types=target_page_types,
             )
             await session.commit()
             return summary, items
@@ -3116,6 +3131,8 @@ async def install_standard_template_pack(
         "persona": normalized_persona,
         "variant": normalized_variant,
         "publish_after_seed": bool(payload.publish_after_seed),
+        "include_extended_templates": bool(payload.include_extended_templates),
+        "template_scope": "extended" if payload.include_extended_templates else "core",
         "summary": aggregate_summary,
         "results": results,
         "failed_countries": failed_countries,
@@ -3126,18 +3143,20 @@ async def install_standard_template_pack(
 async def verify_standard_template_pack(
     countries: str = Query(..., min_length=2),
     module: str = Query(..., min_length=2, max_length=64),
+    include_extended_templates: bool = Query(default=False),
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
 ):
     normalized_countries = _parse_countries_csv_or_400(countries)
     normalized_module = module.strip()
+    target_page_types = list(STANDARD_LAYOUT_PAGE_TYPES if include_extended_templates else CORE_TEMPLATE_PAGE_TYPES)
 
     matrix: list[dict[str, Any]] = []
     ready_rows = 0
-    total_rows = len(normalized_countries) * len(STANDARD_LAYOUT_PAGE_TYPES)
+    total_rows = len(normalized_countries) * len(target_page_types)
 
     for country_code in normalized_countries:
-        for page_type in STANDARD_LAYOUT_PAGE_TYPES:
+        for page_type in target_page_types:
             page_result = await session.execute(
                 select(LayoutPage)
                 .where(
@@ -3190,6 +3209,8 @@ async def verify_standard_template_pack(
         "ok": True,
         "module": normalized_module,
         "countries": normalized_countries,
+        "include_extended_templates": bool(include_extended_templates),
+        "template_scope": "extended" if include_extended_templates else "core",
         "summary": {
             "ready_rows": ready_rows,
             "total_rows": total_rows,

@@ -1,0 +1,139 @@
+{
+  "summary": "Tested Content List active/passive state + Core Template Pack features (#612/P1). All backend APIs and frontend UI working correctly. Backend: 10/10 tests passed. Frontend: All UI elements verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_144_content_list_active_state.py",
+    "/app/test_reports/pytest/pytest_results_144.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "PATCH /api/admin/layouts/{id}/active response structure has is_active nested inside 'item' object - consistent with other layout endpoints"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_144_content_list_active_state.py"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "100% (all UI elements verified)"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All features for #612 + P1 working. verify-standard-pack returns total_rows=12 for core scope (3 countries * 4 templates). install-standard-pack returns controlled JSON with template_scope='core'. Frontend active_state column shows green/red dots with Aktif Et/Pasif Et actions.",
+  "features_verified": {
+    "backend_get_layouts_is_active": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/layouts",
+      "details": "is_active field present in all list items as boolean"
+    },
+    "backend_patch_active_toggle": {
+      "status": "PASS",
+      "endpoint": "PATCH /api/admin/layouts/{id}/active",
+      "details": "Toggle between active/passive states works, response contains updated is_active in item object"
+    },
+    "backend_patch_active_on_deleted_returns_400": {
+      "status": "PASS",
+      "endpoint": "PATCH /api/admin/layouts/{id}/active",
+      "details": "Returns 400 when trying to toggle active state on deleted revision"
+    },
+    "backend_verify_standard_pack_core_scope": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/site/content-layout/preset/verify-standard-pack",
+      "details": "With TR,DE,FR and include_extended_templates=false, returns total_rows=12 (3 countries * 4 core templates) and template_scope='core'"
+    },
+    "backend_verify_standard_pack_extended_scope": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/site/content-layout/preset/verify-standard-pack",
+      "details": "With include_extended_templates=true, returns total_rows=45 (3 countries * 15 templates) and template_scope='extended'"
+    },
+    "backend_install_standard_pack_core_response": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/site/content-layout/preset/install-standard-pack",
+      "details": "Returns 200 with controlled JSON response containing template_scope='core', summary, results, failed_countries"
+    },
+    "backend_install_validation_invalid_persona": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/site/content-layout/preset/install-standard-pack",
+      "details": "Invalid persona returns 400"
+    },
+    "backend_install_validation_invalid_variant": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/site/content-layout/preset/install-standard-pack",
+      "details": "Invalid variant returns 400"
+    },
+    "backend_install_validation_empty_countries": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/site/content-layout/preset/install-standard-pack",
+      "details": "Empty countries returns 422"
+    },
+    "backend_verify_returns_items_array": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/site/content-layout/preset/verify-standard-pack",
+      "details": "Returns items array with 4 items for single country core scope"
+    },
+    "frontend_content_list_page": {
+      "status": "PASS",
+      "details": "Content List page loads at /admin/site-design/content-list"
+    },
+    "frontend_active_state_column": {
+      "status": "PASS",
+      "details": "active_state column header visible in table"
+    },
+    "frontend_green_dots_aktif": {
+      "status": "PASS",
+      "details": "Green dots (bg-emerald-500) shown for active items - 111 found"
+    },
+    "frontend_red_dots_pasif": {
+      "status": "PASS",
+      "details": "Red dots (bg-rose-500) shown for passive items - 2 found"
+    },
+    "frontend_aktif_et_buttons": {
+      "status": "PASS",
+      "details": "Aktif Et buttons visible - 112 found"
+    },
+    "frontend_pasif_et_buttons": {
+      "status": "PASS",
+      "details": "Pasif Et buttons visible and functional - 112 found, action completes successfully"
+    },
+    "frontend_template_pack_panel": {
+      "status": "PASS",
+      "details": "#612 + P1 Başlangıç: Standart Template Pack panel visible with all form fields"
+    },
+    "frontend_publish_dogrula_button": {
+      "status": "PASS",
+      "details": "Publish Doğrula button visible and functional, returns scope: core · ready_rows: 12 / total_rows: 12 · ready_ratio: 100%"
+    },
+    "frontend_tek_tik_kurulum_button": {
+      "status": "PASS",
+      "details": "Tek Tık Kurulum Başlat button visible"
+    },
+    "frontend_extended_templates_checkbox": {
+      "status": "PASS",
+      "details": "Genişletilmiş şablonlar (core dışı) checkbox visible, unchecked by default"
+    }
+  },
+  "mocked_apis": {
+    "academy.modules": "MOCKED"
+  },
+  "test_results": {
+    "test_get_layouts_has_is_active_field": "PASS",
+    "test_patch_layout_active_toggle": "PASS",
+    "test_patch_active_on_deleted_revision_returns_400": "PASS",
+    "test_verify_standard_pack_core_scope_total_rows_12": "PASS",
+    "test_verify_standard_pack_extended_scope": "PASS",
+    "test_install_standard_pack_core_scope_response": "PASS",
+    "test_install_standard_pack_invalid_persona_returns_400": "PASS",
+    "test_install_standard_pack_invalid_variant_returns_400": "PASS",
+    "test_install_standard_pack_empty_countries_returns_422": "PASS",
+    "test_verify_standard_pack_returns_items_array": "PASS"
+  }
+}

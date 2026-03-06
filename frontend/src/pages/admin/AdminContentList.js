@@ -111,6 +111,7 @@ export default function AdminContentList() {
   const [presetVariant, setPresetVariant] = useState('A');
   const [presetOverwriteDraft, setPresetOverwriteDraft] = useState(true);
   const [presetPublishAfterSeed, setPresetPublishAfterSeed] = useState(true);
+  const [presetIncludeExtendedTemplates, setPresetIncludeExtendedTemplates] = useState(false);
   const [presetLoading, setPresetLoading] = useState(false);
   const [presetError, setPresetError] = useState('');
   const [presetStatus, setPresetStatus] = useState('');
@@ -258,6 +259,7 @@ export default function AdminContentList() {
           variant: presetVariant,
           overwrite_existing_draft: presetOverwriteDraft,
           publish_after_seed: presetPublishAfterSeed,
+          include_extended_templates: presetIncludeExtendedTemplates,
         },
         { headers: authHeaders },
       );
@@ -293,6 +295,7 @@ export default function AdminContentList() {
         params: {
           countries: countries.join(','),
           module: normalizedModule,
+          include_extended_templates: presetIncludeExtendedTemplates,
         },
       });
       setPresetVerifyResult(response.data || null);
@@ -400,7 +403,7 @@ export default function AdminContentList() {
           <div className="flex flex-wrap items-center justify-between gap-2" data-testid="admin-content-list-template-pack-header">
             <div>
               <h2 className="text-xs font-semibold" data-testid="admin-content-list-template-pack-title">#612 + P1 Başlangıç: Standart Template Pack</h2>
-              <p className="text-xs text-slate-500" data-testid="admin-content-list-template-pack-subtitle">TR/DE/FR için publish doğrulama ve tek tık preset kurulum akışı</p>
+              <p className="text-xs text-slate-500" data-testid="admin-content-list-template-pack-subtitle">TR/DE/FR için (varsayılan: core 4 şablon) publish doğrulama ve tek tık preset kurulum akışı</p>
             </div>
             <div className="flex gap-2" data-testid="admin-content-list-template-pack-header-actions">
               <button
@@ -491,6 +494,16 @@ export default function AdminContentList() {
               />
               Seed sonrası publish
             </label>
+
+            <label className="mt-6 inline-flex items-center gap-2 text-xs" data-testid="admin-content-list-template-pack-extended-wrap">
+              <input
+                type="checkbox"
+                checked={presetIncludeExtendedTemplates}
+                onChange={(event) => setPresetIncludeExtendedTemplates(event.target.checked)}
+                data-testid="admin-content-list-template-pack-extended-input"
+              />
+              Genişletilmiş şablonlar (core dışı)
+            </label>
           </div>
 
           {presetStatus ? (
@@ -502,6 +515,8 @@ export default function AdminContentList() {
 
           {presetInstallResult?.summary ? (
             <div className="mt-2 rounded border bg-slate-50 p-2 text-xs" data-testid="admin-content-list-template-pack-install-summary">
+              <span data-testid="admin-content-list-template-pack-install-scope">scope: {presetInstallResult.template_scope || 'core'}</span>
+              {' · '}
               <span data-testid="admin-content-list-template-pack-install-created-pages">created_pages: {presetInstallResult.summary.created_pages ?? 0}</span>
               {' · '}
               <span data-testid="admin-content-list-template-pack-install-updated-drafts">updated_drafts: {presetInstallResult.summary.updated_drafts ?? 0}</span>
@@ -512,6 +527,8 @@ export default function AdminContentList() {
 
           {presetVerifyResult?.summary ? (
             <div className="mt-2 rounded border bg-slate-50 p-2 text-xs" data-testid="admin-content-list-template-pack-verify-summary">
+              <span data-testid="admin-content-list-template-pack-verify-scope">scope: {presetVerifyResult.template_scope || 'core'}</span>
+              {' · '}
               <span data-testid="admin-content-list-template-pack-verify-ready-rows">ready_rows: {presetVerifyResult.summary.ready_rows ?? 0}</span>
               {' / '}
               <span data-testid="admin-content-list-template-pack-verify-total-rows">total_rows: {presetVerifyResult.summary.total_rows ?? 0}</span>
