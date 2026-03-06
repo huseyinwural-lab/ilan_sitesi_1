@@ -20,6 +20,37 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ## 2026-03-05 (P1 — Reklam Yönetimi Formu: Firma Adı + İletişim)
 
+## 2026-03-06 (P0 — Content Builder Refactor: Content List + Edit/Delete/Copy)
+
+### Kullanıcı Onayıyla Uygulananlar
+- Content List varsayılanı: **aktif + silinmiş birlikte**
+- Statü filtreleme: **draft + published**
+- Kolon seti: `page_type`, `country`, `module`, `category / scope`, `status`, `version`, `updated_at`, `actions`
+- Ek görev: yapılan sayfalar için **bire bir kopyalama** akışı
+
+### Backend
+- `layout_revisions` için soft-delete alanı eklendi: `is_deleted: boolean`
+- Yeni migration: `p75_layout_revision_soft_delete`
+- Yeni endpointler:
+  - `GET /api/admin/layouts`
+  - `DELETE /api/admin/layouts/{revision_id}` (soft-delete)
+  - `POST /api/admin/layouts/{revision_id}/copy` (target scope’a bire bir kopya)
+- Resolve/revision akışlarında silinmiş revisionlar dışlanacak şekilde güncellendi.
+
+### Frontend
+- `AdminContentBuilder` altında yeni **Content List** paneli eklendi.
+- Edit: seçili satırı builder’a yükler.
+- Delete: revision’ı soft-delete eder ve satırı silinmiş olarak gösterir.
+- Kopyala: hedef scope panelindeki (`page_type/country/module/category`) değerlere bire bir kopya alır.
+- Silinmiş satırlar kırmızı tema ile vurgulanır.
+
+### Test Durumu
+- Self backend smoke: PASS (`GET /api/admin/layouts`, `POST copy`, `DELETE soft-delete`).
+- Screenshot smoke: PASS (`/admin/site-design/content-builder`, content list panel visible).
+- `testing_agent` raporu: `/app/test_reports/iteration_137.json`
+  - Backend: **100% (12/12)**
+  - Frontend: **100%**
+
 ## 2026-03-06 (P0 — Sayfa Tasarım Fazı Başlangıcı: Home / Acil / Kategori / Liste Kompozisyonları)
 
 ## 2026-03-06 (P0 — Kapanış Görevleri Tamamlandı: Kalıcılaştırma + İçerik + QA + Final Smoke)
