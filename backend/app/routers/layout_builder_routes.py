@@ -906,6 +906,14 @@ class LayoutSeedDefaultsPayload(BaseModel):
     overwrite_existing_draft: bool = True
 
 
+class LayoutRevisionCopyPayload(BaseModel):
+    target_page_type: LayoutPageType
+    country: str = Field(min_length=2, max_length=5)
+    module: str = Field(min_length=2, max_length=64)
+    category_id: Optional[str] = None
+    publish_after_copy: bool = False
+
+
 def _cache_key(country: str, module: str, page_type: LayoutPageType, category_id: Optional[str], lang: str = "tr") -> str:
     normalized_category = str(category_id or "").strip().lower()
     return f"{country.upper()}|{module.strip().lower()}|{page_type.value}|{normalized_category}|{_normalize_i18n_lang(lang)}"
@@ -981,9 +989,56 @@ def _serialize_layout_revision(row: LayoutRevision) -> dict[str, Any]:
         "status": row.status.value,
         "payload_json": row.payload_json,
         "version": int(row.version),
+        "is_deleted": bool(getattr(row, "is_deleted", False)),
         "published_at": row.published_at.isoformat() if row.published_at else None,
         "created_by": str(row.created_by) if row.created_by else None,
         "created_at": row.created_at.isoformat() if row.created_at else None,
+    }
+
+
+def _parse_layout_status_filters(raw_statuses: Optional[str]) -> list[LayoutRevisionStatus]:
+    normalized = str(raw_statuses or "draft,published").strip().lower()
+    if not normalized:
+        normalized = "draft,published"
+
+    requested = [item.strip() for item in normalized.split(",") if item.strip()]
+    allowed = {status.value: status for status in LayoutRevisionStatus}
+    invalid = [item for item in requested if item not in allowed]
+    if invalid:
+        raise HTTPException(status_code=400, detail=f"Invalid statuses: {', '.join(invalid)}")
+    return [allowed[item] for item in requested]
+
+
+def _build_layout_scope(country: str, module: str, category_id: Optional[str]) -> str:
+    normalized_country = str(country or "").upper()
+    normalized_module = str(module or "").strip()
+    normalized_category = str(category_id or "").strip()
+    if normalized_category:
+        return f"{normalized_country}/{normalized_module}/{normalized_category}"
+    return f"{normalized_country}/{normalized_module}/global"
+
+
+def _serialize_admin_layout_item(revision: LayoutRevision, page: LayoutPage) -> dict[str, Any]:
+    revision_item = _serialize_layout_revision(revision)
+    page_item = _serialize_layout_page(page)
+    category_id = page_item.get("category_id")
+    updated_at = revision_item.get("published_at") or revision_item.get("created_at")
+    return {
+        "id": revision_item["id"],
+        "revision_id": revision_item["id"],
+        "layout_page_id": page_item["id"],
+        "page_type": page_item["page_type"],
+        "country": page_item["country"],
+        "module": page_item["module"],
+        "category_id": category_id,
+        "scope": _build_layout_scope(page_item["country"], page_item["module"], category_id),
+        "status": revision_item["status"],
+        "version": revision_item["version"],
+        "is_deleted": revision_item["is_deleted"],
+        "updated_at": updated_at,
+        "published_at": revision_item["published_at"],
+        "created_at": revision_item["created_at"],
+        "payload_json": revision_item["payload_json"],
     }
 
 
@@ -2396,6 +2451,191 @@ async def list_layout_pages(
     }
 
 
+@router.get("/admin/layouts")
+async def list_admin_layouts(
+    include_deleted: bool = Query(default=False),
+    statuses: Optional[str] = Query(default="draft,published"),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=50, ge=1, le=200),
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    status_filters = _parse_layout_status_filters(statuses)
+
+    query = select(LayoutRevision, LayoutPage).join(LayoutPage, LayoutPage.id == LayoutRevision.layout_page_id)
+    if status_filters:
+        query = query.where(LayoutRevision.status.in_(status_filters))
+    if not include_deleted:
+        query = query.where(LayoutRevision.is_deleted.is_(False))
+
+    count_result = await session.execute(select(func.count()).select_from(query.subquery()))
+    total = int(count_result.scalar() or 0)
+
+    rows_result = await session.execute(
+        query
+        .order_by(desc(LayoutRevision.created_at), desc(LayoutRevision.version))
+        .offset((page - 1) * limit)
+        .limit(limit)
+    )
+    rows = rows_result.all()
+    items = [_serialize_admin_layout_item(revision, layout_page) for revision, layout_page in rows]
+    return {
+        "items": items,
+        "pagination": {"page": page, "limit": limit, "total": total},
+    }
+
+
+@router.delete("/admin/layouts/{revision_id}")
+async def soft_delete_admin_layout(
+    revision_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    revision_uuid = _as_uuid_or_400(revision_id, field_name="revision_id")
+    row = await session.get(LayoutRevision, revision_uuid)
+    if not row:
+        raise HTTPException(status_code=404, detail="Layout revision not found")
+
+    if bool(getattr(row, "is_deleted", False)):
+        return {"ok": True, "already_deleted": True, "item": _serialize_layout_revision(row)}
+
+    row.is_deleted = True
+    await write_layout_audit_log(
+        session,
+        actor_user_id=current_user.get("id"),
+        action=LayoutAuditAction.ARCHIVE,
+        entity_type="layout_revision",
+        entity_id=str(row.id),
+        before_json={"is_deleted": False, "status": row.status.value},
+        after_json={"is_deleted": True, "status": row.status.value},
+        ip=request.client.host if request and request.client else None,
+        user_agent=request.headers.get("user-agent") if request else None,
+    )
+    await session.commit()
+    _invalidate_resolve_cache()
+    return {"ok": True, "item": _serialize_layout_revision(row)}
+
+
+@router.post("/admin/layouts/{revision_id}/copy")
+async def copy_admin_layout_revision(
+    revision_id: str,
+    payload: LayoutRevisionCopyPayload,
+    request: Request,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    await _ensure_layout_page_type_enum_values(session)
+
+    revision_uuid = _as_uuid_or_400(revision_id, field_name="revision_id")
+    source_revision = await session.get(LayoutRevision, revision_uuid)
+    if not source_revision or bool(getattr(source_revision, "is_deleted", False)):
+        raise HTTPException(status_code=404, detail="Layout revision not found")
+
+    source_page = await session.get(LayoutPage, source_revision.layout_page_id)
+    if not source_page:
+        raise HTTPException(status_code=404, detail="Source layout page not found")
+
+    target_country = payload.country.upper().strip()
+    target_module = payload.module.strip()
+    target_category_uuid = _as_uuid_or_400(payload.category_id, field_name="category_id") if payload.category_id else None
+
+    target_page_result = await session.execute(
+        select(LayoutPage)
+        .where(
+            and_(
+                LayoutPage.page_type == payload.target_page_type,
+                LayoutPage.country == target_country,
+                LayoutPage.module == target_module,
+                LayoutPage.category_id == target_category_uuid,
+            )
+        )
+        .order_by(desc(LayoutPage.updated_at), desc(LayoutPage.created_at))
+        .limit(1)
+    )
+    target_page = target_page_result.scalar_one_or_none()
+
+    if not target_page:
+        target_page = await create_layout_page(
+            session,
+            page_type=payload.target_page_type,
+            country=target_country,
+            module=target_module,
+            category_id=str(target_category_uuid) if target_category_uuid else None,
+            title_i18n=_normalize_i18n_text_map(source_page.title_i18n or {}, fallback_value=payload.target_page_type.value),
+            description_i18n=_normalize_i18n_text_map(source_page.description_i18n or {}, fallback_value=""),
+            label_i18n=_normalize_i18n_text_map(source_page.label_i18n or {}, fallback_value=payload.target_page_type.value),
+            actor_user_id=current_user.get("id"),
+        )
+
+    copied_payload = _sanitize_payload_for_sql_ascii(source_revision.payload_json or {})
+    draft_result = await session.execute(
+        select(LayoutRevision)
+        .where(
+            and_(
+                LayoutRevision.layout_page_id == target_page.id,
+                LayoutRevision.status == LayoutRevisionStatus.DRAFT,
+                LayoutRevision.is_deleted.is_(False),
+            )
+        )
+        .order_by(desc(LayoutRevision.version), desc(LayoutRevision.created_at))
+        .limit(1)
+    )
+    target_revision = draft_result.scalar_one_or_none()
+
+    action = "created_draft"
+    if target_revision:
+        before = {
+            "status": target_revision.status.value,
+            "version": int(target_revision.version),
+            "is_deleted": bool(target_revision.is_deleted),
+        }
+        target_revision.payload_json = copied_payload
+        target_revision.is_deleted = False
+        await write_layout_audit_log(
+            session,
+            actor_user_id=current_user.get("id"),
+            action=LayoutAuditAction.CREATE_REVISION,
+            entity_type="layout_revision",
+            entity_id=str(target_revision.id),
+            before_json=before,
+            after_json={
+                "status": target_revision.status.value,
+                "version": int(target_revision.version),
+                "is_deleted": bool(target_revision.is_deleted),
+                "copied_from_revision_id": str(source_revision.id),
+            },
+            ip=request.client.host if request and request.client else None,
+            user_agent=request.headers.get("user-agent") if request else None,
+        )
+        action = "updated_draft"
+    else:
+        target_revision = await create_draft_revision(
+            session,
+            layout_page_id=str(target_page.id),
+            payload_json=copied_payload,
+            actor_user_id=current_user.get("id"),
+        )
+
+    if payload.publish_after_copy:
+        target_revision = await publish_revision(
+            session,
+            revision_id=str(target_revision.id),
+            actor_user_id=current_user.get("id"),
+        )
+        action = "published_copy"
+
+    await session.commit()
+    _invalidate_resolve_cache()
+    return {
+        "ok": True,
+        "action": action,
+        "source_revision_id": str(source_revision.id),
+        "target_page": _serialize_layout_page(target_page),
+        "target_revision": _serialize_layout_revision(target_revision),
+    }
+
+
 @router.post("/admin/site/content-layout/pages")
 async def create_layout_page_admin(
     payload: LayoutPageCreatePayload,
@@ -2566,6 +2806,7 @@ async def seed_standard_layout_pages_admin(
                     and_(
                         LayoutRevision.layout_page_id == page_row.id,
                         LayoutRevision.status == LayoutRevisionStatus.DRAFT,
+                        LayoutRevision.is_deleted.is_(False),
                     )
                 )
                 .order_by(desc(LayoutRevision.version), desc(LayoutRevision.created_at))
@@ -2676,6 +2917,8 @@ async def patch_draft_revision_admin(
     row = await session.get(LayoutRevision, revision_uuid)
     if not row:
         raise HTTPException(status_code=404, detail="Revision not found")
+    if bool(getattr(row, "is_deleted", False)):
+        raise HTTPException(status_code=404, detail="Revision not found")
     if row.status != LayoutRevisionStatus.DRAFT:
         raise HTTPException(status_code=400, detail="Only draft revisions can be updated")
 
@@ -2732,6 +2975,8 @@ async def publish_revision_admin(
     revision_uuid = _as_uuid_or_400(revision_id, field_name="revision_id")
     target_revision = await session.get(LayoutRevision, revision_uuid)
     if target_revision:
+        if bool(getattr(target_revision, "is_deleted", False)):
+            raise HTTPException(status_code=404, detail="Revision not found")
         page_row = await session.get(LayoutPage, target_revision.layout_page_id)
         if page_row and _is_wizard_policy_page_type(page_row.page_type):
             _validate_listing_runtime_guard_or_400(target_revision.payload_json or {})
@@ -2774,6 +3019,8 @@ async def get_revision_policy_report_admin(
     row = await session.get(LayoutRevision, revision_uuid)
     if not row:
         raise HTTPException(status_code=404, detail="Revision not found")
+    if bool(getattr(row, "is_deleted", False)):
+        raise HTTPException(status_code=404, detail="Revision not found")
 
     page_row = await session.get(LayoutPage, row.layout_page_id)
     if not page_row:
@@ -2795,6 +3042,8 @@ async def auto_fix_revision_policy_admin(
     revision_uuid = _as_uuid_or_400(revision_id, field_name="revision_id")
     row = await session.get(LayoutRevision, revision_uuid)
     if not row:
+        raise HTTPException(status_code=404, detail="Revision not found")
+    if bool(getattr(row, "is_deleted", False)):
         raise HTTPException(status_code=404, detail="Revision not found")
 
     page_row = await session.get(LayoutPage, row.layout_page_id)
@@ -2875,7 +3124,12 @@ async def list_revisions_for_page(
 
     result = await session.execute(
         select(LayoutRevision)
-        .where(LayoutRevision.layout_page_id == page_uuid)
+        .where(
+            and_(
+                LayoutRevision.layout_page_id == page_uuid,
+                LayoutRevision.is_deleted.is_(False),
+            )
+        )
         .order_by(desc(LayoutRevision.version), desc(LayoutRevision.created_at))
         .limit(100)
     )
@@ -3149,6 +3403,7 @@ async def _resolve_effective_layout(
                 and_(
                     LayoutRevision.layout_page_id == layout_page_id,
                     LayoutRevision.status == status,
+                    LayoutRevision.is_deleted.is_(False),
                 )
             )
             .order_by(desc(LayoutRevision.version), desc(LayoutRevision.created_at))

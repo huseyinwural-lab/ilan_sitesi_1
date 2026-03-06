@@ -1,0 +1,79 @@
+{
+  "summary": "Content List feature testing complete for Admin Content Builder refactor. Backend APIs (GET /api/admin/layouts, DELETE soft-delete, POST copy) all working. Frontend Content List panel visible with all required columns and actions.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_137_content_list.py",
+    "/app/test_reports/pytest/pytest_results_137.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_137_content_list.py"
+  ],
+  "success_rate": {"backend": "100% (12/12 passed)", "frontend": "100%"},
+  "test_credentials": "admin@platform.com / Admin123! (via /admin/login)",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Content List feature fully implemented. Admin login via /admin/login route. Content List panel at bottom of /admin/site-design/content-builder page. All data-testids properly in place.",
+  "features_verified": {
+    "backend_api_list_layouts": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/layouts",
+      "details": "Returns draft+published layouts with pagination, include_deleted parameter works"
+    },
+    "backend_api_soft_delete": {
+      "status": "PASS", 
+      "endpoint": "DELETE /api/admin/layouts/{revision_id}",
+      "details": "Sets is_deleted=true on revision, returns updated item"
+    },
+    "backend_api_copy": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/layouts/{revision_id}/copy",
+      "details": "Creates copy with target_page_type, country, module, category_id parameters"
+    },
+    "frontend_content_list_panel": {
+      "status": "PASS",
+      "details": "Panel visible with data-testid admin-content-builder-content-list-panel"
+    },
+    "frontend_content_list_table": {
+      "status": "PASS",
+      "details": "Table shows columns: page_type, country, module, scope, status, version, updated_at, actions"
+    },
+    "frontend_edit_button": {
+      "status": "PASS",
+      "details": "Edit button loads page into builder canvas"
+    },
+    "frontend_delete_button": {
+      "status": "PASS",
+      "details": "Delete button triggers soft-delete with confirmation"
+    },
+    "frontend_copy_button": {
+      "status": "PASS",
+      "details": "Kopyala (Copy) button uses copy target fields for bire bir kopyalama"
+    },
+    "frontend_include_deleted_checkbox": {
+      "status": "PASS",
+      "details": "Checkbox filters deleted items in list"
+    },
+    "frontend_copy_target_panel": {
+      "status": "PASS",
+      "details": "Copy target fields: page_type, country, module, category_id, publish_after_copy"
+    },
+    "frontend_deleted_row_styling": {
+      "status": "PASS",
+      "details": "Deleted rows have line-through and bg-rose-50 styling"
+    }
+  },
+  "mocked_apis": {
+    "academy.modules": "MOCKED"
+  }
+}

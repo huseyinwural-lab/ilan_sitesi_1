@@ -163,6 +163,7 @@ class LayoutRevision(Base):
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
+    is_deleted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     layout_page: Mapped["LayoutPage"] = relationship("LayoutPage", back_populates="revisions")

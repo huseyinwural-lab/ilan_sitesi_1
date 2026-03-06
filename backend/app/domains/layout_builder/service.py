@@ -469,6 +469,7 @@ async def get_latest_published_revision_for_page(
             and_(
                 LayoutRevision.layout_page_id == layout_page_id,
                 LayoutRevision.status == LayoutRevisionStatus.PUBLISHED,
+                LayoutRevision.is_deleted.is_(False),
             )
         )
         .order_by(desc(LayoutRevision.version))

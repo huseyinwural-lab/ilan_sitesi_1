@@ -51,6 +51,21 @@ const PAGE_TYPE_OPTIONS = [
   { value: 'listing_create_stepX', label: `${PAGE_TYPE_LABEL_MAP.listing_create_stepX} (listing_create_stepX)` },
 ];
 
+const CONTENT_LIST_STATUS_FILTER = ['draft', 'published'];
+
+const formatLayoutUpdatedAt = (value) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  return date.toLocaleString('tr-TR');
+};
+
+const resolveLayoutScopeLabel = (item) => {
+  if (!item || typeof item !== 'object') return '-';
+  if (item.category_id) return `Kategori: ${item.category_id}`;
+  return item.scope || `${item.country || '-'} / ${item.module || '-'} / global`;
+};
+
 const DEFAULT_COMPONENT_LIBRARY = [
   {
     key: 'home.default-content',
@@ -1963,6 +1978,15 @@ export default function AdminContentBuilder() {
   const [activeDraftId, setActiveDraftId] = useState('');
   const [revisionList, setRevisionList] = useState([]);
   const [payloadJson, setPayloadJson] = useState(createEmptyPayload('home'));
+  const [contentListRows, setContentListRows] = useState([]);
+  const [contentListLoading, setContentListLoading] = useState(false);
+  const [contentListError, setContentListError] = useState('');
+  const [contentListIncludeDeleted, setContentListIncludeDeleted] = useState(true);
+  const [copyTargetPageType, setCopyTargetPageType] = useState('home');
+  const [copyTargetCountry, setCopyTargetCountry] = useState('DE');
+  const [copyTargetModule, setCopyTargetModule] = useState('global');
+  const [copyTargetCategoryId, setCopyTargetCategoryId] = useState('');
+  const [copyPublishAfterCopy, setCopyPublishAfterCopy] = useState(false);
 
   const [bindingCategoryId, setBindingCategoryId] = useState('');
   const [bindingTreeBehavior, setBindingTreeBehavior] = useState('expanded');
@@ -2491,6 +2515,125 @@ export default function AdminContentBuilder() {
     setPayloadJson(normalizePayload(published?.payload_json, targetPageType));
   };
 
+  const fetchContentList = useCallback(async ({ silent = false } = {}) => {
+    setContentListLoading(true);
+    if (!silent) setContentListError('');
+    try {
+      const response = await axios.get(`${API}/admin/layouts`, {
+        headers: authHeaders,
+        params: {
+          include_deleted: contentListIncludeDeleted,
+          statuses: CONTENT_LIST_STATUS_FILTER.join(','),
+          page: 1,
+          limit: 200,
+        },
+      });
+      const items = Array.isArray(response.data?.items) ? response.data.items : [];
+      setContentListRows(items);
+      setContentListError('');
+    } catch (err) {
+      setContentListRows([]);
+      setContentListError(err?.response?.data?.detail || 'Content list yüklenemedi');
+      if (!silent) toast.error('Content list yüklenemedi.');
+    } finally {
+      setContentListLoading(false);
+    }
+  }, [authHeaders, contentListIncludeDeleted]);
+
+  useEffect(() => {
+    fetchContentList({ silent: true });
+  }, [fetchContentList]);
+
+  const handleContentListEdit = async (item) => {
+    if (!item?.layout_page_id || item.is_deleted) return;
+    setLoading(true);
+    setError('');
+    setStatus('');
+    try {
+      setPageType(item.page_type);
+      setCountry(String(item.country || '').toUpperCase());
+      setModuleName(String(item.module || ''));
+      setCategoryId(item.category_id || '');
+      setBindingCategoryId(item.category_id || '');
+      setPageId(item.layout_page_id);
+      await getRevisionsForPage(item.layout_page_id, item.page_type);
+      setStatus('Seçili sayfa builder alanına yüklendi.');
+      toast.success('Sayfa düzenleme için yüklendi.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      setError(err?.response?.data?.detail || 'Sayfa yüklenemedi');
+      toast.error('Sayfa yüklenemedi.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleContentListDelete = async (item) => {
+    if (!item?.revision_id || item.is_deleted) return;
+    const confirmed = window.confirm('Bu revision soft-delete edilsin mi?');
+    if (!confirmed) return;
+
+    setContentListError('');
+    try {
+      await axios.delete(`${API}/admin/layouts/${item.revision_id}`, {
+        headers: authHeaders,
+      });
+      setStatus('Revision soft-delete edildi.');
+      toast.success('Revision soft-delete edildi.');
+      if (pageId && item.layout_page_id === pageId) {
+        await getRevisionsForPage(pageId, pageType);
+      }
+      await fetchContentList({ silent: true });
+    } catch (err) {
+      setContentListError(err?.response?.data?.detail || 'Soft-delete başarısız');
+      toast.error('Soft-delete başarısız.');
+    }
+  };
+
+  const handleContentListCopy = async (item) => {
+    if (!item?.revision_id) return;
+    const normalizedModule = String(copyTargetModule || '').trim();
+    const normalizedCountry = String(copyTargetCountry || '').trim().toUpperCase();
+
+    if (!normalizedCountry || !normalizedModule) {
+      toast.error('Kopya hedefi için ülke ve module zorunludur.');
+      return;
+    }
+
+    setContentListError('');
+    try {
+      const response = await axios.post(
+        `${API}/admin/layouts/${item.revision_id}/copy`,
+        {
+          target_page_type: copyTargetPageType,
+          country: normalizedCountry,
+          module: normalizedModule,
+          category_id: String(copyTargetCategoryId || '').trim() || null,
+          publish_after_copy: copyPublishAfterCopy,
+        },
+        { headers: authHeaders },
+      );
+
+      const targetPage = response.data?.target_page;
+      if (targetPage?.id) {
+        setPageType(targetPage.page_type || copyTargetPageType);
+        setCountry(targetPage.country || normalizedCountry);
+        setModuleName(targetPage.module || normalizedModule);
+        setCategoryId(targetPage.category_id || '');
+        setBindingCategoryId(targetPage.category_id || '');
+        setPageId(targetPage.id);
+        await getRevisionsForPage(targetPage.id, targetPage.page_type || copyTargetPageType);
+      }
+
+      await fetchContentList({ silent: true });
+      setStatus('Sayfa bire bir kopyalandı ve hedef scope builder alanına yüklendi.');
+      toast.success('Bire bir kopyalama tamamlandı.');
+    } catch (err) {
+      setContentListError(err?.response?.data?.detail || 'Kopyalama başarısız');
+      toast.error('Kopyalama başarısız.');
+    }
+  };
+
   const loadOrCreatePage = async () => {
     setLoading(true);
     setError('');
@@ -2533,6 +2676,7 @@ export default function AdminContentBuilder() {
       setPageId(page.id);
       setBindingCategoryId(normalizedCategoryId);
       await getRevisionsForPage(page.id, pageType);
+      await fetchContentList({ silent: true });
       setPolicyReport(null);
       setStatus('Sayfa yüklendi. Draft düzenleyebilirsiniz.');
       toast.success('Layout page başarıyla yüklendi.');
@@ -2582,6 +2726,7 @@ export default function AdminContentBuilder() {
       }
       setStatus('Draft kaydedildi.');
       toast.success('Draft kaydedildi.');
+      await fetchContentList({ silent: true });
       refreshPreviewAfterInteraction();
       return currentDraftId;
     } catch (err) {
@@ -2657,6 +2802,7 @@ export default function AdminContentBuilder() {
       );
       setStatus('Draft publish edildi. Yeni draft oluşturuluyor...');
       await getRevisionsForPage(pageId, pageType);
+      await fetchContentList({ silent: true });
       setStatus('Publish tamamlandı. Yeni draft hazır.');
       if (lastAppliedPresetMeta) {
         trackPresetAnalyticsEvent({
@@ -3988,6 +4134,195 @@ export default function AdminContentBuilder() {
 
         </section>
       </div>
+
+      <section className="rounded-xl border bg-white p-4" data-testid="admin-content-builder-content-list-panel">
+        <div className="flex flex-wrap items-center justify-between gap-2" data-testid="admin-content-builder-content-list-header">
+          <div>
+            <h2 className="text-sm font-semibold" data-testid="admin-content-builder-content-list-title">Content List</h2>
+            <p className="text-xs text-slate-500" data-testid="admin-content-builder-content-list-subtitle">
+              Filtre: draft + published • Silinen kayıtlar kırmızı gösterilir.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs" data-testid="admin-content-builder-content-list-header-actions">
+            <button
+              type="button"
+              className="h-9 rounded border px-3"
+              onClick={() => {
+                setCopyTargetPageType(pageType);
+                setCopyTargetCountry(country);
+                setCopyTargetModule(moduleName);
+                setCopyTargetCategoryId(categoryId);
+              }}
+              data-testid="admin-content-builder-content-list-sync-copy-target-button"
+            >
+              Hedefi Aktif Formdan Doldur
+            </button>
+            <button
+              type="button"
+              className="h-9 rounded border px-3"
+              onClick={() => fetchContentList()}
+              disabled={contentListLoading}
+              data-testid="admin-content-builder-content-list-refresh-button"
+            >
+              Yenile
+            </button>
+            <label className="inline-flex items-center gap-2" data-testid="admin-content-builder-content-list-include-deleted-wrap">
+              <input
+                type="checkbox"
+                checked={contentListIncludeDeleted}
+                onChange={(event) => setContentListIncludeDeleted(event.target.checked)}
+                data-testid="admin-content-builder-content-list-include-deleted-input"
+              />
+              Silinenleri göster
+            </label>
+          </div>
+        </div>
+
+        <div className="mt-3 rounded-lg border bg-slate-50 p-3" data-testid="admin-content-builder-content-list-copy-target-panel">
+          <div className="text-xs font-semibold" data-testid="admin-content-builder-content-list-copy-target-title">Bire bir kopya hedefi</div>
+          <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-5" data-testid="admin-content-builder-content-list-copy-target-grid">
+            <label className="text-xs" data-testid="admin-content-builder-content-list-copy-target-page-type-wrap">
+              Page Type
+              <select
+                className="mt-1 h-9 w-full rounded border px-2"
+                value={copyTargetPageType}
+                onChange={(event) => setCopyTargetPageType(event.target.value)}
+                data-testid="admin-content-builder-content-list-copy-target-page-type-select"
+              >
+                {PAGE_TYPE_OPTIONS.map((item) => <option key={`copy-target-${item.value}`} value={item.value}>{item.label}</option>)}
+              </select>
+            </label>
+
+            <label className="text-xs" data-testid="admin-content-builder-content-list-copy-target-country-wrap">
+              Country
+              <input
+                className="mt-1 h-9 w-full rounded border px-2"
+                value={copyTargetCountry}
+                onChange={(event) => setCopyTargetCountry(event.target.value.toUpperCase())}
+                data-testid="admin-content-builder-content-list-copy-target-country-input"
+              />
+            </label>
+
+            <label className="text-xs" data-testid="admin-content-builder-content-list-copy-target-module-wrap">
+              Module
+              <input
+                className="mt-1 h-9 w-full rounded border px-2"
+                value={copyTargetModule}
+                onChange={(event) => setCopyTargetModule(event.target.value)}
+                data-testid="admin-content-builder-content-list-copy-target-module-input"
+              />
+            </label>
+
+            <label className="text-xs" data-testid="admin-content-builder-content-list-copy-target-category-wrap">
+              Category ID (opsiyonel)
+              <input
+                className="mt-1 h-9 w-full rounded border px-2"
+                value={copyTargetCategoryId}
+                onChange={(event) => setCopyTargetCategoryId(event.target.value)}
+                data-testid="admin-content-builder-content-list-copy-target-category-input"
+              />
+            </label>
+
+            <label className="mt-6 inline-flex items-center gap-2 text-xs" data-testid="admin-content-builder-content-list-copy-target-publish-wrap">
+              <input
+                type="checkbox"
+                checked={copyPublishAfterCopy}
+                onChange={(event) => setCopyPublishAfterCopy(event.target.checked)}
+                data-testid="admin-content-builder-content-list-copy-target-publish-input"
+              />
+              Kopya sonrası publish et
+            </label>
+          </div>
+        </div>
+
+        <div className="mt-3 overflow-x-auto" data-testid="admin-content-builder-content-list-table-wrap">
+          <table className="min-w-full text-left text-xs" data-testid="admin-content-builder-content-list-table">
+            <thead>
+              <tr className="border-b bg-slate-50" data-testid="admin-content-builder-content-list-head-row">
+                <th className="px-2 py-2">page_type</th>
+                <th className="px-2 py-2">country</th>
+                <th className="px-2 py-2">module</th>
+                <th className="px-2 py-2">category / scope</th>
+                <th className="px-2 py-2">status</th>
+                <th className="px-2 py-2">version</th>
+                <th className="px-2 py-2">updated_at</th>
+                <th className="px-2 py-2">actions</th>
+              </tr>
+            </thead>
+            <tbody data-testid="admin-content-builder-content-list-table-body">
+              {contentListLoading ? (
+                <tr data-testid="admin-content-builder-content-list-loading-row">
+                  <td className="px-2 py-3 text-slate-500" colSpan={8} data-testid="admin-content-builder-content-list-loading-cell">İçerik listesi yükleniyor...</td>
+                </tr>
+              ) : contentListRows.length === 0 ? (
+                <tr data-testid="admin-content-builder-content-list-empty-row">
+                  <td className="px-2 py-3 text-slate-500" colSpan={8} data-testid="admin-content-builder-content-list-empty-cell">Kayıt bulunamadı.</td>
+                </tr>
+              ) : (
+                contentListRows.map((item) => {
+                  const rowKey = item.revision_id || item.id;
+                  const deleted = Boolean(item.is_deleted);
+                  return (
+                    <tr
+                      key={rowKey}
+                      className={`border-b ${deleted ? 'bg-rose-50 text-rose-700' : 'text-slate-700'}`}
+                      data-testid={`admin-content-builder-content-list-row-${rowKey}`}
+                    >
+                      <td className="px-2 py-2 font-medium" data-testid={`admin-content-builder-content-list-page-type-${rowKey}`}>
+                        {PAGE_TYPE_LABEL_MAP[item.page_type] || item.page_type}
+                      </td>
+                      <td className="px-2 py-2" data-testid={`admin-content-builder-content-list-country-${rowKey}`}>{item.country || '-'}</td>
+                      <td className="px-2 py-2" data-testid={`admin-content-builder-content-list-module-${rowKey}`}>{item.module || '-'}</td>
+                      <td className="px-2 py-2" data-testid={`admin-content-builder-content-list-scope-${rowKey}`}>{resolveLayoutScopeLabel(item)}</td>
+                      <td className="px-2 py-2" data-testid={`admin-content-builder-content-list-status-${rowKey}`}>
+                        <span className={`inline-flex rounded border px-2 py-1 text-[11px] ${deleted ? 'border-rose-300 bg-rose-100 text-rose-700' : 'border-slate-200 bg-slate-100 text-slate-700'}`}>
+                          {deleted ? 'deleted' : item.status}
+                        </span>
+                      </td>
+                      <td className="px-2 py-2" data-testid={`admin-content-builder-content-list-version-${rowKey}`}>{item.version ?? '-'}</td>
+                      <td className="px-2 py-2" data-testid={`admin-content-builder-content-list-updated-at-${rowKey}`}>{formatLayoutUpdatedAt(item.updated_at)}</td>
+                      <td className="px-2 py-2" data-testid={`admin-content-builder-content-list-actions-${rowKey}`}>
+                        <div className="flex flex-wrap gap-1">
+                          <button
+                            type="button"
+                            className="h-8 rounded border px-2 text-[11px]"
+                            onClick={() => handleContentListEdit(item)}
+                            disabled={deleted}
+                            data-testid={`admin-content-builder-content-list-edit-button-${rowKey}`}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="h-8 rounded border border-rose-300 px-2 text-[11px] text-rose-700"
+                            onClick={() => handleContentListDelete(item)}
+                            disabled={deleted}
+                            data-testid={`admin-content-builder-content-list-delete-button-${rowKey}`}
+                          >
+                            Delete
+                          </button>
+                          <button
+                            type="button"
+                            className="h-8 rounded border border-blue-300 px-2 text-[11px] text-blue-700"
+                            onClick={() => handleContentListCopy(item)}
+                            disabled={deleted}
+                            data-testid={`admin-content-builder-content-list-copy-button-${rowKey}`}
+                          >
+                            Kopyala
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+        {contentListError ? (
+          <p className="mt-2 text-xs text-rose-700" data-testid="admin-content-builder-content-list-error-message">{contentListError}</p>
+        ) : null}
+      </section>
     </div>
   );
 }
