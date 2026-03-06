@@ -362,6 +362,30 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - deprecated navigator keyler dışlanmış
   - yeni 2 navigator key mevcut
 
+## 2026-03-06 (Kategori Listesi Geri Yükleme)
+
+### Kullanıcı Talebi
+- Silinen kategori listesinin geri getirilmesi.
+
+### Uygulanan İşlem
+- Kategori listesi TR/DE/FR için yeniden oluşturuldu (istenen module mapping ile):
+  - `Immobilien -> real_estate`
+  - `Fahrzeuge -> vehicle`
+  - `Diğer başlıklar -> other`
+- İsim alanları `tr/de/fr` translation kayıtlarıyla birlikte yazıldı.
+
+### Sonuç (ülke başına aktif kategori)
+- `real_estate = 3`
+- `vehicle = 9`
+- `other = 99`
+
+### Raporlar
+- Operasyon raporu: `/app/test_reports/category_list_restore_result.json`
+- Doğrulama raporu: `/app/test_reports/iteration_153.json`
+  - Backend: 16/18 PASS (2 transient timeout, low)
+  - Frontend: 100% PASS
+  - Admin UI’de DE context altında kök kategoriler görünür doğrulandı.
+
 ## 2026-03-06 (P0 — Sayfa Tasarım Fazı Başlangıcı: Home / Acil / Kategori / Liste Kompozisyonları)
 
 ## 2026-03-06 (P0 — Kapanış Görevleri Tamamlandı: Kalıcılaştırma + İçerik + QA + Final Smoke)
