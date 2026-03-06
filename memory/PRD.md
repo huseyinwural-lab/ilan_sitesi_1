@@ -22,6 +22,59 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ## 2026-03-06 (P0 — Sayfa Tasarım Fazı Başlangıcı: Home / Acil / Kategori / Liste Kompozisyonları)
 
+## 2026-03-06 (P0 — Kapanış Görevleri Tamamlandı: Kalıcılaştırma + İçerik + QA + Final Smoke)
+
+### Kullanıcı Talebi Kapsamı (Tamamlandı)
+- 7 maddelik kapanış görev listesi (şablon kalıcılaştırma, içerik doldurma, kategori binding doğrulama, quick filter E2E, ad placement onayı, responsive QA, final smoke + publish) tamamlandı.
+
+### Uygulananlar
+- **Görev 1 — 4 sayfa şablon kalıcılaştırma**
+  - Page types: `home`, `urgent_listings`, `category_l0_l1`, `search_ln`
+  - Scope seti finalize edildi ve publish edildi:
+    - `TR/vehicle`, `DE/global`, `FR/global`, `TR/global`
+  - Her scope/page için published revision doğrulandı.
+  - `payload_json.meta.template_version = finalized-p0-v1` işaretlemesi eklendi.
+  - Template lock davranışı uygulandı: finalize scope’larda `Bu Sayfaya Standart Şablon` kapalı.
+
+- **Görev 2 — İçerik üretim doldurma**
+  - Heading/Text/CTA/Hero/Image/Carousel içerikleri üretim metinleriyle dolduruldu.
+  - Unsplash tabanlı üretim görselleri sabitlendi (hero/banner/image/carousel).
+  - Placeholder içerikler temizlendi.
+
+- **Görev 3 — Kategori binding finali / veri akışı**
+  - Category Navigator + Sub Category Block + Listing Grid/List data-flow doğrulandı.
+  - Kategori tıklama route davranışı `/kategori?category_id=...` ve query tabanlı filtre akışıyla sabitlendi.
+  - `/api/categories/tree`, `/api/categories/children`, `/api/categories/listing-counts` sözleşmeleri aktif.
+
+- **Görev 4 — Quick Filter E2E**
+  - `urgent -> /acil?badge=urgent`
+  - `showcase -> /vitrin?badge=showcase`
+  - `campaign -> /kampanya?badge=campaign`
+  - Search state ve listing API mapping’i badge paramı ile doğrulandı.
+
+- **Görev 5 — Ad Slot Placement**
+  - Placement desteği: `home_top`, `home_bottom`, `category_top`, `category_bottom`, `urgent_top`
+  - `/api/ads/resolve` ve `/api/banners` endpointleri ile empty-state güvenli render doğrulandı.
+
+- **Görev 6 — Responsive QA**
+  - 320/768/1024/1440 breakpoint testleri yapıldı.
+  - 320 px CTA overflow düzeltildi (button wrap + max width).
+
+- **Görev 7 — Final smoke + publish**
+  - Public page smoke: `/`, `/tr`, `/acil`, `/kategori`, `/liste` PASS
+  - Admin lock smoke PASS (TR/global/home scope).
+  - Final backend closure check PASS.
+
+### Teknik Stabilizasyon Notları
+- Layout draft save/publish akışında retry/timeouts iyileştirildi.
+- SQL encoding kaynaklı save sorununu önlemek için layout payload write yolunda ASCII-safe sanitize eklendi.
+- Draft save path’inde audit yükü hafifletildi (lightweight before/after summary).
+
+### Test Durumu
+- `deep_testing_backend_v2`: Final closure PASS (25/25)
+- `auto_frontend_testing_agent`: Final comprehensive PASS (17/17)
+- `auto_frontend_testing_agent`: Admin lock smoke PASS
+
 ### Kullanıcı Onayı Sonrası Yapılanlar
 - Kullanıcı onayıyla route-bazlı kompozisyon fazına geçildi.
 - `home`, `urgent_listings`, `category_l0_l1`, `search_ln` için standart şablon payload’ları final pattern’e göre güncellendi.
