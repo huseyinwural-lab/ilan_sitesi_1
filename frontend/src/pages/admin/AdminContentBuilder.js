@@ -1003,6 +1003,24 @@ const normalizeI18nProps = (props = {}) => {
   return next;
 };
 
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const withRetries = async (fn, attempts = 4, delayMs = 1200) => {
+  let lastError = null;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      return await fn(attempt);
+    } catch (error) {
+      lastError = error;
+      if (attempt >= attempts) break;
+      // eslint-disable-next-line no-await-in-loop
+      await delay(delayMs * attempt);
+    }
+  }
+  throw lastError;
+};
+
 const isWizardPolicyPageType = (pageType) => WIZARD_POLICY_PAGE_TYPES.has(pageType);
 
 let layoutNodeCounter = 1;
@@ -2465,10 +2483,14 @@ export default function AdminContentBuilder() {
     }
 
     const published = revisions.find((item) => item.status === 'published');
-    const draftCreateRes = await axios.post(
-      `${API}/admin/site/content-layout/pages/${targetPageId}/revisions/draft`,
-      { payload_json: normalizePayload(published?.payload_json, targetPageType) },
-      { headers: authHeaders },
+    const draftCreateRes = await withRetries(
+      () => axios.post(
+        `${API}/admin/site/content-layout/pages/${targetPageId}/revisions/draft`,
+        { payload_json: normalizePayload(published?.payload_json, targetPageType) },
+        { headers: authHeaders },
+      ),
+      5,
+      1500,
     );
     const newDraft = draftCreateRes.data?.item;
     setActiveDraftId(newDraft?.id || '');
@@ -2538,10 +2560,14 @@ export default function AdminContentBuilder() {
     setError('');
     setStatus('');
     try {
-      await axios.patch(
-        `${API}/admin/site/content-layout/revisions/${activeDraftId}/draft`,
-        { payload_json: payloadJson },
-        { headers: authHeaders },
+      await withRetries(
+        () => axios.patch(
+          `${API}/admin/site/content-layout/revisions/${activeDraftId}/draft`,
+          { payload_json: payloadJson },
+          { headers: authHeaders },
+        ),
+        5,
+        1200,
       );
       setStatus('Draft kaydedildi.');
       toast.success('Draft kaydedildi.');
@@ -2617,7 +2643,11 @@ export default function AdminContentBuilder() {
         }
       }
 
-      await axios.post(`${API}/admin/site/content-layout/revisions/${activeDraftId}/publish`, {}, { headers: authHeaders });
+      await withRetries(
+        () => axios.post(`${API}/admin/site/content-layout/revisions/${activeDraftId}/publish`, {}, { headers: authHeaders }),
+        5,
+        1500,
+      );
       setStatus('Draft publish edildi. Yeni draft oluşturuluyor...');
       await getRevisionsForPage(pageId, pageType);
       setStatus('Publish tamamlandı. Yeni draft hazır.');

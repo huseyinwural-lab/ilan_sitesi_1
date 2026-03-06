@@ -29689,3 +29689,140 @@ Initial assessment of 4 page type persistence across 3 scopes (12 total combinat
 
 ---
 
+
+---
+
+## Content Builder Page Creation Flow Test (Mar 6, 2026 - LATEST) ❌ CRITICAL FAIL
+
+### Test Summary
+Testing Content Builder setup drawer → Load/Create Page → draft creation → Apply Template → Save Draft → Publish flow as per review request: "Lütfen şu akışı tekrar test et (değişikliklerden sonra): URL: https://panel-manual-tr.preview.emergentagent.com/admin/login, Kullanıcı: admin@platform.com / Admin123!. Kritik odak: 1) Content Builder'da setup drawer ile scope/page-type seçimi yapınca, Sayfayı Yükle/Oluştur sonrası draft id oluşuyor mu? 2) Bu Sayfaya Standart Şablon → Draft Kaydet → Publish akışı çalışıyor mu? 3) 1 örnek scope/page_type ile kontrol et: TR + vehicle + home."
+
+### Test Flow Executed:
+1. ✅ Admin login (admin@platform.com / Admin123!) → authentication successful
+2. ✅ Navigate to /admin/site-design/content-builder → page loads successfully (waited 10 seconds)
+3. ✅ Open Setup Drawer → drawer opens successfully
+4. ✅ Fill setup form (page_type=home, country=TR, module=vehicle) → all fields filled correctly
+5. ✅ Click "Load/Create Page" button → button clicked, waited 8 seconds
+6. ❌ **CRITICAL FAILURE**: Draft ID shows as "draft_id: -" (NO DRAFT ID CREATED)
+7. ❌ Cannot proceed with Apply Template / Save Draft / Publish (buttons disabled without active draft)
+
+### Critical Findings:
+
+#### ❌ CRITICAL FAILURE - DRAFT ID NOT CREATED
+
+**Test Combination**: TR/vehicle/home
+- **Draft Created**: ❌ NO
+- **Draft Saved**: ❌ NO (cannot test - no draft ID)
+- **Published**: ❌ NO (cannot test - no draft ID)
+- **Failure Reason**: Draft ID element shows "draft_id: -" after Load/Create Page click
+
+**Observed Behavior**:
+1. Setup drawer opens correctly ✅
+2. Form fields populate correctly (home, TR, vehicle) ✅
+3. "Load/Create Page" button is enabled and clickable ✅
+4. Button changes to "Yükleniyor..." (Loading) state ✅
+5. **After 8+ seconds wait, draft_id still shows "-"** ❌
+6. Page status shows: "page_id: - draft_id: - revision_count: 0 Aktif binding bulunamadı." ❌
+7. Preset statistics message: "Henüz preset istatistiği yok." ⚠️
+
+**UI State After Load/Create Page Click**:
+- Setup drawer remains open
+- Loading button visible in drawer
+- No draft ID generated
+- No error toast/message displayed
+- Save Draft button disabled (expected without draft_id)
+- Publish button disabled (expected without draft_id)
+
+### Root Cause Analysis:
+
+**Code Flow (AdminContentBuilder.js)**:
+1. **loadOrCreatePage()** function (line 2500):
+   - Fetches existing pages with GET `/api/admin/site/content-layout/pages?page_type=home&country=TR&module=vehicle`
+   - Creates new page if not found with POST `/api/admin/site/content-layout/pages`
+   - Calls `getRevisionsForPage(page.id, pageType)` if page exists
+
+2. **getRevisionsForPage()** function (line 2471):
+   - Fetches revisions for the page
+   - If draft revision exists → uses it and sets activeDraftId
+   - If NO draft exists → creates new draft with POST `/api/admin/site/content-layout/pages/{page_id}/revisions/draft`
+   - Uses `withRetries()` with 5 attempts and 1.5s delay between attempts
+
+**Possible Failure Points**:
+1. **API Call Not Triggered**: Frontend state preventing API call
+2. **API Call Hanging**: Backend API taking > 8 seconds (timeout issue)
+3. **API Call Failing Silently**: Draft creation API returning 422/500 but error not displayed
+4. **Race Condition**: Multiple rapid API calls causing state confusion
+
+**Backend Log Evidence**:
+- Historical logs show successful flow exists:
+  - `GET /api/admin/site/content-layout/pages?page_type=home&country=TR&module=vehicle HTTP/1.1" 200 OK`
+  - `POST /api/admin/site/content-layout/pages/{page_id}/revisions/draft HTTP/1.1" 200 OK`
+  - `PATCH /api/admin/site/content-layout/revisions/{draft_id}/draft HTTP/1.1" 200 OK`
+  - `POST /api/admin/site/content-layout/revisions/{draft_id}/publish HTTP/1.1" 200 OK`
+- Earlier test showed: `POST /api/admin/site/content-layout/pages HTTP/1.1" 422 Unprocessable Entity` ⚠️
+- Current test logs DO NOT show the critical API calls being made ❌
+
+**Console Logs**:
+- React hydration warnings (non-critical)
+- 403 errors for `/api/admin/menu-items` (expected, menu API)
+- NO blocking JavaScript errors
+- NO visible error messages in console for draft creation failure
+
+### Screenshots Captured:
+1. **content-builder-initial.png**: Content Builder page after navigation (10s wait)
+2. **cb-tr-vehicle-home-fail.png**: Final state showing draft_id: - and loading button in drawer
+
+### Test Results Summary:
+- **Total Tests**: 1 combination tested (TR/vehicle/home)
+- **Passed**: 0/1 (0%)
+- **Failed**: 1/1 (100%)
+- **Critical Blocker**: Draft ID creation failing for TR/vehicle/home
+
+### Untested Combinations (Cannot Proceed):
+Due to critical failure on first test (TR/vehicle/home), the following combinations were NOT tested:
+- ❌ DE/global/home
+- ❌ FR/global/home
+- ❌ TR/vehicle/urgent_listings
+- ❌ TR/vehicle/category_l0_l1
+- ❌ TR/vehicle/search_ln
+
+**Reason**: Per review request, if first test fails, stop testing other combinations.
+
+### Final Status:
+- **Overall Result**: ❌ **CRITICAL FAIL** - Core draft creation flow is broken
+- **Draft Creation**: ❌ NOT WORKING (TR/vehicle/home fails)
+- **Template Application**: ⚠️ CANNOT TEST (requires active draft)
+- **Save Draft**: ⚠️ CANNOT TEST (requires active draft)
+- **Publish**: ⚠️ CANNOT TEST (requires active draft)
+- **Production Readiness**: ❌ NOT READY - Critical blocker prevents any page creation/editing
+
+### Recommendations for Main Agent:
+
+**High Priority - Investigate Draft Creation Failure**:
+1. Check backend API `/api/admin/site/content-layout/pages` endpoint:
+   - Verify endpoint is working and not timing out
+   - Check for validation errors causing 422 responses
+   - Review recent changes to page creation logic
+
+2. Check backend API `/api/admin/site/content-layout/pages/{page_id}/revisions/draft` endpoint:
+   - Verify draft revision creation is working
+   - Check `withRetries()` logic in frontend - may need longer timeout
+   - Review database constraints that might block draft creation
+
+3. Frontend Investigation:
+   - Add console logging to `loadOrCreatePage()` and `getRevisionsForPage()` functions
+   - Check if API calls are actually being triggered
+   - Verify error handling is displaying errors properly (currently silent failure)
+
+4. Database Check:
+   - Verify TR/vehicle/home page exists in database
+   - Check if there are orphaned drafts blocking new draft creation
+   - Review revision status constraints
+
+**Testing Note**: The flow historically worked (backend logs show successful publish), but currently fails. This suggests recent code changes may have introduced a regression.
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Mar 6, 2026 (LATEST)
+- **Message**: Content Builder Page Creation Flow Test FAILED with CRITICAL BLOCKER. **CRITICAL ISSUE**: Draft ID creation is NOT working for TR/vehicle/home combination. Flow tested: 1) Admin login SUCCESS ✅. 2) Navigate to Content Builder SUCCESS ✅. 3) Open setup drawer SUCCESS ✅. 4) Fill form (home, TR, vehicle) SUCCESS ✅. 5) Click "Load/Create Page" button - button clicked and shows loading state BUT after 8+ seconds wait, draft_id still shows as "-" meaning NO DRAFT ID CREATED ❌. 6) UI shows: "page_id: - draft_id: - revision_count: 0 Aktif binding bulunamadı." 7) Save Draft and Publish buttons are disabled (expected without draft_id). **ROOT CAUSE**: Either (A) API call not being triggered from frontend, (B) Backend API hanging/timing out (>8s), (C) API failing silently without error toast, or (D) Race condition in state management. Backend logs from earlier tests show this flow WORKED historically with successful draft creation and publish. Current logs DO NOT show the critical API calls (`GET /api/admin/site/content-layout/pages` or `POST /api/admin/site/content-layout/pages/{page_id}/revisions/draft`) being made during test. One earlier log shows `POST /api/admin/site/content-layout/pages HTTP/1.1" 422 Unprocessable Entity` suggesting validation issues. **TESTING STOPPED**: Per review request, other combinations (DE/global/home, FR/global/home, TR/vehicle/urgent_listings, TR/vehicle/category_l0_l1, TR/vehicle/search_ln) NOT tested because first test failed. **URGENT ACTION REQUIRED**: Debug and fix draft creation API flow before any Content Builder functionality can work. This is a PRODUCTION-BLOCKING issue.
+
