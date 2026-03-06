@@ -1,0 +1,57 @@
+{
+  "summary": "Iteration 147: Verified reset-and-seed-home-wireframe endpoint fix. The endpoint was failing with 503 DB_ERROR due to UTF-8 to SQL_ASCII encoding conversion issue in the wireframe payload (Turkish characters like İ, Ğ). Applied fix by wrapping payload with _sanitize_payload_for_sql_ascii() function. After fix, endpoint returns 200 OK with ok=true and correctly: deletes demo revisions (19), passivates all old revisions (94), creates new home wireframe pages for TR/DE/FR (3).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_reset_wireframe_147.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Applied fix: Added _sanitize_payload_for_sql_ascii() wrapper around _build_home_wireframe_payload() in reset_layouts_and_seed_home_wireframe endpoint at line 2876"
+  ],
+  "updated_files": [
+    "/app/backend/app/routers/layout_builder_routes.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "3 new wireframe home pages created for TR, DE, FR via reset workflow",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The reset-and-seed-home-wireframe endpoint now works correctly. It passivates all existing revisions (94) and creates new wireframe home pages for TR/DE/FR with sanitized ASCII-safe content. The active list now contains 3 home pages (TR, DE, FR) and the passive list contains 91 passivated revisions. Public home pages /tr, /de, /fr render the wireframe layout correctly with HEADER, ACIL ILANLAR CTA, KATEGORILER navigation, VITRIN ILANLARI listing grid, and FOOTER sections.",
+  "fix_applied": {
+    "file": "/app/backend/app/routers/layout_builder_routes.py",
+    "line": 2873,
+    "change": "Wrapped _build_home_wireframe_payload() with _sanitize_payload_for_sql_ascii() to convert Turkish characters to ASCII",
+    "reason": "Database has SQL_ASCII encoding while wireframe payload contained UTF-8 Turkish characters (İ, Ğ) causing 'conversion between UTF8 and SQL_ASCII is not supported' error"
+  },
+  "verification_results": {
+    "endpoint_response": {
+      "ok": true,
+      "countries": ["TR", "DE", "FR"],
+      "module": "global",
+      "summary": {
+        "hard_deleted_demo_revisions": 19,
+        "passivated_revisions": 94,
+        "reactivated_home_revisions": 3,
+        "home_pages_touched": 3
+      }
+    },
+    "active_list_count": 3,
+    "passive_list_count": 91,
+    "public_pages_status": {
+      "/tr": "200 OK - renders wireframe with HEADER, ACIL ILANLAR, KATEGORILER, VITRIN ILANLARI, FOOTER",
+      "/de": "200 OK - renders wireframe correctly with listings",
+      "/fr": "200 OK - renders wireframe correctly"
+    }
+  }
+}
