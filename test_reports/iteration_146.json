@@ -1,0 +1,60 @@
+{
+  "summary": "Iteration 146: Tested Content List active/passive state filter, restore functionality, and reset wireframe workflow. Backend state filter endpoints (active/passive) are working correctly. Reset-and-seed-home-wireframe endpoint returns 503 DB_ERROR consistently. Frontend UI correctly displays active/passive switch, restore buttons in passive list, and reset wireframe button. Public home pages (TR/DE/FR) correctly render wireframe-based layout with expected sections.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "POST /api/admin/layouts/workflows/reset-and-seed-home-wireframe",
+        "issue": "Returns 503 DB_ERROR on every call. The endpoint appears to have database connection issues during the complex transaction (passivating all revisions + creating new home wireframes).",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": [
+      {
+        "endpoint": "GET /api/admin/layouts?state=invalid_state",
+        "issue": "Returns 422 instead of expected 400 for invalid state filter. This is acceptable as Pydantic validation returns 422."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Reset Wireframe workflow button",
+        "issue": "Button exists and is clickable but the backend endpoint fails with DB_ERROR, so no visual feedback or state change occurs in UI after clicking",
+        "affected_selectors": ["[data-testid=\"admin-content-list-template-pack-reset-wireframe-button\"]"]
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "AdminContentList page",
+        "issues": ["Multiple React hydration errors in console (span inside option, span inside select, tr inside span, span inside tbody) - not blocking but should be fixed for proper HTML semantics"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_layout_builder_state_filter.py",
+    "/app/test_reports/pytest/pytest_results_146.xml"
+  ],
+  "action_items": [
+    "CRITICAL: Fix reset-and-seed-home-wireframe endpoint DB_ERROR - the endpoint times out or loses DB connection during complex transaction",
+    "Consider adding transaction batching or chunking for the passivate all + create wireframe workflow",
+    "Fix React hydration errors in AdminContentList.js (span children inside select/option/tbody/tr elements)"
+  ],
+  "critical_code_review_comments": [
+    "The reset-and-seed-home-wireframe endpoint performs too many operations in a single transaction (fetching all revisions, passivating them, then creating 3 new home pages with drafts and publishing). This could cause DB connection timeouts.",
+    "Consider breaking the workflow into smaller transactions or using background tasks for heavy operations."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_layout_builder_state_filter.py"
+  ],
+  "success_rate": {
+    "backend": "90% (9/10 tests passed, 1 failed due to DB_ERROR on reset workflow)",
+    "frontend": "85% (UI elements work, but reset workflow integration fails)"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "No new seed data created",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The reset-and-seed-home-wireframe endpoint consistently returns DB_ERROR. All other tested endpoints (state=active filter, state=passive filter, restore endpoint) work correctly. The frontend UI correctly implements active/passive view toggle with proper buttons and restore functionality visible in passive list. Public home pages (TR/DE/FR) render wireframe layout with 102 runtime components including category navigator, listing grid, CTA blocks, ad slots, heading and text blocks.",
+  "rca_of_the_issue": "The reset-and-seed-home-wireframe endpoint failure is likely caused by: 1) Large transaction involving SELECT of all revisions, multiple UPDATE operations for passivation, then INSERT operations for new pages + revisions + publish 2) Possible DB connection pool exhaustion or timeout during the long-running transaction 3) MeiliSearch settings sync background task also experiencing timeouts, suggesting overall system resource contention"
+}

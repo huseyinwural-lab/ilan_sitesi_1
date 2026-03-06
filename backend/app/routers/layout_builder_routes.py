@@ -950,6 +950,13 @@ class StandardTemplatePackInstallPayload(BaseModel):
     include_extended_templates: bool = False
 
 
+class LayoutResetAndWireframePayload(BaseModel):
+    countries: list[str] = Field(default_factory=lambda: ["TR", "DE", "FR"], min_length=1, max_length=20)
+    module: str = Field(default="global", min_length=2, max_length=64)
+    passivate_all: bool = True
+    hard_delete_demo_pages: bool = True
+
+
 def _cache_key(country: str, module: str, page_type: LayoutPageType, category_id: Optional[str], lang: str = "tr") -> str:
     normalized_category = str(category_id or "").strip().lower()
     return f"{country.upper()}|{module.strip().lower()}|{page_type.value}|{normalized_category}|{_normalize_i18n_lang(lang)}"
@@ -1109,6 +1116,115 @@ def _normalize_countries_or_400(countries: list[str]) -> list[str]:
 
 def _parse_countries_csv_or_400(raw_countries: str) -> list[str]:
     return _normalize_countries_or_400([token for token in str(raw_countries or "").split(",") if token.strip()])
+
+
+def _normalize_layout_list_state_filter_or_400(raw_state: Optional[str]) -> str:
+    normalized = str(raw_state or "all").strip().lower()
+    if normalized not in {"all", "active", "passive"}:
+        raise HTTPException(status_code=400, detail="state_must_be_all_active_or_passive")
+    return normalized
+
+
+def _is_demo_revision_candidate(revision: LayoutRevision, page: LayoutPage) -> bool:
+    payload = revision.payload_json or {}
+    meta = payload.get("meta") if isinstance(payload, dict) else {}
+    generated_by = str((meta or {}).get("generated_by") or "").strip().lower()
+    if generated_by in {"agent-demo", "content-list-copy", "test-seed", "wireframe-home-v2"}:
+        return True
+
+    if page.page_type in {LayoutPageType.SEARCH_L1, LayoutPageType.SEARCH_L2, LayoutPageType.LISTING_CREATE_STEPX}:
+        return True
+
+    if revision.status == LayoutRevisionStatus.DRAFT and revision.published_at is None:
+        revision_age = datetime.now(timezone.utc) - (revision.created_at or datetime.now(timezone.utc))
+        if revision_age <= timedelta(days=14):
+            return True
+
+    return False
+
+
+def _build_home_wireframe_payload(module: str = "global") -> dict[str, Any]:
+    module_key = str(module or "global").strip() or "global"
+    return {
+        "meta": {
+            "template_version": "wireframe-home-v2",
+            "generated_by": "wireframe-home-v2",
+            "template_locked_after_publish": False,
+        },
+        "rows": [
+            _seed_row([
+                _seed_column(12, [
+                    _seed_component("shared.text-block", {
+                        "title": "HEADER",
+                        "body": "",
+                    }),
+                ]),
+            ]),
+            _seed_row([
+                _seed_column(12, [
+                    _seed_component("ad.slot", {
+                        "placement": "home_top",
+                        "size": "horizontal",
+                        "rotation": "on",
+                    }),
+                ]),
+            ]),
+            _seed_row([
+                _seed_column(3, [
+                    _seed_component("cta.block", {
+                        "mode": "quick_filter",
+                        "quick_filter": "urgent",
+                        "title": "ACİL İLANLAR",
+                        "style": "danger",
+                        "target": "same",
+                        "font_size": 15,
+                        "font_weight": "700",
+                        "font_style": "normal",
+                        "text_color": "#ffffff",
+                        "bg_color": "#dc2626",
+                    }),
+                    _seed_component("category.navigator", {
+                        "title": "KATEGORİLER",
+                        "start_level": "L0",
+                        "depth": "L1",
+                        "placement": "side",
+                        "module": module_key,
+                        "show_counts": True,
+                        "tree_behavior": "expanded",
+                        "style_variant": "classic",
+                    }),
+                ]),
+                _seed_column(9, [
+                    _seed_component("content.heading", {
+                        "text": "VİTRİN İLANLARI",
+                        "font_size": 22,
+                        "font_weight": "800",
+                        "alignment": "left",
+                    }),
+                    _seed_component("listing.grid", {
+                        "source": "showcase",
+                        "columns": 3,
+                        "rows": 3,
+                        "auto_refresh": "30s",
+                        "order": "newest",
+                    }),
+                    _seed_component("ad.slot", {
+                        "placement": "home_bottom",
+                        "size": "horizontal",
+                        "rotation": "on",
+                    }),
+                ]),
+            ]),
+            _seed_row([
+                _seed_column(12, [
+                    _seed_component("shared.text-block", {
+                        "title": "FOOTER",
+                        "body": "",
+                    }),
+                ]),
+            ]),
+        ],
+    }
 
 
 def _serialize_binding(row: LayoutBinding) -> dict[str, Any]:
@@ -2524,18 +2640,27 @@ async def list_layout_pages(
 async def list_admin_layouts(
     include_deleted: bool = Query(default=False),
     statuses: Optional[str] = Query(default="draft,published"),
+    state: str = Query(default="all"),
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=50, ge=1, le=200),
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
 ):
     status_filters = _parse_layout_status_filters(statuses)
+    state_filter = _normalize_layout_list_state_filter_or_400(state)
 
     query = select(LayoutRevision, LayoutPage).join(LayoutPage, LayoutPage.id == LayoutRevision.layout_page_id)
     if status_filters:
         query = query.where(LayoutRevision.status.in_(status_filters))
     if not include_deleted:
         query = query.where(LayoutRevision.is_deleted.is_(False))
+    if state_filter == "active":
+        query = query.where(and_(LayoutRevision.is_deleted.is_(False), LayoutRevision.is_active.is_(True)))
+    elif state_filter == "passive":
+        query = query.where(
+            (LayoutRevision.is_deleted.is_(True))
+            | (LayoutRevision.is_active.is_(False))
+        )
 
     count_result = await session.execute(select(func.count()).select_from(query.subquery()))
     total = int(count_result.scalar() or 0)
@@ -2627,6 +2752,168 @@ async def set_admin_layout_active_state(
     await session.commit()
     _invalidate_resolve_cache()
     return {"ok": True, "item": _serialize_layout_revision(row)}
+
+
+@router.post("/admin/layouts/{revision_id}/restore")
+async def restore_admin_layout_revision(
+    revision_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    revision_uuid = _as_uuid_or_400(revision_id, field_name="revision_id")
+    row = await session.get(LayoutRevision, revision_uuid)
+    if not row:
+        raise HTTPException(status_code=404, detail="Layout revision not found")
+
+    before = {
+        "is_active": bool(getattr(row, "is_active", True)),
+        "is_deleted": bool(getattr(row, "is_deleted", False)),
+        "status": row.status.value,
+    }
+    row.is_deleted = False
+    row.is_active = True
+
+    await write_layout_audit_log(
+        session,
+        actor_user_id=current_user.get("id"),
+        action=LayoutAuditAction.CREATE_REVISION,
+        entity_type="layout_revision",
+        entity_id=str(row.id),
+        before_json=before,
+        after_json={
+            "is_active": bool(row.is_active),
+            "is_deleted": bool(getattr(row, "is_deleted", False)),
+            "status": row.status.value,
+        },
+        ip=request.client.host if request and request.client else None,
+        user_agent=request.headers.get("user-agent") if request else None,
+    )
+    await session.commit()
+    _invalidate_resolve_cache()
+    return {"ok": True, "item": _serialize_layout_revision(row)}
+
+
+@router.post("/admin/layouts/workflows/reset-and-seed-home-wireframe")
+async def reset_layouts_and_seed_home_wireframe(
+    payload: LayoutResetAndWireframePayload,
+    request: Request,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    await _ensure_layout_page_type_enum_values(session)
+
+    normalized_countries = _normalize_countries_or_400(payload.countries)
+    normalized_module = str(payload.module or "global").strip()
+    passivate_all = bool(payload.passivate_all)
+    hard_delete_demo_pages = bool(payload.hard_delete_demo_pages)
+
+    revisions_result = await session.execute(
+        select(LayoutRevision, LayoutPage)
+        .join(LayoutPage, LayoutPage.id == LayoutRevision.layout_page_id)
+        .where(LayoutRevision.status.in_([LayoutRevisionStatus.DRAFT, LayoutRevisionStatus.PUBLISHED]))
+        .order_by(desc(LayoutRevision.created_at))
+    )
+    revision_pairs = revisions_result.all()
+
+    summary = {
+        "hard_deleted_demo_revisions": 0,
+        "passivated_revisions": 0,
+        "reactivated_home_revisions": 0,
+        "home_pages_touched": 0,
+    }
+
+    for revision_row, page_row in revision_pairs:
+        if hard_delete_demo_pages and _is_demo_revision_candidate(revision_row, page_row):
+            await session.delete(revision_row)
+            summary["hard_deleted_demo_revisions"] += 1
+            continue
+
+        if passivate_all:
+            changed = False
+            if bool(getattr(revision_row, "is_active", True)):
+                revision_row.is_active = False
+                changed = True
+            if bool(getattr(revision_row, "is_deleted", False)):
+                revision_row.is_deleted = False
+                changed = True
+            if changed:
+                summary["passivated_revisions"] += 1
+
+    for country_code in normalized_countries:
+        page_result = await session.execute(
+            select(LayoutPage)
+            .where(
+                and_(
+                    LayoutPage.page_type == LayoutPageType.HOME,
+                    LayoutPage.country == country_code,
+                    LayoutPage.module == normalized_module,
+                    LayoutPage.category_id.is_(None),
+                )
+            )
+            .order_by(desc(LayoutPage.updated_at), desc(LayoutPage.created_at))
+            .limit(1)
+        )
+        page_row = page_result.scalar_one_or_none()
+        if not page_row:
+            i18n = _default_layout_page_i18n(LayoutPageType.HOME)
+            page_row = await create_layout_page(
+                session,
+                page_type=LayoutPageType.HOME,
+                country=country_code,
+                module=normalized_module,
+                category_id=None,
+                title_i18n=i18n["title_i18n"],
+                description_i18n=i18n["description_i18n"],
+                label_i18n=i18n["label_i18n"],
+                actor_user_id=current_user.get("id"),
+            )
+
+        draft_row = await create_draft_revision(
+            session,
+            layout_page_id=str(page_row.id),
+            payload_json=_build_home_wireframe_payload(module=normalized_module),
+            actor_user_id=current_user.get("id"),
+        )
+        draft_row.is_active = True
+
+        published_row = await publish_revision(
+            session,
+            revision_id=str(draft_row.id),
+            actor_user_id=current_user.get("id"),
+        )
+        published_row.is_active = True
+
+        await write_layout_audit_log(
+            session,
+            actor_user_id=current_user.get("id"),
+            action=LayoutAuditAction.PUBLISH,
+            entity_type="layout_page",
+            entity_id=str(page_row.id),
+            before_json={
+                "country": country_code,
+                "module": normalized_module,
+            },
+            after_json={
+                "country": country_code,
+                "module": normalized_module,
+                "wireframe_revision_id": str(published_row.id),
+            },
+            ip=request.client.host if request and request.client else None,
+            user_agent=request.headers.get("user-agent") if request else None,
+        )
+
+        summary["home_pages_touched"] += 1
+        summary["reactivated_home_revisions"] += 1
+
+    await session.commit()
+    _invalidate_resolve_cache()
+    return {
+        "ok": True,
+        "countries": normalized_countries,
+        "module": normalized_module,
+        "summary": summary,
+    }
 
 
 @router.post("/admin/layouts/{revision_id}/copy")

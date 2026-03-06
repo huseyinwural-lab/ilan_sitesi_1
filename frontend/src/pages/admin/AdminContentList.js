@@ -97,7 +97,7 @@ export default function AdminContentList() {
   const [contentListLoading, setContentListLoading] = useState(false);
   const [contentListError, setContentListError] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
-  const [contentListIncludeDeleted, setContentListIncludeDeleted] = useState(true);
+  const [contentListView, setContentListView] = useState('active');
 
   const [copyTargetPageType, setCopyTargetPageType] = useState('home');
   const [copyTargetCountry, setCopyTargetCountry] = useState('DE');
@@ -125,7 +125,7 @@ export default function AdminContentList() {
       const response = await axios.get(`${API}/admin/layouts`, {
         headers: authHeaders,
         params: {
-          include_deleted: contentListIncludeDeleted,
+          include_deleted: true,
           statuses: CONTENT_LIST_STATUS_FILTER.join(','),
           page: 1,
           limit: 200,
@@ -141,11 +141,21 @@ export default function AdminContentList() {
     } finally {
       setContentListLoading(false);
     }
-  }, [authHeaders, contentListIncludeDeleted]);
+  }, [authHeaders]);
 
   useEffect(() => {
     fetchContentList({ silent: true });
   }, [fetchContentList]);
+
+  const activeRows = useMemo(
+    () => contentListRows.filter((item) => !item?.is_deleted && Boolean(item?.is_active)),
+    [contentListRows],
+  );
+  const passiveRows = useMemo(
+    () => contentListRows.filter((item) => Boolean(item?.is_deleted) || !Boolean(item?.is_active)),
+    [contentListRows],
+  );
+  const visibleRows = contentListView === 'passive' ? passiveRows : activeRows;
 
   const handleContentListEdit = (item) => {
     if (!item?.layout_page_id || item.is_deleted) return;
@@ -231,6 +241,67 @@ export default function AdminContentList() {
     } catch (err) {
       setContentListError(err?.response?.data?.detail || 'Aktif/pasif güncellemesi başarısız');
       toast.error('Aktif/pasif güncellemesi başarısız.');
+    }
+  };
+
+  const handleRestoreFromPassive = async (item) => {
+    if (!item?.revision_id) return;
+
+    setStatusMessage('');
+    setContentListError('');
+    try {
+      if (item.is_deleted) {
+        await axios.post(`${API}/admin/layouts/${item.revision_id}/restore`, {}, { headers: authHeaders });
+      } else {
+        await axios.patch(
+          `${API}/admin/layouts/${item.revision_id}/active`,
+          { is_active: true },
+          { headers: authHeaders },
+        );
+      }
+
+      setStatusMessage('Revision tekrar aktif listeye alındı.');
+      toast.success('Revision aktif edildi.');
+      await fetchContentList({ silent: true });
+      setContentListView('active');
+    } catch (err) {
+      setContentListError(err?.response?.data?.detail || 'Revision geri yükleme başarısız');
+      toast.error('Revision geri yükleme başarısız.');
+    }
+  };
+
+  const handleResetAndSeedHomeWireframe = async () => {
+    const confirmed = window.confirm('Tüm listeleri pasifleştirip (A: tüm scope), TR/DE/FR için yeni wireframe ana sayfa oluşturulsun mu?');
+    if (!confirmed) return;
+
+    setPresetLoading(true);
+    setPresetError('');
+    setPresetStatus('');
+    setStatusMessage('');
+    setContentListError('');
+    try {
+      const response = await axios.post(
+        `${API}/admin/layouts/workflows/reset-and-seed-home-wireframe`,
+        {
+          countries: ['TR', 'DE', 'FR'],
+          module: 'global',
+          passivate_all: true,
+          hard_delete_demo_pages: true,
+        },
+        { headers: authHeaders },
+      );
+
+      setPresetInstallResult(response.data || null);
+      setPresetStatus('Tüm sayfalar pasife alındı ve yeni ana sayfa wireframe’i TR/DE/FR için oluşturuldu.');
+      setStatusMessage('Toplu pasifleştirme + yeni ana sayfa oluşturma tamamlandı.');
+      toast.success('Yeni ana sayfa wireframe operasyonu tamamlandı.');
+      await fetchContentList({ silent: true });
+      setContentListView('active');
+    } catch (err) {
+      setPresetError(err?.response?.data?.detail || 'Toplu pasifleştirme/wireframe işlemi başarısız');
+      toast.error('Toplu pasifleştirme/wireframe işlemi başarısız.');
+    } finally {
+      setPresetLoading(false);
     }
   };
 
@@ -330,15 +401,24 @@ export default function AdminContentList() {
             >
               Yenile
             </button>
-            <label className="inline-flex items-center gap-2" data-testid="admin-content-list-include-deleted-wrap">
-              <input
-                type="checkbox"
-                checked={contentListIncludeDeleted}
-                onChange={(event) => setContentListIncludeDeleted(event.target.checked)}
-                data-testid="admin-content-list-include-deleted-input"
-              />
-              Silinenleri göster
-            </label>
+            <div className="inline-flex rounded border p-1" data-testid="admin-content-list-view-switch">
+              <button
+                type="button"
+                className={`h-8 rounded px-3 ${contentListView === 'active' ? 'bg-emerald-600 text-white' : 'text-slate-700'}`}
+                onClick={() => setContentListView('active')}
+                data-testid="admin-content-list-view-active-button"
+              >
+                Aktif List ({activeRows.length})
+              </button>
+              <button
+                type="button"
+                className={`h-8 rounded px-3 ${contentListView === 'passive' ? 'bg-rose-600 text-white' : 'text-slate-700'}`}
+                onClick={() => setContentListView('passive')}
+                data-testid="admin-content-list-view-passive-button"
+              >
+                Pasif/Arşiv List ({passiveRows.length})
+              </button>
+            </div>
           </div>
         </div>
 
@@ -403,9 +483,18 @@ export default function AdminContentList() {
           <div className="flex flex-wrap items-center justify-between gap-2" data-testid="admin-content-list-template-pack-header">
             <div>
               <h2 className="text-xs font-semibold" data-testid="admin-content-list-template-pack-title">#612 + P1 Başlangıç: Standart Template Pack</h2>
-              <p className="text-xs text-slate-500" data-testid="admin-content-list-template-pack-subtitle">TR/DE/FR için (varsayılan: core 4 şablon) publish doğrulama ve tek tık preset kurulum akışı</p>
+              <p className="text-xs text-slate-500" data-testid="admin-content-list-template-pack-subtitle">TR/DE/FR için (varsayılan: core 4 şablon) publish doğrulama, tek tık preset kurulum ve wireframe reset akışı</p>
             </div>
             <div className="flex gap-2" data-testid="admin-content-list-template-pack-header-actions">
+              <button
+                type="button"
+                className="h-8 rounded border border-amber-300 px-3 text-xs text-amber-700"
+                onClick={handleResetAndSeedHomeWireframe}
+                disabled={presetLoading}
+                data-testid="admin-content-list-template-pack-reset-wireframe-button"
+              >
+                Tümünü Pasifleştir + Yeni Home Oluştur
+              </button>
               <button
                 type="button"
                 className="h-8 rounded border px-3 text-xs"
@@ -539,6 +628,9 @@ export default function AdminContentList() {
         </div>
 
         <div className="mt-3 overflow-x-auto" data-testid="admin-content-list-table-wrap">
+          <div className="mb-2 text-xs font-semibold text-slate-700" data-testid="admin-content-list-current-view-label">
+            {contentListView === 'active' ? 'Aktif List' : 'Pasif / Arşiv List'}
+          </div>
           <table className="min-w-full text-left text-xs" data-testid="admin-content-list-table">
             <thead>
               <tr className="border-b bg-slate-50" data-testid="admin-content-list-head-row">
@@ -558,12 +650,12 @@ export default function AdminContentList() {
                 <tr data-testid="admin-content-list-loading-row">
                   <td className="px-2 py-3 text-slate-500" colSpan={9} data-testid="admin-content-list-loading-cell">İçerik listesi yükleniyor...</td>
                 </tr>
-              ) : contentListRows.length === 0 ? (
+              ) : visibleRows.length === 0 ? (
                 <tr data-testid="admin-content-list-empty-row">
-                  <td className="px-2 py-3 text-slate-500" colSpan={9} data-testid="admin-content-list-empty-cell">Kayıt bulunamadı.</td>
+                  <td className="px-2 py-3 text-slate-500" colSpan={9} data-testid="admin-content-list-empty-cell">{contentListView === 'active' ? 'Aktif listede kayıt bulunamadı.' : 'Pasif/Arşiv listesinde kayıt bulunamadı.'}</td>
                 </tr>
               ) : (
-                contentListRows.map((item) => {
+                visibleRows.map((item) => {
                   const rowKey = item.revision_id || item.id;
                   const deleted = Boolean(item.is_deleted);
                   const active = !deleted && Boolean(item.is_active);
@@ -597,51 +689,57 @@ export default function AdminContentList() {
                       <td className="px-2 py-2" data-testid={`admin-content-list-updated-at-${rowKey}`}>{formatLayoutUpdatedAt(item.updated_at)}</td>
                       <td className="px-2 py-2" data-testid={`admin-content-list-actions-${rowKey}`}>
                         <div className="flex flex-wrap gap-1">
-                          <button
-                            type="button"
-                            className="h-8 rounded border px-2 text-[11px]"
-                            onClick={() => handleContentListEdit(item)}
-                            disabled={deleted}
-                            data-testid={`admin-content-list-edit-button-${rowKey}`}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="h-8 rounded border border-rose-300 px-2 text-[11px] text-rose-700"
-                            onClick={() => handleContentListDelete(item)}
-                            disabled={deleted}
-                            data-testid={`admin-content-list-delete-button-${rowKey}`}
-                          >
-                            Delete
-                          </button>
-                          <button
-                            type="button"
-                            className="h-8 rounded border border-blue-300 px-2 text-[11px] text-blue-700"
-                            onClick={() => handleContentListCopy(item)}
-                            disabled={deleted}
-                            data-testid={`admin-content-list-copy-button-${rowKey}`}
-                          >
-                            Kopyala
-                          </button>
-                          <button
-                            type="button"
-                            className="h-8 rounded border border-emerald-300 px-2 text-[11px] text-emerald-700"
-                            onClick={() => handleSetRevisionActive(item, true)}
-                            disabled={deleted || active}
-                            data-testid={`admin-content-list-activate-button-${rowKey}`}
-                          >
-                            Aktif Et
-                          </button>
-                          <button
-                            type="button"
-                            className="h-8 rounded border border-rose-300 px-2 text-[11px] text-rose-700"
-                            onClick={() => handleSetRevisionActive(item, false)}
-                            disabled={deleted || !active}
-                            data-testid={`admin-content-list-deactivate-button-${rowKey}`}
-                          >
-                            Pasif Et
-                          </button>
+                          {contentListView === 'active' ? (
+                            <>
+                              <button
+                                type="button"
+                                className="h-8 rounded border px-2 text-[11px]"
+                                onClick={() => handleContentListEdit(item)}
+                                disabled={deleted}
+                                data-testid={`admin-content-list-edit-button-${rowKey}`}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="h-8 rounded border border-rose-300 px-2 text-[11px] text-rose-700"
+                                onClick={() => handleContentListDelete(item)}
+                                disabled={deleted}
+                                data-testid={`admin-content-list-delete-button-${rowKey}`}
+                              >
+                                Delete
+                              </button>
+                              <button
+                                type="button"
+                                className="h-8 rounded border border-blue-300 px-2 text-[11px] text-blue-700"
+                                onClick={() => handleContentListCopy(item)}
+                                disabled={deleted}
+                                data-testid={`admin-content-list-copy-button-${rowKey}`}
+                              >
+                                Kopyala
+                              </button>
+                              <button
+                                type="button"
+                                className="h-8 rounded border border-rose-300 px-2 text-[11px] text-rose-700"
+                                onClick={() => handleSetRevisionActive(item, false)}
+                                disabled={deleted || !active}
+                                data-testid={`admin-content-list-deactivate-button-${rowKey}`}
+                              >
+                                Pasif Et
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                className="h-8 rounded border border-emerald-300 px-2 text-[11px] text-emerald-700"
+                                onClick={() => handleRestoreFromPassive(item)}
+                                data-testid={`admin-content-list-restore-button-${rowKey}`}
+                              >
+                                {deleted ? 'Geri Yükle + Aktif Et' : 'Aktif Et'}
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
