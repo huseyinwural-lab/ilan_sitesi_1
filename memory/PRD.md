@@ -344,6 +344,24 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - 12 sayfa builder-driven doğrulandı (layout varsa render, yoksa empty-state)
   - Publish Guard deprecated + unknown key bloklama PASS
 
+## 2026-03-06 (Final Doğrulama — Builder-Only Zincir Kilitlendi)
+
+### Final Test Raporu
+- `/app/test_reports/iteration_152.json`
+  - Backend: **100% (25/25)**
+  - Frontend: **100%**
+
+### Doğrulanan Kriterler
+- TR/DE/FR home sayfaları builder-driven render ediyor.
+- TR/DE/FR search ve urgent sayfaları builder-driven; layout yoksa clean empty-state gösteriyor.
+- Category landing route static içerik taşımıyor, builder flow’a redirect ediyor.
+- Publish Guard aktif:
+  - deprecated keyler bloklanıyor
+  - unknown/inactive keyler bloklanıyor
+- Admin component definitions:
+  - deprecated navigator keyler dışlanmış
+  - yeni 2 navigator key mevcut
+
 ## 2026-03-06 (P0 — Sayfa Tasarım Fazı Başlangıcı: Home / Acil / Kategori / Liste Kompozisyonları)
 
 ## 2026-03-06 (P0 — Kapanış Görevleri Tamamlandı: Kalıcılaştırma + İçerik + QA + Final Smoke)
