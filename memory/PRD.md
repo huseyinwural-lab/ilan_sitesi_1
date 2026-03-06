@@ -20,6 +20,53 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ## 2026-03-05 (P1 — Reklam Yönetimi Formu: Firma Adı + İletişim)
 
+## 2026-03-06 (P0 — Sayfa Tasarım Fazı Başlangıcı: Home / Acil / Kategori / Liste Kompozisyonları)
+
+### Kullanıcı Onayı Sonrası Yapılanlar
+- Kullanıcı onayıyla route-bazlı kompozisyon fazına geçildi.
+- `home`, `urgent_listings`, `category_l0_l1`, `search_ln` için standart şablon payload’ları final pattern’e göre güncellendi.
+
+### Uygulanan Kompozisyonlar
+- **Home (`home`)**
+  - `content.heading`, `content.text-block`, `media.hero-banner(dynamic)`
+  - `category.navigator(side, L0→L1)`
+  - `listing.grid(source=showcase, auto_refresh=30s)`
+  - 3 adet `cta.block` (urgent/showcase/campaign quick_filter)
+  - `ad.slot(home_bottom)`
+- **Acil (`urgent_listings`)**
+  - `content.heading`, `content.text-block`, `cta.block(urgent)`
+  - `listing.list(source=urgent, pagination on)`
+  - `ad.slot(urgent_top)`
+  - `category.navigator(side, depth=Lall)`
+  - `listing.grid(source=urgent)`
+- **Kategori (`category_l0_l1`)**
+  - `content.heading`, `layout.breadcrumb-header`, `category.navigator(top)`
+  - `category.sub-category-block`
+  - `listing.grid(source=category)` + `listing.list(source=category)`
+  - `ad.slot(category_top/bottom)` + `cta.block(campaign)`
+- **Liste (`search_ln`)**
+  - `content.heading`, `content.text-block`
+  - `category.navigator(side, depth=Lall)` + `category.sub-category-block`
+  - `listing.list(source=search, pagination on)`
+  - `listing.grid(source=latest/random)` + `ad.slot(category_bottom)`
+
+### Ek Uygulamalar
+- Public route alias’leri eklendi:
+  - `/acil`, `/vitrin`, `/kampanya`, `/liste`, `/kategori` (+ locale varyantları)
+- Search query uyumluluğu genişletildi:
+  - `badge` paramı `doping` aliası olarak işlenir.
+- Builder UX:
+  - Canvas sütunları drag handle ile sağa-sola taşınabilir (kilitli değil).
+
+### Test Durumu
+- Backend smoke PASS (5/5 endpoint):
+  - `/api/public/listings`, `/api/categories/tree`, `/api/categories/listing-counts`, `/api/ads/resolve`, `/api/banners`
+- Frontend self smoke PASS:
+  - Standart şablon doğrudan uygulamada `home` için yeni key set doğrulandı (`content.heading`, `media.hero-banner`, `listing.grid`, `cta.block`)
+  - 4 page type için şablon uygulama + key doğrulama + column drag PASS (screenshot_tool)
+  - Route alias yüklenme PASS: `/acil`, `/vitrin`, `/kampanya`, `/liste`, `/kategori`
+- Not: Bir otomasyon koşusunda `Formları Aç` etkileşimi Playwright tarafında aralıklı timeout verdi (tooling/interaction issue), fakat manuel-akış smoke ve alternatif otomasyon adımıyla fonksiyonel doğrulama tamamlandı.
+
 ## 2026-03-05 (P0 — Content Builder Finalizasyonu: Görev Emri Uyumlu)
 
 ### Kullanıcı Talebi (Uygulandı)
