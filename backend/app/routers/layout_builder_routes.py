@@ -515,7 +515,7 @@ def _is_transient_db_error(exc: Exception) -> bool:
     return any(marker in message for marker in TRANSIENT_DB_ERROR_MARKERS)
 
 
-async def _run_with_db_retry(session: AsyncSession, operation, *, retries: int = 2):
+async def _run_with_db_retry(session: AsyncSession, operation, *, retries: int = 6):
     last_exc: Optional[Exception] = None
     for attempt in range(1, retries + 1):
         try:
@@ -528,10 +528,32 @@ async def _run_with_db_retry(session: AsyncSession, operation, *, retries: int =
                 await session.rollback()
             except Exception:
                 pass
-            await asyncio.sleep(min(0.25 * attempt, 0.75))
+            await asyncio.sleep(min(0.9 * attempt, 3.0))
     if last_exc:
         raise last_exc
     raise RuntimeError("db_retry_operation_failed")
+
+
+def _count_components(payload_json: dict[str, Any]) -> int:
+    if not isinstance(payload_json, dict):
+        return 0
+    rows = payload_json.get("rows")
+    if not isinstance(rows, list):
+        return 0
+    total = 0
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        columns = row.get("columns")
+        if not isinstance(columns, list):
+            continue
+        for col in columns:
+            if not isinstance(col, dict):
+                continue
+            comps = col.get("components")
+            if isinstance(comps, list):
+                total += len(comps)
+    return total
 
 
 def _build_generic_layout_policy_report(payload_json: dict[str, Any], *, page_type: Optional[str] = None) -> dict[str, Any]:
@@ -2648,8 +2670,16 @@ async def patch_draft_revision_admin(
     if page_row and _is_wizard_policy_page_type(page_row.page_type):
         _validate_listing_runtime_guard_or_400(payload.payload_json)
 
-    before = _serialize_layout_revision(row)
+    before_payload = row.payload_json or {}
+    before = {
+        "id": str(row.id),
+        "status": row.status.value,
+        "version": int(row.version),
+        "row_count": len(before_payload.get("rows") or []) if isinstance(before_payload, dict) else 0,
+        "component_count": _count_components(before_payload),
+    }
     row.payload_json = payload.payload_json or {}
+    after_payload = row.payload_json or {}
 
     await write_layout_audit_log(
         session,
@@ -2658,7 +2688,13 @@ async def patch_draft_revision_admin(
         entity_type="layout_revision",
         entity_id=str(row.id),
         before_json=before,
-        after_json=_serialize_layout_revision(row),
+        after_json={
+            "id": str(row.id),
+            "status": row.status.value,
+            "version": int(row.version),
+            "row_count": len(after_payload.get("rows") or []) if isinstance(after_payload, dict) else 0,
+            "component_count": _count_components(after_payload),
+        },
         ip=request.client.host if request and request.client else None,
         user_agent=request.headers.get("user-agent") if request else None,
     )
