@@ -858,7 +858,7 @@ export const CTABlock = ({ props }) => {
     <section className="rounded-xl border bg-white p-4" data-testid="runtime-cta-block">
       <button
         type="button"
-        className="inline-flex items-center rounded-full px-4 py-2"
+        className="inline-flex w-full max-w-full items-center justify-center rounded-full px-4 py-2 text-center"
         style={{
           fontSize,
           fontWeight,
@@ -866,6 +866,8 @@ export const CTABlock = ({ props }) => {
           color: textColor || selectedPreset.color,
           backgroundColor: bgColor || selectedPreset.backgroundColor,
           border: selectedPreset.border,
+          whiteSpace: 'normal',
+          wordBreak: 'break-word',
         }}
         onClick={() => {
           if (typeof window === 'undefined') return;
