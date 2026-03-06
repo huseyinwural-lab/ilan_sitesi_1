@@ -25,6 +25,14 @@ const buildL0L1Tree = (categories = []) => {
   }));
 };
 
+const resolveNodeCount = (node) => {
+  const own = Number(node?.listing_count || 0);
+  if (Number.isFinite(own) && own > 0) return own;
+  const children = Array.isArray(node?.children) ? node.children : [];
+  if (!children.length) return 0;
+  return children.reduce((sum, child) => sum + resolveNodeCount(child), 0);
+};
+
 export const CategorySidebar = ({
   categories,
   activeCategorySlug,
@@ -50,21 +58,22 @@ export const CategorySidebar = ({
 
   return (
     <div className="mb-6 space-y-3" data-testid="category-sidebar-tree-root">
-      <div className="flex items-center gap-2 text-sm font-semibold text-foreground/80" data-testid="category-sidebar-tree-title">
+      <div className="flex items-center gap-2 border-b pb-2 text-xs font-bold uppercase tracking-wide text-slate-700" data-testid="category-sidebar-tree-title">
         <Folder className="h-4 w-4" />
         Kategoriler
       </div>
 
-      <div className="rounded-lg border bg-white p-2" data-testid="category-sidebar-tree-container">
+      <div className="rounded border border-slate-200 bg-white px-2 py-2" data-testid="category-sidebar-tree-container">
         {tree.map((root) => {
           const rootToken = root.id || root.slug;
           const rootSelected = [root.id, root.slug].some((token) => normalizeToken(token) === selectedToken);
           const isOpen = treeBehavior === 'expanded' || openRootId === root.id;
           const hasChildren = Array.isArray(root.children) && root.children.length > 0;
+          const rootCount = resolveNodeCount(root);
 
           return (
-            <div key={root.id} className="border-b last:border-b-0" data-testid={`category-sidebar-root-${root.id}`}>
-              <div className="flex items-center gap-1 py-1">
+            <div key={root.id} className="border-b border-dashed border-slate-200 py-1 last:border-b-0" data-testid={`category-sidebar-root-${root.id}`}>
+              <div className="flex items-center gap-1">
                 {hasChildren ? (
                   <button
                     type="button"
@@ -80,34 +89,38 @@ export const CategorySidebar = ({
                   type="button"
                   onClick={() => onCategoryChange(rootToken || null)}
                   className={cn(
-                    'flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm transition',
-                    rootSelected ? 'bg-slate-900 font-semibold text-white' : 'font-semibold text-slate-800 hover:bg-slate-100',
+                    'flex w-full items-center justify-between rounded px-1 py-1 text-left text-sm transition',
+                    rootSelected ? 'bg-slate-50 font-semibold text-blue-800' : 'font-semibold text-blue-700 hover:bg-slate-50',
                   )}
                   data-testid={`category-sidebar-root-select-${root.id}`}
                 >
-                  <span>{root.name}</span>
-                  {showCounts ? <span className={cn('text-xs', rootSelected ? 'text-white/90' : 'text-slate-500')}>({Number(root.listing_count || 0)})</span> : null}
+                  <span className="underline-offset-2 hover:underline">{root.name}</span>
+                  {showCounts ? <span className={cn('text-xs text-slate-500')}>({rootCount})</span> : null}
                 </button>
               </div>
 
               {hasChildren && isOpen ? (
-                <div className="mb-2 ml-7 space-y-1" data-testid={`category-sidebar-children-${root.id}`}>
+                <div className="mb-1 ml-7 mt-1 space-y-1" data-testid={`category-sidebar-children-${root.id}`}>
                   {root.children.map((child) => {
                     const childToken = child.id || child.slug;
                     const childSelected = [child.id, child.slug].some((token) => normalizeToken(token) === selectedToken);
+                    const childCount = resolveNodeCount(child);
                     return (
                       <button
                         key={child.id}
                         type="button"
-                        onClick={() => onCategoryChange(childToken || null)}
+                        onClick={() => onCategoryChange(rootToken || childToken || null)}
                         className={cn(
-                          'flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm transition',
-                          childSelected ? 'bg-blue-50 font-medium text-blue-700' : 'text-slate-600 hover:bg-slate-50',
+                          'flex w-full items-center justify-between rounded px-1 py-1 text-left text-[13px] transition',
+                          childSelected ? 'bg-slate-50 font-medium text-blue-700' : 'text-blue-700 hover:bg-slate-50',
                         )}
                         data-testid={`category-sidebar-child-select-${child.id}`}
                       >
-                        <span>{child.name}</span>
-                        {showCounts ? <span className="text-xs text-slate-500">({Number(child.listing_count || 0)})</span> : null}
+                        <span className="inline-flex items-center gap-1">
+                          <span aria-hidden="true" className="text-slate-400">›</span>
+                          <span className="underline-offset-2 hover:underline">{child.name}</span>
+                        </span>
+                        {showCounts ? <span className="text-xs text-slate-500">({childCount})</span> : null}
                       </button>
                     );
                   })}

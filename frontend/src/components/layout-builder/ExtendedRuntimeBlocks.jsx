@@ -228,6 +228,14 @@ const buildL0L1Categories = (items = []) => {
   }));
 };
 
+const resolveCategoryNodeCount = (node) => {
+  const own = Number(node?.listing_count || 0);
+  if (Number.isFinite(own) && own > 0) return own;
+  const children = Array.isArray(node?.children) ? node.children : [];
+  if (!children.length) return 0;
+  return children.reduce((sum, child) => sum + resolveCategoryNodeCount(child), 0);
+};
+
 const normalizeListingFromCandidate = (candidate) => {
   if (!candidate || typeof candidate !== 'object') return null;
   const id = candidate.id || candidate.listing_id || null;
@@ -449,6 +457,13 @@ const CategoryNavigatorBase = ({ props, mode, runtimeContext }) => {
   const country = resolveRuntimeCountry(runtimeContext, props);
   const moduleName = String(props?.module || runtimeContext?.module || 'vehicle').trim();
   const selectedToken = normalizeToken(runtimeContext?.activeCategorySlug);
+  const pathname = typeof window !== 'undefined' ? String(window.location.pathname || '').toLowerCase() : '';
+  const pathSegments = pathname.split('/').filter(Boolean);
+  const isLocaleRootPath = pathSegments.length === 1 && ['tr', 'de', 'fr'].includes(pathSegments[0]);
+  const isRootPath = pathSegments.length === 0;
+  const isUrgentPath = pathSegments.includes('acil');
+  const forceClassicVariant = ['classic', 'legacy-list'].includes(String(props?.style_variant || '').trim().toLowerCase());
+  const useClassicSideNav = placement === 'side' && (forceClassicVariant || isLocaleRootPath || isRootPath || isUrgentPath);
   const [apiTree, setApiTree] = useState([]);
   const [treeLoading, setTreeLoading] = useState(false);
 
@@ -477,8 +492,9 @@ const CategoryNavigatorBase = ({ props, mode, runtimeContext }) => {
     };
   }, [country, depthToken, moduleName]);
 
-  const triggerCategoryChange = (categoryItem) => {
-    const categoryToken = categoryItem?.id || categoryItem?.slug || null;
+  const triggerCategoryChange = (categoryItem, tokenSource = null) => {
+    const source = tokenSource || categoryItem;
+    const categoryToken = source?.id || source?.slug || null;
     if (typeof runtimeContext?.onCategoryChange === 'function') {
       runtimeContext.onCategoryChange(categoryToken || null);
     }
@@ -545,16 +561,20 @@ const CategoryNavigatorBase = ({ props, mode, runtimeContext }) => {
 
   return (
     <section className="rounded-xl border bg-white p-4" data-testid="runtime-category-navigator-side">
-      <h3 className="text-sm font-semibold" data-testid="runtime-category-navigator-side-title">{title} <span className="text-[11px] text-slate-500">({startLevel} → {depthToken})</span></h3>
-      <div className="mt-3 rounded-lg border bg-white p-2" data-testid="runtime-category-navigator-side-tree">
+      <h3 className={`flex items-center gap-2 ${useClassicSideNav ? 'border-b pb-2 text-xs font-bold uppercase tracking-wide text-slate-700' : 'text-sm font-semibold'}`} data-testid="runtime-category-navigator-side-title">
+        {title}
+        <span className="text-[11px] text-slate-500">({startLevel} → {depthToken})</span>
+      </h3>
+      <div className={`mt-3 ${useClassicSideNav ? 'rounded border border-slate-200 bg-white px-2 py-2' : 'rounded-lg border bg-white p-2'}`} data-testid="runtime-category-navigator-side-tree">
         {treeLoading ? <div className="rounded border border-dashed px-2 py-2 text-[11px] text-slate-500" data-testid="runtime-category-navigator-side-loading">Kategori ağacı yükleniyor...</div> : null}
         {l0l1Tree.map((root) => {
           const rootSelected = [root.id, root.slug].some((token) => normalizeToken(token) === selectedToken);
           const isOpen = treeBehavior === 'expanded' || openRootId === root.id;
           const hasChildren = Array.isArray(root.children) && root.children.length > 0;
+          const rootCount = resolveCategoryNodeCount(root);
 
           return (
-            <div key={root.id} className="border-b last:border-b-0" data-testid={`runtime-category-navigator-side-root-${root.id}`}>
+            <div key={root.id} className={`${useClassicSideNav ? 'border-b border-dashed border-slate-200 py-1 last:border-b-0' : 'border-b last:border-b-0'}`} data-testid={`runtime-category-navigator-side-root-${root.id}`}>
               <div className="flex items-center gap-1 py-1">
                 {hasChildren ? (
                   <button
@@ -570,28 +590,36 @@ const CategoryNavigatorBase = ({ props, mode, runtimeContext }) => {
                 <button
                   type="button"
                   onClick={() => triggerCategoryChange(root)}
-                  className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm transition ${rootSelected ? 'bg-slate-900 font-semibold text-white' : 'font-semibold text-slate-800 hover:bg-slate-100'}`}
+                  className={`flex w-full items-center justify-between text-left text-sm transition ${useClassicSideNav
+                    ? `rounded px-1 py-1 ${rootSelected ? 'bg-slate-50 font-semibold text-blue-800' : 'font-semibold text-blue-700 hover:bg-slate-50'}`
+                    : `rounded-md px-2 py-1.5 ${rootSelected ? 'bg-slate-900 font-semibold text-white' : 'font-semibold text-slate-800 hover:bg-slate-100'}`}`}
                   data-testid={`runtime-category-navigator-side-root-link-${root.id}`}
                 >
-                  <span>{root.name}</span>
-                  {showCounts ? <span className={`text-xs ${rootSelected ? 'text-white/90' : 'text-slate-500'}`}>({Number(root.listing_count || 0)})</span> : null}
+                  <span className={useClassicSideNav ? 'underline-offset-2 hover:underline' : ''}>{root.name}</span>
+                  {showCounts ? <span className={`text-xs ${useClassicSideNav ? 'text-slate-500' : (rootSelected ? 'text-white/90' : 'text-slate-500')}`}>({rootCount})</span> : null}
                 </button>
               </div>
 
               {hasChildren && isOpen && maxLevels > 1 ? (
-                <div className="mb-2 ml-7 space-y-1" data-testid={`runtime-category-navigator-side-children-${root.id}`}>
+                <div className={`${useClassicSideNav ? 'mb-1 ml-7 mt-1 space-y-1' : 'mb-2 ml-7 space-y-1'}`} data-testid={`runtime-category-navigator-side-children-${root.id}`}>
                   {root.children.map((child) => {
                     const childSelected = [child.id, child.slug].some((token) => normalizeToken(token) === selectedToken);
+                    const childCount = resolveCategoryNodeCount(child);
                     return (
                       <button
                         key={child.id}
                         type="button"
-                        onClick={() => triggerCategoryChange(child)}
-                        className={`flex items-center justify-between rounded-md px-2 py-1 text-sm transition ${childSelected ? 'bg-blue-50 font-medium text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                        onClick={() => triggerCategoryChange(useClassicSideNav ? root : child, useClassicSideNav ? root : child)}
+                        className={`flex items-center justify-between transition ${useClassicSideNav
+                          ? `w-full rounded px-1 py-1 text-left text-[13px] ${childSelected ? 'bg-slate-50 font-medium text-blue-700' : 'text-blue-700 hover:bg-slate-50'}`
+                          : `rounded-md px-2 py-1 text-sm ${childSelected ? 'bg-blue-50 font-medium text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}`}
                         data-testid={`runtime-category-navigator-side-child-link-${child.id}`}
                       >
-                        <span>{child.name}</span>
-                        {showCounts ? <span className="text-xs text-slate-500">({Number(child.listing_count || 0)})</span> : null}
+                        <span className={useClassicSideNav ? 'inline-flex items-center gap-1' : ''}>
+                          {useClassicSideNav ? <span aria-hidden="true" className="text-slate-400">›</span> : null}
+                          <span className={useClassicSideNav ? 'underline-offset-2 hover:underline' : ''}>{child.name}</span>
+                        </span>
+                        {showCounts ? <span className="text-xs text-slate-500">({childCount})</span> : null}
                       </button>
                     );
                   })}

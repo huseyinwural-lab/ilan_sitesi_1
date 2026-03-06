@@ -320,18 +320,18 @@ export default function HomePageRefreshed() {
 
               return (
                 <section key={moduleGroup.module_key} className="home-kktc-module" data-testid={`home-kktc-module-${moduleGroup.module_key}`}>
-                  <div className="home-kktc-plain-list" data-testid={`home-kktc-plain-list-${moduleGroup.module_key}`}>
+                  <div className="home-kktc-plain-list rounded border border-slate-200 px-2 py-2" data-testid={`home-kktc-plain-list-${moduleGroup.module_key}`}>
                     {visibleRoots.map((root) => (
-                      <div key={root.id} className="home-kktc-root-group" data-testid={`home-kktc-root-group-${root.id}`}>
+                      <div key={root.id} className="home-kktc-root-group border-b border-dashed border-slate-200 py-1 last:border-b-0" data-testid={`home-kktc-root-group-${root.id}`}>
                         <Link
                           to={`/search?category=${encodeURIComponent(root.slug)}`}
-                          className="home-kktc-root-line"
+                          className="home-kktc-root-line text-blue-700"
                           data-testid={`home-kktc-root-line-${root.id}`}
                         >
                           {root.icon_svg ? (
                             <span className="home-kktc-root-icon-svg" data-testid={`home-kktc-root-icon-svg-${root.id}`} dangerouslySetInnerHTML={{ __html: root.icon_svg }} />
                           ) : null}
-                          <span className="home-kktc-root-line-text" data-testid={`home-kktc-root-line-text-${root.id}`}>
+                          <span className="home-kktc-root-line-text underline-offset-2 hover:underline" data-testid={`home-kktc-root-line-text-${root.id}`}>
                             {root.name}
                             <span className="home-kktc-root-count" data-testid={`home-kktc-root-count-${root.id}`}> ({formatCount(root.total_count)})</span>
                           </span>
@@ -342,11 +342,14 @@ export default function HomePageRefreshed() {
                             {root.children.map((child) => (
                               <Link
                                 key={child.id}
-                                to={`/search?category=${encodeURIComponent(child.slug)}`}
-                                className="home-kktc-child-line"
+                                to={`/search?category=${encodeURIComponent(root.slug)}`}
+                                className="home-kktc-child-line text-blue-700"
                                 data-testid={`home-kktc-child-line-${child.id}`}
                               >
-                                {child.name}
+                                <span className="inline-flex items-center gap-1">
+                                  <span aria-hidden="true" className="text-slate-400">›</span>
+                                  <span className="underline-offset-2 hover:underline">{child.name}</span>
+                                </span>
                                 <span className="home-kktc-child-count" data-testid={`home-kktc-child-count-${child.id}`}> ({formatCount(child.total_count)})</span>
                               </Link>
                             ))}
