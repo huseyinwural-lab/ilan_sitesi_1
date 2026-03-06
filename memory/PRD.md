@@ -51,6 +51,34 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Backend: **100% (12/12)**
   - Frontend: **100%**
 
+## 2026-03-06 (P0 Güncelleme — Menü Sırası ve Content List’in Ayrı Sayfaya Taşınması)
+
+### Kullanıcı Talebi
+- `Site İç Tasarımı` menüsünde:
+  1) **Content Builder**
+  2) **Content List**
+- Content Builder içindeki gömülü Content List panelinin kaldırılması
+- Content List’in ayrı route/sayfa olarak yönetilmesi
+
+### Uygulanan Değişiklikler
+- `Layout.js` içinde `Site İç Tasarımı` menü sırası güncellendi: Content Builder ilk, Content List ikinci.
+- Yeni sayfa eklendi: `frontend/src/pages/admin/AdminContentList.js`
+  - Listeleme, soft-delete, bire bir kopyalama, edit ile builder’a geçiş (autoload query) akışları.
+- Yeni route eklendi: `/admin/site-design/content-list`
+- `AdminContentBuilder.js` içinden gömülü Content List paneli kaldırıldı.
+- Builder’a autoload desteği eklendi: Content List’ten edit ile gelen query param’larla hedef sayfa otomatik yüklenir.
+
+### Test ve Doğrulama
+- Testing agent raporu: `/app/test_reports/iteration_138.json`
+  - Menü sırası: PASS
+  - Content List route erişimi: PASS
+  - Kolonlar ve aksiyon butonları: PASS
+- Testing agent düzeltmesi: `frontend/src/shared/adminRbac.js`
+  - `/admin/site-design/content-list` için eksik RBAC route kuralı eklendi.
+- Ek self-test screenshot:
+  - `/admin/site-design/content-list` açılışı PASS
+  - `AdminContentBuilder` içinde gömülü Content List paneli yok (`count=0`) PASS
+
 ## 2026-03-06 (P0 — Sayfa Tasarım Fazı Başlangıcı: Home / Acil / Kategori / Liste Kompozisyonları)
 
 ## 2026-03-06 (P0 — Kapanış Görevleri Tamamlandı: Kalıcılaştırma + İçerik + QA + Final Smoke)
