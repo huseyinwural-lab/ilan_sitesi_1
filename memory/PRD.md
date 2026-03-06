@@ -153,6 +153,43 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Frontend **100% PASS** (5/5)
   - Alt kategori click → parent kategori paramı doğrulandı.
 
+## 2026-03-06 (Content List Toplu Pasifleştirme + Yeni Home Wireframe + Aktif/Pasif Alanları)
+
+### Kullanıcı Kararı
+- Kapsam: **tüm sayfalar (A)**
+- Silme modeli: **B (pasif)** — yani ana yapı `is_active=false` ile ilerler
+- Bu seferlik ek istek: agentin deneme sayfaları temizlensin
+- Yeni home scope: **TR/DE/FR + global**
+- Content List alanı: **Aktif List** ve **Pasif/Arşiv List** olarak iki bölüm
+
+### Uygulananlar
+- Backend:
+  - `GET /api/admin/layouts` için `state=active|passive|all` filtresi eklendi.
+  - `POST /api/admin/layouts/{revision_id}/restore` eklendi (silinen/pasif kaydı geri al + aktif et).
+  - `POST /api/admin/layouts/workflows/reset-and-seed-home-wireframe` eklendi.
+    - Toplu pasifleştirme (bulk SQL)
+    - Demo sayfaları temizleme (legacy test page-types draft cleanup)
+    - TR/DE/FR için yeni wireframe home oluşturma + publish
+  - SQL_ASCII uyumluluğu için wireframe payload sanitize edildi.
+
+- Frontend (`AdminContentList`):
+  - `Aktif List` / `Pasif-Arşiv List` switch eklendi.
+  - Pasif listede `Aktif Et` / `Geri Yükle + Aktif Et` akışı eklendi.
+  - Üstte yeni workflow butonu eklendi:
+    - `Tümünü Pasifleştir + Yeni Home Oluştur`
+
+### Doğrulama (Testing Agent)
+- `/app/test_reports/iteration_146.json`
+  - İlk aşamada workflow endpoint DB_ERROR (503) raporlandı.
+- Düzeltme sonrası `/app/test_reports/iteration_147.json`
+  - **Backend 100% / Frontend 100% PASS**
+  - Endpoint çıktısı doğrulandı:
+    - `hard_deleted_demo_revisions: 19`
+    - `passivated_revisions: 94`
+    - `reactivated_home_revisions: 3`
+    - `home_pages_touched: 3`
+  - Aktif listede 3 yeni home revizyonu (TR/DE/FR), pasif listede önceki revizyonlar doğrulandı.
+
 ## 2026-03-06 (P0 — Sayfa Tasarım Fazı Başlangıcı: Home / Acil / Kategori / Liste Kompozisyonları)
 
 ## 2026-03-06 (P0 — Kapanış Görevleri Tamamlandı: Kalıcılaştırma + İçerik + QA + Final Smoke)
