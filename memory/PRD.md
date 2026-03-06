@@ -386,6 +386,25 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Frontend: 100% PASS
   - Admin UI’de DE context altında kök kategoriler görünür doğrulandı.
 
+## 2026-03-06 (Bug Fix — Preset Uygula Hata Ekranı / Gerçek Hata Mesajı)
+
+### Problem
+- `Content List > Tek Tık Kurulum Başlat (Preset)` sırasında backend `detail` alanı object geldiğinde UI generic hata ekranına düşüyordu.
+
+### Çözüm
+- `AdminContentList.js` içinde hata normalizasyonu eklendi:
+  - `normalizeErrorText()`
+  - `extractApiErrorText()`
+  - `summarizeFailedCountries()`
+- `install / verify / reset` akışlarında `ok=false` response path’i güvenli işlendi.
+- Hata mesajları artık preset error alanında string olarak gösteriliyor; UI crash olmuyor.
+
+### Doğrulama
+- Testing agent: `/app/test_reports/iteration_155.json`
+  - Backend **100%**
+  - Frontend **100%**
+  - Global crash ekranı yok, gerçek hata detayları görünür.
+
 ## 2026-03-06 (P0 — Sayfa Tasarım Fazı Başlangıcı: Home / Acil / Kategori / Liste Kompozisyonları)
 
 ## 2026-03-06 (P0 — Kapanış Görevleri Tamamlandı: Kalıcılaştırma + İçerik + QA + Final Smoke)
