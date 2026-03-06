@@ -2483,15 +2483,31 @@ export default function AdminContentBuilder() {
     }
 
     const published = revisions.find((item) => item.status === 'published');
-    const draftCreateRes = await withRetries(
-      () => axios.post(
-        `${API}/admin/site/content-layout/pages/${targetPageId}/revisions/draft`,
-        { payload_json: normalizePayload(published?.payload_json, targetPageType) },
-        { headers: authHeaders },
-      ),
-      5,
-      1500,
-    );
+    const publishedPayload = normalizePayload(published?.payload_json, targetPageType);
+    const fallbackPayload = normalizePayload(createEmptyPayload(targetPageType), targetPageType);
+
+    let draftCreateRes = null;
+    try {
+      draftCreateRes = await withRetries(
+        () => axios.post(
+          `${API}/admin/site/content-layout/pages/${targetPageId}/revisions/draft`,
+          { payload_json: publishedPayload },
+          { headers: authHeaders, timeout: 45000 },
+        ),
+        3,
+        1200,
+      );
+    } catch (_firstError) {
+      draftCreateRes = await withRetries(
+        () => axios.post(
+          `${API}/admin/site/content-layout/pages/${targetPageId}/revisions/draft`,
+          { payload_json: fallbackPayload },
+          { headers: authHeaders, timeout: 45000 },
+        ),
+        3,
+        1500,
+      );
+    }
     const newDraft = draftCreateRes.data?.item;
     setActiveDraftId(newDraft?.id || '');
     setPayloadJson(normalizePayload(newDraft?.payload_json, targetPageType));
@@ -2564,7 +2580,7 @@ export default function AdminContentBuilder() {
         () => axios.patch(
           `${API}/admin/site/content-layout/revisions/${activeDraftId}/draft`,
           { payload_json: payloadJson },
-          { headers: authHeaders },
+          { headers: authHeaders, timeout: 45000 },
         ),
         5,
         1200,
@@ -2644,7 +2660,7 @@ export default function AdminContentBuilder() {
       }
 
       await withRetries(
-        () => axios.post(`${API}/admin/site/content-layout/revisions/${activeDraftId}/publish`, {}, { headers: authHeaders }),
+        () => axios.post(`${API}/admin/site/content-layout/revisions/${activeDraftId}/publish`, {}, { headers: authHeaders, timeout: 45000 }),
         5,
         1500,
       );
