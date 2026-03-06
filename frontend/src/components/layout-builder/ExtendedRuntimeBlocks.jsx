@@ -836,7 +836,7 @@ export const CTABlock = ({ props }) => {
     ? resolveQuickFilterRoute(props?.quick_filter)
     : (props?.link || '/acil');
   const stylePreset = String(props?.style || 'primary').toLowerCase();
-  const target = String(props?.target || 'same_tab').toLowerCase();
+  const target = String(props?.target || 'same').toLowerCase();
   const fontSize = Math.max(10, Math.min(24, Number(props?.font_size || 14)));
   const fontWeight = String(props?.font_weight || '700');
   const fontStyle = String(props?.font_style || 'normal');
