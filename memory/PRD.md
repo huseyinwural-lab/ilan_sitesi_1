@@ -190,6 +190,38 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
     - `home_pages_touched: 3`
   - Aktif listede 3 yeni home revizyonu (TR/DE/FR), pasif listede önceki revizyonlar doğrulandı.
 
+## 2026-03-06 (Kontrollü Kapsam — Kalıcı Silme + Yeni Kategori Şeması Oluşturma)
+
+### Kullanıcı Talimatı (Onaylı)
+- Ön izleme sonrası, ilgili pasif/arsiv kapsamındaki sayfalar kalıcı silinsin.
+- Verilen Almanca kategori listesine göre yeni kategori şeması oluşturulsun.
+- Scope: `TR/DE/FR`
+- Modül eşlemesi:
+  - `Immobilien` -> `real_estate`
+  - `Fahrzeuge` -> `vehicle`
+  - `Diğer` başlıkları -> `other`
+- İsim alanları: `tr + de + fr`
+
+### Yapılan İşlemler
+- `content_restore_preview_report.json` içindeki pasif/arsiv kategori bağlı revisionlar **hard delete** edildi.
+  - Sonuç: `hard_deleted_layout_revisions = 21`
+- Kategori tarafında hedef modül-country kapsamı için eski kayıtlar pasife alındı (`is_deleted=true`, `is_enabled=false`) ve yeni şema oluşturuldu.
+- Yeni kategori aktif adetleri (ülke başına):
+  - `real_estate = 3`
+  - `vehicle = 9`
+  - `other = 99` (8 root + 91 child)
+- Public category navigator’da `module=global` geldiğinde modül filtresi gönderilmeyecek şekilde normalize edildi (çoklu modül birleşik gösterim için).
+
+### Not (DB Encoding)
+- Ortam SQL_ASCII olduğu için UTF-8 özel karakterlerde (örn. `ü`, `ä`) dönüşüm hatası yaşandı.
+- Bu yüzden kategori isimleri ASCII-safe biçimde kaydedildi (örn. `Grundstücke` -> `Grundstuecke`).
+
+### Doğrulama
+- Testing agent raporu: `/app/test_reports/iteration_148.json`
+  - Backend: **100%**
+  - Frontend: **100%**
+  - `/api/categories/tree` modül bazlı endpoint doğrulandı.
+
 ## 2026-03-06 (P0 — Sayfa Tasarım Fazı Başlangıcı: Home / Acil / Kategori / Liste Kompozisyonları)
 
 ## 2026-03-06 (P0 — Kapanış Görevleri Tamamlandı: Kalıcılaştırma + İçerik + QA + Final Smoke)
