@@ -38,6 +38,7 @@ export const useContentLayoutResolve = ({
 
     let active = true;
     const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     const fetchLayout = async () => {
       setLoading(true);
@@ -69,6 +70,7 @@ export const useContentLayoutResolve = ({
         setLayout(null);
         setError('layout_fetch_failed');
       } finally {
+        clearTimeout(timeoutId);
         if (active) setLoading(false);
       }
     };
@@ -76,6 +78,7 @@ export const useContentLayoutResolve = ({
     fetchLayout();
     return () => {
       active = false;
+      clearTimeout(timeoutId);
       controller.abort();
     };
   }, [queryString]);

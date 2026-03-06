@@ -146,6 +146,15 @@ DEPRECATED_CATEGORY_NAVIGATOR_KEYS: tuple[str, ...] = (
     "layout.category-navigator-top",
 )
 
+PUBLISH_GUARD_BLOCKED_COMPONENT_KEYS: tuple[str, ...] = (
+    "category.navigator",
+    "layout.category-navigator-side",
+    "layout.category-navigator-top",
+    "home.default-content",
+    "search.l1.default-content",
+    "search.l2.default-content",
+)
+
 WIZARD_POLICY_PAGE_TYPES: set[LayoutPageType] = {
     LayoutPageType.WIZARD_STEP_L0,
     LayoutPageType.WIZARD_STEP_LN,
@@ -1111,6 +1120,71 @@ def _normalize_countries_or_400(countries: list[str]) -> list[str]:
 
 def _parse_countries_csv_or_400(raw_countries: str) -> list[str]:
     return _normalize_countries_or_400([token for token in str(raw_countries or "").split(",") if token.strip()])
+
+
+def _extract_component_keys_from_payload(payload_json: dict[str, Any]) -> set[str]:
+    keys: set[str] = set()
+    if not isinstance(payload_json, dict):
+        return keys
+
+    rows = payload_json.get("rows")
+    if not isinstance(rows, list):
+        return keys
+
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        columns = row.get("columns")
+        if not isinstance(columns, list):
+            continue
+        for column in columns:
+            if not isinstance(column, dict):
+                continue
+            components = column.get("components")
+            if not isinstance(components, list):
+                continue
+            for component in components:
+                if not isinstance(component, dict):
+                    continue
+                key = str(component.get("key") or "").strip()
+                if key:
+                    keys.add(key)
+    return keys
+
+
+async def _validate_publish_guard_or_400(session: AsyncSession, payload_json: dict[str, Any]) -> None:
+    component_keys = _extract_component_keys_from_payload(payload_json or {})
+    if not component_keys:
+        raise HTTPException(status_code=400, detail="publish_guard_no_components")
+
+    blocked = sorted(key for key in component_keys if key in PUBLISH_GUARD_BLOCKED_COMPONENT_KEYS)
+    if blocked:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "publish_guard_blocked_components",
+                "blocked_keys": blocked,
+            },
+        )
+
+    definitions_result = await session.execute(
+        select(LayoutComponentDefinition.key).where(
+            and_(
+                LayoutComponentDefinition.key.in_(list(component_keys)),
+                LayoutComponentDefinition.is_active.is_(True),
+            )
+        )
+    )
+    active_keys = {str(row[0]) for row in definitions_result.all()}
+    missing_or_inactive = sorted(component_keys - active_keys)
+    if missing_or_inactive:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "publish_guard_unknown_or_inactive_components",
+                "keys": missing_or_inactive,
+            },
+        )
 
 
 def _normalize_layout_list_state_filter_or_400(raw_state: Optional[str]) -> str:
@@ -2859,6 +2933,7 @@ async def reset_layouts_and_seed_home_wireframe(
             )
             draft_row.is_active = True
 
+            await _validate_publish_guard_or_400(session, draft_row.payload_json or {})
             published_row = await publish_revision(
                 session,
                 revision_id=str(draft_row.id),
@@ -3011,6 +3086,7 @@ async def copy_admin_layout_revision(
         target_revision.is_active = bool(getattr(source_revision, "is_active", True))
 
     if payload.publish_after_copy:
+        await _validate_publish_guard_or_400(session, target_revision.payload_json or {})
         target_revision = await publish_revision(
             session,
             revision_id=str(target_revision.id),
@@ -3226,6 +3302,7 @@ async def _seed_standard_pages_for_scope(
 
         published_revision_id: Optional[str] = None
         if publish_after_seed and draft_row and draft_row.status == LayoutRevisionStatus.DRAFT:
+            await _validate_publish_guard_or_400(session, draft_row.payload_json or {})
             published_row = await publish_revision(
                 session,
                 revision_id=str(draft_row.id),
@@ -3611,6 +3688,7 @@ async def publish_revision_admin(
     if target_revision:
         if bool(getattr(target_revision, "is_deleted", False)):
             raise HTTPException(status_code=404, detail="Revision not found")
+        await _validate_publish_guard_or_400(session, target_revision.payload_json or {})
         page_row = await session.get(LayoutPage, target_revision.layout_page_id)
         if page_row and _is_wizard_policy_page_type(page_row.page_type):
             _validate_listing_runtime_guard_or_400(target_revision.payload_json or {})
