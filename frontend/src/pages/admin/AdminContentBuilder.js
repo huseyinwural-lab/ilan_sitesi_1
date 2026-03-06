@@ -1140,19 +1140,90 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
     return {
       rows: [
         createPresetRow([createPresetColumn(12, [
-          createPresetComponent('home.default-content'),
-          createPresetComponent('media.auto-play-carousel-hero'),
+          createPresetComponent('content.heading', {
+            text: 'Ana Sayfa',
+            font_size: 40,
+            font_weight: '800',
+            alignment: 'left',
+          }),
+          createPresetComponent('content.text-block', {
+            text: 'Vitrin, kategori keşfi ve hızlı aksiyon alanları.',
+            font_size: 15,
+            font_weight: '400',
+            alignment: 'left',
+          }),
+          createPresetComponent('media.hero-banner', {
+            mode: 'dynamic',
+            placement: 'home_top',
+            title: 'Günün Vitrini',
+          }),
         ])]),
         createPresetRow([
-          createPresetColumn(personaKey === 'corporate' ? 5 : 4, [
-            createPresetComponent('layout.category-navigator-side', { tree_behavior: 'expanded' }),
-            ...(personaKey === 'corporate' ? [createPresetComponent('data.seller-card')] : []),
+          createPresetColumn(personaKey === 'corporate' ? 4 : 3, [
+            createPresetComponent('category.navigator', {
+              title: 'Kategoriler',
+              start_level: 'L0',
+              depth: 'L1',
+              placement: 'side',
+              module: 'vehicle',
+              show_counts: true,
+            }),
           ]),
-          createPresetColumn(personaKey === 'corporate' ? 7 : 8, [
-            createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: variantKey === 'B' ? 10 : 8 }),
-            createPresetComponent('media.ad-promo-slot', { placement: 'AD_HOME_TOP', campaign_label: 'Home Showcase' }),
+          createPresetColumn(personaKey === 'corporate' ? 8 : 9, [
+            createPresetComponent('listing.grid', {
+              source: 'showcase',
+              columns: variantKey === 'B' ? 3 : 4,
+              rows: 2,
+              auto_refresh: '30s',
+              order: 'newest',
+            }),
           ]),
         ]),
+        createPresetRow([
+          createPresetColumn(4, [createPresetComponent('cta.block', {
+            mode: 'quick_filter',
+            quick_filter: 'urgent',
+            title: 'ACİL',
+            style: 'danger',
+            target: 'same_tab',
+            font_size: 15,
+            font_weight: '700',
+            font_style: 'normal',
+            text_color: '#ffffff',
+            bg_color: '#dc2626',
+          })]),
+          createPresetColumn(4, [createPresetComponent('cta.block', {
+            mode: 'quick_filter',
+            quick_filter: 'showcase',
+            title: 'VİTRİN',
+            style: 'primary',
+            target: 'same_tab',
+            font_size: 15,
+            font_weight: '700',
+            font_style: 'normal',
+            text_color: '#ffffff',
+            bg_color: '#1d4ed8',
+          })]),
+          createPresetColumn(4, [createPresetComponent('cta.block', {
+            mode: 'quick_filter',
+            quick_filter: 'campaign',
+            title: 'KAMPANYA / DOPING',
+            style: 'outline',
+            target: 'same_tab',
+            font_size: 14,
+            font_weight: '700',
+            font_style: 'normal',
+            text_color: '#0f172a',
+            bg_color: '#f8fafc',
+          })]),
+        ]),
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('ad.slot', {
+            placement: 'home_bottom',
+            size: 'horizontal',
+            rotation: 'on',
+          }),
+        ])]),
       ],
     };
   }
@@ -1161,37 +1232,204 @@ const buildStandardPageTypePayload = (pageType, { persona = 'individual', varian
     return {
       rows: [
         createPresetRow([createPresetColumn(12, [
-          createPresetComponent('search.l1.default-content'),
+          createPresetComponent('content.heading', {
+            text: 'Kategori Sayfası',
+            font_size: 34,
+            font_weight: '800',
+            alignment: 'left',
+          }),
           createPresetComponent('layout.breadcrumb-header'),
-          createPresetComponent('layout.category-navigator-top', { title: 'Sub Categories', show_counts: true, tree_behavior: 'expanded', max_levels: 4 }),
+          createPresetComponent('category.navigator', {
+            title: 'Kategori Gezinme',
+            start_level: 'L0',
+            depth: 'L1',
+            placement: 'top',
+            module: 'vehicle',
+            show_counts: true,
+          }),
         ])]),
         createPresetRow([
-          createPresetColumn(4, [createPresetComponent('layout.category-navigator-side', { title: 'Category Tree', show_counts: true, tree_behavior: 'expanded', max_levels: 6 })]),
+          createPresetColumn(4, [
+            createPresetComponent('category.sub-category-block', {
+              columns: 1,
+              show_count: true,
+              depth: 2,
+            }),
+          ]),
           createPresetColumn(8, [
-            createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: 12 }),
-            createPresetComponent('shared.ad-slot', { placement: 'AD_SEARCH_TOP' }),
+            createPresetComponent('listing.grid', {
+              source: 'category',
+              columns: 4,
+              rows: 2,
+              auto_refresh: '30s',
+              order: 'newest',
+            }),
           ]),
         ]),
+        createPresetRow([
+          createPresetColumn(8, [
+            createPresetComponent('listing.list', {
+              source: 'category',
+              pagination: true,
+              per_page: 24,
+              order: 'newest',
+            }),
+          ]),
+          createPresetColumn(4, [
+            createPresetComponent('ad.slot', {
+              placement: 'category_top',
+              size: 'horizontal',
+              rotation: 'on',
+            }),
+            createPresetComponent('cta.block', {
+              mode: 'quick_filter',
+              quick_filter: 'campaign',
+              title: 'KATEGORİ KAMPANYALARI',
+              style: 'outline',
+              target: 'same_tab',
+              font_size: 13,
+              font_weight: '700',
+              font_style: 'normal',
+              text_color: '#0f172a',
+              bg_color: '#f8fafc',
+            }),
+          ]),
+        ]),
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('ad.slot', {
+            placement: 'category_bottom',
+            size: 'horizontal',
+            rotation: 'off',
+          }),
+        ])]),
       ],
     };
   }
 
-  if (['search_ln', 'category_showcase', 'urgent_listings', 'search_l1', 'search_l2'].includes(pageType)) {
-    const pageTitle = pageType === 'urgent_listings' ? 'Urgent Listings' : (pageType === 'category_showcase' ? 'Category Showcase' : 'Category Listing');
+  if (pageType === 'urgent_listings') {
     return {
       rows: [
         createPresetRow([createPresetColumn(12, [
-          createPresetComponent('search.l1.default-content'),
-          createPresetComponent('layout.breadcrumb-header'),
-          createPresetComponent('shared.text-block', { title: pageTitle, body: 'Comprehensive standard template loaded for this page type.' }),
+          createPresetComponent('content.heading', {
+            text: 'Acil İlanlar',
+            font_size: 36,
+            font_weight: '800',
+            alignment: 'left',
+          }),
+          createPresetComponent('content.text-block', {
+            text: 'Acil badge taşıyan ilanların canlı listesi.',
+            font_size: 15,
+            font_weight: '400',
+            alignment: 'left',
+          }),
+          createPresetComponent('cta.block', {
+            mode: 'quick_filter',
+            quick_filter: 'urgent',
+            title: 'ACİL FİLTRESİ',
+            style: 'danger',
+            target: 'same_tab',
+            font_size: 14,
+            font_weight: '700',
+            font_style: 'normal',
+            text_color: '#ffffff',
+            bg_color: '#dc2626',
+          }),
         ])]),
         createPresetRow([
-          createPresetColumn(8, [createPresetComponent('interactive.similar-listings-slider', { source: 'similar', max_items: 12 })]),
+          createPresetColumn(8, [
+            createPresetComponent('listing.list', {
+              source: 'urgent',
+              pagination: true,
+              per_page: 20,
+              order: 'newest',
+            }),
+          ]),
           createPresetColumn(4, [
-            createPresetComponent('layout.category-navigator-side', { title: 'Segments', show_counts: true, tree_behavior: 'expanded', max_levels: 5 }),
-            createPresetComponent('shared.ad-slot', { placement: 'AD_SEARCH_TOP' }),
+            createPresetComponent('ad.slot', {
+              placement: 'urgent_top',
+              size: 'horizontal',
+              rotation: 'on',
+            }),
+            createPresetComponent('category.navigator', {
+              title: 'Hızlı Kategori',
+              start_level: 'L0',
+              depth: 'Lall',
+              placement: 'side',
+              module: 'vehicle',
+              show_counts: true,
+            }),
           ]),
         ]),
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('listing.grid', {
+            source: 'urgent',
+            columns: variantKey === 'B' ? 3 : 4,
+            rows: 2,
+            auto_refresh: '30s',
+            order: 'newest',
+          }),
+        ])]),
+      ],
+    };
+  }
+
+  if (['search_ln', 'category_showcase', 'search_l1', 'search_l2'].includes(pageType)) {
+    const pageTitle = pageType === 'category_showcase' ? 'Vitrin Liste' : 'Liste Sayfası';
+    return {
+      rows: [
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('content.heading', {
+            text: pageTitle,
+            font_size: 34,
+            font_weight: '800',
+            alignment: 'left',
+          }),
+          createPresetComponent('content.text-block', {
+            text: 'Arama/kategori sorgusuna göre liste görünümü.',
+            font_size: 15,
+            font_weight: '400',
+            alignment: 'left',
+          }),
+        ])]),
+        createPresetRow([
+          createPresetColumn(3, [
+            createPresetComponent('category.navigator', {
+              title: 'Kategori Ağacı',
+              start_level: 'L0',
+              depth: 'Lall',
+              placement: 'side',
+              module: 'vehicle',
+              show_counts: true,
+            }),
+            createPresetComponent('category.sub-category-block', {
+              columns: 1,
+              show_count: true,
+              depth: 2,
+            }),
+          ]),
+          createPresetColumn(9, [
+            createPresetComponent('listing.list', {
+              source: 'search',
+              pagination: true,
+              per_page: 20,
+              order: 'newest',
+            }),
+          ]),
+        ]),
+        createPresetRow([createPresetColumn(12, [
+          createPresetComponent('listing.grid', {
+            source: pageType === 'category_showcase' ? 'showcase' : 'latest',
+            columns: 4,
+            rows: 2,
+            auto_refresh: 'off',
+            order: pageType === 'category_showcase' ? 'newest' : 'random',
+          }),
+          createPresetComponent('ad.slot', {
+            placement: 'category_bottom',
+            size: 'horizontal',
+            rotation: 'off',
+          }),
+        ])]),
       ],
     };
   }
@@ -1954,6 +2192,10 @@ export default function AdminContentBuilder() {
   const previewBasePath = useMemo(() => {
     const selectedCategory = (bindingCategoryId || categoryId).trim();
     if (pageType === 'home') return '/';
+    if (pageType === 'urgent_listings') return '/acil?badge=urgent';
+    if (pageType === 'search_ln') return '/liste';
+    if (pageType === 'category_l0_l1') return selectedCategory ? `/kategori?category=${encodeURIComponent(selectedCategory)}` : '/kategori';
+    if (pageType === 'category_showcase') return '/vitrin?badge=showcase';
     if (SEARCH_TEMPLATE_PAGE_TYPES.has(pageType)) {
       return `/search${selectedCategory ? `?category=${encodeURIComponent(selectedCategory)}` : ''}`;
     }

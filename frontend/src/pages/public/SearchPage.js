@@ -422,7 +422,8 @@ export default function SearchPage() {
         if (searchState.make) queryParams.set('make', searchState.make);
         if (searchState.model) queryParams.set('model', searchState.model);
 
-        const dopingFromUrl = new URLSearchParams(location.search).get('doping');
+        const queryParamsFromUrl = new URLSearchParams(location.search);
+        const dopingFromUrl = queryParamsFromUrl.get('doping') || queryParamsFromUrl.get('badge');
         const activeDopingParam = searchState.doping || dopingFromUrl;
         if (activeDopingParam) queryParams.set('doping_type', activeDopingParam);
 
@@ -510,7 +511,10 @@ export default function SearchPage() {
       .slice(0, 300);
   }, [data.items]);
 
-  const dopingFromUrl = useMemo(() => new URLSearchParams(location.search).get('doping'), [location.search]);
+  const dopingFromUrl = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('doping') || params.get('badge');
+  }, [location.search]);
   const activeDoping = searchState.doping || dopingFromUrl;
 
   const handleCategoryChange = (categoryId) => setSearchState({ category: categoryId, filters: {}, page: 1 });

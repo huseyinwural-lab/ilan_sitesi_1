@@ -218,6 +218,11 @@ function App() {
                   <Route element={<MainLayout />}>
                     <Route path="/" element={<Navigate to="/tr" replace />} />
                     <Route path="/search" element={<SearchPage />} />
+                    <Route path="/acil" element={<SearchPage />} />
+                    <Route path="/vitrin" element={<SearchPage />} />
+                    <Route path="/kampanya" element={<SearchPage />} />
+                    <Route path="/liste" element={<SearchPage />} />
+                    <Route path="/kategori" element={<SearchPage />} />
                     <Route path="/kategori/:slug" element={<CategoryLandingPage />} />
                     <Route path="/ilan/:id" element={<ErrorBoundary><DetailPage /></ErrorBoundary>} />
                     <Route path="/vasita/otomobil/:make/:model" element={<VehicleMakeModelPage />} />
@@ -241,6 +246,11 @@ function App() {
                   <Route path="/:locale" element={<LocaleAwareMainLayout />}>
                     <Route index element={<HomePageRefreshed />} />
                     <Route path="search" element={<SearchPage />} />
+                    <Route path="acil" element={<SearchPage />} />
+                    <Route path="vitrin" element={<SearchPage />} />
+                    <Route path="kampanya" element={<SearchPage />} />
+                    <Route path="liste" element={<SearchPage />} />
+                    <Route path="kategori" element={<SearchPage />} />
                     <Route path="kategori/:slug" element={<CategoryLandingPage />} />
                     <Route path="ilan/:id" element={<ErrorBoundary><DetailPage /></ErrorBoundary>} />
                     <Route path="vasita/otomobil/:make/:model" element={<VehicleMakeModelPage />} />

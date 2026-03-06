@@ -17,7 +17,7 @@ export const useSearchState = () => {
       category: params.get('category') || null,
       make: params.get('make') || null,
       model: params.get('model') || null,
-      doping: params.get('doping') || null,
+      doping: params.get('doping') || params.get('badge') || null,
       sort: params.get('sort') || 'date_desc',
       page: parseInt(params.get('page') || '1', 10),
       limit: parseInt(params.get('limit') || '20', 10),

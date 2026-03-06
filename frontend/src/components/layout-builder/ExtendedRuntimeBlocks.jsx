@@ -126,7 +126,7 @@ const usePublicListings = ({ props, runtimeContext, defaultSource = 'latest', de
   const requestedLimit = Math.max(1, Math.min(100, rows * columns || perPage || defaultLimit));
   const pageFromUrl = Math.max(1, Number(resolveQueryParam('page') || 1));
   const currentPage = includePagination ? pageFromUrl : 1;
-  const searchCategoryId = resolveQueryParam('category_id');
+  const searchCategoryId = resolveQueryParam('category_id') || resolveQueryParam('category');
   const searchBadge = resolveQueryParam('badge');
   const searchQuery = resolveQueryParam('q');
   const categoryId = String(props?.category_id || searchCategoryId || '').trim();
@@ -1005,7 +1005,7 @@ export const SubCategoryBlock = ({ props, runtimeContext }) => {
   const columns = Math.max(1, Math.min(6, Number(props?.columns || 3)));
   const showCount = props?.show_count !== false;
   const country = resolveRuntimeCountry(runtimeContext, props);
-  const fallbackParent = resolveQueryParam('category_id');
+  const fallbackParent = resolveQueryParam('category_id') || resolveQueryParam('category');
   const parentId = String(props?.parent_id || runtimeContext?.activeCategoryId || fallbackParent || '').trim();
   const [apiItems, setApiItems] = useState([]);
   const [loading, setLoading] = useState(false);
