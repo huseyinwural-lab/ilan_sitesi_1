@@ -5,7 +5,7 @@ Final Backend Closure Check - Turkish Review Request
 Testing specific API endpoints and page version validation.
 
 Review Request: Final backend closure check
-Base URL: https://panel-manual-tr.preview.emergentagent.com
+Base URL: https://page-builder-227.preview.emergentagent.com
 
 A) Scope/page publish + version:
 - TR/vehicle: home, urgent_listings, category_l0_l1, search_ln
@@ -41,7 +41,7 @@ from typing import Dict, Any, List, Optional
 
 class FinalBackendClosureTester:
     def __init__(self):
-        self.base_url = "https://panel-manual-tr.preview.emergentagent.com/api"
+        self.base_url = "https://page-builder-227.preview.emergentagent.com/api"
         self.session = requests.Session()
         self.session.headers.update({
             'Content-Type': 'application/json',

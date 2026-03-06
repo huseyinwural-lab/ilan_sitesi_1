@@ -11,7 +11,7 @@ import os
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 if not BASE_URL:
-    BASE_URL = "https://panel-manual-tr.preview.emergentagent.com"
+    BASE_URL = "https://page-builder-227.preview.emergentagent.com"
 
 ADMIN_CREDENTIALS = {"email": "admin@platform.com", "password": "Admin123!"}
 

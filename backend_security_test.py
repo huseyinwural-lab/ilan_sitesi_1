@@ -17,7 +17,7 @@ import hashlib
 from datetime import datetime, timezone
 
 # Configuration
-BASE_URL = "https://panel-manual-tr.preview.emergentagent.com"
+BASE_URL = "https://page-builder-227.preview.emergentagent.com"
 API_BASE = f"{BASE_URL}/api"
 
 def test_health_endpoint():
