@@ -3251,16 +3251,16 @@ export default function AdminContentBuilder() {
 
             <button
               type="button"
-              className={`h-10 rounded border px-3 text-xs font-semibold ${templateScopeLocked ? 'border-slate-300 bg-slate-100 text-slate-500' : 'border-indigo-300 bg-indigo-50 text-indigo-700'}`}
+              className={`h-10 rounded border px-3 text-xs font-semibold ${(templateScopeLocked || !pageId) ? 'border-slate-300 bg-slate-100 text-slate-500' : 'border-indigo-300 bg-indigo-50 text-indigo-700'}`}
               onClick={() => {
-                if (templateScopeLocked) return;
+                if (templateScopeLocked || !pageId) return;
                 const nextPayload = buildStandardPageTypePayload(pageType, { persona: presetPersona, variant: presetVariant, module: moduleName });
                 setPayloadJson(normalizePayload(nextPayload, pageType));
                 setStatus(`${PAGE_TYPE_LABEL_MAP[pageType] || pageType} için kapsamlı standart şablon yüklendi.`);
                 refreshPreviewAfterInteraction();
                 toast.success('Sayfa tipi için standart şablon yüklendi.');
               }}
-              disabled={templateScopeLocked}
+              disabled={templateScopeLocked || !pageId}
               data-testid="admin-content-builder-load-standard-page-template-button"
             >
               Bu Sayfaya Standart Şablon
@@ -3269,6 +3269,10 @@ export default function AdminContentBuilder() {
             {templateScopeLocked ? (
               <span className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-700" data-testid="admin-content-builder-template-lock-note">
                 Bu scope/page-type publish sonrası kilitli. Standart şablon tekrar uygulanamaz.
+              </span>
+            ) : !pageId ? (
+              <span className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-600" data-testid="admin-content-builder-template-load-note">
+                Önce setup drawer ile sayfayı yükleyin, sonra standart şablon uygulanır.
               </span>
             ) : null}
 
