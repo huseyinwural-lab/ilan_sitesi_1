@@ -79,6 +79,48 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - `/admin/site-design/content-list` açılışı PASS
   - `AdminContentBuilder` içinde gömülü Content List paneli yok (`count=0`) PASS
 
+## 2026-03-06 (P0/P1 Güncelleme — Content List Aktif/Pasif + #612 Core Doğrulama + Preset System Başlangıcı)
+
+### Kullanıcı Seçimleri
+- Aktif/Pasif seviye: **Revision bazlı**
+- Gerçek durum yönetimi: yeni DB alanı ile (`is_active`)
+- Görsel kural: **Aktif yeşil nokta**, **Pasif kırmızı nokta**
+- Sonraki sıra: #612 finalizasyon doğrulama → ardından P1 Template Preset başlangıcı
+
+### Backend Değişiklikleri
+- `layout_revisions` için `is_active: boolean` alanı eklendi.
+  - Migration: `p76_layout_revision_active_state`
+- Yeni endpoint:
+  - `PATCH /api/admin/layouts/{revision_id}/active`
+- `GET /api/admin/layouts` çıktısına `is_active` eklendi.
+- Soft-delete akışında revision `is_active=false` olacak şekilde güncellendi.
+- Published resolve akışında aktif olmayan published revisionlar dışlanacak şekilde güncellendi.
+
+### #612 + P1 Başlangıcı (Template Pack)
+- Yeni endpointler:
+  - `POST /api/admin/site/content-layout/preset/install-standard-pack`
+  - `GET /api/admin/site/content-layout/preset/verify-standard-pack`
+- Varsayılan scope **core 4 template** olarak ayarlandı:
+  - `home`, `urgent_listings`, `category_l0_l1`, `search_ln`
+- Opsiyonel genişletilmiş doğrulama/kurulum için `include_extended_templates=true` desteği eklendi.
+- Install endpoint DB hatalarında kontrollü JSON response döner (`ok`, `summary`, `results`, `failed_countries`) ve 503 kırılganlığı azaltıldı.
+
+### Frontend Değişiklikleri (`AdminContentList`)
+- `active_state` kolonu eklendi.
+- Her satıra yeşil/kırmızı nokta + `aktif/pasif` etiketi eklendi.
+- `Aktif Et` / `Pasif Et` aksiyonları eklendi.
+- #612 + P1 paneli eklendi:
+  - Countries/module/persona/variant ayarları
+  - Tek tık kurulum (`install-standard-pack`)
+  - Publish doğrulama (`verify-standard-pack`)
+  - Core/extended scope checkbox
+
+### Testler
+- `/app/test_reports/iteration_139.json` → aktif/pasif + panel temel doğrulama
+- `/app/test_reports/iteration_143.json` → install endpoint fallback davranışı PASS
+- `/app/test_reports/iteration_144.json` → **Backend 10/10 PASS + Frontend 100% PASS**
+  - Core verify: `ready_rows=12 / total_rows=12 / ready_ratio=100%`
+
 ## 2026-03-06 (P0 — Sayfa Tasarım Fazı Başlangıcı: Home / Acil / Kategori / Liste Kompozisyonları)
 
 ## 2026-03-06 (P0 — Kapanış Görevleri Tamamlandı: Kalıcılaştırma + İçerik + QA + Final Smoke)
