@@ -222,6 +222,60 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Frontend: **100%**
   - `/api/categories/tree` modül bazlı endpoint doğrulandı.
 
+## 2026-03-06 (Category Navigator Reset + Admin Kaynağına Geçiş)
+
+### Kullanıcı Talimatı (Onaylı)
+- `Content Builder` içindeki eski category navigatorların tamamı kaldırılacak.
+- Yeni iki component eklenecek:
+  - `Category Navigator (Ana Side)` → L0/L1 görünüm
+  - `Category Navigator (Kategori Side)` → kategori-side görünüm
+- Kaynak: **Kategori & İçerik > kategori** (`/admin/categories`, `/api/categories/tree`)
+- Son yazılan kategori listesi silinecek.
+- Content Builder component kaynağı admin panel tanımlarından beslenecek.
+
+### Uygulanan Değişiklikler
+- Backend (`layout_builder_routes.py`):
+  - Deprecated navigator keyleri kaldırıldı/filtrelendi:
+    - `category.navigator`
+    - `layout.category-navigator-side`
+    - `layout.category-navigator-top`
+  - Yeni navigator key policy eklendi:
+    - `layout.category-navigator-main-side`
+    - `layout.category-navigator-category-side`
+  - Component list endpointi deprecated keyleri döndürmeyecek şekilde güncellendi.
+  - Seed payloadları yeni keylere geçirildi.
+
+- Frontend:
+  - `AdminContentBuilder`:
+    - Eski navigator componentleri builder kütüphanesinden kaldırıldı.
+    - Yeni iki navigator componenti eklendi.
+    - Component library admin API kaynağına bağlandı (local fallback kaldırıldı).
+  - `ExtendedRuntimeBlocks`:
+    - Eski navigator render blokları kaldırıldı.
+    - Yeni iki runtime blok eklendi:
+      - `CategoryNavigatorMainSideBlock`
+      - `CategoryNavigatorCategorySideBlock`
+    - Kaynak `/api/categories/tree` (country/module/depth) olacak şekilde güncellendi.
+
+### Veri Operasyonları
+- Seed edilen son kategori listesi temizlendi:
+  - `deleted_seed_categories = 333`
+  - Önceki kategorilerden uygun olanlar restore edildi:
+  - `restored_old_categories = 149`
+  - Rapor: `/app/test_reports/category_cleanup_revert_result.json`
+- Layout revision payloadlarından deprecated category navigator componentleri temizlendi:
+  - `revisions_updated = 37`
+  - `components_removed = 37`
+  - Rapor: `/app/test_reports/layout_category_navigator_cleanup_result.json`
+- Component definition senkronizasyon raporu:
+  - `/app/test_reports/component_definition_sync_result.json`
+
+### Doğrulama
+- Testing agent: `/app/test_reports/iteration_149.json`
+  - Backend: **100% PASS**
+  - Frontend: **100% PASS**
+  - Yeni navigator keyleri görünür, deprecated keyler görünmez.
+
 ## 2026-03-06 (P0 — Sayfa Tasarım Fazı Başlangıcı: Home / Acil / Kategori / Liste Kompozisyonları)
 
 ## 2026-03-06 (P0 — Kapanış Görevleri Tamamlandı: Kalıcılaştırma + İçerik + QA + Final Smoke)
