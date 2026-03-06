@@ -3040,7 +3040,19 @@ async def install_standard_template_pack(
         return aggregate_summary, bundle_results
 
     try:
-        aggregate_summary, results = await _run_with_db_retry(session, _op)
+        aggregate_summary, results = None, None
+        for attempt in range(3):
+            try:
+                aggregate_summary, results = await _run_with_db_retry(session, _op)
+                break
+            except HTTPException as exc:
+                await session.rollback()
+                if exc.status_code == 503 and attempt < 2:
+                    await asyncio.sleep(0.6 * (attempt + 1))
+                    continue
+                raise
+        if aggregate_summary is None or results is None:
+            raise HTTPException(status_code=503, detail="Database connection error")
     except ValueError as exc:
         await session.rollback()
         raise HTTPException(status_code=400, detail=str(exc)) from exc

@@ -1,0 +1,76 @@
+{
+  "summary": "Tested install-standard-pack retry mechanism and verify-standard-pack summary. verify-standard-pack works correctly. install-standard-pack still fails with 503 DB errors despite retry implementation because the DB exceptions are caught by FastAPI global handlers before reaching the endpoint's retry logic.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "POST /api/admin/site/content-layout/preset/install-standard-pack",
+        "issue": "Still returns 503 DB errors despite retry logic. The retry mechanism catches HTTPException but actual DB errors (DBAPIError, OperationalError) are intercepted by FastAPI global exception handlers before reaching the endpoint code.",
+        "priority": "HIGH",
+        "root_cause": "The retry logic at lines 3044-3053 catches HTTPException, but SQLAlchemy exceptions are caught by global handlers at lines 2268-2305 in server.py which return JSONResponse directly. The inner _run_with_db_retry function has 6 retries but may not recognize the actual error messages as transient.",
+        "suggested_fix": "Either: (1) Move DB retry logic to a middleware level, (2) Wrap the entire operation in a try-catch for SQLAlchemy exceptions before the global handlers intercept, or (3) Add more error markers to TRANSIENT_DB_ERROR_MARKERS to match actual error messages"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_140_install_retry.py"
+  ],
+  "action_items": [
+    "Fix install-standard-pack retry: DB exceptions are caught by global FastAPI handlers before endpoint retry logic",
+    "Consider wrapping _seed_standard_pages_for_scope in SQLAlchemy exception handling before it bubbles to global handlers",
+    "Add more error markers to TRANSIENT_DB_ERROR_MARKERS or check if the actual exception messages match existing markers"
+  ],
+  "critical_code_review_comments": [
+    "The retry mechanism design at lines 3044-3053 catches HTTPException but the actual SQLAlchemy exceptions (DBAPIError, OperationalError, SATimeoutError) are caught by global FastAPI exception handlers at server.py:2268-2305 which return JSONResponse directly - this means the retry logic never gets a chance to execute",
+    "The _run_with_db_retry function at lines 519-535 has good retry logic with 6 attempts, but it relies on _is_transient_db_error() which checks against TRANSIENT_DB_ERROR_MARKERS - need to verify these markers match actual error messages from the remote PostgreSQL database"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_140_install_retry.py"
+  ],
+  "success_rate": {
+    "backend": "50% - verify-standard-pack works (100%), install-standard-pack fails (0%)",
+    "frontend": "N/A - backend-only testing requested"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "The install-standard-pack endpoint has retry logic added but it's not working because FastAPI global exception handlers intercept SQLAlchemy exceptions before the endpoint code can catch them. verify-standard-pack works correctly. Test payload: countries TR,DE,FR, module global, persona individual, variant A.",
+  "features_verified": {
+    "verify_standard_pack": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/site/content-layout/preset/verify-standard-pack?countries=TR,DE,FR&module=global",
+      "details": "Returns summary with ready_rows=12, total_rows=45, ready_ratio=26.67%. All fields present."
+    },
+    "install_standard_pack_retry": {
+      "status": "FAIL",
+      "endpoint": "POST /api/admin/site/content-layout/preset/install-standard-pack",
+      "details": "Returns 503 'Database connection error' with error_code=DB_ERROR. Retry mechanism exists but doesn't catch DB exceptions before global handlers.",
+      "attempts_tested": 5,
+      "all_results": "503 DB_ERROR"
+    },
+    "get_layouts_read": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/layouts",
+      "details": "Read operations work fine, returning 200 with layout data"
+    }
+  },
+  "mocked_apis": {
+    "academy.modules": "MOCKED"
+  },
+  "rca_of_the_issue": {
+    "problem": "install-standard-pack returns 503 despite retry logic",
+    "root_cause": "FastAPI global exception handlers at server.py:2268-2305 intercept SQLAlchemy exceptions (DBAPIError, SATimeoutError, etc) and return JSONResponse(status_code=503) directly. The endpoint's retry logic at layout_builder_routes.py:3044-3053 catches HTTPException, but these are never raised because the global handlers already returned a response.",
+    "reproduction_steps": [
+      "1. POST to /api/admin/site/content-layout/preset/install-standard-pack with payload: {countries: ['TR'], module: 'global', persona: 'individual', variant: 'A', overwrite_existing_draft: true, publish_after_seed: true}",
+      "2. Observe 503 response with error_code: DB_ERROR",
+      "3. Retry multiple times - same 503 each time"
+    ],
+    "mitigation": "The retry needs to be implemented at a level where SQLAlchemy exceptions can be caught before FastAPI global handlers intercept them. Options: (1) Wrap the entire endpoint body in try-except for SQLAlchemy exceptions, (2) Use a decorator-based retry, (3) Catch SQLAlchemyError in the outer try block instead of HTTPException"
+  }
+}
