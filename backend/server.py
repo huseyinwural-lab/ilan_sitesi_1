@@ -29110,6 +29110,40 @@ async def admin_media_pipeline_performance(
 # =====================
 
 
+CATEGORY_LIST_CACHE_TTL_SECONDS = int(os.environ.get("CATEGORY_LIST_CACHE_TTL_SECONDS", "60"))
+_CATEGORY_LIST_CACHE: dict[str, dict[str, Any]] = {}
+
+
+def _category_list_cache_key(*, country_code: Optional[str], module_value: Optional[str], active_flag: Optional[bool]) -> str:
+    return "|".join([
+        country_code or "*",
+        module_value or "*",
+        "*" if active_flag is None else ("1" if bool(active_flag) else "0"),
+    ])
+
+
+def _get_cached_category_list_payload(*, cache_key: str) -> Optional[dict[str, Any]]:
+    cached = _CATEGORY_LIST_CACHE.get(cache_key)
+    if not cached:
+        return None
+    if float(cached.get("expires_at", 0.0)) < time.time():
+        _CATEGORY_LIST_CACHE.pop(cache_key, None)
+        return None
+    return cached.get("payload")
+
+
+def _set_cached_category_list_payload(*, cache_key: str, payload: dict[str, Any]) -> None:
+    ttl_seconds = max(5, int(CATEGORY_LIST_CACHE_TTL_SECONDS))
+    _CATEGORY_LIST_CACHE[cache_key] = {
+        "expires_at": time.time() + ttl_seconds,
+        "payload": payload,
+    }
+
+
+def _invalidate_category_list_cache() -> None:
+    _CATEGORY_LIST_CACHE.clear()
+
+
 @api_router.get("/admin/categories")
 async def admin_list_categories(
     request: Request,
@@ -29124,6 +29158,11 @@ async def admin_list_categories(
         _assert_country_scope(country_code, current_user)
     module_value = _normalize_category_module(module) if module else None
 
+    cache_key = _category_list_cache_key(country_code=country_code, module_value=module_value, active_flag=active_flag)
+    cached_payload = _get_cached_category_list_payload(cache_key=cache_key)
+    if cached_payload is not None:
+        return cached_payload
+
     query = _build_admin_category_query(
         country_code=country_code,
         module_value=module_value,
@@ -29132,12 +29171,14 @@ async def admin_list_categories(
 
     result = await session.execute(query.order_by(Category.sort_order.asc(), Category.created_at.asc()))
     items = result.scalars().all()
-    return {
+    payload = {
         "items": [
             _serialize_category_sql(item, include_schema=True, include_translations=False)
             for item in items
         ]
     }
+    _set_cached_category_list_payload(cache_key=cache_key, payload=payload)
+    return payload
 
 
 REAL_ESTATE_STANDARD_LEVELS = {
@@ -30752,6 +30793,8 @@ async def admin_create_category(
             await session.rollback()
             _raise_category_integrity_error(exc)
 
+    _invalidate_category_list_cache()
+
     result = await session.execute(
         select(Category)
         .options(selectinload(Category.translations))
@@ -31113,6 +31156,8 @@ async def admin_update_category(
             await session.rollback()
             _raise_category_integrity_error(exc)
 
+    _invalidate_category_list_cache()
+
     refreshed = await session.execute(
         select(Category)
         .options(selectinload(Category.translations))
@@ -31400,6 +31445,7 @@ async def admin_delete_category(
     session.add(undo_log)
 
     await session.commit()
+    _invalidate_category_list_cache()
 
     result = await session.execute(
         select(Category)
@@ -31515,6 +31561,7 @@ async def admin_undo_deleted_category_tree(
     undo_log.restored_at = now
     undo_log.restore_source = "admin_panel"
     await session.commit()
+    _invalidate_category_list_cache()
 
     return {
         "ok": True,
@@ -31522,6 +31569,51 @@ async def admin_undo_deleted_category_tree(
         "restored_count": len(restored_ids),
         "restored_ids": restored_ids,
         "undo_window_minutes": int(CATEGORY_DELETE_UNDO_WINDOW_MINUTES),
+    }
+
+
+@api_router.get("/admin/categories/delete-operations")
+async def admin_list_category_delete_operations(
+    request: Request,
+    hours: int = Query(default=24, ge=1, le=168),
+    limit: int = Query(default=30, ge=1, le=200),
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    del request
+    await _ensure_category_delete_undo_table()
+
+    since = datetime.now(timezone.utc) - timedelta(hours=int(hours))
+    rows = (
+        await session.execute(
+            select(CategoryDeleteUndoLog)
+            .where(CategoryDeleteUndoLog.created_at >= since)
+            .order_by(desc(CategoryDeleteUndoLog.created_at), desc(CategoryDeleteUndoLog.id))
+            .limit(limit)
+        )
+    ).scalars().all()
+
+    now = datetime.now(timezone.utc)
+    items = []
+    for row in rows:
+        snapshot = list(row.deleted_snapshot or [])
+        items.append(
+            {
+                "operation_id": str(row.id),
+                "root_category_id": str(row.root_category_id),
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+                "expires_at": row.expires_at.isoformat() if row.expires_at else None,
+                "restored_at": row.restored_at.isoformat() if row.restored_at else None,
+                "deleted_count": len(snapshot),
+                "is_restored": bool(row.restored_at),
+                "is_expired": bool(row.expires_at < now),
+            }
+        )
+
+    return {
+        "items": items,
+        "hours": int(hours),
+        "limit": int(limit),
     }
 
 

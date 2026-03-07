@@ -373,6 +373,13 @@ const buildCategoryErrorMessage = (parsed, fallbackMessage = "İşlem başarıs�
   return `${withCode} • Kaynak: ${sourcePath}`;
 };
 
+const formatDateTimeShort = (value) => {
+  if (!value) return "-";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "-";
+  return parsed.toLocaleString("tr-TR");
+};
+
 const getCategoryListIssueBadges = (item) => {
   const badges = [];
   if (!item?.hierarchy_complete) {
@@ -516,6 +523,8 @@ const AdminCategories = () => {
   const [versionsError, setVersionsError] = useState("");
   const [lastDeleteUndo, setLastDeleteUndo] = useState(null);
   const [undoSecondsLeft, setUndoSecondsLeft] = useState(0);
+  const [undoOperations, setUndoOperations] = useState([]);
+  const [undoOperationsLoading, setUndoOperationsLoading] = useState(false);
   const [seedLoading, setSeedLoading] = useState(false);
   const [level0OrderMovingId, setLevel0OrderMovingId] = useState("");
   const [selectedVersions, setSelectedVersions] = useState([]);
@@ -681,6 +690,48 @@ const AdminCategories = () => {
 
     return () => window.clearInterval(timer);
   }, [lastDeleteUndo]);
+
+  const activeFilterChips = useMemo(() => {
+    const chips = [];
+    if (listFilters.module !== "all") chips.push({ key: "module", label: `Modül: ${listFilters.module}` });
+    if (listFilters.status !== "all") chips.push({ key: "status", label: `Durum: ${listFilters.status}` });
+    if (listFilters.image_presence !== "all") chips.push({ key: "image_presence", label: `Görsel: ${listFilters.image_presence}` });
+    if (listFilters.issue_state !== "all") chips.push({ key: "issue_state", label: `Sorun: ${listFilters.issue_state}` });
+    if (String(listFilters.search_query || "").trim()) chips.push({ key: "search_query", label: `Ara: ${String(listFilters.search_query).trim()}` });
+    if (listFilters.sort_by !== "name_asc") chips.push({ key: "sort_by", label: `Sıralama: ${listFilters.sort_by}` });
+    return chips;
+  }, [listFilters]);
+
+  const fetchUndoOperations = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setUndoOperationsLoading(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/delete-operations?hours=24&limit=20`, {
+        headers: authHeader,
+      });
+      const data = await safeParseJson(response);
+      if (!response.ok) {
+        if (!silent) {
+          const parsed = parseApiError(data, "Undo geçmişi alınamadı.");
+          const message = buildCategoryErrorMessage(parsed, "Undo geçmişi alınamadı.");
+          toast({ title: "Undo geçmişi alınamadı", description: message, variant: "destructive" });
+        }
+        setUndoOperations([]);
+        return;
+      }
+      setUndoOperations(Array.isArray(data?.items) ? data.items : []);
+    } catch (error) {
+      if (!silent) {
+        toast({
+          title: "Undo geçmişi alınamadı",
+          description: "Bağlantı hatası oluştu.",
+          variant: "destructive",
+        });
+      }
+      setUndoOperations([]);
+    } finally {
+      if (!silent) setUndoOperationsLoading(false);
+    }
+  }, [authHeader]);
   const visibleItemIds = useMemo(() => visibleItems.map((item) => item.id), [visibleItems]);
   const allVisibleSelected = useMemo(
     () => visibleItemIds.length > 0 && visibleItemIds.every((id) => selectedIdSet.has(id)),
@@ -1360,7 +1411,8 @@ const AdminCategories = () => {
 
   useEffect(() => {
     fetchItems();
-  }, [selectedCountry, listFilters.module, listFilters.status]);
+    fetchUndoOperations({ silent: true });
+  }, [selectedCountry, listFilters.module, listFilters.status, fetchUndoOperations]);
 
   useEffect(() => {
     if (!bulkJobPolling || !bulkJob?.job_id) return;
@@ -2743,6 +2795,7 @@ const AdminCategories = () => {
       setEditing(null);
     }
     fetchItems();
+    fetchUndoOperations({ silent: true });
   };
 
   const handleUndoDelete = async () => {
@@ -2772,6 +2825,7 @@ const AdminCategories = () => {
     });
     setLastDeleteUndo(null);
     fetchItems();
+    fetchUndoOperations({ silent: true });
   };
 
   const handleMoveLevel0Order = async (item, direction) => {
@@ -3915,9 +3969,39 @@ const AdminCategories = () => {
             </div>
           </div>
 
-          <div className="text-xs text-slate-600" data-testid="categories-list-selection-meta">
-            Seçili: <span className="font-semibold" data-testid="categories-list-selection-count">{selectedIds.length}</span> •
-            Görünen: <span className="font-semibold" data-testid="categories-list-visible-count">{visibleItems.length}</span>
+          <div className="flex flex-col items-end gap-2" data-testid="categories-list-selection-meta">
+            <div className="text-xs text-slate-600">
+              Seçili: <span className="font-semibold" data-testid="categories-list-selection-count">{selectedIds.length}</span> •
+              Görünen: <span className="font-semibold" data-testid="categories-list-visible-count">{visibleItems.length}</span>
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-2" data-testid="categories-list-active-filter-chips-wrap">
+              {activeFilterChips.map((chip) => (
+                <span
+                  key={`categories-filter-chip-${chip.key}`}
+                  className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700"
+                  data-testid={`categories-list-active-filter-chip-${chip.key}`}
+                >
+                  {chip.label}
+                </span>
+              ))}
+              {activeFilterChips.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setListFilters({
+                    module: "all",
+                    status: "all",
+                    image_presence: "all",
+                    issue_state: "all",
+                    sort_by: "name_asc",
+                    search_query: "",
+                  })}
+                  className="h-7 rounded border border-slate-300 px-2 text-[11px]"
+                  data-testid="categories-list-clear-filters"
+                >
+                  Filtreleri Temizle
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
 
@@ -3938,6 +4022,42 @@ const AdminCategories = () => {
             </div>
           </div>
         ) : null}
+
+        <div className="border-b bg-slate-50 px-4 py-3" data-testid="categories-undo-history-panel">
+          <div className="flex items-center justify-between gap-2" data-testid="categories-undo-history-header">
+            <p className="text-xs font-semibold text-slate-700" data-testid="categories-undo-history-title">Son 24 Saat Silme/Undo Geçmişi</p>
+            <button
+              type="button"
+              onClick={() => fetchUndoOperations()}
+              className="h-8 rounded border border-slate-300 bg-white px-2 text-xs"
+              data-testid="categories-undo-history-refresh"
+            >
+              Yenile
+            </button>
+          </div>
+          <div className="mt-2 space-y-1" data-testid="categories-undo-history-list">
+            {undoOperationsLoading ? (
+              <p className="text-xs text-slate-500" data-testid="categories-undo-history-loading">Yükleniyor...</p>
+            ) : undoOperations.length === 0 ? (
+              <p className="text-xs text-slate-500" data-testid="categories-undo-history-empty">Kayıt bulunamadı.</p>
+            ) : undoOperations.map((item, index) => (
+              <div key={`undo-op-${item.operation_id}-${index}`} className="flex flex-wrap items-center justify-between gap-2 rounded border bg-white px-2 py-2 text-xs" data-testid={`categories-undo-history-item-${index}`}>
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-800" data-testid={`categories-undo-history-item-id-${index}`}>{item.operation_id}</p>
+                  <p className="text-slate-600" data-testid={`categories-undo-history-item-meta-${index}`}>
+                    deleted: {Number(item.deleted_count || 0)} • created: {item.created_at ? formatDateTimeShort(item.created_at) : '-'}
+                  </p>
+                </div>
+                <span
+                  className={`rounded border px-2 py-1 ${item.is_restored ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : item.is_expired ? 'border-slate-300 bg-slate-100 text-slate-700' : 'border-amber-300 bg-amber-50 text-amber-700'}`}
+                  data-testid={`categories-undo-history-item-status-${index}`}
+                >
+                  {item.is_restored ? 'Geri Alındı' : item.is_expired ? 'Süresi Doldu' : 'Aktif'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {bulkJob && (
           <div className="border-b px-4 py-2 text-xs bg-slate-50" data-testid="categories-bulk-job-panel">

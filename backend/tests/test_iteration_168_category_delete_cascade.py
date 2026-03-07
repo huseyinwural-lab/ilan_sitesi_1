@@ -156,6 +156,18 @@ class TestCategoryDeleteCascade:
         assert child.get("id") in restored_ids
         assert grandchild.get("id") in restored_ids
 
+        history_response = _request(
+            "GET",
+            f"{BASE_URL}/api/admin/categories/delete-operations",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            params={"hours": 24, "limit": 20},
+            timeout=30,
+        )
+        assert history_response.status_code == 200, history_response.text
+        history_items = (history_response.json() or {}).get("items") or []
+        operation_ids = {str(item.get("operation_id")) for item in history_items}
+        assert str(payload.get("undo_operation_id")) in operation_ids
+
     def test_delete_invalid_id_returns_structured_error(self, admin_token):
         response = _request(
             "DELETE",
