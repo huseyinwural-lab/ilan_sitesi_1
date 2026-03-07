@@ -18,6 +18,50 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ---
 
+## 2026-03-07 (P0 — Scope Conflict Guard + Kalıcı Silme + Publish Force Onayı)
+
+### Kullanıcı Seçimleri
+- Çakışmada davranış: **A (onay modalı)**
+- Kalıcı silme güvenliği: **A (tek onay)**
+- Kapsam: **P0 + Copy akışı dahil**
+
+### Backend
+- Publish endpoint güçlendirildi:
+  - `POST /api/admin/site/content-layout/revisions/{revision_id}/publish`
+  - `PUT /api/admin/layouts/{revision_id}/publish` (alias)
+  - Aynı normalize scope (`page_type/country/module/category`) için aktif publish conflict tespiti eklendi.
+  - Conflict durumunda `409` + `code=publish_scope_conflict` döner.
+  - `force=true` ile çakışan aktif publish revision’lar pasifleştirilip yeni publish tamamlanır.
+- Yeni endpoint:
+  - `DELETE /api/admin/layouts/permanent`
+  - Tekli/toplu revision id listesiyle **kalıcı silme**.
+  - Aktif revision kalıcı silmede `409` + `code=active_revision_cannot_be_permanently_deleted` güvenlik kuralı.
+- Route netliği:
+  - `/api/admin/layouts/{revision_id}` ailesinde UUID path converter ile static route çakışması engellendi.
+- Yeni migration:
+  - `p77_layout_revision_single_active_live`
+  - `layout_revisions` için active-live tekillik indeksi eklendi.
+
+### Frontend
+- `AdminContentBuilder` publish akışı:
+  - Conflict (`publish_scope_conflict`) yakalanır.
+  - Kullanıcı onaylarsa `force=true` ile tekrar publish edilir.
+- `AdminContentList` Passive/Archive:
+  - Satır seçim checkbox’ları + `select all`
+  - `Toplu Kalıcı Sil` butonu
+  - Satır bazında `Kalıcı Sil` butonu
+  - Passive satırlarda `Kopyala` aksiyonu
+
+### Doğrulama
+- Self backend curl: PASS
+  - conflict publish `409` + force publish `200`
+  - permanent delete single/bulk `200`
+  - active revision permanent delete `409`
+- Screenshot smoke: PASS (`/admin/site-design/content-list`, passive view kalıcı silme kontrolleri görünür)
+- `testing_agent` raporu: `/app/test_reports/iteration_157.json`
+  - Backend: **100%** (4 passed, 3 skipped/transient timeout)
+  - Frontend: **100%**
+
 ## 2026-03-05 (P1 — Reklam Yönetimi Formu: Firma Adı + İletişim)
 
 ## 2026-03-06 (P0 — Content Builder Refactor: Content List + Edit/Delete/Copy)
