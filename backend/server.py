@@ -30724,13 +30724,15 @@ async def admin_update_category(
 
     if payload.slug is not None:
         slug = _normalize_category_slug_input(payload.slug)
-        existing_query = await session.execute(
-            select(Category).where(Category.is_deleted.is_(False), Category.id != category.id)
-        )
-        existing_categories = existing_query.scalars().all()
-        if any(_pick_category_slug(cat.slug) == slug for cat in existing_categories):
-            raise HTTPException(status_code=409, detail="Category slug already exists")
-        updates["slug"] = slug
+        current_slug = _normalize_category_slug_input(_pick_category_slug(category.slug) or "")
+        if slug != current_slug:
+            existing_query = await session.execute(
+                select(Category).where(Category.is_deleted.is_(False), Category.id != category.id)
+            )
+            existing_categories = existing_query.scalars().all()
+            if any(_pick_category_slug(cat.slug) == slug for cat in existing_categories):
+                raise HTTPException(status_code=409, detail="Category slug already exists")
+            updates["slug"] = slug
 
     if payload.module is not None:
         module_value = _normalize_category_module(payload.module)
