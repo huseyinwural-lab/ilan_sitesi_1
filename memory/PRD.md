@@ -18,6 +18,29 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ---
 
+## 2026-03-07 (Kategori Yapı Kurulumu — DE > Immobilien > Wohnen)
+
+### Kullanıcı Talebi
+- DE ülkesinde, mevcut `Wohnen` (L1) altında şu yapı kuruldu:
+  - L2: `Verkauf`, `Miete`, `Kurzzeitmiete`
+  - Her L2 altında L3 seti:
+    - `Wohnung`, `Haus`, `Grundstueck`, `WG-Zimmer`, `Senioren-WG`, `Garage`, `Stellplatz`, `Gewerbeimmobilien`, `Anlageimmobilie`, `Ferienimmobilie`
+
+### Teknik Güncelleme
+- `server.py` kategori slug conflict kontrolü sibling-scope'a çekildi:
+  - Aynı `parent_id` altında duplicate slug = conflict
+  - Farklı parent altında aynı slug = allowed
+
+### Doğrulama
+- `testing_agent` raporu: `/app/test_reports/iteration_165.json`
+  - Backend %100 (12/12 PASS)
+  - Sibling slug scope PASS
+  - DE Wohnen hiyerarşisi PASS
+  - Edit without slug change PASS
+
+### Not
+- DB encoding limiti nedeniyle `Grundstück` değeri ASCII uyumlu `Grundstueck` olarak yazıldı.
+
 ## 2026-03-07 (P0 — Kategori UX Hata Mesajı İyileştirmesi)
 
 ### Amaç
