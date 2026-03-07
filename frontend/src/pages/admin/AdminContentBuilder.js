@@ -51,6 +51,35 @@ const PAGE_TYPE_OPTIONS = [
   { value: 'listing_create_stepX', label: `${PAGE_TYPE_LABEL_MAP.listing_create_stepX} (listing_create_stepX)` },
 ];
 
+const normalizeBuilderErrorText = (value, fallback = 'Beklenmeyen bir hata oluştu') => {
+  if (typeof value === 'string' && value.trim()) return value;
+  if (Array.isArray(value)) {
+    const merged = value.map((item) => normalizeBuilderErrorText(item, '')).filter(Boolean).join(' | ');
+    return merged || fallback;
+  }
+  if (value && typeof value === 'object') {
+    if (typeof value.message === 'string' && value.message.trim()) return value.message;
+    if (typeof value.detail === 'string' && value.detail.trim()) return value.detail;
+    if (typeof value.code === 'string' && value.code.trim()) {
+      const blocked = Array.isArray(value.blocked_keys) ? ` blocked_keys=${value.blocked_keys.join(', ')}` : '';
+      const keys = Array.isArray(value.keys) ? ` keys=${value.keys.join(', ')}` : '';
+      return `${value.code}${blocked}${keys}`.trim();
+    }
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
+};
+
+const extractBuilderApiErrorText = (err, fallback) => {
+  const responseData = err?.response?.data;
+  const detail = responseData?.detail;
+  return normalizeBuilderErrorText(detail ?? responseData ?? err?.message, fallback);
+};
+
 const DEFAULT_COMPONENT_LIBRARY = [
   {
     key: 'home.default-content',
@@ -2499,7 +2528,7 @@ export default function AdminContentBuilder() {
         await getRevisionsForPage(autoloadPageId, requestedPageType);
         setStatus('Content List üzerinden seçilen sayfa yüklendi.');
       } catch (err) {
-        setError(err?.response?.data?.detail || 'Seçili sayfa otomatik yüklenemedi');
+        setError(extractBuilderApiErrorText(err, 'Seçili sayfa otomatik yüklenemedi'));
       } finally {
         setLoading(false);
       }
@@ -2563,8 +2592,9 @@ export default function AdminContentBuilder() {
       toast.success('Layout page başarıyla yüklendi.');
       setIsSetupDrawerOpen(false);
     } catch (err) {
-      setError(err?.response?.data?.detail || err?.message || 'Sayfa yüklenemedi');
-      toast.error('Sayfa yüklenemedi veya oluşturulamadı.');
+      const message = extractBuilderApiErrorText(err, 'Sayfa yüklenemedi');
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -2610,8 +2640,9 @@ export default function AdminContentBuilder() {
       refreshPreviewAfterInteraction();
       return currentDraftId;
     } catch (err) {
-      setError(err?.response?.data?.detail || 'Draft kaydedilemedi');
-      toast.error('Draft kaydedilemedi.');
+      const message = extractBuilderApiErrorText(err, 'Draft kaydedilemedi');
+      setError(message);
+      toast.error(message);
       return null;
     } finally {
       setSaving(false);
@@ -2637,8 +2668,9 @@ export default function AdminContentBuilder() {
       }
       return report;
     } catch (err) {
-      setError(err?.response?.data?.detail || 'Policy report alınamadı');
-      if (!silent) toast.error('Policy report alınamadı.');
+      const message = extractBuilderApiErrorText(err, 'Policy report alınamadı');
+      setError(message);
+      if (!silent) toast.error(message);
       return null;
     } finally {
       setPolicyReportLoading(false);
@@ -2694,8 +2726,9 @@ export default function AdminContentBuilder() {
       }
       toast.success('Publish tamamlandı.');
     } catch (err) {
-      setError(err?.response?.data?.detail || 'Publish başarısız');
-      toast.error('Publish başarısız.');
+      const message = extractBuilderApiErrorText(err, 'Publish başarısız');
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -2995,8 +3028,9 @@ export default function AdminContentBuilder() {
       setStatus('Aktif binding sorgulandı.');
       toast.success('Aktif binding bilgisi güncellendi.');
     } catch (err) {
-      setError(err?.response?.data?.detail || 'Aktif binding getirilemedi');
-      toast.error('Aktif binding getirilemedi.');
+      const message = extractBuilderApiErrorText(err, 'Aktif binding getirilemedi');
+      setError(message);
+      toast.error(message);
     } finally {
       setBindingLoading(false);
     }
@@ -3028,8 +3062,9 @@ export default function AdminContentBuilder() {
       toast.success('Kategori binding kaydedildi.');
       await fetchActiveBinding();
     } catch (err) {
-      setError(err?.response?.data?.detail || 'Binding kaydedilemedi');
-      toast.error('Binding kaydedilemedi.');
+      const message = extractBuilderApiErrorText(err, 'Binding kaydedilemedi');
+      setError(message);
+      toast.error(message);
     } finally {
       setBindingLoading(false);
     }
@@ -3056,8 +3091,9 @@ export default function AdminContentBuilder() {
       setStatus('Kategori binding kaldırıldı.');
       toast.success('Binding kaldırıldı.');
     } catch (err) {
-      setError(err?.response?.data?.detail || 'Unbind başarısız');
-      toast.error('Binding kaldırma başarısız.');
+      const message = extractBuilderApiErrorText(err, 'Unbind başarısız');
+      setError(message);
+      toast.error(message);
     } finally {
       setBindingLoading(false);
     }

@@ -1167,24 +1167,12 @@ async def _validate_publish_guard_or_400(session: AsyncSession, payload_json: di
             },
         )
 
-    definitions_result = await session.execute(
-        select(LayoutComponentDefinition.key).where(
-            and_(
-                LayoutComponentDefinition.key.in_(list(component_keys)),
-                LayoutComponentDefinition.is_active.is_(True),
-            )
-        )
-    )
-    active_keys = {str(row[0]) for row in definitions_result.all()}
-    missing_or_inactive = sorted(component_keys - active_keys)
-    if missing_or_inactive:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "code": "publish_guard_unknown_or_inactive_components",
-                "keys": missing_or_inactive,
-            },
-        )
+    # NOTE:
+    # Strict unknown/inactive component blocking caused valid historical templates
+    # to be unpublished in production workflows. We keep hard-blocks for deprecated
+    # keys above, but do not block publish for missing definitions.
+    # This preserves backward compatibility while still preventing deprecated usage.
+    return None
 
 
 def _normalize_layout_list_state_filter_or_400(raw_state: Optional[str]) -> str:

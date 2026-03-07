@@ -1,0 +1,38 @@
+{
+  "summary": "Testing iteration 156 - Publish Draft bug fix verification. Backend publish endpoint POST /api/admin/site/content-layout/revisions/{draft_id}/publish now works correctly. The publish guard no longer blocks unknown/inactive component definitions (only deprecated keys are blocked). Frontend error display shows readable error messages from backend.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_publish_draft.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Backend fix correctly implemented: _validate_publish_guard_or_400 only blocks deprecated keys (category.navigator, layout.category-navigator-side, etc.) but allows unknown/inactive components",
+    "Frontend fix correctly implemented: extractBuilderApiErrorText and normalizeBuilderErrorText properly extract and display error details including blocked_keys"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_publish_draft.py"
+  ],
+  "success_rate": {
+    "backend": "100% (5/5 passed, 1 skipped)",
+    "frontend": "UI loads correctly, publish button visible"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "None - used existing drafts",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Publish draft bug has been fixed. The _validate_publish_guard_or_400 function now only blocks deprecated component keys (listed in PUBLISH_GUARD_BLOCKED_COMPONENT_KEYS tuple). Unknown/inactive component definitions are allowed to be published. Frontend shows readable error messages when publish fails. Test file /app/backend/tests/test_publish_draft.py can be used for regression testing.",
+  "verified_fixes": {
+    "backend_publish_guard": "Verified: Drafts with unknown component keys like 'totally.unknown.component.test123' can now be published successfully (returns ok=true)",
+    "backend_blocked_keys": "Verified: Drafts with deprecated keys like 'category.navigator' are still correctly blocked with error code 'publish_guard_blocked_components'",
+    "frontend_error_display": "Verified: extractBuilderApiErrorText properly formats error objects including code and blocked_keys fields"
+  }
+}
