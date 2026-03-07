@@ -30595,3 +30595,241 @@ All tested page configurations return:
 - **Message**: Final Backend Closure Check SUCCESSFULLY COMPLETED with 100% PASS rate for Turkish review request. All review request requirements fully satisfied. CRITICAL VERIFICATION: All backend endpoints are PRODUCTION-READY and working perfectly. **SECTION A - PAGE SCOPE & VERSION (16/16 PASS)**: All page configurations tested: TR/vehicle (home, urgent_listings, category_l0_l1, search_ln), DE/global (home, urgent_listings, category_l0_l1, search_ln), FR/global (home, urgent_listings, category_l0_l1, search_ln), TR/global (home, urgent_listings, category_l0_l1, search_ln) ✅. All pages return published revisions with revision.status="published" ✅. All pages have correct template version revision.payload_json.meta.template_version="finalized-p0-v1" ✅. Template locking confirmed with template_locked_after_publish=true ✅. **SECTION B - QUICK FILTER LISTINGS (3/3 PASS)**: /api/public/listings?country=TR&badge=urgent → 200 OK, 71 total urgent listings, query.badge="urgent" ✅. /api/public/listings?country=TR&badge=showcase → 200 OK, 211 total showcase listings, query.badge="showcase" ✅. /api/public/listings?country=TR&badge=campaign → 200 OK, 1000 total campaign listings, query.badge="campaign" ✅. All badge filtering working correctly with proper query validation ✅. **SECTION C - CATEGORIES/ADS/BANNERS (6/6 PASS)**: /api/categories/tree?country=TR&depth=L1&module=vehicle → 200 OK ✅. /api/categories/children?country=TR&module=vehicle&depth=2 → 200 OK ✅. /api/categories/listing-counts?country=TR&module=vehicle → 200 OK ✅. /api/ads/resolve?placement=home_top&country=TR → 200 OK, 1 active ad ✅. /api/ads/resolve?placement=urgent_top&country=TR → 200 OK ✅. /api/banners?placement=category_top&country=TR → 200 OK ✅. All metadata APIs working correctly ✅. **AUTHENTICATION**: Admin login successful (admin@platform.com / Admin123!) with bearer token access ✅. **FINAL VERDICT: ✅ COMPLETE PASS** - Final backend closure 100% successful. All 25 endpoints operational, all page versions finalized, all badge filters working, all metadata APIs healthy. Backend is production-ready for P0 closure. Kısa PASS/FAIL Raporu: PASS.
 
 ---
+
+## Admin Revision Redirect Telemetry Test (Mar 7, 2026 - LATEST) ✅ COMPLETE PASS
+
+### Test Summary
+Comprehensive testing of admin telemetry page at /admin/revision-redirect-telemetry as per Turkish review request: "Admin telemetry sayfasını test et: https://builder-hub-151.preview.emergentagent.com. Hesap: admin@platform.com / Admin123!. Test adımları: 1) Login ol ve /admin/revision-redirect-telemetry sayfasına git. 2) Sayfada aşağıdaki kritik blokların render olduğunu doğrula: summary cards: total, success, failed, avg/p95, success rate, failure rate, SLO durumu bloğu, histogram bloğu, failure reason distribution bloğu, günlük trend bloğu. 3) Filtreleri test et: status=success seç, Filtreyi Uygula, failure reason=REVISION_NOT_FOUND seç, Filtreyi Uygula, trend gün sayısı 7/14/30 değiştir, gün sayısına göre trend satır sayısı değişiyor mu kontrol et. 4) Hata yoksa PASS, varsa selector ve ekran adımı ile FAIL raporla. 5) data-testid odaklı doğrulama yap."
+
+### Test Flow Executed:
+1. ✅ Admin login (admin@platform.com / Admin123!) → authentication successful
+2. ✅ Navigate to /admin/revision-redirect-telemetry → page loads correctly
+3. ✅ Verify all critical blocks render → all 11 critical sections visible
+4. ✅ Test status filter (success) → filter applies correctly
+5. ✅ Test failure reason filter (REVISION_NOT_FOUND) → filter applies correctly
+6. ✅ Test trend days filter (7/14/30) → row counts change correctly
+7. ✅ Monitor console errors → 0 errors detected
+
+### Critical Findings:
+
+#### ✅ ALL REQUIREMENTS PASSED (100% SUCCESS - 7/7 TESTS):
+
+**1. Admin Login & Navigation**: ✅ **FULLY WORKING**
+  - **Login**: admin@platform.com / Admin123! authenticated successfully
+  - **Page Access**: /admin/revision-redirect-telemetry loads without errors
+  - **Page Container**: `[data-testid="admin-revision-redirect-telemetry-page"]` visible ✅
+  - **Panel Container**: `[data-testid="admin-revision-redirect-telemetry-panel"]` visible ✅
+  - **CRITICAL**: Admin authentication and page routing working perfectly
+
+**2. Summary Cards Block**: ✅ **ALL 6 CARDS RENDERING CORRECTLY**
+  - **Container**: `[data-testid="admin-revision-redirect-telemetry-summary-cards"]` visible ✅
+  - **Total Card**: `[data-testid="admin-revision-redirect-telemetry-summary-total"]` visible ✅
+    - Value: 10 (total redirects)
+  - **Success Card**: `[data-testid="admin-revision-redirect-telemetry-summary-success"]` visible ✅
+    - Value: 5 (successful redirects)
+    - Background: emerald-50 (green theme) ✅
+  - **Failed Card**: `[data-testid="admin-revision-redirect-telemetry-summary-failed"]` visible ✅
+    - Value: 5 (failed redirects)
+    - Background: rose-50 (red theme) ✅
+  - **Duration Card**: `[data-testid="admin-revision-redirect-telemetry-summary-duration"]` visible ✅
+    - Value: 279.9 / 999 (avg / p95 ms)
+  - **Success Rate Card**: `[data-testid="admin-revision-redirect-telemetry-summary-success-rate"]` visible ✅
+    - Value: 50.00%
+  - **Failure Rate Card**: `[data-testid="admin-revision-redirect-telemetry-summary-failure-rate"]` visible ✅
+    - Value: 50.00%
+  - **CRITICAL**: All 6 summary cards displaying correct metrics with proper data-testid attributes
+
+**3. SLO Durumu Block**: ✅ **RENDERING CORRECTLY**
+  - **Container**: `[data-testid="admin-revision-redirect-telemetry-slo-wrap"]` visible ✅
+  - **Title**: `[data-testid="admin-revision-redirect-telemetry-slo-title"]` shows "SLO durumu" ✅
+  - **Badge**: `[data-testid="admin-revision-redirect-telemetry-slo-badge"]` displays "SLO İhlali" ✅
+  - **Grid Container**: `[data-testid="admin-revision-redirect-telemetry-slo-grid"]` visible ✅
+  - **P95 Latency**: `[data-testid="admin-revision-redirect-telemetry-slo-latency-item"]` visible ✅
+    - Value: 999 / 1200 ms (current / target)
+  - **Failure Rate**: `[data-testid="admin-revision-redirect-telemetry-slo-failure-rate-item"]` visible ✅
+    - Value: 50.00% / 5.00% (current / target)
+  - **CRITICAL**: SLO status block shows proper targets and current values with violation indicator
+
+**4. Histogram Block**: ✅ **RENDERING CORRECTLY**
+  - **Container**: `[data-testid="admin-revision-redirect-telemetry-histogram-wrap"]` visible ✅
+  - **Title**: "Redirect duration histogram" ✅
+  - **Grid**: `[data-testid="admin-revision-redirect-telemetry-histogram-grid"]` visible ✅
+  - **Buckets** (all 5 buckets visible with data-testid):
+    - `admin-revision-redirect-telemetry-histogram-0_250`: 8 redirects ✅
+    - `admin-revision-redirect-telemetry-histogram-251_500`: 0 redirects ✅
+    - `admin-revision-redirect-telemetry-histogram-501_1000`: 2 redirects ✅
+    - `admin-revision-redirect-telemetry-histogram-1001_2000`: 0 redirects ✅
+    - `admin-revision-redirect-telemetry-histogram-2001_plus`: 0 redirects ✅
+  - **CRITICAL**: Duration histogram showing correct distribution across all 5 time buckets
+
+**5. Failure Reason Distribution Block**: ✅ **RENDERING CORRECTLY**
+  - **Container**: `[data-testid="admin-revision-redirect-telemetry-failure-reasons-wrap"]` visible ✅
+  - **Title**: "Failure reason distribution" ✅
+  - **Grid**: `[data-testid="admin-revision-redirect-telemetry-failure-reasons-grid"]` visible ✅
+  - **Reasons** (2 failure reasons displayed):
+    - `[data-testid="admin-revision-redirect-telemetry-failure-reason-revision_not_found"]`: 4 failures ✅
+    - `[data-testid="admin-revision-redirect-telemetry-failure-reason-revision_not_published"]`: 1 failure ✅
+  - **CRITICAL**: Failure reasons properly categorized and counted
+
+**6. Günlük Trend Block**: ✅ **RENDERING CORRECTLY**
+  - **Container**: `[data-testid="admin-revision-redirect-telemetry-trend-wrap"]` visible ✅
+  - **Title**: "Günlük redirect event trendi" ✅
+  - **List Container**: `[data-testid="admin-revision-redirect-telemetry-trend-list"]` visible ✅
+  - **Trend Items**: Each row has proper data-testid structure:
+    - `admin-revision-redirect-telemetry-trend-item-{index}` ✅
+    - `admin-revision-redirect-telemetry-trend-date-{index}` ✅
+    - `admin-revision-redirect-telemetry-trend-counts-{index}` ✅
+    - `admin-revision-redirect-telemetry-trend-total-bar-{index}` ✅
+    - `admin-revision-redirect-telemetry-trend-success-bar-{index}` ✅
+    - `admin-revision-redirect-telemetry-trend-failed-bar-{index}` ✅
+  - **CRITICAL**: Daily trend visualization with proper date formatting and bar charts
+
+**7. Filter Functionality**: ✅ **ALL FILTERS WORKING PERFECTLY**
+
+  **7.1 Status Filter**: ✅ **WORKING**
+  - **Filter Element**: `[data-testid="admin-revision-redirect-telemetry-status-filter"]` ✅
+  - **Test**: Selected "success" option
+  - **Apply Button**: `[data-testid="admin-revision-redirect-telemetry-apply-button"]` clicked ✅
+  - **Result After Filter**:
+    - Total: 5 (changed from 10) ✅
+    - Success: 5 (unchanged) ✅
+    - Failed: 0 (changed from 5) ✅
+    - Success Rate: 100.00% (changed from 50.00%) ✅
+    - Failure Rate: 0.00% (changed from 50.00%) ✅
+    - SLO Badge: "SLO OK" (changed from "SLO İhlali") ✅
+  - **CRITICAL**: Status filter correctly filters data and updates all metrics
+
+  **7.2 Failure Reason Filter**: ✅ **WORKING**
+  - **Filter Element**: `[data-testid="admin-revision-redirect-telemetry-failure-filter"]` ✅
+  - **Test**: Selected "REVISION_NOT_FOUND" option
+  - **Apply Button**: Clicked successfully ✅
+  - **Result**: Data filtered correctly, showing only REVISION_NOT_FOUND failures ✅
+  - **CRITICAL**: Failure reason filter working as expected
+
+  **7.3 Trend Days Filter**: ✅ **WORKING PERFECTLY**
+  - **Filter Element**: `[data-testid="admin-revision-redirect-telemetry-trend-days-filter"]` ✅
+  - **Test 1**: Selected "7" → Result: 7 trend rows displayed ✅
+  - **Test 2**: Selected "14" → Result: 14 trend rows displayed ✅
+  - **Test 3**: Selected "30" → Result: 30 trend rows displayed ✅
+  - **Verification**: Row count changes correctly based on selected days ✅
+  - **CRITICAL**: Trend days filter dynamically updates trend list size
+
+### Screenshots Captured:
+1. **telemetry-initial.png**: Initial page load with all blocks visible (default filters)
+2. **telemetry-status-success.png**: After applying status=success filter
+3. **telemetry-failure-reason.png**: After applying failure_reason=REVISION_NOT_FOUND filter
+4. **telemetry-trend-7days.png**: Trend view with 7 days selected (7 rows)
+5. **telemetry-trend-14days.png**: Trend view with 14 days selected (14 rows)
+6. **telemetry-trend-30days.png**: Trend view with 30 days selected (30 rows)
+7. **telemetry-final.png**: Final state after all filter tests
+
+### Test Results Summary:
+- **Total Tests**: 7 critical areas
+- **Fully Passed**: 7/7 (100%)
+- **Failed**: 0/7 (0%)
+- **Admin Login & Navigation**: ✅ PASS
+- **Summary Cards (6 cards)**: ✅ PASS
+- **SLO Durumu Block**: ✅ PASS
+- **Histogram Block**: ✅ PASS
+- **Failure Reason Distribution Block**: ✅ PASS
+- **Günlük Trend Block**: ✅ PASS
+- **Filter Functionality (status/failure_reason/trend_days)**: ✅ PASS
+
+### Data-Testid Validation:
+All critical elements have proper data-testid attributes for robust testing:
+
+**Page Level**:
+- `admin-revision-redirect-telemetry-page` ✅
+- `admin-revision-redirect-telemetry-panel` ✅
+- `admin-revision-redirect-telemetry-header` ✅
+- `admin-revision-redirect-telemetry-title` ✅
+
+**Filters**:
+- `admin-revision-redirect-telemetry-status-filter` ✅
+- `admin-revision-redirect-telemetry-failure-filter` ✅
+- `admin-revision-redirect-telemetry-trend-days-filter` ✅
+- `admin-revision-redirect-telemetry-apply-button` ✅
+
+**Summary Cards**:
+- `admin-revision-redirect-telemetry-summary-cards` (container) ✅
+- `admin-revision-redirect-telemetry-summary-total` & `-value` ✅
+- `admin-revision-redirect-telemetry-summary-success` & `-value` ✅
+- `admin-revision-redirect-telemetry-summary-failed` & `-value` ✅
+- `admin-revision-redirect-telemetry-summary-duration` & `-value` ✅
+- `admin-revision-redirect-telemetry-summary-success-rate` & `-value` ✅
+- `admin-revision-redirect-telemetry-summary-failure-rate` & `-value` ✅
+
+**SLO Block**:
+- `admin-revision-redirect-telemetry-slo-wrap` ✅
+- `admin-revision-redirect-telemetry-slo-badge` ✅
+- `admin-revision-redirect-telemetry-slo-latency-item` & `-value` ✅
+- `admin-revision-redirect-telemetry-slo-failure-rate-item` & `-value` ✅
+
+**Histogram Block**:
+- `admin-revision-redirect-telemetry-histogram-wrap` ✅
+- `admin-revision-redirect-telemetry-histogram-{bucket}` (5 buckets) ✅
+
+**Failure Reasons Block**:
+- `admin-revision-redirect-telemetry-failure-reasons-wrap` ✅
+- `admin-revision-redirect-telemetry-failure-reason-{reason}` (dynamic) ✅
+
+**Trend Block**:
+- `admin-revision-redirect-telemetry-trend-wrap` ✅
+- `admin-revision-redirect-telemetry-trend-item-{index}` ✅
+- `admin-revision-redirect-telemetry-trend-date-{index}` ✅
+- `admin-revision-redirect-telemetry-trend-counts-{index}` ✅
+- `admin-revision-redirect-telemetry-trend-total-bar-{index}` ✅
+- `admin-revision-redirect-telemetry-trend-success-bar-{index}` ✅
+- `admin-revision-redirect-telemetry-trend-failed-bar-{index}` ✅
+
+### Console Monitoring:
+- **Console Errors**: 0 ✅ (EXCELLENT)
+- **Console Warnings**: 0 ✅ (EXCELLENT)
+- **Runtime**: Clean execution with no JavaScript errors
+- **Page Error Messages**: None detected ✅
+
+### Final Status:
+- **Overall Result**: ✅ **COMPLETE PASS** - All requirements satisfied 100%
+- **Page Rendering**: ✅ PRODUCTION-READY (all blocks visible with correct data-testid attributes)
+- **Summary Cards**: ✅ PRODUCTION-READY (6 metric cards showing correct values)
+- **SLO Monitoring**: ✅ PRODUCTION-READY (SLO targets and violations properly displayed)
+- **Analytics Visualization**: ✅ PRODUCTION-READY (histogram, failure distribution, trend charts working)
+- **Filter System**: ✅ PRODUCTION-READY (all 3 filters apply correctly and update data)
+- **Data-Testid Coverage**: ✅ EXCELLENT (comprehensive test coverage for all elements)
+
+### Review Request Compliance:
+
+**Turkish Requirements Check**:
+1. ✅ "Login ol ve /admin/revision-redirect-telemetry sayfasına git"
+   - **PASSED**: Successfully logged in with admin@platform.com / Admin123!
+   - **PASSED**: Navigated to /admin/revision-redirect-telemetry page
+   
+2. ✅ "Sayfada aşağıdaki kritik blokların render olduğunu doğrula"
+   - **PASSED**: Summary cards (total, success, failed, avg/p95, success rate, failure rate) all visible ✅
+   - **PASSED**: SLO durumu bloğu visible with badge and metrics ✅
+   - **PASSED**: Histogram bloğu visible with 5 duration buckets ✅
+   - **PASSED**: Failure reason distribution bloğu visible with 2 reasons ✅
+   - **PASSED**: Günlük trend bloğu visible with daily bars ✅
+   
+3. ✅ "Filtreleri test et"
+   - **PASSED**: status=success seçildi, Filtreyi Uygula tıklandı → Data updated correctly (total: 10→5, failed: 5→0, success rate: 50%→100%) ✅
+   - **PASSED**: failure reason=REVISION_NOT_FOUND seçildi, Filtreyi Uygula tıklandı → Filter applied successfully ✅
+   - **PASSED**: Trend gün sayısı 7/14/30 değiştirildi → Row counts changed correctly (7 rows, 14 rows, 30 rows) ✅
+   
+4. ✅ "Hata yoksa PASS, varsa selector ve ekran adımı ile FAIL raporla"
+   - **RESULT**: ✅ PASS - Hiçbir hata bulunamadı
+   
+5. ✅ "data-testid odaklı doğrulama yap"
+   - **PASSED**: All critical elements verified using data-testid selectors
+   - **PASSED**: 40+ unique data-testid attributes validated
+
+**Kısa PASS/FAIL**: ✅ **PASS** - Tüm kritik bloklar render oldu, tüm filtreler çalışıyor, hiçbir hata yok
+
+**Overall Compliance**: ✅ 5/5 requirements fully satisfied (100%)
+
+### Agent Communication:
+- **Agent**: testing
+- **Date**: Mar 7, 2026 (LATEST)
+- **Message**: Admin Revision Redirect Telemetry Test SUCCESSFULLY COMPLETED with 100% PASS rate. All Turkish review request requirements fully satisfied. CRITICAL VERIFICATION: Admin telemetry page at /admin/revision-redirect-telemetry is PRODUCTION-READY and working perfectly. FLOW VERIFICATION: 1) ADMIN LOGIN: Successfully authenticated as admin@platform.com / Admin123! and navigated to telemetry page ✅. 2) CRITICAL BLOCKS RENDERING: ALL 11 CRITICAL SECTIONS VISIBLE with proper data-testid attributes ✅. Summary cards container (admin-revision-redirect-telemetry-summary-cards) ✅. Total card: 10 total redirects ✅. Success card: 5 successful (emerald-50 bg) ✅. Failed card: 5 failed (rose-50 bg) ✅. Duration card: 279.9ms avg / 999ms p95 ✅. Success rate card: 50.00% ✅. Failure rate card: 50.00% ✅. SLO durumu bloğu: showing "SLO İhlali" badge with p95 999/1200ms and failure rate 50%/5% targets ✅. Histogram bloğu: 5 buckets (0_250: 8, 251_500: 0, 501_1000: 2, 1001_2000: 0, 2001_plus: 0) ✅. Failure reason distribution: REVISION_NOT_FOUND (4), REVISION_NOT_PUBLISHED (1) ✅. Günlük trend bloğu: daily bars with date, counts, and status visualization ✅. 3) FILTER TESTS: ALL 3 FILTERS WORKING PERFECTLY ✅. Status=success filter: Applied successfully → metrics updated (total: 10→5, failed: 5→0, success_rate: 50%→100%, SLO badge: İhlali→OK) ✅. Failure reason=REVISION_NOT_FOUND filter: Applied successfully → data filtered correctly ✅. Trend gün sayısı filter: 7 gün → 7 satır ✅, 14 gün → 14 satır ✅, 30 gün → 30 satır ✅. Row count changes correctly based on selected days ✅. 4) DATA-TESTID VALIDATION: All 40+ critical elements have proper data-testid attributes for robust automated testing ✅. Page container, filters, summary cards, SLO block, histogram, failure reasons, trend items all have unique testids ✅. 5) ERROR MONITORING: 0 console errors ✅, 0 page error messages ✅, clean runtime execution ✅. **FINAL VERDICT: ✅ COMPLETE PASS** - Admin telemetry page fully functional and production-ready. All blocks render correctly, all filters work perfectly, all data-testid attributes present. Zero errors detected. Turkish review request requirements 100% satisfied.
+
+---
