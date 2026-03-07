@@ -3231,3 +3231,63 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Açık Kalanlar (Backlog)
 - **MOCKED:** `academy.modules`
 - Apple Social Login (kredensiyal bekliyor)
+
+## 2026-03-07 — Kategori Yönetimi Yapısal Revizyonu (Final Görev)
+
+### Hedef
+- Kategori oluşturma/düzenleme akışındaki 404/409 problemlerini alan değiştirerek "kaçma" yaklaşımından çıkarıp yapısal olarak çözmek.
+
+### Tamamlanan Teknik İşler
+
+#### 1) Backend — Upsert + Conflict Sözleşmesi
+- `POST /api/admin/categories` artık scope bazlı idempotent davranıyor:
+  - Aynı `country+module+parent+slug` mevcutsa `200` + `reused:true` + `category_id` dönüyor.
+  - Yeni kayıtta `201` + `reused:false` + `category_id` dönüyor.
+- `GET /api/admin/categories/resolve` eklendi:
+  - `category_id` ile doğrudan resolve
+  - veya `slug/name + country + module + parent` ile canonical kayıt resolve
+- 409 çatışma payload’ları iyileştirildi:
+  - `existing_category_id`
+  - `conflict_fields`
+
+#### 2) Frontend — Self-Healing Wizard Rebind
+- `AdminCategories.js` içinde mutation katmanı güçlendirildi:
+  - `requestCategoryMutationWithRetry` artık 404/409 durumunda self-heal deniyor.
+  - `resolveCategoryForSelfHeal` ile backend resolve endpoint çağrılıp akış mevcut kayda rebind ediliyor.
+  - `CATEGORY_STALE_VERSION` için `expected_updated_at` otomatik güncellenip retry yapılıyor.
+- Sonuç: kullanıcı modaldan düşmeden kayıt yönetimi akışında kalıyor.
+
+#### 3) DB — Partial Unique Index + Dedup Guard
+- Runtime guard eklendi: `_ensure_category_scope_slug_unique_index`
+  - Legacy `uq_categories_parent_slug` düşürülüyor.
+  - Scope bazlı duplicate aktif kayıtlar soft-delete edilerek dedup yapılıyor.
+  - Partial unique index oluşturuluyor: `uq_categories_scope_slug`
+- Startup performans/stabilite iyileştirmesi:
+  - Index zaten varsa dedup yeniden çalıştırılmıyor (gereksiz startup yükü azaltıldı).
+- Alembic migration eklendi:
+  - `backend/migrations/versions/p80_category_scope_slug_unique.py`
+
+#### 4) UX — Unified Record Management
+- Kategori modalı artık tek akış mesajı veriyor:
+  - Başlık: `Kategori Kayıt Yönetimi`
+  - CTA: `Kayıt Yönetimi`
+  - 404/409 self-heal davranışını açıklayan yönlendirici metin eklendi.
+
+### Testler
+- Manual smoke: PASS
+  - Admin login
+  - `/admin/categories` açılışı
+  - modal başlık/CTA doğrulaması
+- Backend curl: PASS
+  - upsert reused (`200 reused:true`)
+  - resolve endpoint (`category_id` ve `slug`)
+  - structured 404 (`CATEGORY_NOT_FOUND`)
+- Testing agent: PASS
+  - Rapor: `/app/test_reports/iteration_171.json`
+  - Ek test çıktıları:
+    - `/app/backend/tests/test_iteration_171_category_upsert_selfheal.py`
+    - `/app/test_reports/pytest/pytest_results_171.xml`
+
+### Açık Kalanlar
+- **MOCKED:** `academy.modules`
+- Apple Social Login (kullanıcı kredensiyali bekliyor)

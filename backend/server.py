@@ -2441,6 +2441,20 @@ async def _ensure_category_scope_slug_unique_index(conn) -> None:
         # Legacy index, scope dışı çakışma üretiyordu (country/module ayrımı olmadan)
         await conn.execute(text("DROP INDEX IF EXISTS uq_categories_parent_slug"))
 
+        index_exists = await conn.execute(
+            text(
+                """
+                SELECT 1
+                FROM pg_indexes
+                WHERE schemaname = ANY(current_schemas(false))
+                  AND indexname = 'uq_categories_scope_slug'
+                LIMIT 1
+                """
+            )
+        )
+        if index_exists.scalar_one_or_none():
+            return
+
         dedup_result = await conn.execute(
             text(
                 """
