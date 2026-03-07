@@ -16,7 +16,7 @@ import requests
 import uuid
 from typing import Optional
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://layout-uniqueness.preview.emergentagent.com")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://builder-hub-151.preview.emergentagent.com")
 
 
 @pytest.fixture

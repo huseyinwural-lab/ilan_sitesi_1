@@ -16,7 +16,7 @@ from datetime import datetime
 import uuid
 
 # Backend URL from environment
-BACKEND_URL = "https://layout-uniqueness.preview.emergentagent.com"
+BACKEND_URL = "https://builder-hub-151.preview.emergentagent.com"
 
 # Test credentials
 ADMIN_CREDENTIALS = {

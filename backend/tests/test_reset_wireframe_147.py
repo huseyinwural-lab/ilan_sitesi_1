@@ -6,7 +6,7 @@ import os
 import requests
 import pytest
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://layout-uniqueness.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://builder-hub-151.preview.emergentagent.com').rstrip('/')
 
 class TestResetWireframeWorkflow:
     """Test reset-and-seed-home-wireframe workflow endpoint"""

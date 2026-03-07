@@ -1,7 +1,7 @@
 # LOGIN_RATE_LIMIT_EVIDENCE
 
 **Tarih:** 2026-02-24 12:20:00 UTC
-**Ortam URL:** https://layout-uniqueness.preview.emergentagent.com
+**Ortam URL:** https://builder-hub-151.preview.emergentagent.com
 
 ## Senaryo
 - Aynı IP + aynı kullanıcı için 5 başarısız login denemesi
