@@ -51,20 +51,23 @@ export default function AdminPresetRuns() {
   const [limit] = useState(20);
   const [total, setTotal] = useState(0);
   const [statusFilter, setStatusFilter] = useState('');
-  const [moduleFilter, setModuleFilter] = useState('');
+  const [fromDateFilter, setFromDateFilter] = useState('');
+  const [toDateFilter, setToDateFilter] = useState('');
+  const [exportLoading, setExportLoading] = useState(false);
   const [expandedRunIds, setExpandedRunIds] = useState([]);
 
   const fetchRuns = useCallback(async ({ silent = false } = {}) => {
     setLoading(true);
     if (!silent) setError('');
     try {
-      const response = await axios.get(`${API}/admin/site/content-layout/preset-runs`, {
+      const response = await axios.get(`${API}/admin/preset-runs`, {
         headers: authHeaders,
         params: {
           page,
           limit,
           status: statusFilter || undefined,
-          module: moduleFilter || undefined,
+          from: fromDateFilter || undefined,
+          to: toDateFilter || undefined,
         },
       });
       const items = Array.isArray(response.data?.items) ? response.data.items : [];
@@ -81,7 +84,7 @@ export default function AdminPresetRuns() {
     } finally {
       setLoading(false);
     }
-  }, [authHeaders, page, limit, statusFilter, moduleFilter]);
+  }, [authHeaders, page, limit, statusFilter, fromDateFilter, toDateFilter]);
 
   useEffect(() => {
     fetchRuns({ silent: true });
@@ -99,6 +102,40 @@ export default function AdminPresetRuns() {
     ));
   };
 
+  const handleExportCsv = async () => {
+    setExportLoading(true);
+    setError('');
+    try {
+      const response = await axios.get(`${API}/admin/preset-runs/export`, {
+        headers: authHeaders,
+        params: {
+          status: statusFilter || undefined,
+          from: fromDateFilter || undefined,
+          to: toDateFilter || undefined,
+        },
+        responseType: 'blob',
+      });
+
+      const blobUrl = window.URL.createObjectURL(response.data);
+      const link = document.createElement('a');
+      const headerName = String(response.headers?.['content-disposition'] || '');
+      const matchedName = headerName.match(/filename=([^;]+)/i);
+      link.href = blobUrl;
+      link.download = matchedName?.[1] ? String(matchedName[1]).trim() : 'preset-runs.csv';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+      toast.success('CSV export hazır.');
+    } catch (requestError) {
+      const fallback = requestError?.response?.data?.detail || requestError?.message || 'CSV export başarısız';
+      setError(String(fallback));
+      toast.error(String(fallback));
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-5" data-testid="admin-preset-runs-page">
       <section className="rounded-xl border bg-white p-4" data-testid="admin-preset-runs-panel">
@@ -107,18 +144,29 @@ export default function AdminPresetRuns() {
             <h1 className="text-sm font-semibold" data-testid="admin-preset-runs-title">Template Preset Run History</h1>
             <p className="text-xs text-slate-500" data-testid="admin-preset-runs-subtitle">Çalıştırma geçmişi, başarı oranı ve hata logları.</p>
           </div>
-          <button
-            type="button"
-            className="h-9 rounded border px-3 text-xs"
-            onClick={() => fetchRuns()}
-            disabled={loading}
-            data-testid="admin-preset-runs-refresh-button"
-          >
-            Yenile
-          </button>
+          <div className="flex items-center gap-2" data-testid="admin-preset-runs-header-actions">
+            <button
+              type="button"
+              className="h-9 rounded border px-3 text-xs"
+              onClick={handleExportCsv}
+              disabled={loading || exportLoading}
+              data-testid="admin-preset-runs-export-button"
+            >
+              {exportLoading ? 'Export...' : 'Export CSV'}
+            </button>
+            <button
+              type="button"
+              className="h-9 rounded border px-3 text-xs"
+              onClick={() => fetchRuns()}
+              disabled={loading}
+              data-testid="admin-preset-runs-refresh-button"
+            >
+              Yenile
+            </button>
+          </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3" data-testid="admin-preset-runs-filters">
+        <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-4" data-testid="admin-preset-runs-filters">
           <label className="text-xs" data-testid="admin-preset-runs-status-filter-wrap">
             Status
             <select
@@ -137,17 +185,31 @@ export default function AdminPresetRuns() {
             </select>
           </label>
 
-          <label className="text-xs" data-testid="admin-preset-runs-module-filter-wrap">
-            Module
+          <label className="text-xs" data-testid="admin-preset-runs-from-filter-wrap">
+            From
             <input
               className="mt-1 h-9 w-full rounded border px-2"
-              value={moduleFilter}
+              type="date"
+              value={fromDateFilter}
               onChange={(event) => {
                 setPage(1);
-                setModuleFilter(event.target.value);
+                setFromDateFilter(event.target.value);
               }}
-              placeholder="global"
-              data-testid="admin-preset-runs-module-filter"
+              data-testid="admin-preset-runs-from-filter"
+            />
+          </label>
+
+          <label className="text-xs" data-testid="admin-preset-runs-to-filter-wrap">
+            To
+            <input
+              className="mt-1 h-9 w-full rounded border px-2"
+              type="date"
+              value={toDateFilter}
+              onChange={(event) => {
+                setPage(1);
+                setToDateFilter(event.target.value);
+              }}
+              data-testid="admin-preset-runs-to-filter"
             />
           </label>
 
@@ -192,48 +254,42 @@ export default function AdminPresetRuns() {
                 const successRatio = Number(row.success_ratio || 0);
                 const errors = Array.isArray(row.error_logs) ? row.error_logs : [];
                 return (
-                  <React.Fragment key={row.id}>
-                    <tr className="border-b" data-testid={`admin-preset-runs-row-${row.id}`}>
-                      <td className="px-2 py-2 font-mono text-[11px]" data-testid={`admin-preset-runs-run-id-${row.id}`}>{row.id}</td>
-                      <td className="px-2 py-2" data-testid={`admin-preset-runs-operator-${row.id}`}>{row.executed_by_email || row.executed_by || '-'}</td>
-                      <td className="px-2 py-2" data-testid={`admin-preset-runs-executed-at-${row.id}`}>{formatDateTime(row.executed_at)}</td>
-                      <td className="px-2 py-2" data-testid={`admin-preset-runs-countries-${row.id}`}>{(row.target_countries || []).join(', ') || '-'}</td>
-                      <td className="px-2 py-2" data-testid={`admin-preset-runs-success-ratio-${row.id}`}>{successRatio}%</td>
-                      <td className="px-2 py-2" data-testid={`admin-preset-runs-duration-${row.id}`}>{Number(row.duration_ms || 0)} ms</td>
-                      <td className="px-2 py-2" data-testid={`admin-preset-runs-status-${row.id}`}>
-                        <span className={`inline-flex rounded border px-2 py-1 ${row.status === 'success' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : row.status === 'partial_success' ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-rose-300 bg-rose-50 text-rose-700'}`}>
-                          {row.status}
-                        </span>
-                      </td>
-                      <td className="px-2 py-2" data-testid={`admin-preset-runs-actions-${row.id}`}>
-                        <button
-                          type="button"
-                          className="h-8 rounded border px-2 text-[11px]"
-                          onClick={() => toggleExpand(row.id)}
-                          data-testid={`admin-preset-runs-expand-button-${row.id}`}
-                        >
-                          {expanded ? 'Log Gizle' : 'Log Gör'}
-                        </button>
-                      </td>
-                    </tr>
-                    {expanded ? (
-                      <tr className="border-b bg-slate-50" data-testid={`admin-preset-runs-expanded-row-${row.id}`}>
-                        <td className="px-2 py-2" colSpan={8} data-testid={`admin-preset-runs-expanded-cell-${row.id}`}>
+                  <tr key={row.id} className="border-b" data-testid={`admin-preset-runs-row-${row.id}`}>
+                    <td className="px-2 py-2 font-mono text-[11px]" data-testid={`admin-preset-runs-run-id-${row.id}`}>{row.id}</td>
+                    <td className="px-2 py-2" data-testid={`admin-preset-runs-operator-${row.id}`}>{row.executed_by_email || row.executed_by || '-'}</td>
+                    <td className="px-2 py-2" data-testid={`admin-preset-runs-executed-at-${row.id}`}>{formatDateTime(row.executed_at)}</td>
+                    <td className="px-2 py-2" data-testid={`admin-preset-runs-countries-${row.id}`}>{(row.target_countries || []).join(', ') || '-'}</td>
+                    <td className="px-2 py-2" data-testid={`admin-preset-runs-success-ratio-${row.id}`}>{successRatio}%</td>
+                    <td className="px-2 py-2" data-testid={`admin-preset-runs-duration-${row.id}`}>{Number(row.duration_ms || 0)} ms</td>
+                    <td className="px-2 py-2" data-testid={`admin-preset-runs-status-${row.id}`}>
+                      <span className={`inline-flex rounded border px-2 py-1 ${row.status === 'success' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : row.status === 'partial_success' ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-rose-300 bg-rose-50 text-rose-700'}`}>
+                        {row.status}
+                      </span>
+                    </td>
+                    <td className="px-2 py-2" data-testid={`admin-preset-runs-actions-${row.id}`}>
+                      <button
+                        type="button"
+                        className="h-8 rounded border px-2 text-[11px]"
+                        onClick={() => toggleExpand(row.id)}
+                        data-testid={`admin-preset-runs-expand-button-${row.id}`}
+                      >
+                        {expanded ? 'Log Gizle' : 'Log Gör'}
+                      </button>
+                      {expanded ? (
+                        <div className="mt-2 space-y-1 rounded border bg-slate-50 p-2" data-testid={`admin-preset-runs-error-list-${row.id}`}>
                           {errors.length === 0 ? (
                             <p className="text-xs text-slate-600" data-testid={`admin-preset-runs-expanded-empty-${row.id}`}>Bu run için hata logu yok.</p>
                           ) : (
-                            <div className="space-y-1" data-testid={`admin-preset-runs-error-list-${row.id}`}>
-                              {errors.map((errorItem, index) => (
-                                <p key={`run-error-${row.id}-${index}`} className="text-xs text-rose-700" data-testid={`admin-preset-runs-error-item-${row.id}-${index}`}>
-                                  {String(errorItem?.country || '-').toUpperCase()} • {normalizeErrorText(errorItem?.error || errorItem?.detail, 'error')}
-                                </p>
-                              ))}
-                            </div>
+                            errors.map((errorItem, index) => (
+                              <p key={`run-error-${row.id}-${index}`} className="text-xs text-rose-700" data-testid={`admin-preset-runs-error-item-${row.id}-${index}`}>
+                                {String(errorItem?.country || '-').toUpperCase()} • {normalizeErrorText(errorItem?.error || errorItem?.detail, 'error')}
+                              </p>
+                            ))
                           )}
-                        </td>
-                      </tr>
-                    ) : null}
-                  </React.Fragment>
+                        </div>
+                      ) : null}
+                    </td>
+                  </tr>
                 );
               })}
             </tbody>

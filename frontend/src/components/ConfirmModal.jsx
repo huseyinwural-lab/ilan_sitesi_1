@@ -16,6 +16,7 @@ export const ConfirmModal = ({
   warningText,
   cancelLabel,
   proceedLabel,
+  openRevisionLabel = 'Revizyonu Aç',
   onCancel,
   onProceed,
   conflictItems,
@@ -51,8 +52,27 @@ export const ConfirmModal = ({
                   className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700"
                   data-testid={`${testIdPrefix}-conflict-item-${index}`}
                 >
-                  {String(item?.country || '-').toUpperCase()} / {item?.module || '-'} / {item?.page_type || '-'}
-                  {' • '}rev: {item?.revision_id || '-'}
+                  <div className="flex flex-wrap items-center justify-between gap-2" data-testid={`${testIdPrefix}-conflict-item-row-${index}`}>
+                    <span data-testid={`${testIdPrefix}-conflict-item-text-${index}`}>
+                      {String(item?.country || '-').toUpperCase()} / {item?.module || '-'} / {item?.page_type || '-'}
+                      {' • '}rev: {item?.revision_id || '-'}
+                    </span>
+                    {item?.revision_id ? (
+                      <a
+                        href={`/admin/revisions/${item.revision_id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded border border-slate-300 px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100"
+                        data-testid={`${testIdPrefix}-open-revision-link-${index}`}
+                      >
+                        {openRevisionLabel}
+                      </a>
+                    ) : (
+                      <span className="text-[11px] text-rose-700" data-testid={`${testIdPrefix}-missing-revision-${index}`}>
+                        revision_id eksik
+                      </span>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

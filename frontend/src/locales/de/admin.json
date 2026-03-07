@@ -130,6 +130,8 @@
     "invalid_target": "Land und Modul sind für das Kopierziel erforderlich.",
     "conflict_warning": "Kopierkonflikt erkannt.",
     "force_publish_effect": "Wenn Sie fortfahren, wird die alte aktive Veröffentlichung deaktiviert und die neue Kopie veröffentlicht.",
-    "proceed": "Fortfahren"
+    "proceed": "Fortfahren",
+    "open_revision": "Revision öffnen",
+    "revision_id_required": "In der Konfliktliste ist revision_id erforderlich."
   }
 }

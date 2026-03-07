@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import asyncio
+import csv
+import io
 import unicodedata
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 import logging
 import time
 import uuid
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import SchemaError
 from pydantic import BaseModel, Field
@@ -1017,6 +1019,16 @@ def _safe_uuid_or_none(raw_value: Optional[Any]) -> Optional[uuid.UUID]:
         return uuid.UUID(value)
     except (TypeError, ValueError):
         return None
+
+
+def _parse_iso_date_or_400(raw_value: Optional[str], *, field_name: str) -> Optional[date]:
+    value = str(raw_value or "").strip()
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"invalid_{field_name}_format") from exc
 
 
 def _serialize_component(row: LayoutComponentDefinition) -> dict[str, Any]:
@@ -2835,6 +2847,28 @@ async def list_admin_layouts(
     }
 
 
+@router.get("/admin/layouts/{revision_id:uuid}")
+async def get_admin_layout_revision(
+    revision_id: uuid.UUID,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    del current_user
+    row = await session.get(LayoutRevision, revision_id)
+    if not row or bool(getattr(row, "is_deleted", False)):
+        raise HTTPException(status_code=404, detail="layout_revision_not_found")
+
+    page_row = await session.get(LayoutPage, row.layout_page_id)
+    if not page_row:
+        raise HTTPException(status_code=404, detail="layout_page_not_found")
+
+    return {
+        "ok": True,
+        "item": _serialize_layout_revision(row),
+        "page": _serialize_layout_page(page_row),
+    }
+
+
 @router.delete("/admin/layouts/{revision_id:uuid}")
 async def soft_delete_admin_layout(
     revision_id: uuid.UUID,
@@ -3903,10 +3937,13 @@ async def verify_standard_template_pack(
 
 
 @router.get("/admin/site/content-layout/preset-runs")
+@router.get("/admin/preset-runs")
 async def list_layout_preset_runs(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=20, ge=1, le=100),
     status: Optional[str] = Query(default=None),
+    from_date: Optional[str] = Query(default=None, alias="from"),
+    to_date: Optional[str] = Query(default=None, alias="to"),
     module: Optional[str] = Query(default=None),
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
@@ -3924,6 +3961,20 @@ async def list_layout_preset_runs(
     if normalized_module:
         query = query.where(LayoutPresetRunLog.module == normalized_module)
         count_query = count_query.where(LayoutPresetRunLog.module == normalized_module)
+
+    start_date = _parse_iso_date_or_400(from_date, field_name="from")
+    end_date = _parse_iso_date_or_400(to_date, field_name="to")
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(status_code=400, detail="invalid_date_range")
+
+    if start_date:
+        start_dt = datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc)
+        query = query.where(LayoutPresetRunLog.executed_at >= start_dt)
+        count_query = count_query.where(LayoutPresetRunLog.executed_at >= start_dt)
+    if end_date:
+        end_dt_exclusive = datetime.combine(end_date + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc)
+        query = query.where(LayoutPresetRunLog.executed_at < end_dt_exclusive)
+        count_query = count_query.where(LayoutPresetRunLog.executed_at < end_dt_exclusive)
 
     total = int((await session.execute(count_query)).scalar_one() or 0)
     result = await session.execute(
@@ -3943,15 +3994,97 @@ async def list_layout_preset_runs(
     }
 
 
-@router.get("/admin/site/content-layout/preset-runs/{run_id}")
-async def get_layout_preset_run_detail(
-    run_id: str,
+@router.get("/admin/site/content-layout/preset-runs/export")
+@router.get("/admin/preset-runs/export")
+async def export_layout_preset_runs_csv(
+    status: Optional[str] = Query(default=None),
+    from_date: Optional[str] = Query(default=None, alias="from"),
+    to_date: Optional[str] = Query(default=None, alias="to"),
+    module: Optional[str] = Query(default=None),
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
 ):
     del current_user
-    run_uuid = _as_uuid_or_400(run_id, field_name="run_id")
-    row = await session.get(LayoutPresetRunLog, run_uuid)
+    query = select(LayoutPresetRunLog)
+
+    normalized_status = str(status or "").strip().lower()
+    if normalized_status:
+        query = query.where(func.lower(LayoutPresetRunLog.status) == normalized_status)
+
+    normalized_module = str(module or "").strip()
+    if normalized_module:
+        query = query.where(LayoutPresetRunLog.module == normalized_module)
+
+    start_date = _parse_iso_date_or_400(from_date, field_name="from")
+    end_date = _parse_iso_date_or_400(to_date, field_name="to")
+    if start_date and end_date and start_date > end_date:
+        raise HTTPException(status_code=400, detail="invalid_date_range")
+
+    if start_date:
+        start_dt = datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc)
+        query = query.where(LayoutPresetRunLog.executed_at >= start_dt)
+    if end_date:
+        end_dt_exclusive = datetime.combine(end_date + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc)
+        query = query.where(LayoutPresetRunLog.executed_at < end_dt_exclusive)
+
+    rows = (
+        await session.execute(
+            query.order_by(desc(LayoutPresetRunLog.executed_at), desc(LayoutPresetRunLog.id)).limit(10000)
+        )
+    ).scalars().all()
+
+    stream = io.StringIO()
+    writer = csv.writer(stream)
+    writer.writerow([
+        "run_id",
+        "operator",
+        "executed_at",
+        "countries",
+        "total_jobs",
+        "success_count",
+        "failure_count",
+        "duration",
+        "status",
+    ])
+
+    for row in rows:
+        writer.writerow([
+            str(row.id),
+            row.executed_by_email or (str(row.executed_by) if row.executed_by else ""),
+            row.executed_at.isoformat() if row.executed_at else "",
+            "|".join([str(item) for item in (row.target_countries or [])]),
+            int(row.total_jobs or 0),
+            int(row.success_count or 0),
+            int(row.failure_count or 0),
+            int(row.duration_ms or 0),
+            row.status,
+        ])
+
+    filename_parts = ["preset-runs"]
+    if start_date:
+        filename_parts.append(f"from-{start_date.isoformat()}")
+    if end_date:
+        filename_parts.append(f"to-{end_date.isoformat()}")
+    if normalized_status:
+        filename_parts.append(normalized_status)
+    filename = "_".join(filename_parts) + ".csv"
+
+    return Response(
+        content=stream.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/admin/site/content-layout/preset-runs/{run_id:uuid}")
+@router.get("/admin/preset-runs/{run_id:uuid}")
+async def get_layout_preset_run_detail(
+    run_id: uuid.UUID,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    del current_user
+    row = await session.get(LayoutPresetRunLog, run_id)
     if not row:
         raise HTTPException(status_code=404, detail="preset_run_not_found")
     return {"ok": True, "item": _serialize_preset_run_log(row)}

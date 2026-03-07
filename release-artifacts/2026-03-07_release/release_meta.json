@@ -1,0 +1,11 @@
+{
+  "release_version": "2026-03-07_release",
+  "release_date": "2026-03-07",
+  "validated_locales": [
+    "TR",
+    "DE",
+    "FR"
+  ],
+  "preset_batch_size": 100,
+  "validated_by": "admin@platform.com"
+}

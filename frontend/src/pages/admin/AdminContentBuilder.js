@@ -2505,12 +2505,22 @@ export default function AdminContentBuilder() {
     updatePayload(next);
   };
 
-  const getRevisionsForPage = useCallback(async (targetPageId, targetPageType) => {
+  const getRevisionsForPage = useCallback(async (targetPageId, targetPageType, preferredRevisionId = '') => {
     const res = await axios.get(`${API}/admin/site/content-layout/pages/${targetPageId}/revisions`, {
       headers: authHeaders,
     });
     const revisions = Array.isArray(res.data?.items) ? res.data.items : [];
     setRevisionList(revisions);
+
+    const preferredRevision = String(preferredRevisionId || '').trim()
+      ? revisions.find((item) => item.id === String(preferredRevisionId || '').trim())
+      : null;
+
+    if (preferredRevision) {
+      setActiveDraftId(preferredRevision.status === 'draft' ? preferredRevision.id : '');
+      setPayloadJson(normalizePayload(preferredRevision.payload_json, targetPageType));
+      return;
+    }
 
     const draft = revisions.find((item) => item.status === 'draft');
     if (draft) {
@@ -2535,6 +2545,7 @@ export default function AdminContentBuilder() {
     const requestedCountry = String(params.get('country') || '').trim().toUpperCase() || country;
     const requestedModule = String(params.get('module') || '').trim() || moduleName;
     const requestedCategoryId = String(params.get('category_id') || '').trim();
+    const requestedRevisionId = String(params.get('autoload_revision_id') || '').trim();
 
     const runAutoload = async () => {
       setLoading(true);
@@ -2547,7 +2558,7 @@ export default function AdminContentBuilder() {
         setCategoryId(requestedCategoryId);
         setBindingCategoryId(requestedCategoryId);
         setPageId(autoloadPageId);
-        await getRevisionsForPage(autoloadPageId, requestedPageType);
+        await getRevisionsForPage(autoloadPageId, requestedPageType, requestedRevisionId);
         setStatus('Content List üzerinden seçilen sayfa yüklendi.');
       } catch (err) {
         setError(extractBuilderApiErrorText(err, 'Seçili sayfa otomatik yüklenemedi'));
@@ -2562,6 +2573,7 @@ export default function AdminContentBuilder() {
     params.delete('country');
     params.delete('module');
     params.delete('category_id');
+    params.delete('autoload_revision_id');
     const nextQuery = params.toString();
     const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}`;
     window.history.replaceState({}, '', nextUrl);

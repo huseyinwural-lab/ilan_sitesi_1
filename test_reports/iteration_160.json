@@ -1,0 +1,124 @@
+{
+  "summary": "Iteration 160: Kapanış Görev Listesi test complete. All 5 phases (Faz1-Faz5) verified. Backend APIs and frontend UI working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "AdminPresetRuns",
+        "issues": ["Warning banner visible at top about missing Stripe secret/publishable key - cosmetic, not blocking"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_160_kapani_faz_testing.py",
+    "/app/test_reports/pytest/pytest_results_160.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_160_kapani_faz_testing.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@platform.com / Admin123!, dealer@platform.com / Dealer123!",
+  "seed_data_creation": "None - used existing data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All Faz1-Faz5 features fully verified. Backend APIs tested via curl and pytest. Frontend UI tested via Playwright.",
+  "phase_results": {
+    "faz1_release_artifacts": {
+      "status": "PASS",
+      "details": {
+        "release_artifacts_dir": "/app/release-artifacts/2026-03-07_release exists",
+        "publish_validation_report_md": "File exists with country validation data (TR, DE, FR)",
+        "preset_stress_test_report_md": "File exists with 100% success ratio (100/100)",
+        "release_meta_json": "Valid JSON with release_version, release_date, validated_locales, preset_batch_size, validated_by",
+        "ci_lint_yml": "Contains archive_release_artifacts step and upload-artifact step",
+        "archive_script": "/app/scripts/archive_release_artifacts.sh exists with proper structure"
+      }
+    },
+    "faz2_preset_runs_api": {
+      "status": "PASS",
+      "details": {
+        "list_endpoint_alias": "GET /api/admin/preset-runs returns 200 with items, total, page, limit, has_next",
+        "status_filter": "?status=success filters correctly",
+        "from_date_filter": "?from=2026-01-01 works correctly",
+        "to_date_filter": "?to=2026-12-31 works correctly",
+        "date_range_filter": "Combined from+to filters work",
+        "csv_export": "GET /api/admin/preset-runs/export returns text/csv with columns: run_id, operator, executed_at, countries, total_jobs, success_count, failure_count, duration, status"
+      }
+    },
+    "faz3_copy_conflict_modal": {
+      "status": "PASS",
+      "details": {
+        "conflict_409_response": "Returns publish_scope_conflict with code, message, scope, conflicts array",
+        "revision_id_in_conflicts": "Each conflict item has revision_id field",
+        "force_query_param": "?force=true proceeds and returns conflict_resolution.deactivated_revision_ids",
+        "confirm_modal_deep_link": "ConfirmModal.jsx has href=/admin/revisions/{revision_id} with target=_blank",
+        "revision_redirect_route": "BackofficePortalApp.jsx has /revisions/:revisionId route",
+        "revision_redirect_component": "AdminRevisionRedirect.jsx redirects to /admin/site-design/content-builder with query params"
+      }
+    },
+    "faz4_academy_modules": {
+      "status": "PASS",
+      "details": {
+        "real_backend_source": "GET /api/academy/modules returns source=dealer_modules_db|cache|cache_fallback (NOT mock)",
+        "items_structure": "Returns items with id, key, visible, etc. fields"
+      }
+    },
+    "faz5_ui_consistency": {
+      "status": "PASS",
+      "details": {
+        "admin_preset_runs_page": "Page loads with status/from/to filters and Export CSV button visible",
+        "data_testids": "All interactive elements have data-testid attributes",
+        "revision_redirect_page": "Shows loading state 'Revision açılıyor...' and performs redirect"
+      }
+    }
+  },
+  "api_verification_results": {
+    "preset_runs_list": {
+      "url": "GET /api/admin/preset-runs?page=1&limit=5&status=success&from=2026-01-01&to=2026-12-31",
+      "status": 200,
+      "response_sample": "160 total items, items with id, executed_at, status, success_ratio, etc."
+    },
+    "preset_runs_export": {
+      "url": "GET /api/admin/preset-runs/export?status=success&from=2026-01-01",
+      "status": 200,
+      "content_type": "text/csv",
+      "columns": ["run_id", "operator", "executed_at", "countries", "total_jobs", "success_count", "failure_count", "duration", "status"]
+    },
+    "revision_context": {
+      "url": "GET /api/admin/layouts/{revision_id}",
+      "status": 200,
+      "response": "Returns page context with id, page_type, country, module"
+    },
+    "copy_conflict_409": {
+      "url": "POST /api/admin/layouts/{id}/copy with publish_after_copy=true",
+      "status": 409,
+      "response": {"code": "publish_scope_conflict", "conflicts": [{"revision_id": "...", "scope": "..."}]}
+    },
+    "copy_with_force": {
+      "url": "POST /api/admin/layouts/{id}/copy?force=true",
+      "status": 200,
+      "response": {"ok": true, "conflict_resolution": {"deactivated_revision_ids": ["..."]}}
+    }
+  },
+  "file_verification_results": {
+    "release_artifacts_directory": "/app/release-artifacts/2026-03-07_release - EXISTS",
+    "publish_validation_report": "/app/release-artifacts/2026-03-07_release/publish_validation_report.md - EXISTS (76 lines)",
+    "preset_stress_test_report": "/app/release-artifacts/2026-03-07_release/preset_stress_test_report.md - EXISTS (43 lines)",
+    "release_meta_json": "/app/release-artifacts/2026-03-07_release/release_meta.json - VALID (5 required fields)",
+    "ci_lint_yml": "/app/.github/workflows/lint.yml - HAS archive step and upload-artifact",
+    "archive_script": "/app/scripts/archive_release_artifacts.sh - EXISTS with proper env vars",
+    "confirm_modal_jsx": "/app/frontend/src/components/ConfirmModal.jsx - HAS deep-link with target=_blank",
+    "revision_redirect_jsx": "/app/frontend/src/pages/admin/AdminRevisionRedirect.jsx - HAS content-builder redirect",
+    "backoffice_routing": "/app/frontend/src/portals/backoffice/BackofficePortalApp.jsx - HAS /revisions/:revisionId route"
+  }
+}

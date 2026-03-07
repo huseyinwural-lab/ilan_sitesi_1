@@ -129,6 +129,8 @@
     "invalid_target": "Kopya hedefi için ülke ve module zorunludur.",
     "conflict_warning": "Kopyalama çakışması tespit edildi.",
     "force_publish_effect": "Devam ederseniz eski aktif yayın pasifleştirilir ve yeni kopya publish edilir.",
-    "proceed": "Devam Et"
+    "proceed": "Devam Et",
+    "open_revision": "Revizyonu Aç",
+    "revision_id_required": "Çakışma listesinde revision_id zorunludur."
   }
 }

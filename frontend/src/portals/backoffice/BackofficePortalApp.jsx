@@ -54,6 +54,7 @@ import AdminListingDesign from '@/pages/admin/AdminListingDesign';
 import AdminContentBuilder from '@/pages/admin/AdminContentBuilder';
 import AdminContentList from '@/pages/admin/AdminContentList';
 import AdminPresetRuns from '@/pages/admin/AdminPresetRuns';
+import AdminRevisionRedirect from '@/pages/admin/AdminRevisionRedirect';
 import AdminInfoPages from '@/pages/admin/AdminInfoPages';
 import AdminUserInterfaceDesignV2 from '@/pages/admin/AdminUserInterfaceDesignV2';
 import AdminPublishHealthPage from '@/pages/admin/ops/AdminPublishHealthPage';
@@ -242,6 +243,16 @@ export default function BackofficePortalApp() {
           <AdminLayout>
             <AdminRouteGuard roles={["super_admin", "country_admin"]}>
               <AdminPresetRuns />
+            </AdminRouteGuard>
+          </AdminLayout>
+        }
+      />
+      <Route
+        path="/revisions/:revisionId"
+        element={
+          <AdminLayout>
+            <AdminRouteGuard roles={["super_admin", "country_admin"]}>
+              <AdminRevisionRedirect />
             </AdminRouteGuard>
           </AdminLayout>
         }

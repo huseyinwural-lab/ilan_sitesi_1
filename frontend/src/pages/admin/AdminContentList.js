@@ -410,6 +410,14 @@ export default function AdminContentList() {
           throw copyError;
         }
 
+        const hasMissingRevisionId = (conflictDetail.conflicts || []).some((conflictItem) => !String(conflictItem?.revision_id || '').trim());
+        if (hasMissingRevisionId) {
+          const revisionMissingMessage = t('copy_page.revision_id_required', { defaultValue: 'Çakışma listesinde revision_id zorunludur.' });
+          setContentListError(revisionMissingMessage);
+          toast.error(revisionMissingMessage);
+          return;
+        }
+
         setPendingCopyConflict({
           sourceRevisionId: item.revision_id,
           requestPayload,
@@ -1227,6 +1235,7 @@ export default function AdminContentList() {
           warningText={t('copy_page.force_publish_effect', { defaultValue: 'Devam ederseniz eski aktif yayın pasifleştirilir ve yeni kopya publish edilir.' })}
           cancelLabel={t('cancel', { defaultValue: 'İptal' })}
           proceedLabel={t('copy_page.proceed', { defaultValue: 'Devam Et' })}
+          openRevisionLabel={t('copy_page.open_revision', { defaultValue: 'Revizyonu Aç' })}
           onCancel={handleCopyConflictCancel}
           onProceed={handleCopyConflictProceed}
           conflictItems={pendingCopyConflict?.conflictDetail?.conflicts || []}

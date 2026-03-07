@@ -130,6 +130,8 @@
     "invalid_target": "Le pays et le module sont obligatoires pour la cible de copie.",
     "conflict_warning": "Conflit de copie détecté.",
     "force_publish_effect": "Si vous continuez, l’ancienne publication active sera désactivée et la nouvelle copie sera publiée.",
-    "proceed": "Continuer"
+    "proceed": "Continuer",
+    "open_revision": "Ouvrir la révision",
+    "revision_id_required": "revision_id est obligatoire dans la liste des conflits."
   }
 }
