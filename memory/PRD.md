@@ -18,6 +18,67 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ---
 
+## 2026-03-07 (Faz 1→5 Kapanış Paketi — Release Safety + Ops Visibility + UX + Academy Entegrasyonu)
+
+### Faz 1 — Release Safety (tamamlandı)
+- TR/DE/FR publish pipeline canlı veriyle doğrulandı, checklist satırları kapatıldı.
+- Cache invalidation akışı preset publish sonrası doğrulandı (`cache -> default -> cache` döngüsü).
+- Üretildi: `/app/publish_validation_report.md` (**PASS**)
+- 100 batch preset stress simülasyonu çalıştırıldı.
+- Üretildi: `/app/preset_stress_test_report.md`
+
+### Faz 2 — Admin Operasyonel Görünürlük (tamamlandı)
+- Yeni veri modeli: `layout_preset_run_logs` (preset run history)
+  - model: `LayoutPresetRunLog`
+  - migration: `p78_preset_run_logs`
+- Preset install pipeline’a run logging eklendi (run id, operator, countries, success/failure, duration, status, error logs).
+- Yeni API:
+  - `GET /api/admin/site/content-layout/preset-runs`
+  - `GET /api/admin/site/content-layout/preset-runs/{run_id}`
+- Yeni admin ekranı: `/admin/preset-runs`
+  - filtre, pagination, expandable error log görünümü
+
+### Faz 3 — UX Stabilizasyonu (tamamlandı)
+- Copy conflict akışında `window.confirm` kaldırıldı.
+- Yeni bileşen: `frontend/src/components/ConfirmModal.jsx`
+  - conflict list preview
+  - proceed/cancel
+  - force publish etkisi uyarısı
+- `AdminContentList` copy akışı modal + force retry ile güncellendi.
+- i18n key standardizasyonu eklendi:
+  - `copy_page.invalid_source`
+  - `copy_page.invalid_target`
+  - `copy_page.conflict_warning`
+  - `copy_page.force_publish_effect`
+  - `copy_page.proceed`
+
+### Faz 4 — academy.modules gerçek veri entegrasyonu (tamamlandı)
+- Yeni endpoint: `GET /api/academy/modules`
+  - kaynak: `DealerModule` (gerçek backend verisi)
+  - contract: `id, title, slug, locale, status, updated_at`
+  - cache: TTL 300 sn
+  - fallback: API hata durumunda cache fallback / cache miss → empty state
+  - admin override: `admin_override=true` (yalnız admin roller)
+- `DealerAcademy` sayfası mock’tan çıkarılıp gerçek endpoint + adapter + local cache fallback ile güncellendi.
+
+### Faz 5 — UI/CSS son düzen (tamamlandı)
+- `/admin/preset-runs` tablo okunabilirlik, filtre alanları, responsive overflow ve action/expand akışları düzenlendi.
+- Copy conflict modal spacing/state/warning görünümü stabilize edildi.
+
+### Ek Stabilizasyonlar
+- Preset publish sonrası `_invalidate_resolve_cache()` tetiklenmesi eklendi.
+- SQL_ASCII ortamı için preset run log JSON alanları sanitize edildi (run log insert kararlılığı).
+- Alembic revision id limitine uygun migration id standardize edildi:
+  - `p77_active_live_idx`
+  - `p78_preset_run_logs`
+
+### Test Durumu
+- Smoke screenshot: PASS (`/admin/site-design/content-list`, `/admin/preset-runs`)
+- `testing_agent` raporu: `/app/test_reports/iteration_159.json`
+  - Faz 1→5: **PASS**
+  - Backend: **100%**
+  - Frontend: **100%**
+
 ## 2026-03-07 (P1 — Preset Stabilizasyonu + Copy Guard/Force + Auto-Open)
 
 ### Kullanıcı Seçimleri (uygulandı)
@@ -83,7 +144,7 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - Route netliği:
   - `/api/admin/layouts/{revision_id}` ailesinde UUID path converter ile static route çakışması engellendi.
 - Yeni migration:
-  - `p77_layout_revision_single_active_live`
+  - `p77_active_live_idx`
   - `layout_revisions` için active-live tekillik indeksi eklendi.
 
 ### Frontend
