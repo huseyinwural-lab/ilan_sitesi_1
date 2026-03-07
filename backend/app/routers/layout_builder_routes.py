@@ -542,6 +542,19 @@ def _is_transient_db_error(exc: Exception) -> bool:
     return any(marker in message for marker in TRANSIENT_DB_ERROR_MARKERS)
 
 
+def _classify_preset_operation_error(exc: Exception) -> str:
+    if isinstance(exc, asyncio.TimeoutError):
+        return "preset_operation_timeout"
+    message = str(exc or "").lower()
+    if "conversion between utf8 and sql_ascii is not supported" in message:
+        return "sql_ascii_encoding_error"
+    if isinstance(exc, IntegrityError):
+        return "preset_install_conflict"
+    if _is_transient_db_error(exc):
+        return "db_error"
+    return "operation_error"
+
+
 async def _run_with_db_retry(session: AsyncSession, operation, *, retries: int = 6):
     last_exc: Optional[Exception] = None
     for attempt in range(1, retries + 1):
@@ -956,6 +969,7 @@ class StandardTemplatePackInstallPayload(BaseModel):
     overwrite_existing_draft: bool = True
     publish_after_seed: bool = True
     include_extended_templates: bool = False
+    fail_fast: bool = True
 
 
 class LayoutResetAndWireframePayload(BaseModel):
@@ -3096,6 +3110,7 @@ async def copy_admin_layout_revision(
     revision_id: uuid.UUID,
     payload: LayoutRevisionCopyPayload,
     request: Request,
+    force: bool = Query(default=False),
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
 ):
@@ -3193,29 +3208,38 @@ async def copy_admin_layout_revision(
         )
         target_revision.is_active = bool(getattr(source_revision, "is_active", True))
 
+    conflict_items: list[dict[str, Any]] = []
+    deactivated_conflict_ids: list[str] = []
+
     if payload.publish_after_copy:
         conflicts = await _find_scope_active_publish_conflicts(
             session,
             target_page=target_page,
-            exclude_layout_page_id=target_page.id,
         )
+        conflict_items = [
+            _serialize_publish_scope_conflict_item(revision, page)
+            for revision, page in conflicts
+        ]
         if conflicts:
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "code": "publish_scope_conflict",
-                    "message": "Aynı kapsamda aktif bir yayın zaten var.",
-                    "scope": _build_layout_scope(
-                        target_page.country,
-                        target_page.module,
-                        str(target_page.category_id) if target_page.category_id else None,
-                    ),
-                    "conflicts": [
-                        _serialize_publish_scope_conflict_item(revision, page)
-                        for revision, page in conflicts
-                    ],
-                },
-            )
+            if not force:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": "publish_scope_conflict",
+                        "message": "Aynı kapsamda aktif bir yayın zaten var.",
+                        "scope": _build_layout_scope(
+                            target_page.country,
+                            target_page.module,
+                            str(target_page.category_id) if target_page.category_id else None,
+                        ),
+                        "conflicts": conflict_items,
+                    },
+                )
+
+            for conflict_revision, _ in conflicts:
+                conflict_revision.is_active = False
+                deactivated_conflict_ids.append(str(conflict_revision.id))
+
         await _validate_publish_guard_or_400(session, target_revision.payload_json or {})
         target_revision = await publish_revision(
             session,
@@ -3232,6 +3256,11 @@ async def copy_admin_layout_revision(
         "source_revision_id": str(source_revision.id),
         "target_page": _serialize_layout_page(target_page),
         "target_revision": _serialize_layout_revision(target_revision),
+        "conflict_resolution": {
+            "force": bool(force),
+            "conflict_count": len(conflict_items),
+            "deactivated_revision_ids": deactivated_conflict_ids,
+        },
     }
 
 
@@ -3395,6 +3424,7 @@ async def _seed_standard_pages_for_scope(
             variant=variant,
             module=module,
         )
+        safe_seed_payload = _sanitize_payload_for_sql_ascii(seed_payload)
 
         draft_result = await session.execute(
             select(LayoutRevision)
@@ -3413,7 +3443,7 @@ async def _seed_standard_pages_for_scope(
         draft_action = "skipped"
         if draft_row:
             if overwrite_existing_draft:
-                draft_row.payload_json = seed_payload
+                draft_row.payload_json = safe_seed_payload
                 draft_row.is_active = True
                 draft_action = "updated"
                 summary["updated_drafts"] += 1
@@ -3423,7 +3453,7 @@ async def _seed_standard_pages_for_scope(
             draft_row = await create_draft_revision(
                 session,
                 layout_page_id=str(page_row.id),
-                payload_json=seed_payload,
+                payload_json=safe_seed_payload,
                 actor_user_id=actor_user_id,
             )
             draft_row.is_active = True
@@ -3513,6 +3543,7 @@ async def install_standard_template_pack(
     normalized_module = payload.module.strip()
     normalized_persona = _normalize_standard_persona_or_400(payload.persona)
     normalized_variant = _normalize_standard_variant_or_400(payload.variant)
+    fail_fast = bool(payload.fail_fast)
     target_page_types = list(STANDARD_LAYOUT_PAGE_TYPES if payload.include_extended_templates else CORE_TEMPLATE_PAGE_TYPES)
 
     try:
@@ -3528,6 +3559,7 @@ async def install_standard_template_pack(
             "countries": normalized_countries,
             "persona": normalized_persona,
             "variant": normalized_variant,
+            "fail_fast": fail_fast,
             "publish_after_seed": bool(payload.publish_after_seed),
             "include_extended_templates": bool(payload.include_extended_templates),
             "template_scope": "extended" if payload.include_extended_templates else "core",
@@ -3555,9 +3587,12 @@ async def install_standard_template_pack(
         "updated_drafts": 0,
         "skipped_drafts": 0,
         "published_revisions": 0,
+        "failed_countries": 0,
+        "processed_countries": 0,
     }
     results: list[dict[str, Any]] = []
     failed_countries: list[dict[str, Any]] = []
+    stopped_early = False
 
     for country_code in normalized_countries:
         async def _country_op():
@@ -3576,13 +3611,20 @@ async def install_standard_template_pack(
             return summary, items
 
         try:
-            summary, items = await _run_with_db_retry(session, _country_op, retries=6)
+            summary, items = await asyncio.wait_for(
+                _run_with_db_retry(session, _country_op, retries=2),
+                timeout=20,
+            )
             for key in aggregate_summary:
+                if key in {"failed_countries", "processed_countries"}:
+                    continue
                 aggregate_summary[key] += int(summary.get(key, 0))
+            aggregate_summary["processed_countries"] += 1
             results.append(
                 {
                     "country": country_code,
                     "module": normalized_module,
+                    "ok": True,
                     "summary": summary,
                     "items": items,
                 }
@@ -3590,25 +3632,36 @@ async def install_standard_template_pack(
         except ValueError as exc:
             await session.rollback()
             raise HTTPException(status_code=400, detail=str(exc)) from exc
-        except IntegrityError as exc:
-            await session.rollback()
-            failed_countries.append(
-                {
-                    "country": country_code,
-                    "error": "preset_install_conflict",
-                    "detail": str(exc),
-                }
-            )
         except Exception as exc:
             await session.rollback()
-            failed_countries.append(
+            error_code = _classify_preset_operation_error(exc)
+            failure_item = {
+                "country": country_code,
+                "error": error_code,
+                "detail": str(exc),
+            }
+            failed_countries.append(failure_item)
+            aggregate_summary["failed_countries"] += 1
+            results.append(
                 {
                     "country": country_code,
-                    "error": "db_error" if _is_transient_db_error(exc) else "operation_error",
+                    "module": normalized_module,
+                    "ok": False,
+                    "summary": {
+                        "created_pages": 0,
+                        "created_drafts": 0,
+                        "updated_drafts": 0,
+                        "skipped_drafts": 0,
+                        "published_revisions": 0,
+                    },
+                    "items": [],
+                    "error": error_code,
                     "detail": str(exc),
                 }
             )
-            continue
+            if fail_fast:
+                stopped_early = True
+                break
 
     return {
         "ok": len(failed_countries) == 0,
@@ -3616,6 +3669,8 @@ async def install_standard_template_pack(
         "countries": normalized_countries,
         "persona": normalized_persona,
         "variant": normalized_variant,
+        "fail_fast": fail_fast,
+        "stopped_early": stopped_early,
         "publish_after_seed": bool(payload.publish_after_seed),
         "include_extended_templates": bool(payload.include_extended_templates),
         "template_scope": "extended" if payload.include_extended_templates else "core",
@@ -3630,6 +3685,7 @@ async def verify_standard_template_pack(
     countries: str = Query(..., min_length=2),
     module: str = Query(..., min_length=2, max_length=64),
     include_extended_templates: bool = Query(default=False),
+    fail_fast: bool = Query(default=True),
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
 ):
@@ -3638,71 +3694,119 @@ async def verify_standard_template_pack(
     target_page_types = list(STANDARD_LAYOUT_PAGE_TYPES if include_extended_templates else CORE_TEMPLATE_PAGE_TYPES)
 
     matrix: list[dict[str, Any]] = []
+    failed_countries: list[dict[str, Any]] = []
+    country_summaries: list[dict[str, Any]] = []
     ready_rows = 0
     total_rows = len(normalized_countries) * len(target_page_types)
 
     for country_code in normalized_countries:
-        for page_type in target_page_types:
-            page_result = await session.execute(
-                select(LayoutPage)
-                .where(
-                    and_(
-                        LayoutPage.page_type == page_type,
-                        LayoutPage.country == country_code,
-                        LayoutPage.module == normalized_module,
-                        LayoutPage.category_id.is_(None),
-                    )
-                )
-                .order_by(desc(LayoutPage.updated_at), desc(LayoutPage.created_at))
-                .limit(1)
-            )
-            page_row = page_result.scalar_one_or_none()
-
-            published_revision = None
-            if page_row:
-                published_result = await session.execute(
-                    select(LayoutRevision)
-                    .where(
-                        and_(
-                            LayoutRevision.layout_page_id == page_row.id,
-                            LayoutRevision.status == LayoutRevisionStatus.PUBLISHED,
-                            LayoutRevision.is_deleted.is_(False),
+        country_ready_rows = 0
+        try:
+            async def _country_verify_op():
+                nonlocal ready_rows, country_ready_rows
+                country_matrix: list[dict[str, Any]] = []
+                for page_type in target_page_types:
+                    page_result = await session.execute(
+                        select(LayoutPage)
+                        .where(
+                            and_(
+                                LayoutPage.page_type == page_type,
+                                LayoutPage.country == country_code,
+                                LayoutPage.module == normalized_module,
+                                LayoutPage.category_id.is_(None),
+                            )
                         )
+                        .order_by(desc(LayoutPage.updated_at), desc(LayoutPage.created_at))
+                        .limit(1)
                     )
-                    .order_by(desc(LayoutRevision.version), desc(LayoutRevision.created_at))
-                    .limit(1)
-                )
-                published_revision = published_result.scalar_one_or_none()
+                    page_row = page_result.scalar_one_or_none()
 
-            is_ready = bool(page_row and published_revision and bool(getattr(published_revision, "is_active", False)))
-            if is_ready:
-                ready_rows += 1
+                    published_revision = None
+                    if page_row:
+                        published_result = await session.execute(
+                            select(LayoutRevision)
+                            .where(
+                                and_(
+                                    LayoutRevision.layout_page_id == page_row.id,
+                                    LayoutRevision.status == LayoutRevisionStatus.PUBLISHED,
+                                    LayoutRevision.is_deleted.is_(False),
+                                )
+                            )
+                            .order_by(desc(LayoutRevision.version), desc(LayoutRevision.created_at))
+                            .limit(1)
+                        )
+                        published_revision = published_result.scalar_one_or_none()
 
-            matrix.append(
+                    is_ready = bool(page_row and published_revision and bool(getattr(published_revision, "is_active", False)))
+                    if is_ready:
+                        ready_rows += 1
+                        country_ready_rows += 1
+
+                    country_matrix.append(
+                        {
+                            "country": country_code,
+                            "module": normalized_module,
+                            "page_type": page_type.value,
+                            "layout_page_id": str(page_row.id) if page_row else None,
+                            "published_revision_id": str(published_revision.id) if published_revision else None,
+                            "published_revision_active": bool(getattr(published_revision, "is_active", False)) if published_revision else False,
+                            "published_at": published_revision.published_at.isoformat() if published_revision and published_revision.published_at else None,
+                            "is_ready": is_ready,
+                        }
+                    )
+                return country_matrix
+
+            country_matrix = await asyncio.wait_for(_country_verify_op(), timeout=12)
+            matrix.extend(country_matrix)
+            country_summaries.append(
                 {
                     "country": country_code,
-                    "module": normalized_module,
-                    "page_type": page_type.value,
-                    "layout_page_id": str(page_row.id) if page_row else None,
-                    "published_revision_id": str(published_revision.id) if published_revision else None,
-                    "published_revision_active": bool(getattr(published_revision, "is_active", False)) if published_revision else False,
-                    "published_at": published_revision.published_at.isoformat() if published_revision and published_revision.published_at else None,
-                    "is_ready": is_ready,
+                    "ready_rows": country_ready_rows,
+                    "total_rows": len(target_page_types),
+                    "ready_ratio": round((country_ready_rows / len(target_page_types)) * 100, 2) if target_page_types else 0,
+                    "ok": True,
                 }
             )
+        except Exception as exc:
+            error_code = _classify_preset_operation_error(exc)
+            failed_countries.append(
+                {
+                    "country": country_code,
+                    "error": error_code,
+                    "detail": str(exc),
+                }
+            )
+            country_summaries.append(
+                {
+                    "country": country_code,
+                    "ready_rows": 0,
+                    "total_rows": len(target_page_types),
+                    "ready_ratio": 0,
+                    "ok": False,
+                    "error": error_code,
+                    "detail": str(exc),
+                }
+            )
+            if fail_fast:
+                break
 
     return {
-        "ok": True,
+        "ok": len(failed_countries) == 0,
         "module": normalized_module,
         "countries": normalized_countries,
         "include_extended_templates": bool(include_extended_templates),
+        "fail_fast": bool(fail_fast),
         "template_scope": "extended" if include_extended_templates else "core",
         "summary": {
             "ready_rows": ready_rows,
             "total_rows": total_rows,
             "ready_ratio": round((ready_rows / total_rows) * 100, 2) if total_rows else 0,
+            "missing_rows": max(total_rows - ready_rows, 0),
+            "failed_countries": len(failed_countries),
         },
+        "country_summaries": country_summaries,
         "items": matrix,
+        "failed_countries": failed_countries,
     }
 
 

@@ -109,6 +109,33 @@ const summarizeFailedCountries = (failedCountries) => {
     .join(' | ');
 };
 
+const extractScopeConflictDetail = (error) => {
+  const detail = error?.response?.data?.detail;
+  if (!detail || typeof detail !== 'object') return null;
+  if (detail.code !== 'publish_scope_conflict') return null;
+  return {
+    scope: detail.scope || '-',
+    conflicts: Array.isArray(detail.conflicts) ? detail.conflicts : [],
+    message: normalizeErrorText(detail.message, 'Aynı kapsamda aktif bir yayın zaten var.'),
+  };
+};
+
+const buildCopyConflictPrompt = (conflictDetail) => {
+  const conflictCount = Array.isArray(conflictDetail?.conflicts) ? conflictDetail.conflicts.length : 0;
+  return [
+    conflictDetail?.message || 'Aynı kapsamda aktif bir yayın zaten var.',
+    `Scope: ${conflictDetail?.scope || '-'}`,
+    `Çakışan aktif yayın sayısı: ${conflictCount}`,
+    '',
+    'Eski aktif yayını pasifleştirip bu kopyayı publish etmek ister misiniz?',
+  ].join('\n');
+};
+
+const isAxiosTimeoutError = (error) => {
+  if (!error) return false;
+  return error.code === 'ECONNABORTED' || String(error?.message || '').toLowerCase().includes('timeout');
+};
+
 export default function AdminContentList() {
   const navigate = useNavigate();
 
@@ -154,11 +181,29 @@ export default function AdminContentList() {
   const [presetOverwriteDraft, setPresetOverwriteDraft] = useState(true);
   const [presetPublishAfterSeed, setPresetPublishAfterSeed] = useState(true);
   const [presetIncludeExtendedTemplates, setPresetIncludeExtendedTemplates] = useState(false);
+  const [presetFailFast, setPresetFailFast] = useState(true);
   const [presetLoading, setPresetLoading] = useState(false);
   const [presetError, setPresetError] = useState('');
   const [presetStatus, setPresetStatus] = useState('');
   const [presetInstallResult, setPresetInstallResult] = useState(null);
   const [presetVerifyResult, setPresetVerifyResult] = useState(null);
+
+  const presetInstallFailedCountries = useMemo(
+    () => (Array.isArray(presetInstallResult?.failed_countries) ? presetInstallResult.failed_countries : []),
+    [presetInstallResult],
+  );
+  const presetInstallCountryResults = useMemo(
+    () => (Array.isArray(presetInstallResult?.results) ? presetInstallResult.results : []),
+    [presetInstallResult],
+  );
+  const presetVerifyCountrySummaries = useMemo(
+    () => (Array.isArray(presetVerifyResult?.country_summaries) ? presetVerifyResult.country_summaries : []),
+    [presetVerifyResult],
+  );
+  const presetVerifyNotReadyItems = useMemo(() => {
+    const rows = Array.isArray(presetVerifyResult?.items) ? presetVerifyResult.items : [];
+    return rows.filter((item) => !Boolean(item?.is_ready));
+  }, [presetVerifyResult]);
 
   const fetchContentList = useCallback(async ({ silent = false } = {}) => {
     setContentListLoading(true);
@@ -284,21 +329,62 @@ export default function AdminContentList() {
     setStatusMessage('');
     setContentListError('');
     try {
-      await axios.post(
-        `${API}/admin/layouts/${item.revision_id}/copy`,
-        {
-          target_page_type: copyTargetPageType,
-          country: normalizedCountry,
-          module: normalizedModule,
-          category_id: String(copyTargetCategoryId || '').trim() || null,
-          publish_after_copy: copyPublishAfterCopy,
-        },
-        { headers: authHeaders },
-      );
+      const requestPayload = {
+        target_page_type: copyTargetPageType,
+        country: normalizedCountry,
+        module: normalizedModule,
+        category_id: String(copyTargetCategoryId || '').trim() || null,
+        publish_after_copy: copyPublishAfterCopy,
+      };
+
+      let response;
+      try {
+        response = await axios.post(
+          `${API}/admin/layouts/${item.revision_id}/copy`,
+          requestPayload,
+          { headers: authHeaders },
+        );
+      } catch (copyError) {
+        const conflictDetail = extractScopeConflictDetail(copyError);
+        if (!conflictDetail || !copyPublishAfterCopy) {
+          throw copyError;
+        }
+
+        const confirmed = window.confirm(buildCopyConflictPrompt(conflictDetail));
+        if (!confirmed) {
+          setStatusMessage('Kopyalama iptal edildi: conflict çözümü onaylanmadı.');
+          toast.info('Kopyalama iptal edildi.');
+          return;
+        }
+
+        response = await axios.post(
+          `${API}/admin/layouts/${item.revision_id}/copy`,
+          requestPayload,
+          {
+            headers: authHeaders,
+            params: { force: true },
+          },
+        );
+      }
+
+      const targetPage = response?.data?.target_page;
+      const targetPageId = targetPage?.id;
 
       await fetchContentList({ silent: true });
-      setStatusMessage('Sayfa bire bir kopyalandı. Düzenlemek için Edit ile Content Builder’a geçebilirsiniz.');
+      setStatusMessage('Sayfa bire bir kopyalandı. Hedef sayfa Content Builder’da açılıyor.');
       toast.success('Bire bir kopyalama tamamlandı.');
+
+      if (targetPageId) {
+        const params = new URLSearchParams();
+        params.set('autoload_page_id', targetPageId);
+        params.set('page_type', targetPage?.page_type || copyTargetPageType || 'home');
+        params.set('country', String(targetPage?.country || normalizedCountry || 'DE').toUpperCase());
+        params.set('module', String(targetPage?.module || normalizedModule || 'global'));
+        if (targetPage?.category_id) {
+          params.set('category_id', targetPage.category_id);
+        }
+        navigate(`/admin/site-design/content-builder?${params.toString()}`);
+      }
     } catch (err) {
       const message = extractApiErrorText(err, 'Kopyalama başarısız');
       setContentListError(message);
@@ -464,6 +550,7 @@ export default function AdminContentList() {
     setPresetLoading(true);
     setPresetError('');
     setPresetStatus('');
+    setPresetInstallResult(null);
     try {
       const response = await axios.post(
         `${API}/admin/site/content-layout/preset/install-standard-pack`,
@@ -475,16 +562,18 @@ export default function AdminContentList() {
           overwrite_existing_draft: presetOverwriteDraft,
           publish_after_seed: presetPublishAfterSeed,
           include_extended_templates: presetIncludeExtendedTemplates,
+          fail_fast: presetFailFast,
         },
-        { headers: authHeaders },
+        { headers: authHeaders, timeout: 20000 },
       );
       const payload = response.data || {};
       setPresetInstallResult(payload);
 
       if (payload.ok === false) {
         const failedSummary = summarizeFailedCountries(payload.failed_countries);
-        const message = normalizeErrorText(payload.detail, 'Template pack kurulumu kısmi/başarısız tamamlandı');
-        const fullMessage = failedSummary ? `${message} | ${failedSummary}` : message;
+        const message = normalizeErrorText(payload.detail, 'Template pack kurulumu hızlı-fail ile durdu');
+        const stoppedEarlyMessage = payload.stopped_early ? 'İşlem fail-fast nedeniyle ilk hatada durduruldu.' : '';
+        const fullMessage = [message, stoppedEarlyMessage, failedSummary].filter(Boolean).join(' | ');
         setPresetError(fullMessage);
         toast.error(fullMessage);
         return;
@@ -494,7 +583,9 @@ export default function AdminContentList() {
       toast.success('Standart template pack kuruldu.');
       await fetchContentList({ silent: true });
     } catch (err) {
-      const message = extractApiErrorText(err, 'Template pack kurulumu başarısız');
+      const message = isAxiosTimeoutError(err)
+        ? 'Template pack kurulumu timeout nedeniyle hızlıca durduruldu. Ülke sonuçlarını kontrol edin.'
+        : extractApiErrorText(err, 'Template pack kurulumu başarısız');
       setPresetError(message);
       toast.error(message);
     } finally {
@@ -516,13 +607,16 @@ export default function AdminContentList() {
 
     setPresetLoading(true);
     setPresetError('');
+    setPresetVerifyResult(null);
     try {
       const response = await axios.get(`${API}/admin/site/content-layout/preset/verify-standard-pack`, {
         headers: authHeaders,
+        timeout: 15000,
         params: {
           countries: countries.join(','),
           module: normalizedModule,
           include_extended_templates: presetIncludeExtendedTemplates,
+          fail_fast: presetFailFast,
         },
       });
       const payload = response.data || {};
@@ -530,18 +624,21 @@ export default function AdminContentList() {
 
       if (payload.ok === false) {
         const failedSummary = summarizeFailedCountries(payload.failed_countries);
-        const message = normalizeErrorText(payload.detail, 'Template pack doğrulaması kısmi/başarısız tamamlandı');
-        const fullMessage = failedSummary ? `${message} | ${failedSummary}` : message;
+        const message = normalizeErrorText(payload.detail, 'Template pack doğrulaması fail-fast nedeniyle durdu');
+        const fullMessage = [message, failedSummary].filter(Boolean).join(' | ');
         setPresetError(fullMessage);
         toast.error(fullMessage);
         return;
       }
 
       const ratio = payload?.summary?.ready_ratio;
-      setPresetStatus(`TR/DE/FR publish doğrulaması güncellendi. Hazır oran: ${ratio ?? 0}%`);
+      const missingRows = Number(payload?.summary?.missing_rows || 0);
+      setPresetStatus(`TR/DE/FR publish doğrulaması güncellendi. Hazır oran: ${ratio ?? 0}% • Eksik: ${missingRows}`);
       toast.success('Standart pack doğrulaması tamamlandı.');
     } catch (err) {
-      const message = extractApiErrorText(err, 'Template pack doğrulaması başarısız');
+      const message = isAxiosTimeoutError(err)
+        ? 'Template pack doğrulaması timeout nedeniyle hızlıca durduruldu. Lütfen tekrar deneyin.'
+        : extractApiErrorText(err, 'Template pack doğrulaması başarısız');
       setPresetError(message);
       toast.error(message);
     } finally {
@@ -772,6 +869,16 @@ export default function AdminContentList() {
               />
               Genişletilmiş şablonlar (core dışı)
             </label>
+
+            <label className="mt-6 inline-flex items-center gap-2 text-xs" data-testid="admin-content-list-template-pack-fail-fast-wrap">
+              <input
+                type="checkbox"
+                checked={presetFailFast}
+                onChange={(event) => setPresetFailFast(event.target.checked)}
+                data-testid="admin-content-list-template-pack-fail-fast-input"
+              />
+              Hızlı fail (ilk hatada durdur)
+            </label>
           </div>
 
           {presetStatus ? (
@@ -790,6 +897,47 @@ export default function AdminContentList() {
               <span data-testid="admin-content-list-template-pack-install-updated-drafts">updated_drafts: {presetInstallResult.summary.updated_drafts ?? 0}</span>
               {' · '}
               <span data-testid="admin-content-list-template-pack-install-published">published_revisions: {presetInstallResult.summary.published_revisions ?? 0}</span>
+              {' · '}
+              <span data-testid="admin-content-list-template-pack-install-failed-countries">failed_countries: {presetInstallResult.summary.failed_countries ?? 0}</span>
+            </div>
+          ) : null}
+
+          {presetInstallCountryResults.length ? (
+            <div className="mt-2 overflow-x-auto" data-testid="admin-content-list-template-pack-install-results-wrap">
+              <table className="min-w-full text-left text-xs" data-testid="admin-content-list-template-pack-install-results-table">
+                <thead>
+                  <tr className="border-b bg-slate-50" data-testid="admin-content-list-template-pack-install-results-head">
+                    <th className="px-2 py-1">country</th>
+                    <th className="px-2 py-1">ok</th>
+                    <th className="px-2 py-1">created_pages</th>
+                    <th className="px-2 py-1">updated_drafts</th>
+                    <th className="px-2 py-1">published</th>
+                    <th className="px-2 py-1">error</th>
+                  </tr>
+                </thead>
+                <tbody data-testid="admin-content-list-template-pack-install-results-body">
+                  {presetInstallCountryResults.map((row, index) => (
+                    <tr key={`preset-install-result-${row?.country || index}`} className="border-b" data-testid={`admin-content-list-template-pack-install-result-row-${index}`}>
+                      <td className="px-2 py-1" data-testid={`admin-content-list-template-pack-install-result-country-${index}`}>{row?.country || '-'}</td>
+                      <td className="px-2 py-1" data-testid={`admin-content-list-template-pack-install-result-ok-${index}`}>{row?.ok === false ? 'hayır' : 'evet'}</td>
+                      <td className="px-2 py-1" data-testid={`admin-content-list-template-pack-install-result-created-${index}`}>{row?.summary?.created_pages ?? 0}</td>
+                      <td className="px-2 py-1" data-testid={`admin-content-list-template-pack-install-result-updated-${index}`}>{row?.summary?.updated_drafts ?? 0}</td>
+                      <td className="px-2 py-1" data-testid={`admin-content-list-template-pack-install-result-published-${index}`}>{row?.summary?.published_revisions ?? 0}</td>
+                      <td className="px-2 py-1 text-rose-700" data-testid={`admin-content-list-template-pack-install-result-error-${index}`}>{row?.error || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+
+          {presetInstallFailedCountries.length ? (
+            <div className="mt-2 rounded border border-rose-200 bg-rose-50 p-2 text-xs text-rose-700" data-testid="admin-content-list-template-pack-install-failed-list">
+              {presetInstallFailedCountries.map((item, index) => (
+                <p key={`preset-install-failed-${item?.country || index}`} data-testid={`admin-content-list-template-pack-install-failed-item-${index}`}>
+                  {String(item?.country || '-').toUpperCase()} • {normalizeErrorText(item?.error || item?.detail || 'failed', 'failed')}
+                </p>
+              ))}
             </div>
           ) : null}
 
@@ -802,6 +950,56 @@ export default function AdminContentList() {
               <span data-testid="admin-content-list-template-pack-verify-total-rows">total_rows: {presetVerifyResult.summary.total_rows ?? 0}</span>
               {' · '}
               <span data-testid="admin-content-list-template-pack-verify-ratio">ready_ratio: {presetVerifyResult.summary.ready_ratio ?? 0}%</span>
+              {' · '}
+              <span data-testid="admin-content-list-template-pack-verify-missing-rows">missing_rows: {presetVerifyResult.summary.missing_rows ?? 0}</span>
+            </div>
+          ) : null}
+
+          {presetVerifyCountrySummaries.length ? (
+            <div className="mt-2 overflow-x-auto" data-testid="admin-content-list-template-pack-verify-country-wrap">
+              <table className="min-w-full text-left text-xs" data-testid="admin-content-list-template-pack-verify-country-table">
+                <thead>
+                  <tr className="border-b bg-slate-50" data-testid="admin-content-list-template-pack-verify-country-head">
+                    <th className="px-2 py-1">country</th>
+                    <th className="px-2 py-1">ok</th>
+                    <th className="px-2 py-1">ready_rows</th>
+                    <th className="px-2 py-1">total_rows</th>
+                    <th className="px-2 py-1">ratio</th>
+                    <th className="px-2 py-1">error</th>
+                  </tr>
+                </thead>
+                <tbody data-testid="admin-content-list-template-pack-verify-country-body">
+                  {presetVerifyCountrySummaries.map((row, index) => (
+                    <tr key={`preset-verify-country-${row?.country || index}`} className="border-b" data-testid={`admin-content-list-template-pack-verify-country-row-${index}`}>
+                      <td className="px-2 py-1" data-testid={`admin-content-list-template-pack-verify-country-${index}`}>{row?.country || '-'}</td>
+                      <td className="px-2 py-1" data-testid={`admin-content-list-template-pack-verify-country-ok-${index}`}>{row?.ok === false ? 'hayır' : 'evet'}</td>
+                      <td className="px-2 py-1" data-testid={`admin-content-list-template-pack-verify-country-ready-${index}`}>{row?.ready_rows ?? 0}</td>
+                      <td className="px-2 py-1" data-testid={`admin-content-list-template-pack-verify-country-total-${index}`}>{row?.total_rows ?? 0}</td>
+                      <td className="px-2 py-1" data-testid={`admin-content-list-template-pack-verify-country-ratio-${index}`}>{row?.ready_ratio ?? 0}%</td>
+                      <td className="px-2 py-1 text-rose-700" data-testid={`admin-content-list-template-pack-verify-country-error-${index}`}>{row?.error || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+
+          {presetVerifyNotReadyItems.length ? (
+            <div className="mt-2 rounded border border-amber-200 bg-amber-50 p-2 text-xs" data-testid="admin-content-list-template-pack-verify-not-ready-wrap">
+              <p className="font-semibold text-amber-700" data-testid="admin-content-list-template-pack-verify-not-ready-title">
+                Hazır olmayan satırlar ({presetVerifyNotReadyItems.length})
+              </p>
+              <div className="mt-1 flex flex-wrap gap-2" data-testid="admin-content-list-template-pack-verify-not-ready-list">
+                {presetVerifyNotReadyItems.slice(0, 30).map((item, index) => (
+                  <span
+                    key={`preset-verify-not-ready-${item?.country || 'x'}-${item?.page_type || index}`}
+                    className="rounded border border-amber-300 bg-white px-2 py-1"
+                    data-testid={`admin-content-list-template-pack-verify-not-ready-item-${index}`}
+                  >
+                    {String(item?.country || '-').toUpperCase()} • {item?.page_type || '-'}
+                  </span>
+                ))}
+              </div>
             </div>
           ) : null}
         </div>
