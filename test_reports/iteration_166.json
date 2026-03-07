@@ -1,0 +1,90 @@
+{
+  "summary": "Iteration 166: P0 Regression + Faz 1 Telemetry Enhancement tests complete. Backend APIs working correctly (16/17 passed). Frontend telemetry page displays all required elements.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/admin/categories/{id}", "issue": "No dedicated GET single category endpoint - categories retrieved via list with filters"}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Admin Telemetry Page", "issues": ["Multiple hydration warnings in console (span in option, span in select, span in tbody) - but UI renders correctly"]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_166_p0_regression_faz1.py",
+    "/app/backend/tests/test_iteration_161_revision_redirect_telemetry.py",
+    "/app/test_reports/pytest/pytest_results_166.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Console shows multiple i18n_missing_key warnings for menu items - consider adding Turkish translations",
+    "Hydration warnings for span elements in table/select - not critical but may indicate React SSR issue"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_166_p0_regression_faz1.py"
+  ],
+  "success_rate": {
+    "backend": "94% (16/17 passed, 1 skipped)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@platform.com / Admin123!, dealer@platform.com / Dealer123!",
+  "seed_data_creation": "Test categories created and deleted during tests",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Telemetry API and UI working correctly. SLO shows 'İhlali' (violation) when failure_rate exceeds target.",
+  "verification_summary": {
+    "p0_regression": {
+      "category_crud": {
+        "list": "PASS - /api/admin/categories returns items correctly",
+        "create": "PASS - POST creates category with sort_order required field",
+        "update": "PASS - PATCH updates category name without conflict",
+        "delete": "PASS - DELETE removes category"
+      },
+      "publish_scope_conflict": {
+        "layout_list": "PASS - /api/admin/layouts returns items",
+        "revision_context": "PASS - /api/admin/layouts/{id} returns page context",
+        "permanent_delete": "PASS - DELETE /api/admin/layouts/permanent validates empty revision_ids"
+      },
+      "rbac_dealer_blocked": {
+        "admin_categories": "PASS - Dealer gets 403",
+        "admin_layouts": "PASS - Dealer gets 403",
+        "revision_telemetry": "PASS - Dealer gets 403",
+        "telemetry_create": "PASS - Dealer gets 403"
+      }
+    },
+    "faz1_telemetry": {
+      "success_rate_pct": "PASS - present in summary (50.00%)",
+      "failure_rate_pct": "PASS - present in summary (50.00%)",
+      "daily_trend": "PASS - 14 day trend array returned",
+      "slo_block": "PASS - targets, current, status fields present",
+      "trend_days_param": "PASS - 7/14/30 days work correctly",
+      "failure_reason_counts": "PASS - REVISION_NOT_FOUND: 4, REVISION_NOT_PUBLISHED: 1",
+      "duration_histogram": "PASS - all 5 buckets present"
+    },
+    "frontend_telemetry_ui": {
+      "page_loads": true,
+      "title_visible": "Revision Redirect Telemetry",
+      "summary_cards": ["total", "success", "failed", "avg/p95 duration", "success rate", "failure rate"],
+      "slo_block": "Visible with p95 hedef and failure rate hedef",
+      "histogram": "5 buckets displayed",
+      "failure_reasons": "Distribution displayed",
+      "daily_trend": "14-day trend bars displayed"
+    }
+  },
+  "test_results": {
+    "iteration_166_tests": {
+      "total": 17,
+      "passed": 16,
+      "skipped": 1,
+      "failed": 0
+    },
+    "iteration_161_tests": {
+      "total": 26,
+      "passed": 26,
+      "failed": 0
+    }
+  }
+}

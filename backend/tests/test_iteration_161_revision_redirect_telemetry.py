@@ -133,7 +133,7 @@ class TestRevisionRedirectTelemetry:
         response = requests.get(
             f"{BASE_URL}/api/admin/revision-redirect-telemetry",
             headers=headers,
-            params={"limit": 50},
+            params={"limit": 50, "trend_days": 14},
         )
         assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
         data = response.json()
@@ -144,9 +144,32 @@ class TestRevisionRedirectTelemetry:
         assert "total" in summary
         assert "success" in summary
         assert "failed" in summary
+        assert "success_rate_pct" in summary
+        assert "failure_rate_pct" in summary
         assert "avg_duration_ms" in summary
         assert "p95_duration_ms" in summary
         assert "duration_histogram" in summary
+        assert "daily_trend" in summary
+        assert "slo" in summary
+
+        assert isinstance(summary["daily_trend"], list)
+        assert len(summary["daily_trend"]) == 14
+        for trend_item in summary["daily_trend"]:
+            assert "date" in trend_item
+            assert "total" in trend_item
+            assert "success" in trend_item
+            assert "failed" in trend_item
+            assert "failure_rate_pct" in trend_item
+
+        slo = summary["slo"]
+        assert "targets" in slo
+        assert "current" in slo
+        assert "status" in slo
+        assert "p95_latency_ms" in slo["targets"]
+        assert "failure_rate_pct" in slo["targets"]
+        assert "p95_latency_ok" in slo["status"]
+        assert "failure_rate_ok" in slo["status"]
+
         histogram = summary["duration_histogram"]
         assert "0_250" in histogram
         assert "251_500" in histogram

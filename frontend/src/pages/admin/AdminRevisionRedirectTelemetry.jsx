@@ -19,6 +19,19 @@ const formatDateTime = (value) => {
   return parsed.toLocaleString('tr-TR');
 };
 
+const formatTrendDate = (value) => {
+  if (!value) return '-';
+  const parsed = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' });
+};
+
+const formatPercent = (value) => {
+  const safe = Number(value || 0);
+  if (!Number.isFinite(safe)) return '0%';
+  return `${safe.toFixed(2)}%`;
+};
+
 export default function AdminRevisionRedirectTelemetry() {
   const resolveRequestLocale = () => {
     const pathLocale = String(window.location.pathname || '').split('/').filter(Boolean)[0]?.toLowerCase();
@@ -44,6 +57,7 @@ export default function AdminRevisionRedirectTelemetry() {
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [failureReasonFilter, setFailureReasonFilter] = useState('');
+  const [trendDays, setTrendDays] = useState('14');
 
   const fetchTelemetry = useCallback(async ({ silent = false } = {}) => {
     setLoading(true);
@@ -55,6 +69,7 @@ export default function AdminRevisionRedirectTelemetry() {
           limit: 50,
           status: statusFilter || undefined,
           failure_reason: failureReasonFilter || undefined,
+          trend_days: Number(trendDays) || 14,
         },
       });
       setRows(Array.isArray(response.data?.items) ? response.data.items : []);
@@ -69,13 +84,20 @@ export default function AdminRevisionRedirectTelemetry() {
     } finally {
       setLoading(false);
     }
-  }, [authHeaders, statusFilter, failureReasonFilter]);
+  }, [authHeaders, statusFilter, failureReasonFilter, trendDays]);
 
   useEffect(() => {
     fetchTelemetry({ silent: true });
   }, [fetchTelemetry]);
 
   const durationHistogram = summary?.duration_histogram || {};
+  const failureReasonCounts = summary?.failure_reason_counts || {};
+  const dailyTrend = Array.isArray(summary?.daily_trend) ? summary.daily_trend : [];
+  const maxDailyTrendCount = dailyTrend.reduce((maxValue, item) => {
+    const total = Number(item?.total || 0);
+    return total > maxValue ? total : maxValue;
+  }, 0);
+  const slo = summary?.slo || null;
 
   return (
     <div className="space-y-5" data-testid="admin-revision-redirect-telemetry-page">
@@ -83,7 +105,7 @@ export default function AdminRevisionRedirectTelemetry() {
         <div className="flex flex-wrap items-center justify-between gap-3" data-testid="admin-revision-redirect-telemetry-header">
           <div>
             <h1 className="text-sm font-semibold" data-testid="admin-revision-redirect-telemetry-title">Revision Redirect Telemetry</h1>
-            <p className="text-xs text-slate-500" data-testid="admin-revision-redirect-telemetry-subtitle">Son 50 redirect event, failure reason ve duration dağılımı.</p>
+            <p className="text-xs text-slate-500" data-testid="admin-revision-redirect-telemetry-subtitle">p95 latency, success/failure rate, failure reason dağılımı ve günlük trend görünümü.</p>
           </div>
           <button
             type="button"
@@ -96,7 +118,7 @@ export default function AdminRevisionRedirectTelemetry() {
           </button>
         </div>
 
-        <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-3" data-testid="admin-revision-redirect-telemetry-filters">
+        <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-4" data-testid="admin-revision-redirect-telemetry-filters">
           <label className="text-xs" data-testid="admin-revision-redirect-telemetry-status-filter-wrap">
             Status
             <select
@@ -127,6 +149,20 @@ export default function AdminRevisionRedirectTelemetry() {
             </select>
           </label>
 
+          <label className="text-xs" data-testid="admin-revision-redirect-telemetry-trend-days-filter-wrap">
+            Trend gün sayısı
+            <select
+              className="mt-1 h-9 w-full rounded border px-2"
+              value={trendDays}
+              onChange={(event) => setTrendDays(event.target.value)}
+              data-testid="admin-revision-redirect-telemetry-trend-days-filter"
+            >
+              <option value="7">7 gün</option>
+              <option value="14">14 gün</option>
+              <option value="30">30 gün</option>
+            </select>
+          </label>
+
           <div className="flex items-end" data-testid="admin-revision-redirect-telemetry-apply-wrap">
             <button
               type="button"
@@ -140,23 +176,57 @@ export default function AdminRevisionRedirectTelemetry() {
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4" data-testid="admin-revision-redirect-telemetry-summary-cards">
+        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-6" data-testid="admin-revision-redirect-telemetry-summary-cards">
           <article className="rounded border bg-slate-50 p-3" data-testid="admin-revision-redirect-telemetry-summary-total">
             <p className="text-[11px] text-slate-500">total</p>
-            <p className="text-lg font-semibold">{Number(summary?.total || 0)}</p>
+            <p className="text-lg font-semibold" data-testid="admin-revision-redirect-telemetry-summary-total-value">{Number(summary?.total || 0)}</p>
           </article>
           <article className="rounded border bg-emerald-50 p-3" data-testid="admin-revision-redirect-telemetry-summary-success">
             <p className="text-[11px] text-emerald-700">success</p>
-            <p className="text-lg font-semibold text-emerald-700">{Number(summary?.success || 0)}</p>
+            <p className="text-lg font-semibold text-emerald-700" data-testid="admin-revision-redirect-telemetry-summary-success-value">{Number(summary?.success || 0)}</p>
           </article>
           <article className="rounded border bg-rose-50 p-3" data-testid="admin-revision-redirect-telemetry-summary-failed">
             <p className="text-[11px] text-rose-700">failed</p>
-            <p className="text-lg font-semibold text-rose-700">{Number(summary?.failed || 0)}</p>
+            <p className="text-lg font-semibold text-rose-700" data-testid="admin-revision-redirect-telemetry-summary-failed-value">{Number(summary?.failed || 0)}</p>
           </article>
           <article className="rounded border bg-slate-50 p-3" data-testid="admin-revision-redirect-telemetry-summary-duration">
             <p className="text-[11px] text-slate-500">avg / p95 (ms)</p>
-            <p className="text-lg font-semibold">{Number(summary?.avg_duration_ms || 0)} / {Number(summary?.p95_duration_ms || 0)}</p>
+            <p className="text-lg font-semibold" data-testid="admin-revision-redirect-telemetry-summary-duration-value">{Number(summary?.avg_duration_ms || 0)} / {Number(summary?.p95_duration_ms || 0)}</p>
           </article>
+          <article className="rounded border bg-emerald-50 p-3" data-testid="admin-revision-redirect-telemetry-summary-success-rate">
+            <p className="text-[11px] text-emerald-700">success rate</p>
+            <p className="text-lg font-semibold text-emerald-700" data-testid="admin-revision-redirect-telemetry-summary-success-rate-value">{formatPercent(summary?.success_rate_pct)}</p>
+          </article>
+          <article className="rounded border bg-rose-50 p-3" data-testid="admin-revision-redirect-telemetry-summary-failure-rate">
+            <p className="text-[11px] text-rose-700">failure rate</p>
+            <p className="text-lg font-semibold text-rose-700" data-testid="admin-revision-redirect-telemetry-summary-failure-rate-value">{formatPercent(summary?.failure_rate_pct)}</p>
+          </article>
+        </div>
+
+        <div className="mt-3 rounded border bg-slate-50 p-3" data-testid="admin-revision-redirect-telemetry-slo-wrap">
+          <div className="flex flex-wrap items-center justify-between gap-2" data-testid="admin-revision-redirect-telemetry-slo-header">
+            <p className="text-xs font-semibold" data-testid="admin-revision-redirect-telemetry-slo-title">SLO durumu</p>
+            <span
+              className={`rounded-full px-2 py-1 text-[11px] font-semibold ${slo?.status?.p95_latency_ok && slo?.status?.failure_rate_ok ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}
+              data-testid="admin-revision-redirect-telemetry-slo-badge"
+            >
+              {slo?.status?.p95_latency_ok && slo?.status?.failure_rate_ok ? 'SLO OK' : 'SLO İhlali'}
+            </span>
+          </div>
+          <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2" data-testid="admin-revision-redirect-telemetry-slo-grid">
+            <div className="rounded border bg-white px-3 py-2" data-testid="admin-revision-redirect-telemetry-slo-latency-item">
+              <p className="text-[11px] text-slate-500">p95 hedef</p>
+              <p className="text-sm font-semibold" data-testid="admin-revision-redirect-telemetry-slo-latency-value">
+                {Number(slo?.current?.p95_duration_ms || 0)} / {Number(slo?.targets?.p95_latency_ms || 0)} ms
+              </p>
+            </div>
+            <div className="rounded border bg-white px-3 py-2" data-testid="admin-revision-redirect-telemetry-slo-failure-rate-item">
+              <p className="text-[11px] text-slate-500">failure rate hedef</p>
+              <p className="text-sm font-semibold" data-testid="admin-revision-redirect-telemetry-slo-failure-rate-value">
+                {formatPercent(slo?.current?.failure_rate_pct)} / {formatPercent(slo?.targets?.failure_rate_pct)}
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="mt-3 rounded border bg-slate-50 p-3" data-testid="admin-revision-redirect-telemetry-histogram-wrap">
@@ -168,6 +238,54 @@ export default function AdminRevisionRedirectTelemetry() {
                 <p className="text-base font-semibold">{Number(durationHistogram[bucketKey] || 0)}</p>
               </div>
             ))}
+          </div>
+        </div>
+
+        <div className="mt-3 rounded border bg-slate-50 p-3" data-testid="admin-revision-redirect-telemetry-failure-reasons-wrap">
+          <p className="text-xs font-semibold" data-testid="admin-revision-redirect-telemetry-failure-reasons-title">Failure reason distribution</p>
+          {Object.keys(failureReasonCounts).length === 0 ? (
+            <p className="mt-2 text-xs text-slate-500" data-testid="admin-revision-redirect-telemetry-failure-reasons-empty">Kayıt yok</p>
+          ) : (
+            <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2" data-testid="admin-revision-redirect-telemetry-failure-reasons-grid">
+              {Object.entries(failureReasonCounts)
+                .sort((a, b) => Number(b[1]) - Number(a[1]))
+                .map(([reason, count]) => (
+                  <div key={`reason-${reason}`} className="rounded border bg-white px-2 py-2" data-testid={`admin-revision-redirect-telemetry-failure-reason-${reason.toLowerCase()}`}>
+                    <p className="text-[11px] text-slate-500">{reason}</p>
+                    <p className="text-base font-semibold">{Number(count || 0)}</p>
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-3 rounded border bg-slate-50 p-3" data-testid="admin-revision-redirect-telemetry-trend-wrap">
+          <p className="text-xs font-semibold" data-testid="admin-revision-redirect-telemetry-trend-title">Günlük redirect event trendi</p>
+          <div className="mt-2 space-y-2" data-testid="admin-revision-redirect-telemetry-trend-list">
+            {dailyTrend.map((item, index) => {
+              const total = Number(item?.total || 0);
+              const success = Number(item?.success || 0);
+              const failed = Number(item?.failed || 0);
+              const totalWidth = maxDailyTrendCount > 0 ? Math.max((total / maxDailyTrendCount) * 100, total > 0 ? 6 : 0) : 0;
+              const successWidth = total > 0 ? (success / total) * 100 : 0;
+              const failedWidth = total > 0 ? (failed / total) * 100 : 0;
+
+              return (
+                <div className="rounded border bg-white px-2 py-2" key={`trend-${item?.date || index}`} data-testid={`admin-revision-redirect-telemetry-trend-item-${index}`}>
+                  <div className="flex flex-wrap items-center justify-between gap-2" data-testid={`admin-revision-redirect-telemetry-trend-meta-${index}`}>
+                    <span className="text-[11px] text-slate-500" data-testid={`admin-revision-redirect-telemetry-trend-date-${index}`}>{formatTrendDate(item?.date)}</span>
+                    <span className="text-[11px] text-slate-500" data-testid={`admin-revision-redirect-telemetry-trend-counts-${index}`}>toplam {total} · success {success} · failed {failed}</span>
+                  </div>
+                  <div className="mt-1 h-2 w-full rounded bg-slate-200" data-testid={`admin-revision-redirect-telemetry-trend-total-track-${index}`}>
+                    <div className="h-full rounded bg-slate-400" style={{ width: `${totalWidth}%` }} data-testid={`admin-revision-redirect-telemetry-trend-total-bar-${index}`} />
+                  </div>
+                  <div className="mt-1 flex h-2 w-full overflow-hidden rounded bg-slate-200" data-testid={`admin-revision-redirect-telemetry-trend-status-track-${index}`}>
+                    <div className="bg-emerald-500" style={{ width: `${successWidth}%` }} data-testid={`admin-revision-redirect-telemetry-trend-success-bar-${index}`} />
+                    <div className="bg-rose-500" style={{ width: `${failedWidth}%` }} data-testid={`admin-revision-redirect-telemetry-trend-failed-bar-${index}`} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 

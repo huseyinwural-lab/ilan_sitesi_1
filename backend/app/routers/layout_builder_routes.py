@@ -15,7 +15,7 @@ from fastapi.responses import StreamingResponse
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import SchemaError
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, delete, desc, func, select, text
+from sqlalchemy import and_, case, delete, desc, func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -86,6 +86,11 @@ _REVISION_REDIRECT_METRICS = {
         "1001_2000": 0,
         "2001_plus": 0,
     },
+}
+
+REVISION_REDIRECT_SLO_TARGETS = {
+    "p95_latency_ms": 1200,
+    "failure_rate_pct": 5.0,
 }
 
 TRANSIENT_DB_ERROR_MARKERS = (
@@ -1533,7 +1538,50 @@ def _serialize_revision_redirect_event(row: AdminRevisionRedirectEvent) -> dict[
     }
 
 
-def _build_revision_redirect_summary(items: list[dict[str, Any]]) -> dict[str, Any]:
+def _build_revision_redirect_daily_trend(rows: list[Any], trend_days: int) -> list[dict[str, Any]]:
+    safe_days = max(1, int(trend_days or 1))
+    today = datetime.now(timezone.utc).date()
+    start_date = today - timedelta(days=safe_days - 1)
+
+    buckets: dict[str, dict[str, int]] = {}
+    for row in rows:
+        raw_day = getattr(row, "day_bucket", None)
+        if raw_day is None:
+            continue
+        day_value = raw_day.date() if isinstance(raw_day, datetime) else raw_day
+        key = day_value.isoformat()
+        buckets[key] = {
+            "total": int(getattr(row, "total", 0) or 0),
+            "success": int(getattr(row, "success", 0) or 0),
+            "failed": int(getattr(row, "failed", 0) or 0),
+        }
+
+    result: list[dict[str, Any]] = []
+    for offset in range(safe_days):
+        day = start_date + timedelta(days=offset)
+        key = day.isoformat()
+        item = buckets.get(key, {"total": 0, "success": 0, "failed": 0})
+        total = int(item.get("total", 0))
+        failed = int(item.get("failed", 0))
+        result.append(
+            {
+                "date": key,
+                "total": total,
+                "success": int(item.get("success", 0)),
+                "failed": failed,
+                "failure_rate_pct": round((failed / total) * 100, 2) if total > 0 else 0.0,
+            }
+        )
+
+    return result
+
+
+def _build_revision_redirect_summary(
+    items: list[dict[str, Any]],
+    *,
+    daily_trend: Optional[list[dict[str, Any]]] = None,
+    trend_days: int = 14,
+) -> dict[str, Any]:
     total = len(items)
     success = sum(1 for item in items if item.get("status") == "success")
     failed = sum(1 for item in items if item.get("status") == "failed")
@@ -1563,14 +1611,36 @@ def _build_revision_redirect_summary(items: list[dict[str, Any]]) -> dict[str, A
         if bucket:
             duration_histogram[bucket] = int(duration_histogram.get(bucket, 0)) + 1
 
+    success_rate_pct = round((success / total) * 100, 2) if total > 0 else 0.0
+    failure_rate_pct = round((failed / total) * 100, 2) if total > 0 else 0.0
+    slo_targets = {
+        "p95_latency_ms": int(REVISION_REDIRECT_SLO_TARGETS.get("p95_latency_ms", 1200)),
+        "failure_rate_pct": float(REVISION_REDIRECT_SLO_TARGETS.get("failure_rate_pct", 5.0)),
+    }
+
     return {
         "total": total,
         "success": success,
         "failed": failed,
+        "success_rate_pct": success_rate_pct,
+        "failure_rate_pct": failure_rate_pct,
         "avg_duration_ms": avg_duration_ms,
         "p95_duration_ms": p95_duration_ms,
         "failure_reason_counts": failure_reason_counts,
         "duration_histogram": duration_histogram,
+        "daily_trend": daily_trend or [],
+        "trend_days": int(max(1, trend_days)),
+        "slo": {
+            "targets": slo_targets,
+            "current": {
+                "p95_duration_ms": p95_duration_ms,
+                "failure_rate_pct": failure_rate_pct,
+            },
+            "status": {
+                "p95_latency_ok": p95_duration_ms <= slo_targets["p95_latency_ms"],
+                "failure_rate_ok": failure_rate_pct <= slo_targets["failure_rate_pct"],
+            },
+        },
         "metrics_aggregator_snapshot": {
             "total": int(_REVISION_REDIRECT_METRICS.get("total", 0)),
             "success": int(_REVISION_REDIRECT_METRICS.get("success", 0)),
@@ -4344,23 +4414,28 @@ async def list_admin_revision_redirect_events(
     status: Optional[str] = Query(default=None),
     failure_reason: Optional[str] = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
+    trend_days: int = Query(default=14, ge=1, le=90),
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
 ):
     del current_user
 
-    query = select(AdminRevisionRedirectEvent)
+    conditions: list[Any] = []
     normalized_status = str(status or "").strip().lower()
     if normalized_status:
         if normalized_status not in {"success", "failed"}:
             raise HTTPException(status_code=400, detail="invalid_status")
-        query = query.where(AdminRevisionRedirectEvent.status == normalized_status)
+        conditions.append(AdminRevisionRedirectEvent.status == normalized_status)
 
     normalized_failure_reason = str(failure_reason or "").strip().upper()
     if normalized_failure_reason:
         if normalized_failure_reason not in REVISION_REDIRECT_FAILURE_REASONS:
             raise HTTPException(status_code=400, detail="invalid_failure_reason")
-        query = query.where(AdminRevisionRedirectEvent.failure_reason == normalized_failure_reason)
+        conditions.append(AdminRevisionRedirectEvent.failure_reason == normalized_failure_reason)
+
+    query = select(AdminRevisionRedirectEvent)
+    if conditions:
+        query = query.where(*conditions)
 
     rows = (
         await session.execute(
@@ -4368,10 +4443,31 @@ async def list_admin_revision_redirect_events(
         )
     ).scalars().all()
 
+    trend_since = datetime.now(timezone.utc) - timedelta(days=max(0, int(trend_days) - 1))
+    day_bucket = func.date_trunc("day", AdminRevisionRedirectEvent.created_at).label("day_bucket")
+    trend_query = (
+        select(
+            day_bucket,
+            func.count(AdminRevisionRedirectEvent.id).label("total"),
+            func.sum(case((AdminRevisionRedirectEvent.status == "success", 1), else_=0)).label("success"),
+            func.sum(case((AdminRevisionRedirectEvent.status == "failed", 1), else_=0)).label("failed"),
+        )
+        .where(AdminRevisionRedirectEvent.created_at >= trend_since)
+    )
+    if conditions:
+        trend_query = trend_query.where(*conditions)
+    trend_query = trend_query.group_by(day_bucket).order_by(day_bucket)
+    trend_rows = (await session.execute(trend_query)).all()
+    daily_trend = _build_revision_redirect_daily_trend(trend_rows, trend_days=int(trend_days))
+
     items = [_serialize_revision_redirect_event(row) for row in rows]
     return {
         "items": items,
-        "summary": _build_revision_redirect_summary(items),
+        "summary": _build_revision_redirect_summary(
+            items,
+            daily_trend=daily_trend,
+            trend_days=int(trend_days),
+        ),
         "filters": {
             "status": normalized_status or None,
             "failure_reason": normalized_failure_reason or None,
