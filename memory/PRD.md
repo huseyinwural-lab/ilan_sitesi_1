@@ -3058,3 +3058,46 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - `test_category_edit_save_slug_conflict.py` ✅
 - Ek backend doğrulama (`deep_testing_backend_v2`) ✅ PASS
 - Frontend doğrulama (`auto_frontend_testing_agent`) ✅ Runtime clone/body-read hatası yok; slug/delete akış kodu doğrulandı.
+
+---
+
+## 2026-03-07 (Devam: Step-Badge + 10dk Undo + List/Search UX)
+
+### Kullanıcı Seçimleri
+- Mini step-badge kapsamı: **Modal + liste satırı**
+- Geri alma penceresi: **10 dakika**
+- Geri alma davranışı: **kök + tüm alt ağaç birlikte restore**
+- P2 başlangıç: **List/Search UX iyileştirmeleri**
+
+### Uygulananlar
+- `AdminCategories.js`:
+  - Liste UX geliştirmeleri:
+    - issue-state filtresi (`all` / `with_issues`)
+    - arama inputu (`Ad / slug`)
+    - sıralama seçici (A-Z, Z-A, sıra artan/azalan)
+  - Liste satırlarına mini issue badge eklendi (`Hierarchy/Forms/Rules`).
+  - Modal içine mini issue badge eklendi (`Hierarchy/Forms/Rules`, OK/Uyarı).
+  - Silme sonrası 10 dk geri alma barı eklendi:
+    - countdown
+    - `Silmeyi Geri Al` butonu
+  - Yeni endpoint çağrısı: `POST /api/admin/categories/delete-operations/{operation_id}/undo`.
+
+- Backend (`server.py` + `category.py`):
+  - `CategoryDeleteUndoLog` modeli eklendi (`category_delete_undo_logs`).
+  - Silme endpointi (`DELETE /api/admin/categories/{id}`):
+    - undo kayıt üretimi (`undo_operation_id`, `undo_expires_at`, `undo_window_minutes`)
+  - Yeni endpoint:
+    - `POST /api/admin/categories/delete-operations/{operation_id}/undo`
+    - 10 dk içinde kök + tüm alt ağaç restore.
+  - Structured hata kodları korunup genişletildi (operation id invalid/expired/already restored vb.).
+
+### Test Sonuçları
+- Backend:
+  - `test_iteration_168_category_delete_cascade.py` ✅ (cascade delete + undo restore)
+  - `test_category_edit_save_slug_conflict.py` ✅
+- Frontend:
+  - `auto_frontend_testing_agent` ✅ PASS
+    - yeni filtreler
+    - modal mini badge
+    - undo bar implementasyon doğrulaması
+    - eski runtime hataların yokluğu (`clone/body stream`) doğrulandı
