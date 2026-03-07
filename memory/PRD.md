@@ -18,6 +18,83 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ---
 
+## 2026-03-07 (Yeni Görev Listesi — Redirect Telemetry + Retention Policy + Extended CSV)
+
+### Faz 1 — Revision Redirect Telemetry (tamamlandı)
+- Redirect lifecycle ölçümü eklendi:
+  - `redirect_started_at`
+  - `redirect_completed_at`
+  - `redirect_duration_ms`
+- Failure reason sınıflandırması uygulandı:
+  - `REVISION_NOT_FOUND`
+  - `REVISION_NOT_PUBLISHED`
+  - `TARGET_ROUTE_INVALID`
+  - `PERMISSION_DENIED`
+- Yeni telemetry event endpoint:
+  - `POST /api/admin/revision-redirect-telemetry/events`
+  - event_name: `admin_revision_redirect`
+- Yeni telemetry debug endpoint:
+  - `GET /api/admin/revision-redirect-telemetry`
+  - son kayıtlar + status/failure filter + summary + histogram
+- Observability entegrasyonu:
+  - application log stream (`logger.info`)
+  - metrics aggregator (in-memory counters + duration buckets)
+  - admin observability dashboard route: `/admin/revision-redirect-telemetry`
+- Frontend redirect akışı (`AdminRevisionRedirect`) telemetry event üretir (success/failed).
+
+### Faz 2 — Release Artefact Retention Policy (tamamlandı)
+- Arşiv formatı normalize edildi:
+  - `release-artifacts/release-YYYYMMDD-HHMM/`
+- `release_meta.json` şeması (sabit kaynak):
+  - `release_id`
+  - `created_at`
+  - `is_active`
+  - `is_rollback_candidate`
+  - `retention_locked` (opsiyonel destek)
+- Yeni cleanup script:
+  - `/app/scripts/cleanup_release_artifacts.py`
+  - kural: max 20 release
+  - koruma: `is_active=true`, `is_rollback_candidate=true`, `retention_locked=true`
+  - fail-safe: metadata eksik/geçersiz release **silinmez**, warning loglanır
+  - cleanup log alanları:
+    - `deleted_release_id`
+    - `deleted_at`
+    - `trigger_source`
+    - `remaining_release_count`
+- Arşiv scripti güncellendi:
+  - `/app/scripts/archive_release_artifacts.sh`
+  - release sonrası cleanup tetiklenir
+- CI entegrasyonu:
+  - `.github/workflows/lint.yml` → release archive + upload + cleanup uyumlu env
+  - yeni nightly workflow:
+    - `.github/workflows/release-artifact-retention-nightly.yml`
+
+### Faz 3 — Preset CSV Export Genişletme (tamamlandı)
+- `GET /api/admin/preset-runs/export` genişletildi:
+  - `extended=true` opsiyonu eklendi
+  - extended modda satır 1: `meta,schema_version,2`
+  - satır 2: header
+  - ek kolonlar: `module`, `persona`, `variant`
+- Backward compatibility korundu:
+  - default export format değişmedi
+- Performance guard eklendi:
+  - max row limit (`X-Export-Row-Limit` header)
+  - streaming export (`StreamingResponse`)
+  - timeout guard (`asyncio.wait_for`)
+
+### Ek Tamamlama
+- `GET /api/admin/layouts/{revision_id}` context endpointi korundu/güncellendi.
+- `/admin/revisions/:revisionId` route + redirect flow finalize edildi.
+- Copy conflict modalında deep-link aksiyonu:
+  - `Revizyonu Aç` → `/admin/revisions/{revision_id}` (`target="_blank"`)
+
+### Test Durumu
+- Self-test: PASS (telemetry endpoints, preset export default/extended, retention cleanup fail-safe, revision context, copy conflict payload)
+- Smoke screenshot: PASS (`/admin/revision-redirect-telemetry`)
+- `testing_agent` raporu: `/app/test_reports/iteration_161.json`
+  - Backend: **100%**
+  - Frontend: **100%**
+
 ## 2026-03-07 (Kapanış Görev Listesi — Release Archive + Preset Ops + Deep-Link + CI)
 
 ### Faz 1 — Release Artefact Yönetimi
