@@ -1,0 +1,93 @@
+{
+  "generated_at": "2026-03-07T16:18:45.312456+00:00",
+  "artifact_root": "/app/release-artifacts",
+  "required_fields": [
+    "artifact_hash",
+    "build_commit",
+    "created_at",
+    "is_active",
+    "is_rollback_candidate",
+    "release_id"
+  ],
+  "optional_fields": [
+    "build_pipeline",
+    "retention_locked"
+  ],
+  "summary": {
+    "total_artifacts": 2,
+    "valid_artifacts": 0,
+    "missing_metadata": 2,
+    "corrupted_artifacts": 0
+  },
+  "valid_artifacts": [],
+  "missing_metadata": [
+    {
+      "release_folder": "2026-03-07_release",
+      "release_id": "2026-03-07_release",
+      "meta_exists": true,
+      "meta_error": null,
+      "missing_required_fields": [
+        "artifact_hash",
+        "build_commit",
+        "created_at",
+        "is_active",
+        "is_rollback_candidate",
+        "release_id"
+      ],
+      "hash_expected": null,
+      "hash_actual": null,
+      "hash_match": null,
+      "status": "missing_metadata"
+    },
+    {
+      "release_folder": "release-20260307-1200",
+      "release_id": "release-20260307-1200",
+      "meta_exists": true,
+      "meta_error": null,
+      "missing_required_fields": [
+        "artifact_hash",
+        "build_commit"
+      ],
+      "hash_expected": null,
+      "hash_actual": null,
+      "hash_match": null,
+      "status": "missing_metadata"
+    }
+  ],
+  "corrupted_artifacts": [],
+  "items": [
+    {
+      "release_folder": "2026-03-07_release",
+      "release_id": "2026-03-07_release",
+      "meta_exists": true,
+      "meta_error": null,
+      "missing_required_fields": [
+        "artifact_hash",
+        "build_commit",
+        "created_at",
+        "is_active",
+        "is_rollback_candidate",
+        "release_id"
+      ],
+      "hash_expected": null,
+      "hash_actual": null,
+      "hash_match": null,
+      "status": "missing_metadata"
+    },
+    {
+      "release_folder": "release-20260307-1200",
+      "release_id": "release-20260307-1200",
+      "meta_exists": true,
+      "meta_error": null,
+      "missing_required_fields": [
+        "artifact_hash",
+        "build_commit"
+      ],
+      "hash_expected": null,
+      "hash_actual": null,
+      "hash_match": null,
+      "status": "missing_metadata"
+    }
+  ],
+  "report_path": "/app/reports/artifact_integrity_report.json"
+}

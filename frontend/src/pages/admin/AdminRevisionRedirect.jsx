@@ -4,10 +4,25 @@ import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+const REDIRECT_FAILURE_MESSAGES = {
+  REVISION_NOT_FOUND: 'İlgili revizyon bulunamadı.',
+  REVISION_NOT_PUBLISHED: 'Revizyon yayınlanmamış durumda.',
+  PERMISSION_DENIED: 'Bu revizyona erişim yetkiniz bulunmuyor.',
+  TARGET_ROUTE_INVALID: 'Hedef route bilgisi geçersiz veya eksik.',
+};
+
+const normalizeFailureCode = (value) => {
+  const normalized = String(value || '').trim().toUpperCase();
+  if (Object.prototype.hasOwnProperty.call(REDIRECT_FAILURE_MESSAGES, normalized)) return normalized;
+  return 'TARGET_ROUTE_INVALID';
+};
+
 export default function AdminRevisionRedirect() {
   const navigate = useNavigate();
   const { revisionId } = useParams();
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const [errorInfo, setErrorInfo] = useState(null);
 
   const authHeaders = useMemo(() => {
     const pathLocale = String(window.location.pathname || '').split('/').filter(Boolean)[0]?.toLowerCase();
@@ -23,6 +38,9 @@ export default function AdminRevisionRedirect() {
 
   useEffect(() => {
     let mounted = true;
+
+    setLoading(true);
+    setErrorInfo(null);
 
     const sendTelemetryEvent = async ({
       status,
@@ -59,15 +77,20 @@ export default function AdminRevisionRedirect() {
       const startedAtIso = new Date(redirectStartTimestamp).toISOString();
 
       if (!revisionId) {
-        setError('revision_id bulunamadı');
+        const failureReason = 'REVISION_NOT_FOUND';
+        setErrorInfo({
+          code: failureReason,
+          message: REDIRECT_FAILURE_MESSAGES[failureReason],
+        });
         const completedAtIso = new Date().toISOString();
         await sendTelemetryEvent({
           status: 'failed',
-          failureReason: 'REVISION_NOT_FOUND',
+          failureReason,
           startedAtIso,
           completedAtIso,
           durationMs: Math.max(0, Date.now() - redirectStartTimestamp),
         });
+        setLoading(false);
         return;
       }
 
@@ -82,28 +105,38 @@ export default function AdminRevisionRedirect() {
         const revisionStatus = String(response.data?.item?.status || '').toLowerCase();
 
         if (revisionStatus !== 'published') {
-          setError('Revision publish durumda değil.');
+          const failureReason = 'REVISION_NOT_PUBLISHED';
+          setErrorInfo({
+            code: failureReason,
+            message: REDIRECT_FAILURE_MESSAGES[failureReason],
+          });
           const completedAtIso = new Date().toISOString();
           await sendTelemetryEvent({
             status: 'failed',
-            failureReason: 'REVISION_NOT_PUBLISHED',
+            failureReason,
             startedAtIso,
             completedAtIso,
             durationMs: Math.max(0, Date.now() - redirectStartTimestamp),
           });
+          setLoading(false);
           return;
         }
 
         if (!page?.id) {
-          setError('Revision context bulunamadı');
+          const failureReason = 'TARGET_ROUTE_INVALID';
+          setErrorInfo({
+            code: failureReason,
+            message: REDIRECT_FAILURE_MESSAGES[failureReason],
+          });
           const completedAtIso = new Date().toISOString();
           await sendTelemetryEvent({
             status: 'failed',
-            failureReason: 'TARGET_ROUTE_INVALID',
+            failureReason,
             startedAtIso,
             completedAtIso,
             durationMs: Math.max(0, Date.now() - redirectStartTimestamp),
           });
+          setLoading(false);
           return;
         }
 
@@ -119,16 +152,21 @@ export default function AdminRevisionRedirect() {
 
         const redirectTarget = `/admin/site-design/content-builder?${params.toString()}`;
         if (!redirectTarget.startsWith('/admin/site-design/content-builder?')) {
-          setError('Redirect hedef rotası geçersiz.');
+          const failureReason = 'TARGET_ROUTE_INVALID';
+          setErrorInfo({
+            code: failureReason,
+            message: REDIRECT_FAILURE_MESSAGES[failureReason],
+          });
           const completedAtIso = new Date().toISOString();
           await sendTelemetryEvent({
             status: 'failed',
-            failureReason: 'TARGET_ROUTE_INVALID',
+            failureReason,
             redirectTarget,
             startedAtIso,
             completedAtIso,
             durationMs: Math.max(0, Date.now() - redirectStartTimestamp),
           });
+          setLoading(false);
           return;
         }
 
@@ -144,15 +182,26 @@ export default function AdminRevisionRedirect() {
         navigate(redirectTarget, { replace: true });
       } catch (requestError) {
         if (!mounted) return;
-        const message = requestError?.response?.data?.detail || requestError?.message || 'Revision açılamadı';
-        setError(String(message));
-
+        const detail = requestError?.response?.data?.detail;
+        const detailCode = typeof detail === 'object' && detail?.code ? String(detail.code) : detail;
         const httpStatus = Number(requestError?.response?.status || 0);
-        const failureReason = httpStatus === 403
-          ? 'PERMISSION_DENIED'
-          : httpStatus === 404
-            ? 'REVISION_NOT_FOUND'
-            : 'TARGET_ROUTE_INVALID';
+        const failureReason = normalizeFailureCode(
+          httpStatus === 403
+            ? 'PERMISSION_DENIED'
+            : httpStatus === 404
+              ? 'REVISION_NOT_FOUND'
+              : detailCode,
+        );
+
+        const message = typeof detail === 'string' && detail.trim()
+          ? detail
+          : REDIRECT_FAILURE_MESSAGES[failureReason] || requestError?.message || 'Revision açılamadı';
+        setErrorInfo({
+          code: failureReason,
+          message: String(message),
+          httpStatus,
+        });
+
         const completedAtIso = new Date().toISOString();
         await sendTelemetryEvent({
           status: 'failed',
@@ -161,6 +210,7 @@ export default function AdminRevisionRedirect() {
           completedAtIso,
           durationMs: Math.max(0, Date.now() - redirectStartTimestamp),
         });
+        setLoading(false);
       }
     };
 
@@ -168,24 +218,53 @@ export default function AdminRevisionRedirect() {
     return () => {
       mounted = false;
     };
-  }, [authHeaders, navigate, revisionId]);
+  }, [authHeaders, navigate, revisionId, retryCount]);
 
   return (
     <section className="rounded-lg border bg-white p-4" data-testid="admin-revision-redirect-page">
-      {error ? (
+      {errorInfo ? (
         <div data-testid="admin-revision-redirect-error-wrap">
-          <p className="text-sm text-rose-700" data-testid="admin-revision-redirect-error-message">{error}</p>
-          <button
-            type="button"
-            className="mt-3 h-9 rounded border px-3 text-xs"
-            onClick={() => navigate('/admin/site-design/content-list')}
-            data-testid="admin-revision-redirect-back-button"
-          >
-            Content List’e Dön
-          </button>
+          <div className="rounded border border-rose-200 bg-rose-50 p-3" data-testid="admin-revision-redirect-error-card">
+            <p className="text-xs text-rose-800" data-testid="admin-revision-redirect-error-code">Hata kodu: {errorInfo.code}</p>
+            <p className="mt-1 text-sm text-rose-700" data-testid="admin-revision-redirect-error-message">{errorInfo.message}</p>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2" data-testid="admin-revision-redirect-actions-wrap">
+            <button
+              type="button"
+              className="h-9 rounded border px-3 text-xs"
+              onClick={() => setRetryCount((previous) => previous + 1)}
+              data-testid="admin-revision-redirect-retry-button"
+            >
+              Yeniden Dene
+            </button>
+            <button
+              type="button"
+              className="h-9 rounded border px-3 text-xs"
+              onClick={() => navigate('/')}
+              data-testid="admin-revision-redirect-go-home-button"
+            >
+              Ana Sayfaya Dön
+            </button>
+            <button
+              type="button"
+              className="h-9 rounded border px-3 text-xs"
+              onClick={() => navigate('/admin/dashboard')}
+              data-testid="admin-revision-redirect-go-dashboard-button"
+            >
+              Admin Dashboard'a Git
+            </button>
+            <a
+              href={`/support?reason=revision_redirect&code=${encodeURIComponent(String(errorInfo.code || 'TARGET_ROUTE_INVALID'))}&revision_id=${encodeURIComponent(String(revisionId || ''))}`}
+              className="inline-flex h-9 items-center rounded border px-3 text-xs"
+              data-testid="admin-revision-redirect-support-link"
+            >
+              Destek
+            </a>
+          </div>
         </div>
       ) : (
-        <p className="text-sm text-slate-600" data-testid="admin-revision-redirect-loading">Revision açılıyor...</p>
+        <p className="text-sm text-slate-600" data-testid="admin-revision-redirect-loading">{loading ? 'Revision açılıyor...' : 'İşlem tamamlandı.'}</p>
       )}
     </section>
   );

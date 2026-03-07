@@ -388,3 +388,65 @@ class AdminRevisionRedirectEvent(Base):
         Index("ix_admin_rev_redirect_created_status", "created_at", "status"),
         Index("ix_admin_rev_redirect_failure_reason", "failure_reason", "created_at"),
     )
+
+
+class LayoutReleaseCleanupAudit(Base):
+    __tablename__ = "layout_release_cleanup_audits"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    admin_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    retention_window_days: Mapped[int] = mapped_column(Integer, nullable=False, default=30)
+    trigger_source: Mapped[str] = mapped_column(String(64), nullable=False, default="admin_panel")
+    deleted_artifacts: Mapped[list] = mapped_column(JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb"))
+    protected_artifacts: Mapped[list] = mapped_column(JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb"))
+    dry_run_json: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
+
+    __table_args__ = (
+        CheckConstraint("retention_window_days >= 1", name="ck_layout_release_cleanup_retention_window_min"),
+        CheckConstraint("char_length(trigger_source) > 0", name="ck_layout_release_cleanup_trigger_source_not_empty"),
+        CheckConstraint("jsonb_typeof(deleted_artifacts) = 'array'", name="ck_layout_release_cleanup_deleted_array"),
+        CheckConstraint("jsonb_typeof(protected_artifacts) = 'array'", name="ck_layout_release_cleanup_protected_array"),
+        CheckConstraint("jsonb_typeof(dry_run_json) = 'object'", name="ck_layout_release_cleanup_dry_run_object"),
+        Index("ix_layout_release_cleanup_created", "created_at"),
+    )
+
+
+class LayoutPresetExportJob(Base):
+    __tablename__ = "layout_preset_export_jobs"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    requested_by: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    requested_by_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    export_scope: Mapped[str] = mapped_column(String(24), nullable=False, default="admin", index=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="queued", index=True)
+    filters_json: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"))
+    row_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    file_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    cancel_requested: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    meta_json: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"))
+
+    __table_args__ = (
+        CheckConstraint("status IN ('queued','running','completed','failed','cancelled')", name="ck_layout_preset_export_job_status"),
+        CheckConstraint("export_scope IN ('admin','dealer')", name="ck_layout_preset_export_job_scope"),
+        CheckConstraint("row_count >= 0", name="ck_layout_preset_export_job_row_count_non_negative"),
+        CheckConstraint("jsonb_typeof(filters_json) = 'object'", name="ck_layout_preset_export_job_filters_object"),
+        CheckConstraint("jsonb_typeof(meta_json) = 'object'", name="ck_layout_preset_export_job_meta_object"),
+        Index("ix_layout_preset_export_jobs_status_created", "status", "created_at"),
+        Index("ix_layout_preset_export_jobs_scope_created", "export_scope", "created_at"),
+    )

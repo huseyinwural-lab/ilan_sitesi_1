@@ -1,0 +1,5 @@
+run_id,operator,executed_at,countries,total_jobs,success_count,failure_count,duration,status
+d0f5d644-e51e-4432-8fbd-29ae54b7accc,admin@platform.com,2026-03-07T11:09:26.609130+00:00,TR|DE|FR,12,3,0,31017,success
+8b0a7bcf-33b3-4dbb-bffa-187184802731,admin@platform.com,2026-03-07T10:45:05.990218+00:00,TR|DE|FR,12,3,0,20864,success
+97f19447-d2ed-4421-87ab-366e0d3fdbe7,admin@platform.com,2026-03-07T10:39:49.266541+00:00,TR|DE|FR,12,3,0,20337,success
+0ed17ace-c17b-4dee-944e-c111a9cbe7ca,admin@platform.com,2026-03-07T10:39:03.731548+00:00,TR|DE|FR,12,3,0,30331,success

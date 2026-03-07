@@ -1,0 +1,85 @@
+{
+  "summary": "Iteration 167: Faz 2-6 testing complete. All 12 backend tests passed. Frontend pages (AdminReleaseRetention, AdminPresetRuns, AdminRevisionRedirect) verified with all required UI elements.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "AdminPresetRuns",
+        "issues": ["Hydration warning: <span> in <tbody> - UI renders correctly but may need HTML structure fix"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_167_release_retention_and_export_jobs.py",
+    "/app/test_reports/pytest/pytest_results_167.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Multiple i18n_missing_key console warnings for menu items - not blocking but consider adding translations"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (12/12 passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@platform.com / Admin123!, dealer@platform.com / Dealer123!, user@platform.com / User123!",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Faz 2-6 features working: release retention dry-run/execute/audit, integrity scan, preset export jobs with cancel/download, dealer scoped exports, revision redirect error UI with quick actions.",
+  "verification_summary": {
+    "faz_2_release_retention": {
+      "api_dry_run": "PASS - /api/admin/release-retention/dry-run returns summary with keep/delete lists",
+      "api_execute_confirm": "PASS - confirm:false returns 400, confirm:true with safe window creates audit",
+      "api_audit_logs": "PASS - /api/admin/release-retention/audit-logs returns items list",
+      "frontend_panel": "PASS - Panel renders with all elements (dry-run button, execute button, KEEP/DELETE diff, summary cards)"
+    },
+    "faz_3_integrity_scan": {
+      "api_scan": "PASS - /api/admin/release-retention/integrity-scan returns summary and report_path",
+      "report_file": "PASS - report file created at report_path location"
+    },
+    "faz_4_preset_export_jobs": {
+      "admin_create": "PASS - POST /api/admin/preset-runs/export-jobs creates job",
+      "admin_list": "PASS - GET /api/admin/preset-runs/export-jobs returns items",
+      "admin_get": "PASS - GET /api/admin/preset-runs/export-jobs/{id} returns job details",
+      "admin_cancel": "PASS - POST /api/admin/preset-runs/export-jobs/{id}/cancel works",
+      "admin_download": "PASS - GET /api/admin/preset-runs/export-jobs/{id}/download returns CSV",
+      "dealer_scoped": "PASS - POST /api/dealer/preset-runs/export-jobs creates job with export_scope=dealer",
+      "frontend_panel": "PASS - Export Job Queue with lifecycle states, cancel/download buttons rendered"
+    },
+    "faz_5_revision_redirect_ux": {
+      "error_screen": "PASS - Standard error code (REVISION_NOT_FOUND) displayed",
+      "retry_button": "PASS - 'Yeniden Dene' button present",
+      "quick_actions": "PASS - Home/Dashboard/Support buttons present",
+      "support_deep_link": "PASS - /support?reason=revision_redirect&code=...&revision_id=... format"
+    },
+    "faz_5_conflict_modal": {
+      "copy_revision_id": "PASS - Button with data-testid present, clipboard API used",
+      "open_revision_link": "PASS - Link to /admin/revisions/{id} present"
+    },
+    "faz_6_rbac": {
+      "dealer_admin_export_jobs": "PASS - Returns 403",
+      "dealer_release_execute": "PASS - Returns 403",
+      "dealer_telemetry_admin": "PASS - Returns 403",
+      "user_dealer_export": "PASS - Returns 403"
+    }
+  },
+  "test_results": {
+    "backend_pytest": {
+      "total": 12,
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0
+    },
+    "frontend_playwright": {
+      "release_retention_page": "PASS",
+      "preset_runs_page": "PASS",
+      "revision_redirect_error_ui": "PASS"
+    }
+  }
+}

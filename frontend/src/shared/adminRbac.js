@@ -57,6 +57,7 @@ export const ADMIN_ROUTE_RULES = [
   { pattern: /^\/admin\/site-design\/listing-flow-settings$/, roles: ['super_admin', 'country_admin'] },
   { pattern: /^\/admin\/user-interface-design$/, roles: ADMIN_ROLE_GROUPS.uiDesigner },
   { pattern: /^\/admin\/ops\/publish-health$/, roles: ADMIN_ROLE_GROUPS.opsReliability },
+  { pattern: /^\/admin\/release-retention$/, roles: ADMIN_ROLE_GROUPS.opsReliability },
   { pattern: /^\/admin\/info-pages$/, roles: ADMIN_ROLE_GROUPS.contentPublish },
   { pattern: /^\/admin\/categories$/, roles: ADMIN_ROLE_GROUPS.catalogView },
   { pattern: /^\/admin\/categories\/import-export$/, roles: ADMIN_ROLE_GROUPS.catalogAdmin },

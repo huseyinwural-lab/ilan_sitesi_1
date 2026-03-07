@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import csv
+import hashlib
 import io
+import json
+import os
+from pathlib import Path
+import shutil
 import unicodedata
 from datetime import date, datetime, timedelta, timezone
 import logging
@@ -11,7 +16,7 @@ import uuid
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import SchemaError
 from pydantic import BaseModel, Field
@@ -19,7 +24,7 @@ from sqlalchemy import and_, case, delete, desc, func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import AsyncSessionLocal, engine, get_db
 from app.dependencies import ADMIN_ROLES, check_permissions, get_current_user_optional
 from app.domains.layout_builder.service import (
     archive_revision,
@@ -41,7 +46,9 @@ from app.models.layout_builder import (
     LayoutPageType,
     LayoutPresetEvent,
     LayoutPresetEventType,
+    LayoutPresetExportJob,
     LayoutPresetRunLog,
+    LayoutReleaseCleanupAudit,
     AdminRevisionRedirectEvent,
     LayoutRevision,
     LayoutRevisionStatus,
@@ -52,6 +59,8 @@ router = APIRouter(prefix="/api", tags=["layout_builder"])
 logger = logging.getLogger("layout_builder")
 
 ADMIN_LAYOUT_ROLES = ["super_admin", "country_admin"]
+RELEASE_RETENTION_VIEW_ROLES = ["super_admin", "country_admin", "ops"]
+PRESET_EXPORT_ADMIN_ROLES = ["super_admin", "country_admin", "admin"]
 RESOLVE_CACHE_TTL_SECONDS = 180
 
 _RESOLVE_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
@@ -92,6 +101,41 @@ REVISION_REDIRECT_SLO_TARGETS = {
     "p95_latency_ms": 1200,
     "failure_rate_pct": 5.0,
 }
+
+RELEASE_META_REQUIRED_FIELDS = {
+    "release_id",
+    "created_at",
+    "build_commit",
+    "artifact_hash",
+    "is_active",
+    "is_rollback_candidate",
+}
+RELEASE_META_OPTIONAL_FIELDS = {"retention_locked", "build_pipeline"}
+RELEASE_RETENTION_PROTECTED_REASONS = {
+    "ACTIVE_RELEASE",
+    "ROLLBACK_CANDIDATE",
+    "RETENTION_LOCKED",
+    "MISSING_METADATA",
+    "INVALID_METADATA",
+    "MISSING_CREATED_AT",
+    "WITHIN_RETENTION_WINDOW",
+}
+RELEASE_RETENTION_DEFAULT_DAYS = int(os.environ.get("RELEASE_RETENTION_WINDOW_DAYS", "21"))
+
+PRESET_EXPORT_MAX_ROWS = int(os.environ.get("PRESET_EXPORT_MAX_ROWS", "10000"))
+PRESET_EXPORT_TIMEOUT_SECONDS = int(os.environ.get("PRESET_EXPORT_TIMEOUT_SECONDS", "90"))
+PRESET_EXPORT_CHUNK_SIZE = int(os.environ.get("PRESET_EXPORT_CHUNK_SIZE", "300"))
+PRESET_EXPORT_FILE_EXPIRY_HOURS = int(os.environ.get("PRESET_EXPORT_FILE_EXPIRY_HOURS", "24"))
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+RELEASE_ARTIFACT_ROOT = PROJECT_ROOT / "release-artifacts"
+REPORT_ROOT = PROJECT_ROOT / "reports"
+PRESET_EXPORT_OUTPUT_ROOT = REPORT_ROOT / "preset_run_exports"
+ARTIFACT_INTEGRITY_REPORT_PATH = REPORT_ROOT / "artifact_integrity_report.json"
+
+_EXPORT_JOB_TASKS: dict[str, asyncio.Task] = {}
+_RELEASE_OPS_TABLES_READY = False
+_RELEASE_OPS_TABLES_LOCK = asyncio.Lock()
 
 TRANSIENT_DB_ERROR_MARKERS = (
     "timeout",
@@ -1009,6 +1053,22 @@ class LayoutPermanentDeletePayload(BaseModel):
     revision_ids: list[str] = Field(min_length=1, max_length=200)
 
 
+class ReleaseRetentionExecutePayload(BaseModel):
+    retention_window_days: int = Field(default=RELEASE_RETENTION_DEFAULT_DAYS, ge=1, le=3650)
+    expected_delete_count: Optional[int] = Field(default=None, ge=0)
+    confirm: bool = False
+    trigger_source: str = Field(default="admin_panel", min_length=2, max_length=64)
+
+
+class PresetExportJobCreatePayload(BaseModel):
+    status: Optional[str] = Field(default=None, max_length=24)
+    from_date: Optional[str] = Field(default=None, alias="from")
+    to_date: Optional[str] = Field(default=None, alias="to")
+    module: Optional[str] = Field(default=None, max_length=64)
+    extended: bool = False
+    export_scope: Optional[str] = Field(default=None, max_length=24)
+
+
 class RevisionRedirectTelemetryPayload(BaseModel):
     revision_id: Optional[str] = None
     redirect_target: Optional[str] = Field(default=None, min_length=1, max_length=512)
@@ -1097,6 +1157,250 @@ def _parse_iso_datetime_or_none(raw_value: Optional[str], *, field_name: str) ->
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed.astimezone(timezone.utc)
+
+
+def _parse_bool_from_raw(raw_value: Optional[Any]) -> bool:
+    if isinstance(raw_value, bool):
+        return raw_value
+    value = str(raw_value or "").strip().lower()
+    return value in {"1", "true", "yes", "y", "on"}
+
+
+def _resolve_release_meta_path(release_dir: Path) -> Path:
+    return release_dir / "release_meta.json"
+
+
+def _load_release_meta(release_dir: Path) -> tuple[Optional[dict[str, Any]], Optional[str]]:
+    meta_path = _resolve_release_meta_path(release_dir)
+    if not meta_path.exists() or not meta_path.is_file():
+        return None, "MISSING_METADATA"
+    try:
+        raw = json.loads(meta_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None, "INVALID_METADATA"
+    if not isinstance(raw, dict):
+        return None, "INVALID_METADATA"
+    return raw, None
+
+
+def _resolve_release_created_at(*, release_dir: Path, meta: Optional[dict[str, Any]]) -> Optional[datetime]:
+    meta_created = _parse_iso_datetime_or_none((meta or {}).get("created_at"), field_name="created_at") if meta else None
+    if meta_created:
+        return meta_created
+    try:
+        return datetime.fromtimestamp(release_dir.stat().st_mtime, tz=timezone.utc)
+    except Exception:
+        return None
+
+
+def _compute_artifact_hash(release_dir: Path) -> str:
+    digest = hashlib.sha256()
+    for file_path in sorted([item for item in release_dir.rglob("*") if item.is_file()]):
+        if file_path.name == "release_meta.json":
+            continue
+        rel_path = file_path.relative_to(release_dir).as_posix()
+        digest.update(rel_path.encode("utf-8"))
+        digest.update(b"\x00")
+        digest.update(file_path.read_bytes())
+        digest.update(b"\x01")
+    return digest.hexdigest()
+
+
+def _analyze_release_artifact(release_dir: Path, *, retention_days: int, now: datetime) -> dict[str, Any]:
+    meta, meta_error = _load_release_meta(release_dir)
+    release_id = str((meta or {}).get("release_id") or release_dir.name)
+
+    created_at = _resolve_release_created_at(release_dir=release_dir, meta=meta)
+    is_active = _parse_bool_from_raw((meta or {}).get("is_active"))
+    is_rollback_candidate = _parse_bool_from_raw((meta or {}).get("is_rollback_candidate"))
+    retention_locked = _parse_bool_from_raw((meta or {}).get("retention_locked"))
+
+    action = "KEEP"
+    reason = "WITHIN_RETENTION_WINDOW"
+    if is_active:
+        reason = "ACTIVE_RELEASE"
+    elif is_rollback_candidate:
+        reason = "ROLLBACK_CANDIDATE"
+    elif retention_locked:
+        reason = "RETENTION_LOCKED"
+    elif meta_error == "MISSING_METADATA":
+        reason = "MISSING_METADATA"
+    elif meta_error == "INVALID_METADATA":
+        reason = "INVALID_METADATA"
+    elif created_at is None:
+        reason = "MISSING_CREATED_AT"
+    else:
+        cutoff = now - timedelta(days=max(1, int(retention_days)))
+        if created_at < cutoff:
+            action = "DELETE"
+            reason = "OUTSIDE_RETENTION_WINDOW"
+
+    age_days = None
+    if created_at:
+        age_days = max(0, int((now - created_at).total_seconds() // 86400))
+
+    return {
+        "release_dir": str(release_dir),
+        "release_folder": release_dir.name,
+        "release_id": release_id,
+        "created_at": created_at.isoformat() if created_at else None,
+        "age_days": age_days,
+        "is_active": bool(is_active),
+        "is_rollback_candidate": bool(is_rollback_candidate),
+        "retention_locked": bool(retention_locked),
+        "action": action,
+        "reason": reason,
+        "meta_present": meta is not None,
+        "meta_error": meta_error,
+        "meta": meta or {},
+    }
+
+
+def _build_release_retention_dry_run(*, retention_days: int) -> dict[str, Any]:
+    now = datetime.now(timezone.utc)
+    release_dirs = sorted([item for item in RELEASE_ARTIFACT_ROOT.iterdir() if item.is_dir()]) if RELEASE_ARTIFACT_ROOT.exists() else []
+    items = [_analyze_release_artifact(item, retention_days=retention_days, now=now) for item in release_dirs]
+    keep_items = [item for item in items if item.get("action") == "KEEP"]
+    delete_items = [item for item in items if item.get("action") == "DELETE"]
+
+    return {
+        "generated_at": now.isoformat(),
+        "retention_window_days": int(retention_days),
+        "total_artifacts": len(items),
+        "protected_count": len(keep_items),
+        "delete_candidates_count": len(delete_items),
+        "items": items,
+        "keep": keep_items,
+        "delete": delete_items,
+    }
+
+
+def _validate_release_meta_schema(meta: dict[str, Any]) -> list[str]:
+    missing = [field for field in RELEASE_META_REQUIRED_FIELDS if field not in meta]
+    return sorted(missing)
+
+
+def _build_release_integrity_scan(*, write_report: bool) -> dict[str, Any]:
+    scan_started_at = datetime.now(timezone.utc)
+    release_dirs = sorted([item for item in RELEASE_ARTIFACT_ROOT.iterdir() if item.is_dir()]) if RELEASE_ARTIFACT_ROOT.exists() else []
+
+    valid_items: list[dict[str, Any]] = []
+    missing_metadata_items: list[dict[str, Any]] = []
+    corrupted_items: list[dict[str, Any]] = []
+    all_items: list[dict[str, Any]] = []
+
+    for release_dir in release_dirs:
+        meta, meta_error = _load_release_meta(release_dir)
+        release_id = str((meta or {}).get("release_id") or release_dir.name)
+        item: dict[str, Any] = {
+            "release_folder": release_dir.name,
+            "release_id": release_id,
+            "meta_exists": bool(meta is not None),
+            "meta_error": meta_error,
+            "missing_required_fields": [],
+            "hash_expected": (meta or {}).get("artifact_hash") if meta else None,
+            "hash_actual": None,
+            "hash_match": None,
+            "status": "valid",
+        }
+
+        if meta is None:
+            item["status"] = "missing_metadata"
+            missing_metadata_items.append(item)
+            all_items.append(item)
+            continue
+
+        missing_fields = _validate_release_meta_schema(meta)
+        if missing_fields:
+            item["missing_required_fields"] = missing_fields
+            item["status"] = "missing_metadata"
+            missing_metadata_items.append(item)
+            all_items.append(item)
+            continue
+
+        hash_expected = str(meta.get("artifact_hash") or "").strip()
+        hash_actual = _compute_artifact_hash(release_dir)
+        item["hash_actual"] = hash_actual
+        item["hash_match"] = bool(hash_expected and hash_actual == hash_expected)
+
+        if not hash_expected or not item["hash_match"]:
+            item["status"] = "corrupted"
+            corrupted_items.append(item)
+        else:
+            item["status"] = "valid"
+            valid_items.append(item)
+        all_items.append(item)
+
+    report = {
+        "generated_at": scan_started_at.isoformat(),
+        "artifact_root": str(RELEASE_ARTIFACT_ROOT),
+        "required_fields": sorted(RELEASE_META_REQUIRED_FIELDS),
+        "optional_fields": sorted(RELEASE_META_OPTIONAL_FIELDS),
+        "summary": {
+            "total_artifacts": len(all_items),
+            "valid_artifacts": len(valid_items),
+            "missing_metadata": len(missing_metadata_items),
+            "corrupted_artifacts": len(corrupted_items),
+        },
+        "valid_artifacts": valid_items,
+        "missing_metadata": missing_metadata_items,
+        "corrupted_artifacts": corrupted_items,
+        "items": all_items,
+        "report_path": str(ARTIFACT_INTEGRITY_REPORT_PATH),
+    }
+
+    if write_report:
+        REPORT_ROOT.mkdir(parents=True, exist_ok=True)
+        ARTIFACT_INTEGRITY_REPORT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    return report
+
+
+def _serialize_release_cleanup_audit(row: LayoutReleaseCleanupAudit) -> dict[str, Any]:
+    return {
+        "id": str(row.id),
+        "admin_user_id": str(row.admin_user_id) if row.admin_user_id else None,
+        "retention_window_days": int(row.retention_window_days or 0),
+        "trigger_source": row.trigger_source,
+        "deleted_artifacts": list(row.deleted_artifacts or []),
+        "protected_artifacts": list(row.protected_artifacts or []),
+        "dry_run_json": row.dry_run_json or {},
+        "cleanup_timestamp": row.created_at.isoformat() if row.created_at else None,
+    }
+
+
+def _serialize_preset_export_job(row: LayoutPresetExportJob) -> dict[str, Any]:
+    return {
+        "job_id": str(row.id),
+        "requested_by": str(row.requested_by) if row.requested_by else None,
+        "requested_by_email": row.requested_by_email,
+        "export_scope": row.export_scope,
+        "status": row.status,
+        "filters": row.filters_json or {},
+        "row_count": int(row.row_count or 0),
+        "error_message": row.error_message,
+        "file_path": row.file_path,
+        "download_path": f"/api/admin/preset-runs/export-jobs/{row.id}/download" if row.status == "completed" and row.file_path else None,
+        "cancel_requested": bool(row.cancel_requested),
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "started_at": row.started_at.isoformat() if row.started_at else None,
+        "completed_at": row.completed_at.isoformat() if row.completed_at else None,
+        "expires_at": row.expires_at.isoformat() if row.expires_at else None,
+        "meta": row.meta_json or {},
+    }
+
+
+async def _ensure_release_ops_tables() -> None:
+    global _RELEASE_OPS_TABLES_READY
+    if _RELEASE_OPS_TABLES_READY:
+        return
+    async with _RELEASE_OPS_TABLES_LOCK:
+        if _RELEASE_OPS_TABLES_READY:
+            return
+        async with engine.begin() as conn:
+            await conn.run_sync(LayoutReleaseCleanupAudit.__table__.create, checkfirst=True)
+            await conn.run_sync(LayoutPresetExportJob.__table__.create, checkfirst=True)
+        _RELEASE_OPS_TABLES_READY = True
 
 
 def _serialize_component(row: LayoutComponentDefinition) -> dict[str, Any]:
@@ -4149,31 +4453,25 @@ async def verify_standard_template_pack(
     }
 
 
-@router.get("/admin/site/content-layout/preset-runs")
-@router.get("/admin/preset-runs")
-async def list_layout_preset_runs(
-    page: int = Query(default=1, ge=1),
-    limit: int = Query(default=20, ge=1, le=100),
-    status: Optional[str] = Query(default=None),
-    from_date: Optional[str] = Query(default=None, alias="from"),
-    to_date: Optional[str] = Query(default=None, alias="to"),
-    module: Optional[str] = Query(default=None),
-    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
-    session: AsyncSession = Depends(get_db),
-):
-    del current_user
+def _build_preset_runs_query(
+    *,
+    status: Optional[str],
+    from_date: Optional[str],
+    to_date: Optional[str],
+    module: Optional[str],
+) -> tuple[Any, dict[str, Any]]:
     query = select(LayoutPresetRunLog)
-    count_query = select(func.count()).select_from(LayoutPresetRunLog)
+    meta: dict[str, Any] = {}
 
     normalized_status = str(status or "").strip().lower()
     if normalized_status:
         query = query.where(func.lower(LayoutPresetRunLog.status) == normalized_status)
-        count_query = count_query.where(func.lower(LayoutPresetRunLog.status) == normalized_status)
+    meta["status"] = normalized_status or None
 
     normalized_module = str(module or "").strip()
     if normalized_module:
         query = query.where(LayoutPresetRunLog.module == normalized_module)
-        count_query = count_query.where(LayoutPresetRunLog.module == normalized_module)
+    meta["module"] = normalized_module or None
 
     start_date = _parse_iso_date_or_400(from_date, field_name="from")
     end_date = _parse_iso_date_or_400(to_date, field_name="to")
@@ -4183,12 +4481,284 @@ async def list_layout_preset_runs(
     if start_date:
         start_dt = datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc)
         query = query.where(LayoutPresetRunLog.executed_at >= start_dt)
-        count_query = count_query.where(LayoutPresetRunLog.executed_at >= start_dt)
     if end_date:
         end_dt_exclusive = datetime.combine(end_date + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc)
         query = query.where(LayoutPresetRunLog.executed_at < end_dt_exclusive)
-        count_query = count_query.where(LayoutPresetRunLog.executed_at < end_dt_exclusive)
 
+    meta["from"] = start_date.isoformat() if start_date else None
+    meta["to"] = end_date.isoformat() if end_date else None
+    return query, meta
+
+
+def _is_full_export_admin(current_user: dict[str, Any]) -> bool:
+    role = str((current_user or {}).get("role") or "").strip().lower()
+    return role in {"super_admin", "country_admin", "admin"}
+
+
+def _is_dealer_export_user(current_user: dict[str, Any]) -> bool:
+    role = str((current_user or {}).get("role") or "").strip().lower()
+    return role == "dealer"
+
+
+async def _run_preset_export_job_worker(job_id: str) -> None:
+    task_key = str(job_id)
+    try:
+        await _ensure_release_ops_tables()
+        job_uuid = _as_uuid_or_400(job_id, field_name="job_id")
+        async with AsyncSessionLocal() as session:
+            job_row = await session.get(LayoutPresetExportJob, job_uuid)
+            if not job_row:
+                return
+            if job_row.cancel_requested:
+                job_row.status = "cancelled"
+                job_row.completed_at = datetime.now(timezone.utc)
+                await session.commit()
+                return
+
+            job_row.status = "running"
+            job_row.started_at = datetime.now(timezone.utc)
+            await session.commit()
+
+            filters = job_row.filters_json or {}
+            query, _ = _build_preset_runs_query(
+                status=filters.get("status"),
+                from_date=filters.get("from"),
+                to_date=filters.get("to"),
+                module=filters.get("module"),
+            )
+
+            async def _fetch_rows():
+                result = await session.execute(
+                    query.order_by(desc(LayoutPresetRunLog.executed_at), desc(LayoutPresetRunLog.id)).limit(PRESET_EXPORT_MAX_ROWS + 1)
+                )
+                return result.scalars().all()
+
+            rows = await asyncio.wait_for(_fetch_rows(), timeout=PRESET_EXPORT_TIMEOUT_SECONDS)
+            if len(rows) > PRESET_EXPORT_MAX_ROWS:
+                job_row.status = "failed"
+                job_row.error_message = "export_limit_exceeded"
+                job_row.row_count = int(len(rows))
+                job_row.completed_at = datetime.now(timezone.utc)
+                await session.commit()
+                return
+
+            allowed_countries = [str(item or "").upper() for item in (filters.get("country_scope") or []) if str(item or "").strip()]
+            if job_row.export_scope == "dealer" and allowed_countries:
+                allowed_set = set(allowed_countries)
+
+                def _within_scope(row: LayoutPresetRunLog) -> bool:
+                    row_countries = {str(item or "").upper() for item in (row.target_countries or []) if str(item or "").strip()}
+                    if not row_countries:
+                        return False
+                    return not row_countries.isdisjoint(allowed_set)
+
+                rows = [row for row in rows if _within_scope(row)]
+
+            PRESET_EXPORT_OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
+            output_path = PRESET_EXPORT_OUTPUT_ROOT / f"{job_row.id}.csv"
+
+            headers = [
+                "run_id",
+                "operator",
+                "executed_at",
+                "countries",
+                "total_jobs",
+                "success_count",
+                "failure_count",
+                "duration",
+                "status",
+            ]
+            include_extended = bool(filters.get("extended", False))
+            if include_extended:
+                headers.extend(["module", "persona", "variant"])
+
+            with output_path.open("w", encoding="utf-8", newline="") as file_handle:
+                writer = csv.writer(file_handle)
+                writer.writerow(headers)
+                for index, row in enumerate(rows):
+                    if index % max(1, PRESET_EXPORT_CHUNK_SIZE) == 0:
+                        await session.refresh(job_row)
+                        if job_row.cancel_requested:
+                            job_row.status = "cancelled"
+                            job_row.completed_at = datetime.now(timezone.utc)
+                            await session.commit()
+                            try:
+                                output_path.unlink(missing_ok=True)
+                            except Exception:
+                                logger.warning("preset_export_output_cleanup_failed", exc_info=True)
+                            return
+
+                    values = [
+                        str(row.id),
+                        row.executed_by_email or (str(row.executed_by) if row.executed_by else ""),
+                        row.executed_at.isoformat() if row.executed_at else "",
+                        "|".join([str(item) for item in (row.target_countries or [])]),
+                        int(row.total_jobs or 0),
+                        int(row.success_count or 0),
+                        int(row.failure_count or 0),
+                        int(row.duration_ms or 0),
+                        row.status,
+                    ]
+                    if include_extended:
+                        values.extend([row.module, row.persona, row.variant])
+                    writer.writerow(values)
+
+            completed_at = datetime.now(timezone.utc)
+            job_row.status = "completed"
+            job_row.row_count = int(len(rows))
+            job_row.file_path = str(output_path)
+            job_row.completed_at = completed_at
+            job_row.expires_at = completed_at + timedelta(hours=PRESET_EXPORT_FILE_EXPIRY_HOURS)
+            await session.commit()
+    except asyncio.TimeoutError:
+        async with AsyncSessionLocal() as session:
+            job_uuid = _safe_uuid_or_none(job_id)
+            if not job_uuid:
+                return
+            job_row = await session.get(LayoutPresetExportJob, job_uuid)
+            if not job_row:
+                return
+            job_row.status = "failed"
+            job_row.error_message = "preset_runs_export_timeout"
+            job_row.completed_at = datetime.now(timezone.utc)
+            await session.commit()
+    except Exception:
+        logger.exception("preset_export_job_failed", extra={"job_id": str(job_id)})
+        async with AsyncSessionLocal() as session:
+            job_uuid = _safe_uuid_or_none(job_id)
+            if not job_uuid:
+                return
+            job_row = await session.get(LayoutPresetExportJob, job_uuid)
+            if not job_row:
+                return
+            job_row.status = "failed"
+            job_row.error_message = "preset_runs_export_failed"
+            job_row.completed_at = datetime.now(timezone.utc)
+            await session.commit()
+    finally:
+        _EXPORT_JOB_TASKS.pop(task_key, None)
+
+
+@router.get("/admin/release-retention/dry-run")
+async def get_release_retention_dry_run(
+    retention_window_days: int = Query(default=RELEASE_RETENTION_DEFAULT_DAYS, ge=1, le=3650),
+    current_user=Depends(check_permissions(RELEASE_RETENTION_VIEW_ROLES)),
+):
+    del current_user
+    dry_run = _build_release_retention_dry_run(retention_days=int(retention_window_days))
+    return {"ok": True, "dry_run": dry_run}
+
+
+@router.post("/admin/release-retention/execute")
+async def execute_release_retention_cleanup(
+    payload: ReleaseRetentionExecutePayload,
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_db),
+):
+    await _ensure_release_ops_tables()
+    if not bool(payload.confirm):
+        raise HTTPException(status_code=400, detail="cleanup_confirmation_required")
+
+    dry_run = _build_release_retention_dry_run(retention_days=int(payload.retention_window_days))
+    delete_items = list(dry_run.get("delete") or [])
+    if payload.expected_delete_count is not None and int(payload.expected_delete_count) != len(delete_items):
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "cleanup_candidate_mismatch",
+                "expected_delete_count": int(payload.expected_delete_count),
+                "actual_delete_count": len(delete_items),
+            },
+        )
+
+    deleted_artifacts: list[str] = []
+    for item in delete_items:
+        release_dir = Path(str(item.get("release_dir") or "")).resolve()
+        if not str(release_dir).startswith(str(RELEASE_ARTIFACT_ROOT.resolve())):
+            continue
+        if release_dir.exists() and release_dir.is_dir():
+            shutil.rmtree(release_dir, ignore_errors=False)
+            deleted_artifacts.append(str(item.get("release_id") or release_dir.name))
+
+    protected_artifacts = [str(item.get("release_id") or item.get("release_folder")) for item in (dry_run.get("keep") or [])]
+    actor_uuid = _safe_uuid_or_none((current_user or {}).get("id"))
+    audit_row = LayoutReleaseCleanupAudit(
+        admin_user_id=actor_uuid,
+        retention_window_days=int(payload.retention_window_days),
+        trigger_source=str(payload.trigger_source or "admin_panel").strip() or "admin_panel",
+        deleted_artifacts=deleted_artifacts,
+        protected_artifacts=protected_artifacts,
+        dry_run_json=dry_run,
+    )
+    session.add(audit_row)
+    await session.commit()
+    await session.refresh(audit_row)
+
+    return {
+        "ok": True,
+        "deleted_count": len(deleted_artifacts),
+        "deleted_artifacts": deleted_artifacts,
+        "protected_count": len(protected_artifacts),
+        "audit": _serialize_release_cleanup_audit(audit_row),
+    }
+
+
+@router.get("/admin/release-retention/audit-logs")
+async def list_release_retention_audit_logs(
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, ge=1, le=100),
+    current_user=Depends(check_permissions(["super_admin"])),
+    session: AsyncSession = Depends(get_db),
+):
+    await _ensure_release_ops_tables()
+    del current_user
+    query = select(LayoutReleaseCleanupAudit)
+    total = int((await session.execute(select(func.count()).select_from(query.subquery()))).scalar() or 0)
+    rows = (
+        (
+            await session.execute(
+                query.order_by(desc(LayoutReleaseCleanupAudit.created_at), desc(LayoutReleaseCleanupAudit.id))
+                .offset((page - 1) * limit)
+                .limit(limit)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    return {
+        "items": [_serialize_release_cleanup_audit(row) for row in rows],
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "has_next": (page * limit) < total,
+    }
+
+
+@router.get("/admin/release-retention/integrity-scan")
+async def scan_release_artifact_integrity(
+    write_report: bool = Query(default=True),
+    current_user=Depends(check_permissions(RELEASE_RETENTION_VIEW_ROLES)),
+):
+    del current_user
+    report = _build_release_integrity_scan(write_report=bool(write_report))
+    return {"ok": True, "report": report}
+
+
+@router.get("/admin/site/content-layout/preset-runs")
+@router.get("/admin/preset-runs")
+async def list_layout_preset_runs(
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, ge=1, le=100),
+    status: Optional[str] = Query(default=None),
+    from_date: Optional[str] = Query(default=None, alias="from"),
+    to_date: Optional[str] = Query(default=None, alias="to"),
+    module: Optional[str] = Query(default=None),
+    current_user=Depends(check_permissions(PRESET_EXPORT_ADMIN_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    del current_user
+    query, _filters_meta = _build_preset_runs_query(status=status, from_date=from_date, to_date=to_date, module=module)
+    count_query = select(func.count()).select_from(query.subquery())
     total = int((await session.execute(count_query)).scalar_one() or 0)
     result = await session.execute(
         query
@@ -4215,42 +4785,23 @@ async def export_layout_preset_runs_csv(
     to_date: Optional[str] = Query(default=None, alias="to"),
     module: Optional[str] = Query(default=None),
     extended: bool = Query(default=False),
-    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    current_user=Depends(check_permissions(PRESET_EXPORT_ADMIN_ROLES)),
     session: AsyncSession = Depends(get_db),
 ):
     del current_user
-    query = select(LayoutPresetRunLog)
-
-    normalized_status = str(status or "").strip().lower()
-    if normalized_status:
-        query = query.where(func.lower(LayoutPresetRunLog.status) == normalized_status)
-
-    normalized_module = str(module or "").strip()
-    if normalized_module:
-        query = query.where(LayoutPresetRunLog.module == normalized_module)
-
+    query, normalized_filters = _build_preset_runs_query(status=status, from_date=from_date, to_date=to_date, module=module)
+    normalized_status = str(normalized_filters.get("status") or "")
     start_date = _parse_iso_date_or_400(from_date, field_name="from")
     end_date = _parse_iso_date_or_400(to_date, field_name="to")
-    if start_date and end_date and start_date > end_date:
-        raise HTTPException(status_code=400, detail="invalid_date_range")
-
-    if start_date:
-        start_dt = datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc)
-        query = query.where(LayoutPresetRunLog.executed_at >= start_dt)
-    if end_date:
-        end_dt_exclusive = datetime.combine(end_date + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc)
-        query = query.where(LayoutPresetRunLog.executed_at < end_dt_exclusive)
-
-    MAX_ROW_LIMIT = 10000
 
     async def _fetch_rows():
         result = await session.execute(
-            query.order_by(desc(LayoutPresetRunLog.executed_at), desc(LayoutPresetRunLog.id)).limit(MAX_ROW_LIMIT)
+            query.order_by(desc(LayoutPresetRunLog.executed_at), desc(LayoutPresetRunLog.id)).limit(PRESET_EXPORT_MAX_ROWS)
         )
         return result.scalars().all()
 
     try:
-        rows = await asyncio.wait_for(_fetch_rows(), timeout=15)
+        rows = await asyncio.wait_for(_fetch_rows(), timeout=PRESET_EXPORT_TIMEOUT_SECONDS)
     except asyncio.TimeoutError as exc:
         raise HTTPException(status_code=504, detail="preset_runs_export_timeout") from exc
 
@@ -4317,9 +4868,306 @@ async def export_layout_preset_runs_csv(
         media_type="text/csv",
         headers={
             "Content-Disposition": f"attachment; filename={filename}",
-            "X-Export-Row-Limit": str(MAX_ROW_LIMIT),
+            "X-Export-Row-Limit": str(PRESET_EXPORT_MAX_ROWS),
         },
     )
+
+
+@router.post("/admin/preset-runs/export-jobs")
+async def create_admin_preset_export_job(
+    payload: PresetExportJobCreatePayload,
+    current_user=Depends(check_permissions(PRESET_EXPORT_ADMIN_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    await _ensure_release_ops_tables()
+    if not _is_full_export_admin(current_user):
+        raise HTTPException(status_code=403, detail="insufficient_export_permissions")
+
+    filters = {
+        "status": str(payload.status or "").strip().lower() or None,
+        "from": str(payload.from_date or "").strip() or None,
+        "to": str(payload.to_date or "").strip() or None,
+        "module": str(payload.module or "").strip() or None,
+        "extended": bool(payload.extended),
+    }
+    actor_uuid = _safe_uuid_or_none((current_user or {}).get("id"))
+    row = LayoutPresetExportJob(
+        requested_by=actor_uuid,
+        requested_by_email=(current_user or {}).get("email"),
+        export_scope="admin",
+        status="queued",
+        filters_json=filters,
+        meta_json={"max_rows": PRESET_EXPORT_MAX_ROWS, "export_timeout": PRESET_EXPORT_TIMEOUT_SECONDS, "export_chunk_size": PRESET_EXPORT_CHUNK_SIZE},
+    )
+    session.add(row)
+    await session.commit()
+    await session.refresh(row)
+
+    task = asyncio.create_task(_run_preset_export_job_worker(str(row.id)))
+    _EXPORT_JOB_TASKS[str(row.id)] = task
+    return {"ok": True, "item": _serialize_preset_export_job(row)}
+
+
+@router.post("/dealer/preset-runs/export-jobs")
+async def create_dealer_preset_export_job(
+    payload: PresetExportJobCreatePayload,
+    current_user=Depends(get_current_user_optional),
+    session: AsyncSession = Depends(get_db),
+):
+    await _ensure_release_ops_tables()
+    if not current_user:
+        raise HTTPException(status_code=401, detail="not_authenticated")
+    if not _is_dealer_export_user(current_user):
+        raise HTTPException(status_code=403, detail="insufficient_export_permissions")
+
+    normalized_module = str(payload.module or "").strip()
+    if not normalized_module:
+        raise HTTPException(status_code=400, detail="module_required_for_dealer_export")
+
+    country_scope = [str(item or "").upper() for item in ((current_user or {}).get("country_scope") or []) if str(item or "").strip()]
+    filters = {
+        "status": str(payload.status or "").strip().lower() or None,
+        "from": str(payload.from_date or "").strip() or None,
+        "to": str(payload.to_date or "").strip() or None,
+        "module": normalized_module,
+        "extended": False,
+        "country_scope": country_scope,
+    }
+    actor_uuid = _safe_uuid_or_none((current_user or {}).get("id"))
+    row = LayoutPresetExportJob(
+        requested_by=actor_uuid,
+        requested_by_email=(current_user or {}).get("email"),
+        export_scope="dealer",
+        status="queued",
+        filters_json=filters,
+        meta_json={"max_rows": PRESET_EXPORT_MAX_ROWS, "export_timeout": PRESET_EXPORT_TIMEOUT_SECONDS, "export_chunk_size": PRESET_EXPORT_CHUNK_SIZE},
+    )
+    session.add(row)
+    await session.commit()
+    await session.refresh(row)
+
+    task = asyncio.create_task(_run_preset_export_job_worker(str(row.id)))
+    _EXPORT_JOB_TASKS[str(row.id)] = task
+    return {"ok": True, "item": _serialize_preset_export_job(row)}
+
+
+@router.get("/admin/preset-runs/export-jobs")
+async def list_admin_preset_export_jobs(
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, ge=1, le=100),
+    status: Optional[str] = Query(default=None),
+    current_user=Depends(check_permissions(PRESET_EXPORT_ADMIN_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    await _ensure_release_ops_tables()
+    del current_user
+    query = select(LayoutPresetExportJob).where(LayoutPresetExportJob.export_scope == "admin")
+    normalized_status = str(status or "").strip().lower()
+    if normalized_status:
+        query = query.where(LayoutPresetExportJob.status == normalized_status)
+
+    total = int((await session.execute(select(func.count()).select_from(query.subquery()))).scalar() or 0)
+    rows = (
+        (
+            await session.execute(
+                query.order_by(desc(LayoutPresetExportJob.created_at), desc(LayoutPresetExportJob.id))
+                .offset((page - 1) * limit)
+                .limit(limit)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    return {
+        "items": [_serialize_preset_export_job(row) for row in rows],
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "has_next": (page * limit) < total,
+    }
+
+
+@router.get("/admin/preset-runs/export-jobs/{job_id:uuid}")
+async def get_admin_preset_export_job(
+    job_id: uuid.UUID,
+    current_user=Depends(check_permissions(PRESET_EXPORT_ADMIN_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    await _ensure_release_ops_tables()
+    del current_user
+    row = await session.get(LayoutPresetExportJob, job_id)
+    if not row or row.export_scope != "admin":
+        raise HTTPException(status_code=404, detail="preset_export_job_not_found")
+    return {"ok": True, "item": _serialize_preset_export_job(row)}
+
+
+@router.post("/admin/preset-runs/export-jobs/{job_id:uuid}/cancel")
+async def cancel_admin_preset_export_job(
+    job_id: uuid.UUID,
+    current_user=Depends(check_permissions(PRESET_EXPORT_ADMIN_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    await _ensure_release_ops_tables()
+    del current_user
+    row = await session.get(LayoutPresetExportJob, job_id)
+    if not row or row.export_scope != "admin":
+        raise HTTPException(status_code=404, detail="preset_export_job_not_found")
+    if row.status in {"completed", "failed", "cancelled"}:
+        return {"ok": True, "already_final": True, "item": _serialize_preset_export_job(row)}
+
+    row.cancel_requested = True
+    if row.status == "queued":
+        row.status = "cancelled"
+        row.completed_at = datetime.now(timezone.utc)
+    await session.commit()
+    await session.refresh(row)
+    return {"ok": True, "item": _serialize_preset_export_job(row)}
+
+
+@router.get("/admin/preset-runs/export-jobs/{job_id:uuid}/download")
+async def download_admin_preset_export_job_file(
+    job_id: uuid.UUID,
+    current_user=Depends(check_permissions(PRESET_EXPORT_ADMIN_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    await _ensure_release_ops_tables()
+    del current_user
+    row = await session.get(LayoutPresetExportJob, job_id)
+    if not row or row.export_scope != "admin":
+        raise HTTPException(status_code=404, detail="preset_export_job_not_found")
+    if row.status != "completed" or not row.file_path:
+        raise HTTPException(status_code=409, detail="preset_export_job_not_ready")
+
+    file_path = Path(str(row.file_path)).resolve()
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="preset_export_file_not_found")
+    if row.expires_at and row.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=410, detail="preset_export_file_expired")
+
+    filename = f"preset-runs-export-{row.id}.csv"
+    return FileResponse(path=str(file_path), media_type="text/csv", filename=filename)
+
+
+@router.get("/dealer/preset-runs/export-jobs")
+async def list_dealer_preset_export_jobs(
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, ge=1, le=100),
+    status: Optional[str] = Query(default=None),
+    current_user=Depends(get_current_user_optional),
+    session: AsyncSession = Depends(get_db),
+):
+    await _ensure_release_ops_tables()
+    if not current_user:
+        raise HTTPException(status_code=401, detail="not_authenticated")
+    if not _is_dealer_export_user(current_user):
+        raise HTTPException(status_code=403, detail="insufficient_export_permissions")
+
+    actor_uuid = _safe_uuid_or_none((current_user or {}).get("id"))
+    query = select(LayoutPresetExportJob).where(
+        and_(
+            LayoutPresetExportJob.export_scope == "dealer",
+            LayoutPresetExportJob.requested_by == actor_uuid,
+        )
+    )
+    normalized_status = str(status or "").strip().lower()
+    if normalized_status:
+        query = query.where(LayoutPresetExportJob.status == normalized_status)
+
+    total = int((await session.execute(select(func.count()).select_from(query.subquery()))).scalar() or 0)
+    rows = (
+        (
+            await session.execute(
+                query.order_by(desc(LayoutPresetExportJob.created_at), desc(LayoutPresetExportJob.id))
+                .offset((page - 1) * limit)
+                .limit(limit)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    return {
+        "items": [_serialize_preset_export_job(row) for row in rows],
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "has_next": (page * limit) < total,
+    }
+
+
+@router.get("/dealer/preset-runs/export-jobs/{job_id:uuid}")
+async def get_dealer_preset_export_job(
+    job_id: uuid.UUID,
+    current_user=Depends(get_current_user_optional),
+    session: AsyncSession = Depends(get_db),
+):
+    await _ensure_release_ops_tables()
+    if not current_user:
+        raise HTTPException(status_code=401, detail="not_authenticated")
+    if not _is_dealer_export_user(current_user):
+        raise HTTPException(status_code=403, detail="insufficient_export_permissions")
+
+    actor_uuid = _safe_uuid_or_none((current_user or {}).get("id"))
+    row = await session.get(LayoutPresetExportJob, job_id)
+    if not row or row.export_scope != "dealer" or row.requested_by != actor_uuid:
+        raise HTTPException(status_code=404, detail="preset_export_job_not_found")
+    return {"ok": True, "item": _serialize_preset_export_job(row)}
+
+
+@router.post("/dealer/preset-runs/export-jobs/{job_id:uuid}/cancel")
+async def cancel_dealer_preset_export_job(
+    job_id: uuid.UUID,
+    current_user=Depends(get_current_user_optional),
+    session: AsyncSession = Depends(get_db),
+):
+    await _ensure_release_ops_tables()
+    if not current_user:
+        raise HTTPException(status_code=401, detail="not_authenticated")
+    if not _is_dealer_export_user(current_user):
+        raise HTTPException(status_code=403, detail="insufficient_export_permissions")
+
+    actor_uuid = _safe_uuid_or_none((current_user or {}).get("id"))
+    row = await session.get(LayoutPresetExportJob, job_id)
+    if not row or row.export_scope != "dealer" or row.requested_by != actor_uuid:
+        raise HTTPException(status_code=404, detail="preset_export_job_not_found")
+    if row.status in {"completed", "failed", "cancelled"}:
+        return {"ok": True, "already_final": True, "item": _serialize_preset_export_job(row)}
+
+    row.cancel_requested = True
+    if row.status == "queued":
+        row.status = "cancelled"
+        row.completed_at = datetime.now(timezone.utc)
+    await session.commit()
+    await session.refresh(row)
+    return {"ok": True, "item": _serialize_preset_export_job(row)}
+
+
+@router.get("/dealer/preset-runs/export-jobs/{job_id:uuid}/download")
+async def download_dealer_preset_export_job_file(
+    job_id: uuid.UUID,
+    current_user=Depends(get_current_user_optional),
+    session: AsyncSession = Depends(get_db),
+):
+    await _ensure_release_ops_tables()
+    if not current_user:
+        raise HTTPException(status_code=401, detail="not_authenticated")
+    if not _is_dealer_export_user(current_user):
+        raise HTTPException(status_code=403, detail="insufficient_export_permissions")
+
+    actor_uuid = _safe_uuid_or_none((current_user or {}).get("id"))
+    row = await session.get(LayoutPresetExportJob, job_id)
+    if not row or row.export_scope != "dealer" or row.requested_by != actor_uuid:
+        raise HTTPException(status_code=404, detail="preset_export_job_not_found")
+    if row.status != "completed" or not row.file_path:
+        raise HTTPException(status_code=409, detail="preset_export_job_not_ready")
+
+    file_path = Path(str(row.file_path)).resolve()
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="preset_export_file_not_found")
+    if row.expires_at and row.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=410, detail="preset_export_file_expired")
+
+    filename = f"preset-runs-export-{row.id}.csv"
+    return FileResponse(path=str(file_path), media_type="text/csv", filename=filename)
 
 
 @router.get("/admin/site/content-layout/preset-runs/{run_id:uuid}")

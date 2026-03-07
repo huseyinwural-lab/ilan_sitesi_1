@@ -55,6 +55,7 @@ from app.models.ui_logo_asset import UILogoAsset
 from app.models.ui_theme import UITheme
 from app.models.ui_theme_assignment import UIThemeAssignment
 from app.models.layout_builder import (
+    AdminRevisionRedirectEvent,
     LayoutAuditAction,
     LayoutAuditLog,
     LayoutBinding,
@@ -63,6 +64,9 @@ from app.models.layout_builder import (
     LayoutPageType,
     LayoutPresetEvent,
     LayoutPresetEventType,
+    LayoutPresetExportJob,
+    LayoutPresetRunLog,
+    LayoutReleaseCleanupAudit,
     LayoutRevision,
     LayoutRevisionStatus,
 )

@@ -55,6 +55,9 @@ export default function AdminPresetRuns() {
   const [toDateFilter, setToDateFilter] = useState('');
   const [extendedExport, setExtendedExport] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [jobActionLoadingId, setJobActionLoadingId] = useState('');
+  const [exportJobs, setExportJobs] = useState([]);
   const [expandedRunIds, setExpandedRunIds] = useState([]);
 
   const fetchRuns = useCallback(async ({ silent = false } = {}) => {
@@ -91,6 +94,39 @@ export default function AdminPresetRuns() {
     fetchRuns({ silent: true });
   }, [fetchRuns]);
 
+  const fetchExportJobs = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setJobsLoading(true);
+    try {
+      const response = await axios.get(`${API}/admin/preset-runs/export-jobs`, {
+        headers: authHeaders,
+        params: { page: 1, limit: 20 },
+      });
+      const items = Array.isArray(response.data?.items) ? response.data.items : [];
+      setExportJobs(items);
+    } catch (requestError) {
+      if (!silent) {
+        const fallback = requestError?.response?.data?.detail || requestError?.message || 'Export job listesi alınamadı';
+        setError(String(fallback));
+        toast.error(String(fallback));
+      }
+    } finally {
+      if (!silent) setJobsLoading(false);
+    }
+  }, [authHeaders]);
+
+  useEffect(() => {
+    fetchExportJobs({ silent: true });
+  }, [fetchExportJobs]);
+
+  useEffect(() => {
+    const hasRunningJobs = exportJobs.some((job) => ['queued', 'running'].includes(String(job?.status || '').toLowerCase()));
+    if (!hasRunningJobs) return undefined;
+    const timer = window.setInterval(() => {
+      fetchExportJobs({ silent: true });
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [exportJobs, fetchExportJobs]);
+
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const hasPrev = page > 1;
   const hasNext = page < totalPages;
@@ -103,18 +139,35 @@ export default function AdminPresetRuns() {
     ));
   };
 
-  const handleExportCsv = async () => {
+  const handleCreateExportJob = async () => {
     setExportLoading(true);
     setError('');
     try {
-      const response = await axios.get(`${API}/admin/preset-runs/export`, {
+      await axios.post(`${API}/admin/preset-runs/export-jobs`, {
+        status: statusFilter || undefined,
+        from: fromDateFilter || undefined,
+        to: toDateFilter || undefined,
+        extended: extendedExport,
+      }, {
         headers: authHeaders,
-        params: {
-          status: statusFilter || undefined,
-          from: fromDateFilter || undefined,
-          to: toDateFilter || undefined,
-          extended: extendedExport ? 'true' : undefined,
-        },
+      });
+      toast.success('Export job kuyruğa alındı. Durumu aşağıdaki panelden takip edebilirsiniz.');
+      fetchExportJobs({ silent: true });
+    } catch (requestError) {
+      const fallback = requestError?.response?.data?.detail || requestError?.message || 'Export job oluşturulamadı';
+      setError(String(fallback));
+      toast.error(String(fallback));
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const handleDownloadExportJob = async (jobId) => {
+    if (!jobId) return;
+    setJobActionLoadingId(String(jobId));
+    try {
+      const response = await axios.get(`${API}/admin/preset-runs/export-jobs/${jobId}/download`, {
+        headers: authHeaders,
         responseType: 'blob',
       });
 
@@ -123,18 +176,34 @@ export default function AdminPresetRuns() {
       const headerName = String(response.headers?.['content-disposition'] || '');
       const matchedName = headerName.match(/filename=([^;]+)/i);
       link.href = blobUrl;
-      link.download = matchedName?.[1] ? String(matchedName[1]).trim() : 'preset-runs.csv';
+      link.download = matchedName?.[1] ? String(matchedName[1]).trim() : `preset-runs-export-${jobId}.csv`;
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(blobUrl);
-      toast.success('CSV export hazır.');
+      toast.success('Export dosyası indirildi.');
     } catch (requestError) {
-      const fallback = requestError?.response?.data?.detail || requestError?.message || 'CSV export başarısız';
+      const fallback = requestError?.response?.data?.detail || requestError?.message || 'Export dosyası indirilemedi';
       setError(String(fallback));
       toast.error(String(fallback));
     } finally {
-      setExportLoading(false);
+      setJobActionLoadingId('');
+    }
+  };
+
+  const handleCancelExportJob = async (jobId) => {
+    if (!jobId) return;
+    setJobActionLoadingId(String(jobId));
+    try {
+      await axios.post(`${API}/admin/preset-runs/export-jobs/${jobId}/cancel`, {}, { headers: authHeaders });
+      toast.success('Export job iptal edildi.');
+      fetchExportJobs({ silent: true });
+    } catch (requestError) {
+      const fallback = requestError?.response?.data?.detail || requestError?.message || 'Export job iptal edilemedi';
+      setError(String(fallback));
+      toast.error(String(fallback));
+    } finally {
+      setJobActionLoadingId('');
     }
   };
 
@@ -150,17 +219,20 @@ export default function AdminPresetRuns() {
             <button
               type="button"
               className="h-9 rounded border px-3 text-xs"
-              onClick={handleExportCsv}
+              onClick={handleCreateExportJob}
               disabled={loading || exportLoading}
               data-testid="admin-preset-runs-export-button"
             >
-              {exportLoading ? 'Export...' : 'Export CSV'}
+              {exportLoading ? 'Kuyruğa Alınıyor...' : 'Async Export Job Oluştur'}
             </button>
             <button
               type="button"
               className="h-9 rounded border px-3 text-xs"
-              onClick={() => fetchRuns()}
-              disabled={loading}
+              onClick={() => {
+                fetchRuns();
+                fetchExportJobs();
+              }}
+              disabled={loading || jobsLoading}
               data-testid="admin-preset-runs-refresh-button"
             >
               Yenile
@@ -236,6 +308,85 @@ export default function AdminPresetRuns() {
                 Filtreyi Uygula
               </button>
             </div>
+          </div>
+        </div>
+
+        <div className="mt-3 rounded border bg-slate-50 p-3" data-testid="admin-preset-runs-export-jobs-panel">
+          <div className="flex flex-wrap items-center justify-between gap-2" data-testid="admin-preset-runs-export-jobs-header">
+            <p className="text-xs font-semibold" data-testid="admin-preset-runs-export-jobs-title">CSV Export Job Queue</p>
+            <span className="text-[11px] text-slate-600" data-testid="admin-preset-runs-export-jobs-config">
+              lifecycle: queued → running → completed/failed/cancelled
+            </span>
+          </div>
+          <div className="mt-2 overflow-x-auto" data-testid="admin-preset-runs-export-jobs-table-wrap">
+            <table className="min-w-full text-left text-xs" data-testid="admin-preset-runs-export-jobs-table">
+              <thead>
+                <tr className="border-b bg-white" data-testid="admin-preset-runs-export-jobs-head-row">
+                  <th className="px-2 py-2">job id</th>
+                  <th className="px-2 py-2">created</th>
+                  <th className="px-2 py-2">status</th>
+                  <th className="px-2 py-2">rows</th>
+                  <th className="px-2 py-2">filters</th>
+                  <th className="px-2 py-2">actions</th>
+                </tr>
+              </thead>
+              <tbody data-testid="admin-preset-runs-export-jobs-body">
+                {jobsLoading ? (
+                  <tr data-testid="admin-preset-runs-export-jobs-loading-row">
+                    <td className="px-2 py-2 text-slate-500" colSpan={6} data-testid="admin-preset-runs-export-jobs-loading-cell">Yükleniyor...</td>
+                  </tr>
+                ) : exportJobs.length === 0 ? (
+                  <tr data-testid="admin-preset-runs-export-jobs-empty-row">
+                    <td className="px-2 py-2 text-slate-500" colSpan={6} data-testid="admin-preset-runs-export-jobs-empty-cell">Henüz export job yok.</td>
+                  </tr>
+                ) : exportJobs.map((job) => {
+                  const statusValue = String(job?.status || '-').toLowerCase();
+                  const canCancel = ['queued', 'running'].includes(statusValue);
+                  const canDownload = statusValue === 'completed';
+                  const isActionLoading = jobActionLoadingId === job.job_id;
+                  const filterSummary = [job?.filters?.status, job?.filters?.from, job?.filters?.to].filter(Boolean).join(' • ');
+
+                  return (
+                    <tr key={`export-job-${job.job_id}`} className="border-b bg-white" data-testid={`admin-preset-runs-export-job-row-${job.job_id}`}>
+                      <td className="px-2 py-2 font-mono text-[11px]" data-testid={`admin-preset-runs-export-job-id-${job.job_id}`}>{job.job_id}</td>
+                      <td className="px-2 py-2" data-testid={`admin-preset-runs-export-job-created-${job.job_id}`}>{formatDateTime(job.created_at)}</td>
+                      <td className="px-2 py-2" data-testid={`admin-preset-runs-export-job-status-${job.job_id}`}>
+                        <span className={`inline-flex rounded border px-2 py-1 ${statusValue === 'completed' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : statusValue === 'failed' ? 'border-rose-300 bg-rose-50 text-rose-700' : statusValue === 'cancelled' ? 'border-slate-300 bg-slate-100 text-slate-700' : 'border-amber-300 bg-amber-50 text-amber-700'}`}>
+                          {statusValue}
+                        </span>
+                        {job.error_message ? (
+                          <p className="mt-1 text-[11px] text-rose-700" data-testid={`admin-preset-runs-export-job-error-${job.job_id}`}>{job.error_message}</p>
+                        ) : null}
+                      </td>
+                      <td className="px-2 py-2" data-testid={`admin-preset-runs-export-job-row-count-${job.job_id}`}>{Number(job.row_count || 0)}</td>
+                      <td className="px-2 py-2" data-testid={`admin-preset-runs-export-job-filters-${job.job_id}`}>{filterSummary || '-'}</td>
+                      <td className="px-2 py-2" data-testid={`admin-preset-runs-export-job-actions-${job.job_id}`}>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            className="h-8 rounded border px-2 text-[11px]"
+                            onClick={() => handleDownloadExportJob(job.job_id)}
+                            disabled={!canDownload || isActionLoading}
+                            data-testid={`admin-preset-runs-export-job-download-${job.job_id}`}
+                          >
+                            İndir
+                          </button>
+                          <button
+                            type="button"
+                            className="h-8 rounded border px-2 text-[11px]"
+                            onClick={() => handleCancelExportJob(job.job_id)}
+                            disabled={!canCancel || isActionLoading}
+                            data-testid={`admin-preset-runs-export-job-cancel-${job.job_id}`}
+                          >
+                            Cancel Export
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
 

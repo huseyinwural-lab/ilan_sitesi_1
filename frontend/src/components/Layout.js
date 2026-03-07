@@ -513,6 +513,7 @@ export default function Layout({ children }) {
 
     { divider: true, label: 'Operasyon', roles: roles.opsReliability },
     { path: '/admin/ops/publish-health', icon: Activity, label: 'Publish Health', roles: roles.opsReliability, testId: 'ops-publish-health' },
+    { path: '/admin/release-retention', icon: Activity, label: 'Release Retention', roles: roles.opsReliability, testId: 'ops-release-retention' },
 
     { divider: true, label: 'İçerik Yönetimi', roles: roles.contentPublish },
     { path: '/admin/info-pages', icon: FileText, label: 'Bilgi Sayfaları', roles: roles.contentPublish, testId: 'content-info-pages' },
@@ -651,6 +652,7 @@ export default function Layout({ children }) {
       '/admin/revision-redirect-telemetry',
       '/admin/user-interface-design',
       '/admin/ops/publish-health',
+      '/admin/release-retention',
       '/admin/info-pages',
       '/admin/dashboard',
       '/admin/country-compare',

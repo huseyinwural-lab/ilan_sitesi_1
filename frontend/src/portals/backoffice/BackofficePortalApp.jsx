@@ -54,6 +54,7 @@ import AdminListingDesign from '@/pages/admin/AdminListingDesign';
 import AdminContentBuilder from '@/pages/admin/AdminContentBuilder';
 import AdminContentList from '@/pages/admin/AdminContentList';
 import AdminPresetRuns from '@/pages/admin/AdminPresetRuns';
+import AdminReleaseRetention from '@/pages/admin/AdminReleaseRetention';
 import AdminRevisionRedirect from '@/pages/admin/AdminRevisionRedirect';
 import AdminRevisionRedirectTelemetry from '@/pages/admin/AdminRevisionRedirectTelemetry';
 import AdminInfoPages from '@/pages/admin/AdminInfoPages';
@@ -264,6 +265,16 @@ export default function BackofficePortalApp() {
           <AdminLayout>
             <AdminRouteGuard roles={["super_admin", "country_admin"]}>
               <AdminRevisionRedirectTelemetry />
+            </AdminRouteGuard>
+          </AdminLayout>
+        }
+      />
+      <Route
+        path="/release-retention"
+        element={
+          <AdminLayout>
+            <AdminRouteGuard roles={["super_admin", "country_admin", "ops"]}>
+              <AdminReleaseRetention />
             </AdminRouteGuard>
           </AdminLayout>
         }

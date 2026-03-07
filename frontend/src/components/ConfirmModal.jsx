@@ -17,6 +17,7 @@ export const ConfirmModal = ({
   cancelLabel,
   proceedLabel,
   openRevisionLabel = 'Revizyonu Aç',
+  copyRevisionLabel = 'ID Kopyala',
   onCancel,
   onProceed,
   conflictItems,
@@ -24,6 +25,15 @@ export const ConfirmModal = ({
   testIdPrefix = 'confirm-modal',
 }) => {
   const items = Array.isArray(conflictItems) ? conflictItems : [];
+
+  const copyRevisionId = async (revisionId) => {
+    if (!revisionId) return;
+    try {
+      await navigator.clipboard.writeText(String(revisionId));
+    } catch {
+      // no-op
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -58,15 +68,25 @@ export const ConfirmModal = ({
                       {' • '}rev: {item?.revision_id || '-'}
                     </span>
                     {item?.revision_id ? (
-                      <a
-                        href={`/admin/revisions/${item.revision_id}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="rounded border border-slate-300 px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100"
-                        data-testid={`${testIdPrefix}-open-revision-link-${index}`}
-                      >
-                        {openRevisionLabel}
-                      </a>
+                      <div className="flex flex-wrap items-center gap-1" data-testid={`${testIdPrefix}-conflict-item-actions-${index}`}>
+                        <button
+                          type="button"
+                          className="rounded border border-slate-300 px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100"
+                          onClick={() => copyRevisionId(item.revision_id)}
+                          data-testid={`${testIdPrefix}-copy-revision-id-${index}`}
+                        >
+                          {copyRevisionLabel}
+                        </button>
+                        <a
+                          href={`/admin/revisions/${item.revision_id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded border border-slate-300 px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100"
+                          data-testid={`${testIdPrefix}-open-revision-link-${index}`}
+                        >
+                          {openRevisionLabel}
+                        </a>
+                      </div>
                     ) : (
                       <span className="text-[11px] text-rose-700" data-testid={`${testIdPrefix}-missing-revision-${index}`}>
                         revision_id eksik
