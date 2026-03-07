@@ -113,6 +113,8 @@ class TestCategoryDeleteCascade:
 
         assert payload.get("cascade") is True
         assert int(payload.get("deleted_count") or 0) >= 3
+        assert payload.get("undo_operation_id")
+        assert payload.get("undo_expires_at")
         assert parent.get("id") in deleted_ids
         assert child.get("id") in deleted_ids
         assert grandchild.get("id") in deleted_ids
@@ -129,6 +131,30 @@ class TestCategoryDeleteCascade:
         assert parent.get("id") not in ids
         assert child.get("id") not in ids
         assert grandchild.get("id") not in ids
+
+        undo_response = _request(
+            "POST",
+            f"{BASE_URL}/api/admin/categories/delete-operations/{payload.get('undo_operation_id')}/undo",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            timeout=30,
+        )
+        assert undo_response.status_code == 200, undo_response.text
+        undo_payload = undo_response.json()
+        assert undo_payload.get("ok") is True
+        assert int(undo_payload.get("restored_count") or 0) >= 3
+
+        restored_list_response = _request(
+            "GET",
+            f"{BASE_URL}/api/admin/categories",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            params={"country": "TR", "module": "other"},
+            timeout=30,
+        )
+        assert restored_list_response.status_code == 200, restored_list_response.text
+        restored_ids = {str(item.get("id")) for item in ((restored_list_response.json() or {}).get("items") or [])}
+        assert parent.get("id") in restored_ids
+        assert child.get("id") in restored_ids
+        assert grandchild.get("id") in restored_ids
 
     def test_delete_invalid_id_returns_structured_error(self, admin_token):
         response = _request(

@@ -111,7 +111,7 @@ from app.models.finance_v2 import (
 )
 from app.models.message_report import MessageReport
 from app.models.webhook_event_log import WebhookEventLog
-from app.models.category import Category, CategoryTranslation
+from app.models.category import Category, CategoryTranslation, CategoryDeleteUndoLog
 from app.models.category_schema_version import CategorySchemaVersion
 from app.models.core import AuditLog, Country, FeatureFlag
 from app.models.attribute import Attribute, AttributeOption, CategoryAttributeMap
@@ -263,6 +263,7 @@ CATEGORY_BULK_JOB_MAX_ATTEMPTS = 5
 CATEGORY_BULK_JOB_CLAIM_TTL_SECONDS = 120
 CATEGORY_BULK_JOB_RETRY_BASE_SECONDS = 30
 CATEGORY_BULK_JOB_WORKER_INTERVAL_SECONDS = 3
+CATEGORY_DELETE_UNDO_WINDOW_MINUTES = int(os.environ.get("CATEGORY_DELETE_UNDO_WINDOW_MINUTES", "10"))
 BATCH_PUBLISH_INTERVAL_SECONDS = 300
 BATCH_PUBLISH_LIMIT_PER_RUN = 25
 BATCH_PUBLISH_RUN_EVENTS = deque(maxlen=50)
@@ -15577,6 +15578,21 @@ def _serialize_category_translation(translation: CategoryTranslation) -> dict:
 
 
 CATEGORY_I18N_LANGS = ("tr", "de", "fr")
+
+_CATEGORY_DELETE_UNDO_TABLE_READY = False
+_CATEGORY_DELETE_UNDO_TABLE_LOCK = asyncio.Lock()
+
+
+async def _ensure_category_delete_undo_table() -> None:
+    global _CATEGORY_DELETE_UNDO_TABLE_READY
+    if _CATEGORY_DELETE_UNDO_TABLE_READY:
+        return
+    async with _CATEGORY_DELETE_UNDO_TABLE_LOCK:
+        if _CATEGORY_DELETE_UNDO_TABLE_READY:
+            return
+        async with sql_engine.begin() as conn:
+            await conn.run_sync(CategoryDeleteUndoLog.__table__.create, checkfirst=True)
+        _CATEGORY_DELETE_UNDO_TABLE_READY = True
 
 
 def _normalize_public_locale(value: Optional[str]) -> str:
@@ -31299,6 +31315,7 @@ async def admin_delete_category(
     session: AsyncSession = Depends(get_sql_session),
 ):
     del request
+    await _ensure_category_delete_undo_table()
     try:
         category_uuid = uuid.UUID(category_id)
     except ValueError as exc:
@@ -31352,12 +31369,35 @@ async def admin_delete_category(
             frontier = [row.id for row in children_rows]
 
     deleted_ids: list[str] = []
+    deleted_snapshot: list[dict[str, Any]] = []
     for row in to_delete:
+        deleted_snapshot.append(
+            {
+                "id": str(row.id),
+                "was_enabled": bool(row.is_enabled),
+                "was_deleted": bool(row.is_deleted),
+            }
+        )
         row.is_enabled = False
         row.is_deleted = True
         row.deleted_at = now
         row.updated_at = now
         deleted_ids.append(str(row.id))
+
+    actor_uuid = None
+    try:
+        actor_uuid = uuid.UUID(str((current_user or {}).get("id"))) if (current_user or {}).get("id") else None
+    except ValueError:
+        actor_uuid = None
+
+    undo_expires_at = now + timedelta(minutes=max(1, int(CATEGORY_DELETE_UNDO_WINDOW_MINUTES)))
+    undo_log = CategoryDeleteUndoLog(
+        root_category_id=category.id,
+        deleted_snapshot=deleted_snapshot,
+        created_by=actor_uuid,
+        expires_at=undo_expires_at,
+    )
+    session.add(undo_log)
 
     await session.commit()
 
@@ -31373,6 +31413,115 @@ async def admin_delete_category(
         "deleted_count": len(deleted_ids),
         "deleted_descendant_count": max(0, len(deleted_ids) - 1),
         "deleted_ids": deleted_ids,
+        "undo_operation_id": str(undo_log.id),
+        "undo_expires_at": undo_expires_at.isoformat(),
+        "undo_window_minutes": int(CATEGORY_DELETE_UNDO_WINDOW_MINUTES),
+    }
+
+
+@api_router.post("/admin/categories/delete-operations/{operation_id}/undo")
+async def admin_undo_deleted_category_tree(
+    operation_id: str,
+    request: Request,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    del request
+    await _ensure_category_delete_undo_table()
+
+    try:
+        operation_uuid = uuid.UUID(operation_id)
+    except ValueError as exc:
+        raise _category_error(
+            "CATEGORY_UNDO_OPERATION_INVALID",
+            "Geri alma işlem kimliği geçersiz.",
+            status_code=400,
+            field_name="operation_id",
+            conflict={"operation_id": operation_id},
+        ) from exc
+
+    undo_log = await session.get(CategoryDeleteUndoLog, operation_uuid)
+    if not undo_log:
+        raise _category_error(
+            "CATEGORY_UNDO_OPERATION_NOT_FOUND",
+            "Geri alma kaydı bulunamadı.",
+            status_code=404,
+            field_name="operation_id",
+            conflict={"operation_id": operation_id},
+        )
+
+    if undo_log.restored_at:
+        raise _category_error(
+            "CATEGORY_UNDO_ALREADY_RESTORED",
+            "Bu silme işlemi zaten geri alınmış.",
+            status_code=409,
+            field_name="operation_id",
+            conflict={"operation_id": operation_id},
+        )
+
+    now = datetime.now(timezone.utc)
+    if undo_log.expires_at < now:
+        raise _category_error(
+            "CATEGORY_UNDO_WINDOW_EXPIRED",
+            "Geri alma süresi doldu.",
+            status_code=410,
+            field_name="operation_id",
+            conflict={"operation_id": operation_id},
+        )
+
+    root_category = await session.get(Category, undo_log.root_category_id)
+    if root_category and root_category.country_code:
+        _assert_country_scope(root_category.country_code, current_user)
+
+    snapshot = list(undo_log.deleted_snapshot or [])
+    target_ids: list[uuid.UUID] = []
+    for item in snapshot:
+        raw_id = str((item or {}).get("id") or "").strip()
+        if not raw_id:
+            continue
+        try:
+            target_ids.append(uuid.UUID(raw_id))
+        except ValueError:
+            continue
+
+    if not target_ids:
+        raise _category_error(
+            "CATEGORY_UNDO_NO_TARGET",
+            "Geri alınacak kategori bulunamadı.",
+            status_code=409,
+            field_name="operation_id",
+            conflict={"operation_id": operation_id},
+        )
+
+    rows = (
+        await session.execute(
+            select(Category).where(Category.id.in_(target_ids))
+        )
+    ).scalars().all()
+    row_by_id = {str(row.id): row for row in rows}
+
+    restored_ids: list[str] = []
+    for item in snapshot:
+        item_id = str((item or {}).get("id") or "")
+        row = row_by_id.get(item_id)
+        if not row:
+            continue
+        row.is_deleted = False
+        row.deleted_at = None
+        row.is_enabled = bool((item or {}).get("was_enabled", True))
+        row.updated_at = now
+        restored_ids.append(str(row.id))
+
+    undo_log.restored_at = now
+    undo_log.restore_source = "admin_panel"
+    await session.commit()
+
+    return {
+        "ok": True,
+        "operation_id": str(undo_log.id),
+        "restored_count": len(restored_ids),
+        "restored_ids": restored_ids,
+        "undo_window_minutes": int(CATEGORY_DELETE_UNDO_WINDOW_MINUTES),
     }
 
 

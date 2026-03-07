@@ -373,6 +373,24 @@ const buildCategoryErrorMessage = (parsed, fallbackMessage = "İşlem başarıs�
   return `${withCode} • Kaynak: ${sourcePath}`;
 };
 
+const getCategoryListIssueBadges = (item) => {
+  const badges = [];
+  if (!item?.hierarchy_complete) {
+    badges.push({ key: "hierarchy", label: "Hierarchy" });
+  }
+
+  const formSchema = item?.form_schema;
+  const hasFormSchema = Boolean(formSchema) && typeof formSchema === "object" && Object.keys(formSchema || {}).length > 0;
+  if (!hasFormSchema) {
+    badges.push({ key: "forms", label: "Forms" });
+  }
+
+  if (!Number.isFinite(Number(item?.sort_order)) || Number(item?.sort_order) <= 0) {
+    badges.push({ key: "rules", label: "Rules" });
+  }
+  return badges;
+};
+
 const TriStateCheckbox = ({ checked, indeterminate, onChange, disabled, testId }) => {
   const ref = useRef(null);
 
@@ -402,6 +420,9 @@ const AdminCategories = () => {
     module: "all",
     status: "all",
     image_presence: "all",
+    issue_state: "all",
+    sort_by: "name_asc",
+    search_query: "",
   });
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkRunning, setBulkRunning] = useState(false);
@@ -493,6 +514,8 @@ const AdminCategories = () => {
   const [versions, setVersions] = useState([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [versionsError, setVersionsError] = useState("");
+  const [lastDeleteUndo, setLastDeleteUndo] = useState(null);
+  const [undoSecondsLeft, setUndoSecondsLeft] = useState(0);
   const [seedLoading, setSeedLoading] = useState(false);
   const [level0OrderMovingId, setLevel0OrderMovingId] = useState("");
   const [selectedVersions, setSelectedVersions] = useState([]);
@@ -587,15 +610,77 @@ const AdminCategories = () => {
   }, [items]);
   const visibleItems = useMemo(() => {
     const rootOnlyItems = items.filter((item) => !item.parent_id);
+    const normalizedQuery = String(listFilters.search_query || "").trim().toLocaleLowerCase("tr");
 
-    if (listFilters.image_presence === "with_image") {
-      return rootOnlyItems.filter((item) => Boolean((item.image_url || "").trim()));
+    let filtered = rootOnlyItems.filter((item) => {
+      if (listFilters.image_presence === "with_image" && !Boolean((item.image_url || "").trim())) return false;
+      if (listFilters.image_presence === "without_image" && Boolean((item.image_url || "").trim())) return false;
+
+      if (listFilters.issue_state === "with_issues") {
+        if (getCategoryListIssueBadges(item).length === 0) return false;
+      }
+
+      if (normalizedQuery) {
+        const haystack = [item?.name, item?.slug, item?.country_code, item?.module]
+          .map((value) => String(value || "").toLocaleLowerCase("tr"))
+          .join(" ");
+        if (!haystack.includes(normalizedQuery)) return false;
+      }
+      return true;
+    });
+
+    const sortMode = String(listFilters.sort_by || "name_asc");
+    filtered = [...filtered].sort((a, b) => {
+      if (sortMode === "name_desc") {
+        return String(b.name || "").localeCompare(String(a.name || ""), "tr");
+      }
+      if (sortMode === "sort_asc") {
+        return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+      }
+      if (sortMode === "sort_desc") {
+        return Number(b.sort_order || 0) - Number(a.sort_order || 0);
+      }
+      return String(a.name || "").localeCompare(String(b.name || ""), "tr");
+    });
+
+    return filtered;
+  }, [items, listFilters.image_presence, listFilters.issue_state, listFilters.search_query, listFilters.sort_by]);
+
+  const modalIssueBadges = useMemo(() => {
+    const hierarchyHasIssue = Boolean(hierarchyError) || Object.keys(hierarchyFieldErrors || {}).some((key) => key.startsWith("main_") || key.startsWith("level-"));
+    const formsHasIssue = Boolean(dynamicError) || Boolean(detailError) || Boolean(categoryImageError) || Boolean(vehicleImportError);
+    const rulesHasIssue = Boolean(vehicleSegmentError) || Boolean(publishError) || Boolean(versionsError);
+
+    return [
+      { id: "hierarchy", label: "Hierarchy", hasIssue: hierarchyHasIssue },
+      { id: "forms", label: "Forms", hasIssue: formsHasIssue },
+      { id: "rules", label: "Rules", hasIssue: rulesHasIssue },
+    ];
+  }, [hierarchyError, hierarchyFieldErrors, dynamicError, detailError, categoryImageError, vehicleImportError, vehicleSegmentError, publishError, versionsError]);
+
+  useEffect(() => {
+    if (!lastDeleteUndo?.expiresAt) {
+      setUndoSecondsLeft(0);
+      return undefined;
     }
-    if (listFilters.image_presence === "without_image") {
-      return rootOnlyItems.filter((item) => !Boolean((item.image_url || "").trim()));
-    }
-    return rootOnlyItems;
-  }, [items, listFilters.image_presence]);
+
+    const getRemainingSeconds = () => {
+      const expiresAtMs = new Date(lastDeleteUndo.expiresAt).getTime();
+      if (Number.isNaN(expiresAtMs)) return 0;
+      return Math.max(0, Math.floor((expiresAtMs - Date.now()) / 1000));
+    };
+
+    setUndoSecondsLeft(getRemainingSeconds());
+    const timer = window.setInterval(() => {
+      const remaining = getRemainingSeconds();
+      setUndoSecondsLeft(remaining);
+      if (remaining <= 0) {
+        setLastDeleteUndo(null);
+      }
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [lastDeleteUndo]);
   const visibleItemIds = useMemo(() => visibleItems.map((item) => item.id), [visibleItems]);
   const allVisibleSelected = useMemo(
     () => visibleItemIds.length > 0 && visibleItemIds.every((id) => selectedIdSet.has(id)),
@@ -2637,16 +2722,55 @@ const AdminCategories = () => {
 
     const deletedCount = Number(data?.deleted_count || 1);
     const deletedDescendantCount = Number(data?.deleted_descendant_count || Math.max(0, deletedCount - 1));
+    const undoOperationId = String(data?.undo_operation_id || "").trim();
+    const undoExpiresAt = String(data?.undo_expires_at || "").trim();
     toast({
       title: "Kategori silindi",
       description: `${deletedCount} kayıt silindi (alt kategori: ${deletedDescendantCount}).`,
     });
+
+    if (undoOperationId && undoExpiresAt) {
+      setLastDeleteUndo({
+        operationId: undoOperationId,
+        expiresAt: undoExpiresAt,
+        deletedCount,
+      });
+    }
 
     const deletedIds = Array.isArray(data?.deleted_ids) ? data.deleted_ids.map((idValue) => String(idValue)) : [];
     if (editing?.id && deletedIds.includes(String(editing.id))) {
       setModalOpen(false);
       setEditing(null);
     }
+    fetchItems();
+  };
+
+  const handleUndoDelete = async () => {
+    if (!lastDeleteUndo?.operationId || undoSecondsLeft <= 0) return;
+    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/delete-operations/${lastDeleteUndo.operationId}/undo`, {
+      method: "POST",
+      headers: {
+        ...authHeader,
+      },
+    });
+    const data = await safeParseJson(response);
+    if (!response.ok) {
+      const parsed = parseApiError(data, "Geri alma işlemi başarısız.");
+      const message = applyParsedCategoryError(parsed, { setGeneral: true });
+      toast({
+        title: "Geri alma başarısız",
+        description: message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const restoredCount = Number(data?.restored_count || 0);
+    toast({
+      title: "Silme geri alındı",
+      description: `${restoredCount} kayıt geri yüklendi.`,
+    });
+    setLastDeleteUndo(null);
     fetchItems();
   };
 
@@ -3750,6 +3874,45 @@ const AdminCategories = () => {
                 </button>
               ))}
             </div>
+
+            <div className="flex flex-wrap items-center gap-1" data-testid="categories-list-filter-issue-state">
+              {[
+                { value: 'all', label: 'Tüm Kayıtlar' },
+                { value: 'with_issues', label: 'Sorunlu Kayıtlar' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setListFilters((prev) => ({ ...prev, issue_state: option.value }))}
+                  className={`h-9 rounded-md border px-3 text-sm ${listFilters.issue_state === option.value ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 text-slate-800'}`}
+                  data-testid={`categories-list-filter-issue-state-${option.value}`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2" data-testid="categories-list-filter-search-wrap">
+              <input
+                type="text"
+                value={listFilters.search_query}
+                onChange={(event) => setListFilters((prev) => ({ ...prev, search_query: event.target.value }))}
+                placeholder="Ad / slug ara"
+                className="h-9 w-48 rounded-md border border-slate-300 px-3 text-sm"
+                data-testid="categories-list-filter-search-input"
+              />
+              <select
+                className="h-9 rounded-md border border-slate-300 px-2 text-sm"
+                value={listFilters.sort_by}
+                onChange={(event) => setListFilters((prev) => ({ ...prev, sort_by: event.target.value }))}
+                data-testid="categories-list-filter-sort-select"
+              >
+                <option value="name_asc">Ad (A-Z)</option>
+                <option value="name_desc">Ad (Z-A)</option>
+                <option value="sort_asc">Sıra (artan)</option>
+                <option value="sort_desc">Sıra (azalan)</option>
+              </select>
+            </div>
           </div>
 
           <div className="text-xs text-slate-600" data-testid="categories-list-selection-meta">
@@ -3757,6 +3920,24 @@ const AdminCategories = () => {
             Görünen: <span className="font-semibold" data-testid="categories-list-visible-count">{visibleItems.length}</span>
           </div>
         </div>
+
+        {lastDeleteUndo && undoSecondsLeft > 0 ? (
+          <div className="border-b border-indigo-200 bg-indigo-50 px-4 py-3" data-testid="categories-delete-undo-bar">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs text-indigo-800" data-testid="categories-delete-undo-message">
+                Son silme işlemini geri alabilirsiniz. Kalan süre: <span className="font-semibold" data-testid="categories-delete-undo-seconds">{undoSecondsLeft}s</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleUndoDelete}
+                className="h-8 rounded border border-indigo-300 bg-white px-3 text-xs text-indigo-800"
+                data-testid="categories-delete-undo-button"
+              >
+                Silmeyi Geri Al
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         {bulkJob && (
           <div className="border-b px-4 py-2 text-xs bg-slate-50" data-testid="categories-bulk-job-panel">
@@ -3884,6 +4065,7 @@ const AdminCategories = () => {
             const canMoveUp = currentSiblingIndex > 0;
             const canMoveDown = currentSiblingIndex >= 0 && currentSiblingIndex < level0Siblings.length - 1;
             const isMovePending = level0OrderMovingId === item.id;
+            const rowIssueBadges = getCategoryListIssueBadges(item);
             return (
               <div key={item.id} className="grid grid-cols-[40px_72px_1.2fr_1fr_0.7fr_0.8fr_0.6fr_0.7fr_1.5fr] px-4 py-3 border-b text-sm items-center text-slate-900" data-testid={`categories-row-${item.id}`}>
                 <div>
@@ -3910,7 +4092,22 @@ const AdminCategories = () => {
                     )}
                   </div>
                 </div>
-                <div className="font-semibold text-slate-900" style={{ paddingLeft: `${Math.min(Number(item.depth || 0), 5) * 12}px` }} data-testid={`categories-row-name-${item.id}`}>{item.name}</div>
+                <div className="font-semibold text-slate-900" style={{ paddingLeft: `${Math.min(Number(item.depth || 0), 5) * 12}px` }} data-testid={`categories-row-name-${item.id}`}>
+                  <div className="truncate">{item.name}</div>
+                  {rowIssueBadges.length > 0 ? (
+                    <div className="mt-1 flex flex-wrap items-center gap-1" data-testid={`categories-row-issue-badges-${item.id}`}>
+                      {rowIssueBadges.map((badge) => (
+                        <span
+                          key={`${item.id}-${badge.key}`}
+                          className="rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700"
+                          data-testid={`categories-row-issue-badge-${item.id}-${badge.key}`}
+                        >
+                          {badge.label}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
                 <div className="text-slate-800" data-testid={`categories-row-slug-${item.id}`}>{item.slug}</div>
                 <div className="text-slate-800" data-testid={`categories-row-country-${item.id}`}>{item.country_code || "global"}</div>
                 <div className="text-slate-800" data-testid={`categories-row-module-${item.id}`}>
@@ -4039,6 +4236,18 @@ const AdminCategories = () => {
                 >
                   {schemaStatusLabel}
                 </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2" data-testid="categories-modal-issue-mini-badges">
+                {modalIssueBadges.map((badge) => (
+                  <span
+                    key={`modal-issue-${badge.id}`}
+                    className={`rounded border px-2 py-1 text-[11px] font-semibold ${badge.hasIssue ? 'border-rose-300 bg-rose-50 text-rose-700' : 'border-emerald-300 bg-emerald-50 text-emerald-700'}`}
+                    data-testid={`categories-modal-issue-badge-${badge.id}`}
+                  >
+                    {badge.label}: {badge.hasIssue ? 'Uyarı' : 'OK'}
+                  </span>
+                ))}
               </div>
 
               {hierarchyError && (
