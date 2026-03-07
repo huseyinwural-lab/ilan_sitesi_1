@@ -3101,3 +3101,11 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
     - modal mini badge
     - undo bar implementasyon doğrulaması
     - eski runtime hataların yokluğu (`clone/body stream`) doğrulandı
+
+### Ek Kapanış ("Next Action Items" komple uygulandı)
+- Aktif filtre chipleri + `Filtreleri Temizle` eklendi.
+- Undo operasyon geçmiş paneli (son 24 saat) eklendi (`/api/admin/categories/delete-operations`).
+- Category list cache eklendi (TTL + create/update/delete/undo invalidation).
+- Testing agent iterasyon raporu: `/app/test_reports/iteration_168.json` ✅
+  - backend 11/11 pass
+  - frontend doğrulama pass
