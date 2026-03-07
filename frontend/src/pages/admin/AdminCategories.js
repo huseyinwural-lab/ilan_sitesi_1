@@ -356,6 +356,15 @@ const safeParseJson = async (response) => {
   }
 };
 
+const buildHttpStatusFallbackMessage = (status) => {
+  const code = Number(status || 0);
+  if (code === 404) return "Kayıt bulunamadı (404). Sistem mevcut kayıtla yeniden bağlanmayı deneyecek.";
+  if (code === 409) return "Kayıt çakışması (409). Sistem mevcut kayıtla yeniden bağlanmayı deneyecek.";
+  if (code === 401 || code === 403) return `Yetki hatası (${code}). Lütfen oturum/yetki durumunu kontrol edin.`;
+  if (code >= 500) return `Sunucu geçici olarak erişilemez (${code}).`;
+  return `İşlem başarısız (${code || "unknown"}).`;
+};
+
 const CATEGORY_FIELD_ERROR_KEY_MAP = {
   name: "main_name",
   slug: "main_slug",
@@ -565,6 +574,40 @@ const AdminCategories = () => {
     }
     return finalMessage;
   }, []);
+
+  const resolveCategoryForSelfHeal = useCallback(async ({
+    categoryId,
+    slug,
+    name,
+    moduleValue,
+    countryCode,
+    parentId,
+    parentIsRoot,
+  }) => {
+    try {
+      const params = new URLSearchParams();
+      if (categoryId) params.set("category_id", String(categoryId));
+      if (slug) params.set("slug", normalizeSlugValue(slug));
+      if (name) params.set("name", String(name));
+      if (moduleValue) params.set("module", String(moduleValue));
+      if (countryCode) params.set("country", String(countryCode).toUpperCase());
+      if (parentId) {
+        params.set("parent_id", String(parentId));
+      } else if (parentIsRoot) {
+        params.set("parent_is_root", "true");
+      }
+
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/resolve?${params.toString()}`,
+        { headers: authHeader }
+      );
+      const data = await safeParseJson(response);
+      if (!response.ok) return null;
+      return data?.category || null;
+    } catch (_error) {
+      return null;
+    }
+  }, [authHeader]);
 
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const hierarchyPreviewRows = useMemo(() => {
@@ -1234,43 +1277,123 @@ const AdminCategories = () => {
     return null;
   }, [authHeader]);
 
-  const requestCategoryMutationWithRetry = useCallback(async ({ url, method, payload, fallbackMessage, retries = 3 }) => {
+  const requestCategoryMutationWithRetry = useCallback(async ({
+    url,
+    method,
+    payload,
+    fallbackMessage,
+    retries = 3,
+    selfHealContext = null,
+  }) => {
     let lastParsed = { errorCode: "", message: fallbackMessage, fieldName: "", conflict: null };
     let lastStatus = 0;
+    let workingUrl = url;
+    let workingPayload = { ...(payload || {}) };
 
     for (let attempt = 0; attempt < retries; attempt += 1) {
-      const res = await fetch(url, {
+      const res = await fetch(workingUrl, {
         method,
         headers: {
           "Content-Type": "application/json",
           ...authHeader,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(workingPayload),
       });
 
       let data = await safeParseJson(res);
       if (!res.ok && (!data || Object.keys(data).length === 0)) {
-        data = { message: `Sunucu hatası (${res.status})` };
+        data = { message: buildHttpStatusFallbackMessage(res.status) };
       }
 
       if (res.ok) {
-        return { ok: true, data, status: res.status };
+        return { ok: true, data, status: res.status, selfHealed: false };
       }
 
       const parsed = parseApiError(data, fallbackMessage);
       lastParsed = parsed;
       lastStatus = res.status;
 
+      const staleVersionCurrent = String(parsed?.conflict?.current_updated_at || "").trim();
+      if (method === "PATCH" && parsed?.errorCode === "CATEGORY_STALE_VERSION" && staleVersionCurrent) {
+        workingPayload = {
+          ...workingPayload,
+          expected_updated_at: staleVersionCurrent,
+        };
+        if (attempt < retries - 1) {
+          continue;
+        }
+      }
+
+      if ([404, 409].includes(res.status) && selfHealContext) {
+        const resolvedCategory = await resolveCategoryForSelfHeal({
+          categoryId:
+            parsed?.conflict?.existing_category_id
+            || selfHealContext.categoryId
+            || "",
+          slug:
+            selfHealContext.slug
+            || workingPayload.slug
+            || "",
+          name:
+            selfHealContext.name
+            || workingPayload.name
+            || "",
+          moduleValue:
+            selfHealContext.moduleValue
+            || workingPayload.module
+            || "",
+          countryCode:
+            selfHealContext.countryCode
+            || workingPayload.country_code
+            || selectedCountry
+            || "",
+          parentId:
+            selfHealContext.parentId
+            ?? workingPayload.parent_id
+            ?? "",
+          parentIsRoot: Boolean(
+            selfHealContext.parentIsRoot
+            ?? (workingPayload.parent_id === "" || workingPayload.parent_id === null || workingPayload.parent_id === undefined)
+          ),
+        });
+
+        if (resolvedCategory?.id) {
+          if (method === "POST") {
+            return {
+              ok: true,
+              status: 200,
+              selfHealed: true,
+              data: {
+                category: resolvedCategory,
+                reused: true,
+                category_id: resolvedCategory.id,
+                self_healed: true,
+              },
+            };
+          }
+
+          const reboundUrl = `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${resolvedCategory.id}`;
+          workingUrl = reboundUrl;
+          workingPayload = {
+            ...workingPayload,
+            expected_updated_at: resolvedCategory.updated_at || workingPayload.expected_updated_at,
+          };
+          if (attempt < retries - 1) {
+            continue;
+          }
+        }
+      }
+
       if (isTransientCategorySaveError(res.status, parsed) && attempt < retries - 1) {
         await waitMs(250 * (attempt + 1));
         continue;
       }
 
-      return { ok: false, parsed, status: res.status, data };
+      return { ok: false, parsed, status: res.status, data, selfHealed: false };
     }
 
-    return { ok: false, parsed: lastParsed, status: lastStatus, data: {} };
-  }, [authHeader]);
+    return { ok: false, parsed: lastParsed, status: lastStatus, data: {}, selfHealed: false };
+  }, [authHeader, resolveCategoryForSelfHeal, selectedCountry]);
 
   const createCategoryWithSortFallback = useCallback(async (initialPayload, fallbackMessage) => {
     const moduleValue = (initialPayload.module || "").trim().toLowerCase();
@@ -1290,21 +1413,26 @@ const AdminCategories = () => {
         payload,
         fallbackMessage,
         retries: 3,
+        selfHealContext: {
+          slug: payload.slug,
+          name: payload.name,
+          moduleValue,
+          countryCode,
+          parentId,
+          parentIsRoot: !parentId,
+        },
       });
       if (mutation.ok) {
-        return { ok: true, data: mutation.data, payload, autoAdjusted: attempt > 0 };
+        return {
+          ok: true,
+          data: mutation.data,
+          payload,
+          autoAdjusted: attempt > 0,
+          selfHealed: Boolean(mutation.selfHealed),
+        };
       }
 
       const parsed = mutation.parsed;
-
-      const parsedMessageLower = String(parsed?.message || "").toLowerCase();
-      const hasSlugConflict = parsed.errorCode === "CATEGORY_SLUG_CONFLICT" || parsed.fieldName === "slug";
-      const hasSlugFormatError = parsedMessageLower.includes("slug") && parsedMessageLower.includes("format");
-      if ((hasSlugConflict || hasSlugFormatError) && baseSlug) {
-        const uniqueSuffix = `${Date.now().toString().slice(-4)}-${attempt + 2}`;
-        payload = { ...payload, slug: normalizeSlugValue(`${baseSlug}-${uniqueSuffix}`) };
-        continue;
-      }
 
       if (parsed.errorCode === "ORDER_INDEX_ALREADY_USED") {
         const nextSort = await findNextAvailableSortOrder({
@@ -2597,19 +2725,26 @@ const AdminCategories = () => {
       });
     }
 
-    const res = await fetch(url, {
+    const mutation = await requestCategoryMutationWithRetry({
+      url,
       method,
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeader,
+      payload,
+      fallbackMessage: "Kaydetme sırasında hata oluştu.",
+      retries: 3,
+      selfHealContext: {
+        categoryId: activeEditing?.id || "",
+        slug: payload.slug,
+        name: payload.name,
+        moduleValue: payload.module,
+        countryCode: payload.country_code,
+        parentId: payload.parent_id,
+        parentIsRoot: !payload.parent_id,
       },
-      body: JSON.stringify(payload),
     });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const parsed = parseApiError(data, "Kaydetme sırasında hata oluştu.");
+    if (!mutation.ok) {
+      const parsed = mutation.parsed;
       const detailedMessage = buildCategoryErrorMessage(parsed, "Kaydetme sırasında hata oluştu.");
-      if (res.status === 409) {
+      if (mutation.status === 409) {
         if (String(parsed.message || "").toLowerCase().includes("hiyerar")) {
           showDraftToast({
             title: "Kaydetme başarısız",
@@ -2639,6 +2774,7 @@ const AdminCategories = () => {
       setAutosaveStatus("idle");
       return { success: false };
     }
+    const data = mutation.data;
     if (!data?.category) {
       if (!autosave) {
         setHierarchyError("Sunucu yanıtı eksik. Lütfen tekrar deneyin.");
@@ -2651,6 +2787,12 @@ const AdminCategories = () => {
     if (savedCategory) {
       applyCategoryFromServer(savedCategory, {
         clearEditMode: Boolean(progressState && editModeStep === wizardStep),
+      });
+    }
+    if (mutation.selfHealed) {
+      toast({
+        title: "Kayıt yeniden bağlandı",
+        description: "Sunucu çakışması algılandı; sistem mevcut kayıtla akışı otomatik sürdürdü.",
       });
     }
     if (status === "draft") {
@@ -3251,6 +3393,12 @@ const AdminCategories = () => {
           if (!created.ok) {
             throw new Error(created.parsed.message);
           }
+          if (created.selfHealed) {
+            toast({
+              title: "Kayıt yeniden bağlandı",
+              description: `${node.name || "Kategori"} mevcut kayıtla eşlendi ve akış devam etti.`,
+            });
+          }
           data = created.data;
         } else {
           const mutation = await requestCategoryMutationWithRetry({
@@ -3259,9 +3407,24 @@ const AdminCategories = () => {
             payload: basePayload,
             fallbackMessage: "Kategori kaydedilemedi.",
             retries: 3,
+            selfHealContext: {
+              categoryId: node.id || "",
+              slug: basePayload.slug,
+              name: basePayload.name,
+              moduleValue: basePayload.module,
+              countryCode: basePayload.country_code,
+              parentId,
+              parentIsRoot: !parentId,
+            },
           });
           if (!mutation.ok) {
             throw new Error(mutation.parsed.message);
+          }
+          if (mutation.selfHealed) {
+            toast({
+              title: "Kayıt yeniden bağlandı",
+              description: `${node.name || "Kategori"} güncel kayıtla eşlenerek kaydedildi.`,
+            });
           }
           data = mutation.data;
         }
@@ -3300,11 +3463,26 @@ const AdminCategories = () => {
           },
           fallbackMessage: "Kategori güncellenemedi.",
           retries: 3,
+          selfHealContext: {
+            categoryId: editing.id,
+            slug,
+            name,
+            moduleValue,
+            countryCode: country,
+            parentId: form.parent_id,
+            parentIsRoot: !form.parent_id,
+          },
         });
         if (!mutation.ok) {
           const parsed = mutation.parsed;
           applyParsedCategoryError(parsed, { setGeneral: true });
           return { success: false };
+        }
+        if (mutation.selfHealed) {
+          toast({
+            title: "Kayıt yeniden bağlandı",
+            description: "Stale kayıt tespit edildi, güncel kayıtla düzenleme akışı devam etti.",
+          });
         }
         const data = mutation.data;
         updatedParent = data?.category || editing;
@@ -3326,6 +3504,12 @@ const AdminCategories = () => {
           const parsed = createdParent.parsed;
           applyParsedCategoryError(parsed, { setGeneral: true });
           return { success: false };
+        }
+        if (createdParent.selfHealed) {
+          toast({
+            title: "Mevcut kayıt kullanıldı",
+            description: "Yeni kayıt yerine mevcut kategori bulundu; akış bu kayıtla devam ediyor.",
+          });
         }
         if (createdParent.autoAdjusted && createdParent.payload?.sort_order) {
           setForm((prev) => ({ ...prev, sort_order: String(createdParent.payload.sort_order) }));
@@ -3353,6 +3537,15 @@ const AdminCategories = () => {
           payload: { hierarchy_complete: true, wizard_progress: { state: progressState, dirty_steps: dirtyStepsOverride } },
           fallbackMessage: "Kategori güncellenemedi.",
           retries: 3,
+          selfHealContext: {
+            categoryId: updatedParent.id,
+            slug,
+            name,
+            moduleValue,
+            countryCode: country,
+            parentId: form.parent_id,
+            parentIsRoot: !form.parent_id,
+          },
         });
         if (!patchMutation.ok) {
           const parsed = patchMutation.parsed;
@@ -3871,7 +4064,7 @@ const AdminCategories = () => {
             onClick={handleCreate}
             data-testid="categories-create-open"
           >
-            Yeni Kategori
+            Kayıt Yönetimi
           </button>
         </div>
       </div>
@@ -4280,8 +4473,13 @@ const AdminCategories = () => {
       {modalOpen && (
         <div className={`fixed inset-0 bg-black/40 z-50 ${isModalFullscreen ? '' : 'flex items-center justify-center'}`} data-testid="categories-modal">
           <div className={`bg-white p-6 text-slate-900 ${isModalFullscreen ? '' : 'rounded-lg shadow-xl'}`} style={modalPanelStyle} data-testid="categories-modal-panel">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">{editing ? "Kategori Düzenle" : "Yeni Kategori"}</h2>
+            <div className="flex items-start justify-between mb-4 gap-3" data-testid="categories-record-management-header">
+              <div>
+                <h2 className="text-lg font-semibold" data-testid="categories-modal-title">Kategori Kayıt Yönetimi</h2>
+                <p className="text-xs text-slate-500" data-testid="categories-modal-title-subtext">
+                  Yeni ve mevcut kayıtlar tek akışta yönetilir; 404/409 durumunda sistem otomatik yeniden bağlanmayı dener.
+                </p>
+              </div>
               <div className="flex items-center gap-2">
                 {!isModalFullscreen ? (
                   <button

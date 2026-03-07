@@ -1820,6 +1820,7 @@ async def lifespan(app: FastAPI):
                 await _ensure_pricing_campaign_item_columns(conn)
                 await _ensure_finance_v2_columns(conn)
                 await _ensure_i18n_jsonb_columns(conn)
+                await _ensure_category_scope_slug_unique_index(conn)
 
         await asyncio.wait_for(_bootstrap_sql_init(), timeout=45)
     except Exception as exc:
@@ -2433,6 +2434,69 @@ async def _ensure_i18n_jsonb_columns(conn) -> None:
         await conn.execute(text("ALTER TABLE categories ADD COLUMN IF NOT EXISTS label_i18n JSONB NOT NULL DEFAULT '{}'::jsonb"))
     except Exception as exc:
         logging.getLogger("sql_config").warning("i18n jsonb columns check failed: %s", exc)
+
+
+async def _ensure_category_scope_slug_unique_index(conn) -> None:
+    try:
+        # Legacy index, scope dışı çakışma üretiyordu (country/module ayrımı olmadan)
+        await conn.execute(text("DROP INDEX IF EXISTS uq_categories_parent_slug"))
+
+        dedup_result = await conn.execute(
+            text(
+                """
+                WITH ranked AS (
+                    SELECT
+                        id,
+                        row_number() OVER (
+                            PARTITION BY
+                                coalesce(country_code, '__GLOBAL__'),
+                                module,
+                                coalesce(parent_id, '00000000-0000-0000-0000-000000000000'::uuid),
+                                lower(coalesce(slug->>'tr', ''))
+                            ORDER BY
+                                created_at ASC NULLS LAST,
+                                id ASC
+                        ) AS rn
+                    FROM categories
+                    WHERE is_deleted = false
+                )
+                UPDATE categories c
+                SET
+                    is_deleted = true,
+                    is_enabled = false,
+                    deleted_at = COALESCE(c.deleted_at, now()),
+                    updated_at = now()
+                FROM ranked r
+                WHERE c.id = r.id
+                  AND r.rn > 1
+                RETURNING c.id
+                """
+            )
+        )
+        dedup_rows = dedup_result.fetchall()
+
+        await conn.execute(
+            text(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS uq_categories_scope_slug
+                ON categories (
+                    coalesce(country_code, '__GLOBAL__'),
+                    module,
+                    coalesce(parent_id, '00000000-0000-0000-0000-000000000000'::uuid),
+                    lower(coalesce(slug->>'tr', ''))
+                )
+                WHERE is_deleted = false
+                """
+            )
+        )
+
+        if dedup_rows:
+            logging.getLogger("sql_config").warning(
+                "Category slug scope dedup applied. soft_deleted_duplicates=%s",
+                len(dedup_rows),
+            )
+    except Exception as exc:
+        logging.getLogger("sql_config").warning("Category scope slug index check failed: %s", exc)
 
 
 async def _seed_finance_defaults(session: AsyncSession) -> None:
@@ -10735,7 +10799,13 @@ async def validate_category_selection(
     try:
         category_uuid = uuid.UUID(category_id)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Invalid category id") from exc
+        raise _category_error(
+            "CATEGORY_ID_INVALID",
+            "Kategori kimliği geçersiz.",
+            status_code=400,
+            field_name="category_id",
+            conflict={"category_id": category_id},
+        ) from exc
 
     result = await session.execute(
         select(Category)
@@ -15968,6 +16038,8 @@ async def _assert_category_sort_available(
                 "parent_id": str(conflict.parent_id) if conflict.parent_id else None,
                 "module": conflict.module,
                 "country_code": conflict.country_code,
+                "existing_category_id": str(conflict.id),
+                "conflict_fields": ["country_code", "module", "parent_id", "sort_order"],
             },
         )
 
@@ -16024,8 +16096,28 @@ def _raise_category_integrity_error(exc: IntegrityError) -> None:
             "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor.",
             status_code=409,
             field_name="sort_order",
+            conflict={
+                "existing_category_id": None,
+                "conflict_fields": ["country_code", "module", "parent_id", "sort_order"],
+            },
         ) from exc
-    raise _category_error("CATEGORY_CONFLICT", "Kategori kaydı çakıştı.", status_code=409) from exc
+    if "uq_categories_scope_slug" in message or "uq_categories_parent_slug" in message:
+        raise _category_error(
+            "CATEGORY_SLUG_CONFLICT",
+            "Bu slug seçili kapsam içinde zaten kullanılıyor.",
+            status_code=409,
+            field_name="slug",
+            conflict={
+                "existing_category_id": None,
+                "conflict_fields": ["country_code", "module", "parent_id", "slug"],
+            },
+        ) from exc
+    raise _category_error(
+        "CATEGORY_CONFLICT",
+        "Kategori kaydı çakıştı.",
+        status_code=409,
+        conflict={"existing_category_id": None, "conflict_fields": []},
+    ) from exc
 
 
 async def _next_category_sort_order(
@@ -29181,6 +29273,133 @@ async def admin_list_categories(
     return payload
 
 
+@api_router.get("/admin/categories/resolve")
+async def admin_resolve_category(
+    request: Request,
+    category_id: Optional[str] = None,
+    slug: Optional[str] = None,
+    name: Optional[str] = None,
+    country: Optional[str] = None,
+    module: Optional[str] = None,
+    parent_id: Optional[str] = None,
+    parent_is_root: bool = False,
+    current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    del request
+
+    country_code = country.upper() if country else None
+    if country_code:
+        _assert_country_scope(country_code, current_user)
+    module_value = _normalize_category_module(module) if module else None
+
+    if category_id:
+        try:
+            category_uuid = uuid.UUID(category_id)
+        except ValueError as exc:
+            raise _category_error(
+                "CATEGORY_ID_INVALID",
+                "Kategori kimliği geçersiz.",
+                status_code=400,
+                field_name="category_id",
+                conflict={"category_id": category_id},
+            ) from exc
+
+        category = await session.get(Category, category_uuid)
+        if not category or category.is_deleted:
+            raise _category_error(
+                "CATEGORY_NOT_FOUND",
+                "Kategori bulunamadı.",
+                status_code=404,
+                field_name="category_id",
+                conflict={"category_id": category_id},
+            )
+
+        if category.country_code:
+            _assert_country_scope(category.country_code, current_user)
+
+        return {
+            "category": _serialize_category_sql(category, include_schema=True, include_translations=False),
+            "resolved_by": "category_id",
+        }
+
+    slug_value = _normalize_category_slug_input(slug) if slug else ""
+    name_value = str(name or "").strip()
+    if not slug_value and not name_value:
+        raise _category_error(
+            "CATEGORY_RESOLVE_QUERY_REQUIRED",
+            "Slug veya name zorunludur.",
+            status_code=400,
+        )
+
+    parent_uuid: Optional[uuid.UUID] = None
+    if parent_id:
+        try:
+            parent_uuid = uuid.UUID(parent_id)
+        except ValueError as exc:
+            raise _category_error(
+                "PARENT_ID_INVALID",
+                "Üst kategori kimliği geçersiz.",
+                status_code=400,
+                field_name="parent_id",
+                conflict={"parent_id": parent_id},
+            ) from exc
+
+    query = (
+        select(Category)
+        .options(selectinload(Category.translations))
+        .where(Category.is_deleted.is_(False))
+    )
+    if module_value:
+        query = query.where(Category.module == module_value)
+    if country_code is not None:
+        query = query.where(Category.country_code == country_code)
+    if parent_uuid:
+        query = query.where(Category.parent_id == parent_uuid)
+    elif parent_is_root:
+        query = query.where(Category.parent_id.is_(None))
+
+    rows = (
+        await session.execute(
+            query.order_by(Category.updated_at.desc().nullslast(), Category.created_at.desc().nullslast())
+        )
+    ).scalars().all()
+
+    target = None
+    if slug_value:
+        target = next((row for row in rows if _pick_category_slug(row.slug) == slug_value), None)
+    if not target and name_value:
+        lowered_name = name_value.lower()
+        target = next(
+            (
+                row
+                for row in rows
+                if _pick_category_name(list(row.translations or []), _pick_category_slug(row.slug)).strip().lower() == lowered_name
+            ),
+            None,
+        )
+
+    if not target:
+        raise _category_error(
+            "CATEGORY_NOT_FOUND",
+            "Kategori bulunamadı.",
+            status_code=404,
+            conflict={
+                "slug": slug_value or None,
+                "name": name_value or None,
+                "country_code": country_code,
+                "module": module_value,
+                "parent_id": str(parent_uuid) if parent_uuid else (None if not parent_is_root else "__root__"),
+                "parent_is_root": bool(parent_is_root),
+            },
+        )
+
+    return {
+        "category": _serialize_category_sql(target, include_schema=True, include_translations=False),
+        "resolved_by": "slug" if slug_value else "name",
+    }
+
+
 REAL_ESTATE_STANDARD_LEVELS = {
     "l1": ["Emlak"],
     "l2": ["Konut", "Ticari Alan", "Arsa"],
@@ -30662,19 +30881,14 @@ async def admin_create_category(
         )
     )
     existing_categories = slug_query.scalars().all()
-    if any(_pick_category_slug(cat.slug) == slug for cat in existing_categories):
-        raise _category_error(
-            "CATEGORY_SLUG_CONFLICT",
-            "Bu slug seçili üst kategori altında zaten kullanılıyor.",
-            status_code=409,
-            field_name="slug",
-            conflict={
-                "slug": slug,
-                "parent_id": str(parent.id) if parent else None,
-                "module": module_value,
-                "country_code": country_code,
-            },
-        )
+    existing_slug_category = next((cat for cat in existing_categories if _pick_category_slug(cat.slug) == slug), None)
+    if existing_slug_category:
+        reused_payload = {
+            "category": _serialize_category_sql(existing_slug_category, include_schema=True, include_translations=False),
+            "reused": True,
+            "category_id": str(existing_slug_category.id),
+        }
+        return JSONResponse(status_code=200, content=reused_payload)
 
     now = datetime.now(timezone.utc)
     hierarchy_complete = payload.hierarchy_complete if payload.hierarchy_complete is not None else True
@@ -30685,7 +30899,16 @@ async def admin_create_category(
         schema = _sanitize_category_schema_icon_svg(schema)
         schema_status = schema.get("status", "published")
         if not hierarchy_complete:
-            raise HTTPException(status_code=409, detail="Kategori hiyerarşisi tamamlanmadan kaydedilemez")
+            raise _category_error(
+                "CATEGORY_HIERARCHY_REQUIRED",
+                "Kategori hiyerarşisi tamamlanmadan kaydedilemez.",
+                status_code=409,
+                field_name="hierarchy_complete",
+                conflict={
+                    "existing_category_id": None,
+                    "conflict_fields": ["hierarchy_complete"],
+                },
+            )
         if schema_status != "draft":
             _validate_category_schema(schema)
 
@@ -30801,7 +31024,11 @@ async def admin_create_category(
         .where(Category.id == category.id)
     )
     created = result.scalar_one()
-    return {"category": _serialize_category_sql(created, include_schema=True, include_translations=False)}
+    return {
+        "category": _serialize_category_sql(created, include_schema=True, include_translations=False),
+        "reused": False,
+        "category_id": str(created.id),
+    }
 
 
 @api_router.patch(
@@ -30846,7 +31073,13 @@ async def admin_update_category(
     try:
         category_uuid = uuid.UUID(category_id)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Invalid category id") from exc
+        raise _category_error(
+            "CATEGORY_ID_INVALID",
+            "Kategori kimliği geçersiz.",
+            status_code=400,
+            field_name="category_id",
+            conflict={"category_id": category_id},
+        ) from exc
 
     result = await session.execute(
         select(Category)
@@ -30855,7 +31088,13 @@ async def admin_update_category(
     )
     category = result.scalar_one_or_none()
     if not category:
-        raise HTTPException(status_code=404, detail="Category not found")
+        raise _category_error(
+            "CATEGORY_NOT_FOUND",
+            "Kategori bulunamadı.",
+            status_code=404,
+            field_name="category_id",
+            conflict={"category_id": category_id},
+        )
 
     if payload.expected_updated_at is not None:
         current_updated_at = category.updated_at.isoformat() if category.updated_at else None
@@ -30868,6 +31107,8 @@ async def admin_update_category(
                 conflict={
                     "current_updated_at": current_updated_at,
                     "expected_updated_at": payload.expected_updated_at,
+                    "existing_category_id": str(category.id),
+                    "conflict_fields": ["expected_updated_at"],
                 },
             )
 
@@ -30899,7 +31140,16 @@ async def admin_update_category(
                 )
             )
             if (child_count.scalar_one() or 0) > 0:
-                raise HTTPException(status_code=409, detail="Kategori çocukları varken module değiştirilemez")
+                raise _category_error(
+                    "CATEGORY_MODULE_CHANGE_BLOCKED",
+                    "Kategori çocukları varken modül değiştirilemez.",
+                    status_code=409,
+                    field_name="module",
+                    conflict={
+                        "existing_category_id": str(category.id),
+                        "conflict_fields": ["module"],
+                    },
+                )
         updates["module"] = module_value
 
     if payload.parent_id is not None:
@@ -30986,14 +31236,31 @@ async def admin_update_category(
         schema_status = schema.get("status", "published")
         hierarchy_complete = updates.get("hierarchy_complete", category.hierarchy_complete)
         if not hierarchy_complete:
-            raise HTTPException(status_code=409, detail="Kategori hiyerarşisi tamamlanmadan kaydedilemez")
+            raise _category_error(
+                "CATEGORY_HIERARCHY_REQUIRED",
+                "Kategori hiyerarşisi tamamlanmadan kaydedilemez.",
+                status_code=409,
+                field_name="hierarchy_complete",
+                conflict={
+                    "existing_category_id": str(category.id),
+                    "conflict_fields": ["hierarchy_complete"],
+                },
+            )
         if schema_status != "draft":
             dirty_steps = []
             wizard_progress_payload = payload.wizard_progress or category.wizard_progress or {}
             if isinstance(wizard_progress_payload, dict):
                 dirty_steps = wizard_progress_payload.get("dirty_steps") or []
             if dirty_steps:
-                raise HTTPException(status_code=409, detail="Dirty adımlar tamamlanmadan yayınlanamaz")
+                raise _category_error(
+                    "CATEGORY_DIRTY_STEPS_PENDING",
+                    "Dirty adımlar tamamlanmadan yayınlanamaz.",
+                    status_code=409,
+                    conflict={
+                        "existing_category_id": str(category.id),
+                        "conflict_fields": ["wizard_progress.dirty_steps"],
+                    },
+                )
             _validate_category_schema(schema)
         updates["form_schema"] = schema
 
@@ -31045,7 +31312,8 @@ async def admin_update_category(
             )
         )
         scope_categories = scope_query.scalars().all()
-        if any(_pick_category_slug(cat.slug) == updates["slug"] for cat in scope_categories):
+        conflict_category = next((cat for cat in scope_categories if _pick_category_slug(cat.slug) == updates["slug"]), None)
+        if conflict_category:
             raise _category_error(
                 "CATEGORY_SLUG_CONFLICT",
                 "Bu slug aynı üst kategori altında zaten kullanılıyor.",
@@ -31056,6 +31324,8 @@ async def admin_update_category(
                     "parent_id": str(effective_parent_id) if effective_parent_id else None,
                     "module": module_value,
                     "country_code": country_value,
+                    "existing_category_id": str(conflict_category.id),
+                    "conflict_fields": ["country_code", "module", "parent_id", "slug"],
                 },
             )
 

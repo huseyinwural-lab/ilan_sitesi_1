@@ -1,0 +1,86 @@
+{
+  "summary": "Iteration 171: Category yapısal revizyon paketi test edildi. (1) BE idempotent upsert: same country+module+parent+slug için 200 reused:true döndürülüyor - PASS, (2) 409 payloadında conflict_fields mevcut - PASS, (3) GET /api/admin/categories/resolve category_id ve slug bazlı resolve yapıyor - PASS, (4) Admin Categories wizard modal header 'Kategori Kayıt Yönetimi', CTA 'Kayıt Yönetimi' ve yeni açıklama metni görünüyor - PASS, (5) Admin login + /admin/categories sayfası regresyon testi - PASS",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "Environment",
+        "issue": "Preview ortamı zaman zaman 502/503 döndürüyor (transient DB connection errors)",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_171_category_upsert_selfheal.py",
+    "/app/test_reports/pytest/pytest_results_171.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "POST /api/admin/categories idempotent upsert - aynı scope (country+module+parent+slug) için 200 reused:true döner",
+    "_raise_category_integrity_error fonksiyonu conflict_fields ve existing_category_id alanları içeriyor",
+    "GET /api/admin/categories/resolve endpointi category_id ile doğrudan, slug/name+country+module+parent ile filtreleyerek resolve yapıyor",
+    "Frontend requestCategoryMutationWithRetry ve resolveCategoryForSelfHeal fonksiyonları 404/409 durumlarında self-heal mekanizması içeriyor",
+    "p80_category_scope_slug_unique.py migration dosyası partial unique index ve dedup guard oluşturuyor"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_171_category_upsert_selfheal.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!"
+  },
+  "seed_data_creation": "Test categories created with prefix test-upsert-*, test-conflict-*, test-resolve-*",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Category yapısal revizyon paketi tam test edildi. Backend: idempotent upsert (reused:true), resolve endpoint (category_id/slug), 409 conflict_fields, contextual error messages. Frontend: modal header 'Kategori Kayıt Yönetimi', CTA 'Kayıt Yönetimi', 404/409 açıklama metni, wizard steps tümü görünür. Preview ortamı zaman zaman transient 502/503 döndürüyor (retry logic eklendi).",
+  "backend_api_verification": {
+    "endpoints_tested": [
+      {"endpoint": "POST /api/admin/categories (idempotent upsert)", "status": "200/201", "result": "PASS", "note": "Aynı slug için 200 reused:true döner"},
+      {"endpoint": "POST /api/admin/categories (new create)", "status": 201, "result": "PASS"},
+      {"endpoint": "GET /api/admin/categories/resolve?category_id=X", "status": 200, "result": "PASS", "note": "resolved_by: category_id"},
+      {"endpoint": "GET /api/admin/categories/resolve?slug=X&country=DE&module=vehicle", "status": 200, "result": "PASS", "note": "resolved_by: slug"},
+      {"endpoint": "GET /api/admin/categories/resolve (not found)", "status": 404, "result": "PASS", "note": "CATEGORY_NOT_FOUND error_code"},
+      {"endpoint": "GET /api/admin/categories/resolve (missing params)", "status": 400, "result": "PASS"},
+      {"endpoint": "GET /api/admin/categories", "status": 200, "result": "PASS"},
+      {"endpoint": "GET /api/admin/categories?country=DE", "status": 200, "result": "PASS"},
+      {"endpoint": "POST /api/admin/categories (invalid parent_id)", "status": 400, "result": "PASS", "note": "PARENT_ID_INVALID error_code"},
+      {"endpoint": "POST /api/admin/categories (invalid module)", "status": 422, "result": "PASS"}
+    ]
+  },
+  "ui_verification": {
+    "admin_categories_page": {
+      "page_loads": true,
+      "page_title_visible": true,
+      "filters_visible": true,
+      "category_list_visible": true
+    },
+    "category_modal": {
+      "modal_header": "Kategori Kayıt Yönetimi",
+      "create_cta_text": "Kayıt Yönetimi",
+      "description_text_404_409": "Yeni ve mevcut kayıtlar tek akışta yönetilir; 404/409 durumunda sistem otomatik yeniden bağlanmayı dener.",
+      "wizard_steps": ["Kategori", "Çekirdek Alanlar", "Parametre Alanları (2a)", "Detay Grupları (2c)", "Modüller", "Önizleme"],
+      "status_badges": ["Hierarchy: OK", "Forms: OK", "Rules: OK"]
+    },
+    "self_heal_description_present": true
+  },
+  "mocked_apis": {
+    "academy.modules": "MOCKED (bilinen eski backlog)"
+  },
+  "features_verified": [
+    "POST /api/admin/categories idempotent upsert: aynı country+module+parent+slug için 200 reused:true + category_id dönüyor - PASS",
+    "Çözülemeyen 409 payloadında conflict_fields ve existing_category_id alanları mevcut - PASS",
+    "GET /api/admin/categories/resolve endpointi category_id ve slug tabanlı resolve yapıyor - PASS",
+    "Admin Categories wizard save akışında 404/409 alınırsa kullanıcı modaldan düşmeden rebind/self-heal ile devam ediyor (code review) - PASS",
+    "UI/UX: modal başlığı 'Kategori Kayıt Yönetimi', create CTA 'Kayıt Yönetimi' ve yeni açıklama metni görünüyor - PASS",
+    "Kategori akışında generic server error yerine bağlamsal hata mesajı kullanılıyor - PASS",
+    "Kritik regresyon: admin login + /admin/categories sayfası + modal açılışı bozulmamış - PASS"
+  ]
+}
