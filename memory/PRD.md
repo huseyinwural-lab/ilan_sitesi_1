@@ -2911,3 +2911,47 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - P3.1/P3.2/P3.3 doğrulandı
   - regresyon bulunmadı
 - `deep_testing_backend_v2` PASS (guard + draft preview auth + resolve/binding sanity)
+
+---
+
+## 2026-03-07 (P0 Regresyon Doğrulama + Faz 1 Telemetry SLO/Trend)
+
+### Kullanıcı Seçimleri (bu iterasyon için uygulanan)
+- Faz sırası: **A (1 → 6 sıralı)**
+- İlk yürütme: **P0 regresyon doğrulama**, ardından **Faz 1 Telemetry**
+- Telemetry gösterimi: **A (p95 + success/failure rate + trend grafiği)**
+
+### P0 Regresyon Doğrulama Sonucu
+- Kategori akışları doğrulandı: create / update / delete.
+- Layout publish scope-conflict ve permanent delete güvenlik kontrolleri doğrulandı.
+- RBAC temel kontrolü doğrulandı: dealer kullanıcı admin endpoint'lerine erişemiyor (403).
+
+### Faz 1 — Telemetry Operasyon Hardening (Uygulananlar)
+- Backend `GET /api/admin/revision-redirect-telemetry` zenginleştirildi:
+  - `success_rate_pct`, `failure_rate_pct`
+  - `daily_trend` (7/14/30 gün destekli)
+  - `slo` bloğu (target/current/status)
+- Backend tarafında günlük trend hesaplama helper’ı eklendi.
+- Frontend `AdminRevisionRedirectTelemetry` güncellendi:
+  - success/failure rate kartları
+  - SLO durumu bloğu
+  - failure reason distribution görünümü
+  - günlük trend görünümü + trend gün filtresi (7/14/30)
+
+### Test ve Doğrulama
+- Yerel pytest:
+  - `test_category_edit_save_slug_conflict.py` ✅
+  - `test_p77_publish_conflict_permanent_delete.py` ✅
+  - `test_iteration_161_revision_redirect_telemetry.py` ✅
+- Testing agent raporu: `/app/test_reports/iteration_166.json` ✅
+- `auto_frontend_testing_agent`: ✅ PASS (telemetry sayfası, filtreler, trend gün sayısı)
+- `deep_testing_backend_v2`: ✅ PASS (P0 + RBAC + Faz1 telemetry API)
+
+### Güncel Öncelik Listesi
+- **P1 (Sıradaki):**
+  1. Faz 2 — Retention cleanup dry-run + admin onay modalı + audit kaydı
+  2. Faz 3 — `release_meta.json` şema doğrulaması + artifact integrity kontrolü + eksik metadata raporu
+  3. Faz 4 — Büyük CSV export async job + state yönetimi + cancel
+  4. Faz 5 — Redirect deep-link UX (hata/retry/quick actions)
+  5. Faz 6 — Final regresyon + RBAC doğrulama
+- **P2 (Backlog):** Component API Health Indicator, Category cache, List/Search UX, Address Form UI, Visual diff, Apple social login.
