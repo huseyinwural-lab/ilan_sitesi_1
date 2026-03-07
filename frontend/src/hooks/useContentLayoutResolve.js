@@ -7,6 +7,8 @@ export const useContentLayoutResolve = ({
   module,
   pageType,
   categoryId,
+  sourcePolicy,
+  allowDraftPreview = true,
   enabled = true,
 }) => {
   const [loading, setLoading] = useState(false);
@@ -20,14 +22,15 @@ export const useContentLayoutResolve = ({
     params.set('module', String(module));
     params.set('page_type', String(pageType));
     if (categoryId) params.set('category_id', String(categoryId));
-    if (typeof window !== 'undefined') {
+    if (sourcePolicy) params.set('source_policy', String(sourcePolicy));
+    if (allowDraftPreview && typeof window !== 'undefined') {
       const mode = new URLSearchParams(window.location.search).get('layout_preview');
       if (mode && mode.toLowerCase() === 'draft') {
         params.set('layout_preview', 'draft');
       }
     }
     return params.toString();
-  }, [enabled, country, module, pageType, categoryId]);
+  }, [enabled, country, module, pageType, categoryId, sourcePolicy, allowDraftPreview]);
 
   useEffect(() => {
     if (!queryString) {

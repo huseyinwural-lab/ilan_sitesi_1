@@ -30,6 +30,8 @@ export default function HomePageRefreshed() {
     country: countryCode,
     module: 'global',
     pageType: 'home',
+    sourcePolicy: 'content_builder_only',
+    allowDraftPreview: false,
     enabled: Boolean(countryCode),
   });
 

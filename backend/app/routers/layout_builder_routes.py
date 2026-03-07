@@ -1097,9 +1097,17 @@ class LayoutResetAndWireframePayload(BaseModel):
     hard_delete_demo_pages: bool = True
 
 
-def _cache_key(country: str, module: str, page_type: LayoutPageType, category_id: Optional[str], lang: str = "tr") -> str:
+def _cache_key(
+    country: str,
+    module: str,
+    page_type: LayoutPageType,
+    category_id: Optional[str],
+    lang: str = "tr",
+    source_policy: str = "",
+) -> str:
     normalized_category = str(category_id or "").strip().lower()
-    return f"{country.upper()}|{module.strip().lower()}|{page_type.value}|{normalized_category}|{_normalize_i18n_lang(lang)}"
+    normalized_policy = str(source_policy or "").strip().lower() or "default"
+    return f"{country.upper()}|{module.strip().lower()}|{page_type.value}|{normalized_category}|{_normalize_i18n_lang(lang)}|policy:{normalized_policy}"
 
 
 def _invalidate_resolve_cache() -> None:
@@ -6032,6 +6040,7 @@ async def resolve_content_layout(
     page_type: LayoutPageType,
     category_id: Optional[str] = None,
     layout_preview: str = Query(default="published"),
+    source_policy: str = Query(default=""),
     request: Request = None,
     current_user=Depends(get_current_user_optional),
     session: AsyncSession = Depends(get_db),
@@ -6040,6 +6049,13 @@ async def resolve_content_layout(
     normalized_country = country.upper()
     normalized_module = module.strip()
     preview_mode = "draft" if str(layout_preview).strip().lower() == "draft" else "published"
+    normalized_source_policy = str(source_policy or "").strip().lower()
+
+    if normalized_source_policy and normalized_source_policy not in {"content_builder_only"}:
+        raise HTTPException(status_code=400, detail="invalid_source_policy")
+
+    if normalized_source_policy == "content_builder_only" and page_type == LayoutPageType.HOME and preview_mode != "published":
+        raise HTTPException(status_code=400, detail="content_builder_only_requires_published_preview")
 
     if preview_mode == "draft":
         if not current_user or current_user.get("role") not in ADMIN_ROLES:
@@ -6048,7 +6064,14 @@ async def resolve_content_layout(
     requested_lang = _resolve_request_i18n_lang(request, current_user=current_user)
 
     _METRICS["resolve_requests"] += 1
-    key = _cache_key(normalized_country, normalized_module, page_type, category_id, requested_lang)
+    key = _cache_key(
+        normalized_country,
+        normalized_module,
+        page_type,
+        category_id,
+        requested_lang,
+        normalized_source_policy,
+    )
     now_ts = time.time()
     cached = _RESOLVE_CACHE.get(key) if preview_mode == "published" else None
     if cached and cached[0] > now_ts:
@@ -6074,6 +6097,16 @@ async def resolve_content_layout(
         "comparison": _localize_payload_values(payload.get("comparison"), requested_lang),
         "lang": requested_lang,
     }
+
+    if normalized_source_policy == "content_builder_only" and page_type == LayoutPageType.HOME:
+        revision_payload = localized_payload.get("revision") if isinstance(localized_payload, dict) else {}
+        payload_json = revision_payload.get("payload_json") if isinstance(revision_payload, dict) else {}
+        rows = payload_json.get("rows") if isinstance(payload_json, dict) else []
+        revision_status = str(revision_payload.get("status") or "").lower() if isinstance(revision_payload, dict) else ""
+
+        if revision_status != "published" or not isinstance(rows, list) or len(rows) == 0:
+            raise HTTPException(status_code=409, detail="home_content_builder_published_revision_required")
+        localized_payload["source_policy"] = "content_builder_only"
 
     if preview_mode == "published":
         _RESOLVE_CACHE[key] = (now_ts + RESOLVE_CACHE_TTL_SECONDS, localized_payload)

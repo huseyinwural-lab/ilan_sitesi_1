@@ -1247,7 +1247,27 @@ export default function AdminContentList() {
           <p className="mt-2 text-xs text-emerald-700" data-testid="admin-content-list-status-message">{statusMessage}</p>
         ) : null}
         {contentListError ? (
-          <p className="mt-2 text-xs text-rose-700" data-testid="admin-content-list-error-message">{contentListError}</p>
+          <div className="mt-2 rounded border border-rose-200 bg-rose-50 p-2" data-testid="admin-content-list-error-wrap">
+            <p className="text-xs text-rose-700" data-testid="admin-content-list-error-message">{contentListError}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2" data-testid="admin-content-list-error-actions">
+              <button
+                type="button"
+                className="h-8 rounded border border-rose-300 bg-white px-2 text-[11px] text-rose-700"
+                onClick={() => fetchContentList()}
+                data-testid="admin-content-list-error-retry-button"
+              >
+                Yeniden Dene
+              </button>
+              <button
+                type="button"
+                className="h-8 rounded border border-slate-300 bg-white px-2 text-[11px] text-slate-700"
+                onClick={() => navigate('/admin/revisions/00000000-0000-0000-0000-000000000000')}
+                data-testid="admin-content-list-error-deep-link-test-button"
+              >
+                Deep-Link Kontrol
+              </button>
+            </div>
+          </div>
         ) : null}
       </section>
     </div>
