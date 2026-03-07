@@ -322,6 +322,18 @@ const parseApiError = (payload, fallbackMessage) => {
   };
 };
 
+const waitMs = (duration) => new Promise((resolve) => setTimeout(resolve, duration));
+
+const isTransientCategorySaveError = (httpStatus, parsed) => {
+  const status = Number(httpStatus || 0);
+  const message = String(parsed?.message || "").toLowerCase();
+  const code = String(parsed?.errorCode || "").toUpperCase();
+  if ([429, 500, 502, 503, 504].includes(status)) return true;
+  if (code.startsWith("DB_")) return true;
+  if (message.includes("database") || message.includes("timeout") || message.includes("service unavailable")) return true;
+  return false;
+};
+
 const safeParseJson = async (response) => {
   const clone = response.clone();
   try {
@@ -1030,6 +1042,44 @@ const AdminCategories = () => {
     return null;
   }, [authHeader]);
 
+  const requestCategoryMutationWithRetry = useCallback(async ({ url, method, payload, fallbackMessage, retries = 3 }) => {
+    let lastParsed = { errorCode: "", message: fallbackMessage, fieldName: "", conflict: null };
+    let lastStatus = 0;
+
+    for (let attempt = 0; attempt < retries; attempt += 1) {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      let data = await safeParseJson(res);
+      if (!res.ok && (!data || Object.keys(data).length === 0)) {
+        data = { message: `Sunucu hatası (${res.status})` };
+      }
+
+      if (res.ok) {
+        return { ok: true, data, status: res.status };
+      }
+
+      const parsed = parseApiError(data, fallbackMessage);
+      lastParsed = parsed;
+      lastStatus = res.status;
+
+      if (isTransientCategorySaveError(res.status, parsed) && attempt < retries - 1) {
+        await waitMs(250 * (attempt + 1));
+        continue;
+      }
+
+      return { ok: false, parsed, status: res.status, data };
+    }
+
+    return { ok: false, parsed: lastParsed, status: lastStatus, data: {} };
+  }, [authHeader]);
+
   const createCategoryWithSortFallback = useCallback(async (initialPayload, fallbackMessage) => {
     const moduleValue = (initialPayload.module || "").trim().toLowerCase();
     const countryCode = (initialPayload.country_code || "").trim().toUpperCase();
@@ -1042,24 +1092,18 @@ const AdminCategories = () => {
     };
 
     for (let attempt = 0; attempt < 12; attempt += 1) {
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`, {
+      const mutation = await requestCategoryMutationWithRetry({
+        url: `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories`,
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...authHeader,
-        },
-        body: JSON.stringify(payload),
+        payload,
+        fallbackMessage,
+        retries: 3,
       });
-
-      let data = await safeParseJson(res);
-      if (!res.ok && (!data || Object.keys(data).length === 0)) {
-        data = { message: `Sunucu hatası (${res.status})` };
-      }
-      if (res.ok) {
-        return { ok: true, data, payload, autoAdjusted: attempt > 0 };
+      if (mutation.ok) {
+        return { ok: true, data: mutation.data, payload, autoAdjusted: attempt > 0 };
       }
 
-      const parsed = parseApiError(data, fallbackMessage);
+      const parsed = mutation.parsed;
 
       const parsedMessageLower = String(parsed?.message || "").toLowerCase();
       const hasSlugConflict = parsed.errorCode === "CATEGORY_SLUG_CONFLICT" || parsed.fieldName === "slug";
@@ -1087,7 +1131,7 @@ const AdminCategories = () => {
     }
 
     return { ok: false, parsed: { errorCode: "", message: fallbackMessage }, payload };
-  }, [authHeader, findNextAvailableSortOrder]);
+  }, [findNextAvailableSortOrder, requestCategoryMutationWithRetry]);
 
   const fetchVersions = async () => {
     if (!editing?.id) return;
@@ -2952,19 +2996,17 @@ const AdminCategories = () => {
           }
           data = created.data;
         } else {
-          const res = await fetch(url, {
+          const mutation = await requestCategoryMutationWithRetry({
+            url,
             method,
-            headers: {
-              "Content-Type": "application/json",
-              ...authHeader,
-            },
-            body: JSON.stringify(basePayload),
+            payload: basePayload,
+            fallbackMessage: "Kategori kaydedilemedi.",
+            retries: 3,
           });
-          data = await res.json().catch(() => ({}));
-          if (!res.ok) {
-            const parsed = parseApiError(data, "Kategori kaydedilemedi.");
-            throw new Error(parsed.message);
+          if (!mutation.ok) {
+            throw new Error(mutation.parsed.message);
           }
+          data = mutation.data;
         }
         const saved = data?.category || node;
         const childNodes = node.is_leaf ? [] : await persistSubcategories(node.children || [], saved.id || node.id);
@@ -2982,13 +3024,10 @@ const AdminCategories = () => {
       let updatedParent = editing;
 
       if (editing) {
-        const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${editing.id}`, {
+        const mutation = await requestCategoryMutationWithRetry({
+          url: `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${editing.id}`,
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            ...authHeader,
-          },
-          body: JSON.stringify({
+          payload: {
             name,
             slug,
             country_code: country,
@@ -3001,11 +3040,12 @@ const AdminCategories = () => {
             wizard_progress: { state: progressState, dirty_steps: dirtyStepsOverride },
             wizard_edit_event: wizardEditEvent || undefined,
             expected_updated_at: editing.updated_at,
-          }),
+          },
+          fallbackMessage: "Kategori güncellenemedi.",
+          retries: 3,
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          const parsed = parseApiError(data, "Kategori güncellenemedi.");
+        if (!mutation.ok) {
+          const parsed = mutation.parsed;
           if (parsed.fieldName === "slug") {
             setHierarchyFieldErrors((prev) => ({ ...prev, main_slug: parsed.message }));
           }
@@ -3018,6 +3058,7 @@ const AdminCategories = () => {
           setHierarchyError(parsed.message);
           return { success: false };
         }
+        const data = mutation.data;
         updatedParent = data?.category || editing;
       } else {
         const parentPayload = {
@@ -3067,20 +3108,19 @@ const AdminCategories = () => {
       const savedSubs = isVehicleModule ? [] : await persistSubcategories(cleanedSubs, updatedParent.id);
 
       if (!editing && updatedParent?.id && !isVehicleModule) {
-        const patchRes = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${updatedParent.id}`, {
+        const patchMutation = await requestCategoryMutationWithRetry({
+          url: `${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${updatedParent.id}`,
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            ...authHeader,
-          },
-          body: JSON.stringify({ hierarchy_complete: true, wizard_progress: { state: progressState, dirty_steps: dirtyStepsOverride } }),
+          payload: { hierarchy_complete: true, wizard_progress: { state: progressState, dirty_steps: dirtyStepsOverride } },
+          fallbackMessage: "Kategori güncellenemedi.",
+          retries: 3,
         });
-        const patchData = await patchRes.json().catch(() => ({}));
-        if (!patchRes.ok) {
-          const parsed = parseApiError(patchData, "Kategori güncellenemedi.");
+        if (!patchMutation.ok) {
+          const parsed = patchMutation.parsed;
           setHierarchyError(parsed.message);
           return { success: false };
         }
+        const patchData = patchMutation.data;
         updatedParent = patchData?.category || updatedParent;
       }
 

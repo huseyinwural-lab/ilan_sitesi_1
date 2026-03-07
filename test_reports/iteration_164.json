@@ -1,0 +1,111 @@
+{
+  "summary": "Iteration 164: Category edit-save flow verification complete. Backend field-based error messages (field_name, conflict) working correctly. Frontend parseApiError formats 'Alan: <field> • message' with conflict details. Retry mechanism for transient errors (503/timeout) in place.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_category_edit_save_slug_conflict.py",
+    "/app/test_reports/pytest/pytest_results_164.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_category_edit_save_slug_conflict.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@platform.com / Admin123!",
+  "seed_data_creation": "Test categories created and cleaned up automatically",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Category error handling fully implemented. Backend _category_error returns structured detail with error_code, message, field_name, conflict. Frontend parseApiError correctly formats field-based messages.",
+  "verification_summary": {
+    "features_tested": [
+      {
+        "feature": "PATCH /api/admin/categories/{id} - slug unchanged",
+        "expected": "200 OK (no false 409)",
+        "actual": "200 OK",
+        "status": "PASS"
+      },
+      {
+        "feature": "Duplicate slug conflict",
+        "expected": "409 with detail.field_name='slug' and detail.conflict.slug",
+        "actual": "409 with detail.field_name='slug' and detail.conflict.slug",
+        "status": "PASS"
+      },
+      {
+        "feature": "Invalid parent_id format",
+        "expected": "400 with detail.field_name='parent_id' and error_code='PARENT_ID_INVALID'",
+        "actual": "400 with detail.field_name='parent_id' and error_code='PARENT_ID_INVALID'",
+        "status": "PASS"
+      },
+      {
+        "feature": "Non-existent parent_id",
+        "expected": "400 with detail.field_name='parent_id' and error_code='PARENT_ID_NOT_FOUND'",
+        "actual": "400 with detail.field_name='parent_id' and error_code='PARENT_ID_NOT_FOUND'",
+        "status": "PASS"
+      },
+      {
+        "feature": "Sort order conflict",
+        "expected": "409 with detail.field_name='sort_order' and detail.conflict",
+        "actual": "409 with detail.field_name='sort_order' and detail.conflict",
+        "status": "PASS"
+      },
+      {
+        "feature": "Parent module mismatch",
+        "expected": "409 with detail.field_name='parent_id' and error_code='PARENT_MODULE_MISMATCH'",
+        "actual": "409 with detail.field_name='parent_id' and error_code='PARENT_MODULE_MISMATCH'",
+        "status": "PASS"
+      },
+      {
+        "feature": "Error detail structure consistency",
+        "expected": "error_code, message, field_name in detail",
+        "actual": "All fields present correctly",
+        "status": "PASS"
+      }
+    ],
+    "frontend_verification": {
+      "admin_categories_page_loads": true,
+      "category_list_visible": true,
+      "edit_modal_opens": true,
+      "wizard_steps_visible": ["Kategori", "Edit", "Çekirdek Alanlar", "Parametre Alanları", "Detay Grupları", "Modüller", "Önizleme"],
+      "form_fields_present": ["Modül adı", "Slug", "Ülke", "Modül", "Sıra"]
+    },
+    "retry_mechanism": {
+      "file": "/app/frontend/src/pages/admin/AdminCategories.js",
+      "functions": {
+        "isTransientCategorySaveError": "lines 327-335 - identifies transient errors (429, 500, 502, 503, 504, DB_*, database/timeout keywords)",
+        "requestCategoryMutationWithRetry": "lines 1045-1081 - retries up to 3 times with 250ms * (attempt+1) delay",
+        "waitMs": "line 325 - delay helper function"
+      },
+      "transient_error_conditions": [
+        "HTTP status: 429, 500, 502, 503, 504",
+        "Error code starts with DB_",
+        "Message contains: database, timeout, service unavailable"
+      ]
+    },
+    "parseApiError_implementation": {
+      "file": "/app/frontend/src/pages/admin/AdminCategories.js",
+      "lines": "269-323",
+      "format": "Alan: <field_name> • <message>",
+      "conflict_handling": {
+        "sort_order": "Adds (Çakışan kayıt: sıra: X, slug: Y)",
+        "slug": "Adds (Çakışan slug: X)"
+      }
+    }
+  },
+  "test_results": {
+    "total_tests": 7,
+    "passed": 7,
+    "failed": 0,
+    "test_duration": "108.17s"
+  }
+}
