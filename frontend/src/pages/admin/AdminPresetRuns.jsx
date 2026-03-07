@@ -351,9 +351,9 @@ export default function AdminPresetRuns() {
                       <td className="px-2 py-2 font-mono text-[11px]" data-testid={`admin-preset-runs-export-job-id-${job.job_id}`}>{job.job_id}</td>
                       <td className="px-2 py-2" data-testid={`admin-preset-runs-export-job-created-${job.job_id}`}>{formatDateTime(job.created_at)}</td>
                       <td className="px-2 py-2" data-testid={`admin-preset-runs-export-job-status-${job.job_id}`}>
-                        <span className={`inline-flex rounded border px-2 py-1 ${statusValue === 'completed' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : statusValue === 'failed' ? 'border-rose-300 bg-rose-50 text-rose-700' : statusValue === 'cancelled' ? 'border-slate-300 bg-slate-100 text-slate-700' : 'border-amber-300 bg-amber-50 text-amber-700'}`}>
+                        <div className={`inline-flex rounded border px-2 py-1 ${statusValue === 'completed' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : statusValue === 'failed' ? 'border-rose-300 bg-rose-50 text-rose-700' : statusValue === 'cancelled' ? 'border-slate-300 bg-slate-100 text-slate-700' : 'border-amber-300 bg-amber-50 text-amber-700'}`}>
                           {statusValue}
-                        </span>
+                        </div>
                         {job.error_message ? (
                           <p className="mt-1 text-[11px] text-rose-700" data-testid={`admin-preset-runs-export-job-error-${job.job_id}`}>{job.error_message}</p>
                         ) : null}
@@ -426,9 +426,9 @@ export default function AdminPresetRuns() {
                     <td className="px-2 py-2" data-testid={`admin-preset-runs-success-ratio-${row.id}`}>{successRatio}%</td>
                     <td className="px-2 py-2" data-testid={`admin-preset-runs-duration-${row.id}`}>{Number(row.duration_ms || 0)} ms</td>
                     <td className="px-2 py-2" data-testid={`admin-preset-runs-status-${row.id}`}>
-                      <span className={`inline-flex rounded border px-2 py-1 ${row.status === 'success' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : row.status === 'partial_success' ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-rose-300 bg-rose-50 text-rose-700'}`}>
+                      <div className={`inline-flex rounded border px-2 py-1 ${row.status === 'success' ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : row.status === 'partial_success' ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-rose-300 bg-rose-50 text-rose-700'}`}>
                         {row.status}
-                      </span>
+                      </div>
                     </td>
                     <td className="px-2 py-2" data-testid={`admin-preset-runs-actions-${row.id}`}>
                       <button

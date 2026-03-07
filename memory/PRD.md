@@ -2955,3 +2955,79 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   4. Faz 5 — Redirect deep-link UX (hata/retry/quick actions)
   5. Faz 6 — Final regresyon + RBAC doğrulama
 - **P2 (Backlog):** Component API Health Indicator, Category cache, List/Search UX, Address Form UI, Visual diff, Apple social login.
+
+---
+
+## 2026-03-07 (Faz 2 → Faz 6 Tamamlama Paketi)
+
+### Faz 2 — Retention Cleanup (Dry-Run + Admin Onayı)
+- Backend eklendi:
+  - `GET /api/admin/release-retention/dry-run`
+  - `POST /api/admin/release-retention/execute` (confirm + expected_delete_count guard)
+  - `GET /api/admin/release-retention/audit-logs`
+- Dry-run çıktısı: `total_artifacts`, `protected_count`, `delete_candidates_count`, `keep`, `delete`, neden kodları.
+- Kurallar uygulandı: `is_active`, `is_rollback_candidate`, `retention_locked` => KEEP; retention window dışı => DELETE.
+- Audit log modeli eklendi: `layout_release_cleanup_audits`.
+- Frontend eklendi: `/admin/release-retention` paneli
+  - Dry-run tetikleme
+  - KEEP/DELETE diff görünümü
+  - Execute Cleanup butonu + onay modalı
+  - audit log görünümü
+
+### Faz 3 — Release Artifact Integrity
+- Backend eklendi:
+  - `GET /api/admin/release-retention/integrity-scan`
+- `release_meta.json` zorunlu alan doğrulaması eklendi:
+  - `release_id`, `created_at`, `build_commit`, `artifact_hash`, `is_active`, `is_rollback_candidate`
+- Artifact hash doğrulaması eklendi (dosya tabanlı SHA256, `release_meta.json` hariç).
+- Rapor çıktısı: `/app/reports/artifact_integrity_report.json`
+- Script eklendi: `/app/scripts/artifact_integrity_scan.py`
+
+### Faz 4 — Büyük CSV Export Async Job
+- Yeni job modeli: `layout_preset_export_jobs`
+- Lifecycle: `queued`, `running`, `completed`, `failed`, `cancelled`
+- Backend eklendi (admin):
+  - `POST /api/admin/preset-runs/export-jobs`
+  - `GET /api/admin/preset-runs/export-jobs`
+  - `GET /api/admin/preset-runs/export-jobs/{job_id}`
+  - `POST /api/admin/preset-runs/export-jobs/{job_id}/cancel`
+  - `GET /api/admin/preset-runs/export-jobs/{job_id}/download`
+- Backend eklendi (dealer scoped export):
+  - `/api/dealer/preset-runs/export-jobs` create/list/get/cancel/download
+- Config parametreleri eklendi:
+  - `PRESET_EXPORT_MAX_ROWS`, `PRESET_EXPORT_TIMEOUT_SECONDS`, `PRESET_EXPORT_CHUNK_SIZE`, `PRESET_EXPORT_FILE_EXPIRY_HOURS`
+- Frontend güncellendi: `/admin/preset-runs`
+  - Async Export Job Queue paneli
+  - job durumları
+  - Cancel Export
+  - Download
+
+### Faz 5 — Redirect Deep-Link UX
+- `/admin/revisions/:revisionId` ekranı güncellendi:
+  - standart hata kodu görünümü
+  - retry (`Yeniden Dene`)
+  - quick actions (home, admin dashboard, support deep-link)
+  - destek link formatı: `/support?reason=revision_redirect&code=...&revision_id=...`
+- Conflict modal quick action eklendi:
+  - revision id copy butonu (`ID Kopyala`)
+
+### Faz 6 — Final Regresyon + RBAC
+- RBAC doğrulandı:
+  - dealer `/api/admin/*` export/telemetry/cleanup erişimleri 403
+  - cleanup execute yalnızca admin (super_admin)
+  - export yetkileri: admin full, dealer scoped, user yok
+
+### Test Sonuçları
+- Backend pytest:
+  - `/app/backend/tests/test_iteration_167_release_retention_and_export_jobs.py` ✅ 12 passed
+  - `/app/backend/tests/test_iteration_166_p0_regression_faz1.py` ✅ 17 passed
+- Testing agent raporu: `/app/test_reports/iteration_167.json` ✅ PASS
+- Frontend doğrulama (`auto_frontend_testing_agent`) ✅ PASS
+  - release retention
+  - preset runs async export queue
+  - revision redirect standard error UX
+  - categories edit message regression kontrolü
+
+### Açık Kalanlar / Backlog
+- P2 backlog (önceki): Component API Health Indicator, Category cache, List/Search UX, Address Form UI, Visual diff, Apple social login.
+- Düşük öncelik not: Preset Runs tablosunda hydration warning gözlemi (işlevsel blokaj yok).
