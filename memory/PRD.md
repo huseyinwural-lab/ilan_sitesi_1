@@ -3194,3 +3194,40 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - Faz B/C policy enforcement PASS
   - RBAC PASS (dealer/user admin endpointlerinde 403)
   - policy bypass noktaları PASS
+
+## 2026-03-07 — Fork Dev Update (P2 Kapanış Paketi)
+
+### Tamamlananlar
+- **Component API Health Indicator** dashboard içine eklendi (`/admin/dashboard`):
+  - Content Builder kritik endpoint health check kartı
+  - Endpoint bazlı durum (healthy/restricted/degraded/down), HTTP status, latency, manuel yenileme
+  - Test ID kapsamı: `dashboard-component-api-health-*`
+- **Address Form UI** iyileştirildi (`/ilan-ver/detaylar`, edit akışı dahil):
+  - Zorunlu alan tamamlama paneli (% ilerleme + eksik etiketleri)
+  - “Adresi Temizle” aksiyonu (local state + draft patch)
+  - Test ID kapsamı: `ilan-ver-address-completion-*`, `ilan-ver-address-clear-button`
+- **Visual Diff** tamamlandı (`/admin/site-design/content-builder`):
+  - Revision listesi paneli (seçim, canvas’a yükleme, seçim temizleme)
+  - 2 revizyonla modal açılışı
+  - İnsan okunur blok-bazlı diff (row/column/component, added/removed/updated)
+  - Filtre (all/row/column/component), diff cursor prev/next, Raw JSON toggle
+  - Test ID kapsamı: `admin-content-builder-revision-*`, `admin-content-builder-visual-diff-*`
+
+### Regresyon/Sağlamlık İyileştirmesi
+- `ListingCategorySelect` içinde yavaş/hang riskine karşı request timeout katmanı eklendi:
+  - `fetchWithTimeout` helper
+  - Kategori children, listing layout, recent-category çağrıları timeout’lu çalışıyor
+
+### Test Durumu
+- Manual smoke: PASS
+  - Admin login → dashboard (health widget görünüyor)
+  - Admin content-builder (revision panel görünüyor)
+  - User login → `/ilan-ver` modül/kategori akışı çalışıyor (infinite loading yok)
+- Backend curl: PASS (`/api/admin/site/content-layout/components`, `/api/admin/layouts`, `/api/admin/menu-items/health`)
+- Testing agent raporu: `/app/test_reports/iteration_170.json`
+  - P2 feature kod doğrulaması PASS
+  - Önceki medium not için timeout iyileştirmesi uygulandı
+
+### Açık Kalanlar (Backlog)
+- **MOCKED:** `academy.modules`
+- Apple Social Login (kredensiyal bekliyor)

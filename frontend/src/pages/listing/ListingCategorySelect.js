@@ -41,6 +41,16 @@ const DEFAULT_LISTING_SITE_DESIGN = {
   },
 };
 
+const fetchWithTimeout = async (url, options = {}, timeoutMs = 10000) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
 const normalizeListingSiteDesign = (raw) => {
   const source = raw && typeof raw === 'object' ? raw : {};
   const step1 = source.step1 && typeof source.step1 === 'object' ? source.step1 : {};
@@ -331,7 +341,7 @@ const ListingCategorySelect = () => {
 
     const params = new URLSearchParams({ country, module: moduleKey });
     if (parentId) params.append('parent_id', parentId);
-    const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/categories/children?${params.toString()}`);
+    const res = await fetchWithTimeout(`${process.env.REACT_APP_BACKEND_URL}/api/categories/children?${params.toString()}`, {}, 10000);
     if (!res.ok) {
       throw new Error('CATEGORY_CHILD_FETCH_FAILED');
     }
@@ -372,8 +382,8 @@ const ListingCategorySelect = () => {
   const fetchListingLayout = useCallback(async () => {
     try {
       const [layoutRes, listingRes] = await Promise.all([
-        fetch(`${process.env.REACT_APP_BACKEND_URL}/api/site/home-category-layout?country=${country}`),
-        fetch(`${process.env.REACT_APP_BACKEND_URL}/api/site/listing-design`),
+        fetchWithTimeout(`${process.env.REACT_APP_BACKEND_URL}/api/site/home-category-layout?country=${country}`, {}, 8000),
+        fetchWithTimeout(`${process.env.REACT_APP_BACKEND_URL}/api/site/listing-design`, {}, 8000),
       ]);
 
       if (layoutRes.ok) {
@@ -484,11 +494,11 @@ const ListingCategorySelect = () => {
       return;
     }
     try {
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/account/recent-category`, {
+      const res = await fetchWithTimeout(`${process.env.REACT_APP_BACKEND_URL}/api/account/recent-category`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      });
+      }, 6000);
       if (!res.ok) {
         const fallback = readRecentFromStorage();
         setRecentCategory(fallback);
