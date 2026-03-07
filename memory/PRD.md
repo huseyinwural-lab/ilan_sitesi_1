@@ -3109,3 +3109,41 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 - Testing agent iterasyon raporu: `/app/test_reports/iteration_168.json` ✅
   - backend 11/11 pass
   - frontend doğrulama pass
+
+---
+
+## 2026-03-07 (Content-Builder / Content-List Kapanış — Faz A)
+
+### Kullanıcı Kararı
+- 1A: HTML ana sayfa tek kaynak: **Content Builder published revision**
+- 2: Geçiş planı sıralı (**A → B → C**) — bu iterasyonda **A**
+- 3C: Content-list kapanış kriterleri (publish/conflict/retry/quick actions + deep-link)
+
+### Uygulananlar (A Fazı)
+- Backend `resolve_content_layout`:
+  - Yeni query: `source_policy`
+  - `source_policy=content_builder_only` doğrulaması eklendi
+  - `content_builder_only` + `layout_preview=draft` + `page_type=home` => 400
+  - Cache key `source_policy` ile genişletildi (policy bazlı cache ayrımı)
+- Frontend `useContentLayoutResolve`:
+  - `sourcePolicy` ve `allowDraftPreview` parametreleri eklendi
+- `HomePageRefreshed`:
+  - resolve çağrısı artık `source_policy=content_builder_only`
+  - `allowDraftPreview=false` ile draft paramından bağımsız, published-only akış
+
+### Content-List / Deep-Link kapanış notu
+- `AdminContentList` hata bloğuna quick actions eklendi:
+  - `Yeniden Dene`
+  - `Deep-Link Kontrol`
+- Conflict modal quick actions (copy revision id + open revision) mevcut yapı ile doğrulandı.
+- `/admin/revisions/:revisionId` standart hata/retry/quick-actions akışı korunarak doğrulandı.
+
+### Test Sonuçları
+- Backend pytest:
+  - `test_iteration_169_home_source_policy.py` ✅
+  - `test_iteration_168_category_delete_cascade.py` ✅
+- Frontend test agent: ✅ PASS
+  - `/tr` home runtime + source_policy doğrulaması
+  - content-list kapanış kriterleri doğrulaması
+  - deep-link hata ekranı/aksiyonlar doğrulaması
+- Backend deep test: ✅ PASS (`invalid_source_policy`, `content_builder_only_requires_published_preview`, no 500)
