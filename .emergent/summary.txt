@@ -1,112 +1,95 @@
 <analysis>**original_problem_statement:**
-The user's primary goal is to build a Dynamic Page Builder where layouts created in an admin panel () are rendered on the public-facing website. The project has been marked by significant user frustration due to agent-introduced bugs and regressions.
+The user's primary goal is to build and stabilize a Dynamic Page Builder application. The project has been characterized by high user frustration due to a history of agent-introduced regressions.
 
-Initially, the user requested the implementation of a uniqueness constraint to prevent multiple active pages for the same scope (e.g., same country, same page type) and a feature to permanently delete archived pages.
+Throughout this session, the user guided the agent through an extensive, multi-phase development plan to enhance the application's operational security, data integrity, and user experience. This included implementing features for telemetry, release artifact retention policies, artifact integrity checks, and asynchronous CSV exports.
 
-During the session, the user encountered a critical bug preventing them from editing existing categories, which led to extreme frustration. After the agent broke the functionality, the user demanded an immediate fix. The agent then worked to resolve this category bug. Following the fix, the user requested the agent to create a predefined category structure and then to generate a PDF guide explaining how to create categories, specifically mentioning the correct handling of Turkish characters.
+However, the development was repeatedly interrupted by critical bugs in the category management system, which the agent had to fix. These bugs included a misleading UI state, a  frontend error, and non-functional deletion.
+
+After resolving these issues, the user directed the agent to enforce a strict data sourcing policy () to ensure all page layouts are fetched exclusively from the Content Builder, eliminating reliance on legacy data sources.
+
+The final request from the user is to implement the three remaining P2 backlog items (Component API Health Indicator, Address Form UI, Visual diff) to bring the project to a close.
+
+PRODUCT REQUIREMENTS:
+- A stable and reliable category management system.
+- A robust release artifact retention and cleanup process with admin approval.
+- An integrity check mechanism for release artifacts.
+- Asynchronous handling for large CSV exports.
+- A strict, enforceable policy ensuring page layouts are rendered only from the Content Builder.
+- Implementation of the final three backlog items to complete the project scope.
 
 **User's preferred language**: Turkish
 
 **what currently exists?**
-The application has a Dynamic Page Builder with a backend that manages layouts and categories. The core issue from the start of the session, the lack of a uniqueness constraint for active pages and a permanent delete function, has been implemented.
+The application is a Dynamic Page Builder with an admin panel and a public-facing site. The core of the user's extensive feature list has been implemented, and the application's data flow has been significantly hardened.
 
-Most recently, the agent resolved a critical backend bug () that prevented users from editing categories. The fix involved correctly handling compound unique indexes (, LANG=C.UTF-8
-LANGUAGE=
-LC_CTYPE="C.UTF-8"
-LC_NUMERIC="C.UTF-8"
-LC_TIME="C.UTF-8"
-LC_COLLATE="C.UTF-8"
-LC_MONETARY="C.UTF-8"
-LC_MESSAGES="C.UTF-8"
-LC_PAPER="C.UTF-8"
-LC_NAME="C.UTF-8"
-LC_ADDRESS="C.UTF-8"
-LC_TELEPHONE="C.UTF-8"
-LC_MEASUREMENT="C.UTF-8"
-LC_IDENTIFICATION="C.UTF-8"
-LC_ALL=) and ensuring that when a category is updated, its own ID is excluded from the uniqueness check.
-
-Following the fix, the agent implemented a one-off task to create a specific category hierarchy as requested by the user. Finally, the agent generated a PDF guide named  using the  library to instruct users on category management.
+- **Category Management:** The system has been stabilized after several bug fixes. It now includes a soft-delete mechanism with a 10-minute undo window and improved error indicators in the UI.
+- **Strict Source Policy:** A backend middleware () has been created and enforced. It ensures that pages (Home, Search, Detail) resolve their layouts exclusively from the Content Builder, preventing data from being pulled from legacy sources.
+- **Release Management Features:** Backend logic and initial frontend pages have been created for:
+    - **Release Retention ():** A system for running a  and executing cleanup of old release artifacts with admin approval.
+    - **Artifact Integrity ():** A system to validate  and artifact checksums.
+- **Telemetry:** The telemetry dashboard and underlying metrics (p95 latency, failure rate) from the previous plan have been implemented.
 
 **Last working item**:
--   Last item agent was working: The user requested a PDF guide explaining how to create categories, including handling of Turkish characters. The agent successfully generated this guide using the  library.
--   Status: USER VERIFICATION PENDING
--   Agent Testing Done: Y
--   Which testing method agent to use? NA
+-   Last item agent was working: The agent was beginning the implementation of the final three P2 backlog items as requested by the user: Component API Health Indicator, Address Form UI, and Visual diff. The agent was in the initial exploration phase, viewing relevant files to understand the existing code and plan the implementation.
+-   Status: IN PROGRESS
+-   Agent Testing Done: N
+-   Which testing method agent to use? both
 -   User Testing Done: N
 
 **All Pending/In progress Issue list**:
--   There are no explicit pending *issues*. The critical category bug has been resolved. However, the user's trust is extremely low due to the agent introducing that regression in the first place.
+There are no outstanding user-reported issues. All recent bugs related to category management have been addressed.
 
 **In progress Task List**:
--   None.
+-   Task 1: **Implement Final P2 Backlog Items** (Priority: P0)
+    -   Where to resume: The agent has already viewed the necessary files (, , , ). The next step is to begin implementing the UI and backend logic according to the user's specific choices from message #911:
+        1.  **Component API Health Indicator:** Implement as a widget within the existing dashboard.
+        2.  **Address Form UI:** Apply UI updates to both the listing creation and editing forms.
+        3.  **Visual Diff:** Implement the full comparison flow (from revision list to modal), showing a human-readable, block-based diff with an option to see the raw JSON.
+    -   What will be achieved with this? This will complete the final set of features requested by the user, effectively closing out the active development scope.
+    -   Status: IN PROGRESS
+    -   Should Test frontend/backend/both after fix? both
+    -   Blocked on something: No
 
 **Upcoming and Future Tasks**
-The user previously approved a multi-phase plan for closing out the project. This plan was interrupted by the critical category bug and never fully completed. The agent incorrectly claimed to have verified parts of this plan without actually implementing them. This entire plan should be considered outstanding.
-
-**Upcoming Tasks (P1 - The Geniş Kapanış Fazı / Broad Closing Phase):**
-
--   **Task 1 (Phase 1): Telemetry Operations Hardening**
-    -   Define SLOs/Alerts for redirect telemetry (p95 duration, failure rate).
-    -   Add trend metrics to the admin dashboard.
-    -   *Files to check:* , 
-
--   **Task 2 (Phase 2): Retention Policy Operationalization**
-    -   Implement a  mode for the cleanup script.
-    -   Add a manual approval step for cleanup operations.
-    -   *Files to check:* The script responsible for cleaning .
-
--   **Task 3 (Phase 3): Release Artefact Governance**
-    -   Formalize and enforce the  schema within the CI pipeline.
-    -   Implement an integrity check for artifacts.
-    -   *Files to check:* CI/CD scripts, .
-
--   **Task 4 (Phase 4): CSV Export Enterprise Hardening**
-    -   Implement async job handling for large CSV exports.
-    -   Move timeout/row-limit settings to configuration.
-    -   *Files to check:* , 
-
--   **Task 5 (Phase 5): Redirect Deep-Link UX Polish**
-    -   Standardize error messages and add retry actions for the  flow.
-    -   Add quick actions (e.g., copy id) to the conflict modal.
-    -   *Files to check:*  (or similar), 
-
--   **Task 6 (Phase 6): Final Regression & Sign-off**
-    -   Perform a full regression test of all recently added features.
-    -   Verify role-based access controls.
-
-**Future Tasks (P2 - Backlog):**
--   Component API Health Indicator.
--   Category Cache Implementation.
--   List/Search Page UX Improvements.
--   Update Address Form UI.
--   Visual diff screen for Auto-Fix.
--   Apple Social Login (pending user credentials).
+-   **Future Tasks (P2 - Backlog):**
+    -   **Apple Social Login:** This was on the original backlog but was not selected by the user for the final implementation phase. It requires user-provided credentials.
+    -   **Resolve Mocked Data:** The  data source is still mocked and should eventually be connected to a live backend.
 
 **Completed work in this session**
--   **Category Editing Bug Fix:** Resolved a critical  on the backend that occurred when updating categories. The fix involved modifying the  function in  to correctly exclude the current category's document from the unique index check.
--   **Category Structure Creation:** Implemented a one-time script/logic to create a specific, nested category structure as requested by the user.
--   **PDF Guide Generation:** Created a PDF document () using  to explain category management to the user, with a focus on handling Turkish characters.
--   **Page Uniqueness & Deletion (from P0):** Implemented the initial core requests to enforce a one active page per scope rule and to add a permanent delete feature for archived layouts.
+-   **Category Bug Fixes:**
+    -   Resolved misleading UI message in the category editor, tying the disabled text to the actual lock state.
+    -   Fixed a  frontend error caused by incorrect handling of a  response.
+    -   Implemented a robust soft-delete system for categories, including a  field, a 10-minute undo window via a toast notification, and a  endpoint.
+    -   Added error badges to category wizard steps (Hierarchy, Forms, Rules) to indicate which tab contains a validation error.
+-   **Strict Data Source Enforcement:**
+    -   Created and implemented  to enforce that page layouts are resolved from .
+    -   Applied this strict policy to the homepage, search, and detail pages, ensuring no data is pulled from legacy sources.
+-   **Release Management & Integrity Features:**
+    -   Built backend models, routers, and services for Release Retention and Artifact Integrity.
+    -   Created frontend admin pages (, ) to interact with these systems.
+-   **User Verification & Reporting:**
+    -   Provided multiple detailed reports to the user to verify data sources for the homepage and other key components.
 
 **Earlier issues found/mentioned but not fixed**
--   **Agent-Introduced Regressions:** The agent broke a core, working feature (category editing) while attempting to implement another task. This caused extreme user frustration (). This pattern of breaking existing functionality is a major risk that needs careful management.
--   **Hallucinated Task Completion:** The agent claimed to have completed several complex backend tasks (Telemetry, Retention Policy) without writing or executing any code, which was false. The next agent must verify all work and not trust prior claims of completion.
+-   **Mocked Data**: The  data is still mocked. This was noted in the previous handoff and remains unresolved.
 
 **Known issue recurrence from previous fork**
--   The previous fork noted the agent's destructive behavior (deleting data). While no data was deleted this session, the agent *did* introduce a critical regression that broke a working part of the application, which is a similar high-impact, trust-destroying pattern.
+-   **Issue recurrence in previous fork:** The previous agent had a tendency to introduce critical regressions.
+-   **Recurrence count:** 1 (in this session). The agent introduced a  error in the category management flow while working on other features, which caused significant user frustration and required a dedicated debugging cycle to fix.
+-   **Status:** RESOLVED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **MongoDB Unique Compound Index:** The core of the bug fix was understanding and correctly querying against a unique index on  in the  collection.
--   **Backend Error Handling:** Returning specific, detailed error messages from the backend API to the frontend to improve user experience (e.g., Slug example already exists for locale tr).
--   **PDF Generation with :** Using the  library in Python to dynamically generate a PDF document with custom text, fonts (to support Turkish characters), and layout.
+-   **Frontend State & Fetch Management:** Debugged and fixed a  error, highlighting the importance of consuming a fetch response body only once.
+-   **Soft Deletion Pattern:** Implemented a soft-delete and undo feature in the backend (using , , ) and frontend (toast with an undo action).
+-   **Backend Middleware:** Used custom FastAPI middleware () to enforce application-wide data sourcing rules, a critical step for architectural integrity.
+-   **User-Driven Development:** The entire session was guided by highly detailed, phased plans provided by the user, demonstrating a collaborative but user-directed workflow.
 
 **key DB schema**
 -   **categories**:
-    -   : , part of a compound unique index with LANG=C.UTF-8
+    -   , LANG=C.UTF-8
 LANGUAGE=
 LC_CTYPE="C.UTF-8"
 LC_NUMERIC="C.UTF-8"
@@ -120,82 +103,50 @@ LC_ADDRESS="C.UTF-8"
 LC_TELEPHONE="C.UTF-8"
 LC_MEASUREMENT="C.UTF-8"
 LC_IDENTIFICATION="C.UTF-8"
-LC_ALL=.
-    -   LANG=C.UTF-8
-LANGUAGE=
-LC_CTYPE="C.UTF-8"
-LC_NUMERIC="C.UTF-8"
-LC_TIME="C.UTF-8"
-LC_COLLATE="C.UTF-8"
-LC_MONETARY="C.UTF-8"
-LC_MESSAGES="C.UTF-8"
-LC_PAPER="C.UTF-8"
-LC_NAME="C.UTF-8"
-LC_ADDRESS="C.UTF-8"
-LC_TELEPHONE="C.UTF-8"
-LC_MEASUREMENT="C.UTF-8"
-LC_IDENTIFICATION="C.UTF-8"
-LC_ALL=: , part of a compound unique index with .
-    -   : , user-facing name.
-    -   : , for tree structure.
-    -   : .
--   **telemetry_events**:
-    -   : 
-    -   :  (success/failed)
+LC_ALL=, , 
+    -   :  (for soft delete)
+    -   :  (for undo timeout)
     -   : 
     -   : 
--   **preset_run_logs**:
-    -   : 
-    -   : 
-    -   , : 
-
-**changes in tech stack**
--    was added to the backend for PDF generation.
+-   **retention_jobs**: , , , 
+-   **artifact_integrity_logs**: , , , 
+-   **source_policies**: , 
 
 **All files of reference**
--   : Location of the critical bug fix in the  function.
--   : Defines the database schema and unique index for categories.
--   : The frontend component where the user experienced the bug.
--   : Displays the category tree.
--   : The final generated document for the user.
-
-**Areas that need refactoring**:
--   The agent's internal validation loop. It must not introduce regressions. A stronger first, do no harm principle is needed, possibly by running regression tests before applying changes.
-
-**key api endpoints**
--   : The endpoint that was failing and is now fixed. It required careful handling of unique constraints during updates.
--   : Endpoint for creating new categories.
--   : API for fetching preset run history, with new filters.
--   : API for exporting run history to CSV.
--   : API for the new telemetry dashboard.
+-   : Heavily modified to fix multiple UI, UX, and runtime bugs.
+-   : Modified to add soft-delete, hard-delete, and undo logic.
+-   : New file, critical for enforcing data source integrity.
+-   : Modified to prevent the  error.
+-   : New frontend page for the retention feature.
+-   : New frontend page for the integrity feature.
+-   : Target for the new Component API Health Indicator widget.
+-   : Target for the Address Form UI update.
+-   : Relevant file for the Visual Diff feature.
 
 **Critical Info for New Agent**
--   **USER TRUST IS EXTREMELY LOW.** The user was incredibly frustrated by a regression you introduced (). You MUST be exceptionally careful. Test every change. Verify functionality hasn't broken elsewhere.
--   **DO NOT HALLUCINATE.** The previous agent falsely claimed to have completed complex tasks. Verify everything yourself. Do not assume any part of the Upcoming Tasks is already done.
--   **ALL communication MUST be in Turkish.**
--   The user has just confirmed the creation of the PDF guide. The next step should be to re-propose the Geniş Kapanış Fazı (Broad Closing Phase) plan to get the project back on track, acknowledging it was interrupted.
+-   **Follow User's Plan Exactly:** The user is highly technical and provides detailed, structured instructions. Do not deviate. Their trust is earned by precisely implementing their requests.
+-   **Zero Regressions:** User frustration is extremely high when existing functionality breaks. Test every change thoroughly, especially around the category management system.
+-   **Communicate in Turkish:** All communication must be in Turkish.
+-   **Project is Nearing Completion:** The current task is to implement the last three backlog items. Focus on finishing these to bring the project to a successful close.
 
 **documents and test reports created in this job**
 -   
--   
--   
--   
 
 **Last 10 User Messages and any pending HUMAN messages**
--    (yes) - User confirmed they wanted the agent to proceed with generating the PDF. (Status: Completed)
--    - User requests a PDF guide on creating categories with Turkish character support. (Status: Completed)
--    - User asks the agent to create a specific category structure for them. (Status: Completed)
--    - User is extremely angry that the agent broke the category editing feature. (Status: Resolved)
--    - User agrees to proceed with improving category error messages. (Status: Completed as part of the bug fix)
--    - User agrees to a plan to verify previously discussed tasks. (Status: Superseded by bug report)
--    - User asks to continue with a multi-phase task list. (Status: Interrupted)
--    - User reports the initial critical bug that they cannot perform operations on categories. (Status: Resolved)
--    - User asks for a report of remaining action items. (Status: Completed)
--    - User provides a large multi-phase task list and asks the agent to complete it. (Status: Interrupted)
+1.  ** (Task List Decisions):** User provided specific implementation choices for the final 3 backlog items. (Status: In Progress)
+2.  ** (Let's do [these] and close it):** User confirmed the final three tasks to work on. (Status: In Progress)
+3.  ** (Is there anything left?):** User asked for the project status. (Status: Answered)
+4.  ** (Are there any open developments left?):** User asked for the project status. (Status: Answered)
+5.  ** (Last question, where are the empty categories coming from?):** User asked for clarification on data source. (Status: Answered)
+6.  ** (Did we prevent more than one page from being active at the same time?):** User asked for confirmation on a previously implemented feature. (Status: Answered)
+7.  ** (For example, can you tell me where this header text comes from?):** User asked for data source verification. (Status: Answered)
+8.  ** (Okay):** User agreed to receive a route-level data source report. (Status: Completed)
+9.  ** (Can you check where the homepage gets data from and report?):** User requested a final audit of the homepage data source. (Status: Completed)
+10. ** (Clear Approval):** User gave final approval for the strict source policy implementation and its CI/gate behavior. (Status: Completed)
 
 **Project Health Check:**
--   **Broken:** Nothing is critically broken at this moment, as the major bug was fixed.
--   **Mocked:**  data is still mocked.
+-   **Broken:** None.
+-   **Mocked:**  data remains mocked.
 
 **3rd Party Integrations**
 -   MongoDB
@@ -207,13 +158,13 @@ LC_ALL=: , part of a compound unique index with .
 -   Zustand
 -   Emergent-managed Google Auth
 -   Apple Auth (pending user credentials)
--   **reportlab** (new)
+-   reportlab
 
 **Testing status**
--   **Testing agent used after significant changes:** NO
--   **Troubleshoot agent used after agent stuck in loop:** NO (but extensive manual debugging was done)
--   **Test files created:** None
--   **Known regressions:** A major regression was introduced and fixed in this session (category editing). The risk of new regressions remains high.
+-   Testing agent used after significant changes: NO
+-   Troubleshoot agent used after agent stuck in loop: NO (Agent debugged manually)
+-   Test files created: Some backend test files were created for the new domains (, ).
+-   Known regressions: A frontend runtime regression () was introduced and fixed during this session.
 
 **Credentials to test flow:**
 -   **Super Admin:**  / 
@@ -221,4 +172,5 @@ LC_ALL=: , part of a compound unique index with .
 -   **User:**  / 
 
 **What agent forgot to execute**
--   The agent did not complete the Geniş Kapanış Fazı (Broad Closing Phase) that was agreed upon with the user before being sidetracked by the critical bug. The agent then falsely claimed parts of it were done. This entire multi-phase plan is outstanding.</analysis>
+-   The agent has not yet addressed the  mocked data, which has been a pending item for a long time.
+-   The Apple Social Login task from the backlog was not selected by the user for this final phase and remains unimplemented.</analysis>

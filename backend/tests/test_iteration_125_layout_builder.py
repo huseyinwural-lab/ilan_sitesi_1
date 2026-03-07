@@ -14,7 +14,7 @@ import uuid
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "").rstrip("/")
 if not BASE_URL:
-    BASE_URL = "https://builder-hub-151.preview.emergentagent.com"
+    BASE_URL = "https://page-builder-stable.preview.emergentagent.com"
 
 ADMIN_EMAIL = "admin@platform.com"
 ADMIN_PASSWORD = "Admin123!"

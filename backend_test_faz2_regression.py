@@ -6,7 +6,7 @@ import sys
 import time
 
 # Configuration
-BASE_URL = "https://builder-hub-151.preview.emergentagent.com/api"
+BASE_URL = "https://page-builder-stable.preview.emergentagent.com/api"
 
 class FAZ2RegressionTester:
     def __init__(self):

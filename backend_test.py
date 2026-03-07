@@ -5,7 +5,7 @@ Category Backend API Validation - Turkish Review Request
 Testing category deletion cascade functionality and error handling.
 
 Review Request: "Kategori tarafı için backend hedefli doğrulama yap."
-Base URL: https://builder-hub-151.preview.emergentagent.com
+Base URL: https://page-builder-stable.preview.emergentagent.com
 Hesap: admin@platform.com / Admin123!
 
 Testler:
@@ -37,7 +37,7 @@ from typing import Dict, Any, List, Optional
 
 class CategoryBackendTester:
     def __init__(self):
-        self.base_url = "https://builder-hub-151.preview.emergentagent.com/api"
+        self.base_url = "https://page-builder-stable.preview.emergentagent.com/api"
         self.session = requests.Session()
         self.session.headers.update({
             'Content-Type': 'application/json',

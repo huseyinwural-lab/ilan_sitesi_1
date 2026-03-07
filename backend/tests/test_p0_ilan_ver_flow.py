@@ -10,7 +10,7 @@ import pytest
 import requests
 import uuid
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://builder-hub-151.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://page-builder-stable.preview.emergentagent.com')
 
 # Test credentials
 USER_EMAIL = "user@platform.com"

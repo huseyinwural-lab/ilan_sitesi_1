@@ -2,7 +2,7 @@
 """
 Backend API Testing for Content Layout Resolve Endpoints
 Turkish Review Request: Backend hızlı doğrulama
-Base URL: https://builder-hub-151.preview.emergentagent.com
+Base URL: https://page-builder-stable.preview.emergentagent.com
 
 Kontroller:
 1) GET /api/site/content-layout/resolve invalid source_policy
@@ -23,7 +23,7 @@ import json
 from typing import Dict, Any
 
 # Base URL from frontend environment
-BASE_URL = "https://builder-hub-151.preview.emergentagent.com"
+BASE_URL = "https://page-builder-stable.preview.emergentagent.com"
 API_BASE = f"{BASE_URL}/api"
 
 def test_content_layout_resolve_invalid_source_policy() -> Dict[str, Any]:

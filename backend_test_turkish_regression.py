@@ -3,7 +3,7 @@
 """
 Turkish Backend Regression Test
 
-Base URL: https://builder-hub-151.preview.emergentagent.com
+Base URL: https://page-builder-stable.preview.emergentagent.com
 Users:
 - Admin: admin@platform.com / Admin123!
 - Dealer: dealer@platform.com / Dealer123!
@@ -35,7 +35,7 @@ from typing import Dict, Any, List, Optional, Tuple
 
 class TurkishRegressionTester:
     def __init__(self):
-        self.base_url = "https://builder-hub-151.preview.emergentagent.com/api"
+        self.base_url = "https://page-builder-stable.preview.emergentagent.com/api"
         self.session = requests.Session()
         self.session.headers.update({
             'Content-Type': 'application/json',

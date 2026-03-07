@@ -3,7 +3,7 @@ import requests
 import time
 
 def quick_test():
-    api_url = "https://builder-hub-151.preview.emergentagent.com/api"
+    api_url = "https://page-builder-stable.preview.emergentagent.com/api"
     
     print("Making 3 quick requests to see rate limiter logs...")
     for i in range(3):

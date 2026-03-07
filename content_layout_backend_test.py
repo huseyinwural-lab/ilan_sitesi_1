@@ -5,7 +5,7 @@ import json
 import sys
 
 # Base URL from frontend env
-BASE_URL = "https://builder-hub-151.preview.emergentagent.com"
+BASE_URL = "https://page-builder-stable.preview.emergentagent.com"
 
 def test_auth_login(email, password, role_name):
     """Test authentication for different user roles"""
