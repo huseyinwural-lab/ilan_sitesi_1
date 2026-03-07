@@ -18,6 +18,28 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ---
 
+## 2026-03-07 (Hotfix — Kategori Düzenleme 409 Slug Conflict)
+
+### Problem
+- `/admin/categories` ekranında kullanıcı kategoriyi **slug değiştirmeden** düzenleyip kaydettiğinde backend `409 Category slug already exists` dönüyordu.
+
+### Kök Neden
+- `admin_update_category` içinde slug uniqueness kontrolü, slug değeri değişmese bile çalışıyordu.
+- Kısmi/önceden oluşmuş veri durumlarında bu kontrol false-positive conflict üretiyordu.
+
+### Uygulanan Fix
+- Dosya: `/app/backend/server.py`
+- `payload.slug` kontrolünde mevcut slug ile karşılaştırma eklendi.
+- Yalnızca `incoming_slug != current_slug` ise duplicate slug query çalıştırılıyor.
+- Slug değişmediyse uniqueness check atlanıyor ve kayıt normal güncelleniyor.
+
+### Doğrulama
+- Self test: problemli kategori için PATCH artık `200`.
+- Testing agent raporu: `/app/test_reports/iteration_162.json`
+  - Backend: 100%
+  - Frontend: 100%
+  - Aynı slug ile update PASS, gerçek duplicate slug ile 409 koruması PASS.
+
 ## 2026-03-07 (Yeni Görev Listesi — Redirect Telemetry + Retention Policy + Extended CSV)
 
 ### Faz 1 — Revision Redirect Telemetry (tamamlandı)
