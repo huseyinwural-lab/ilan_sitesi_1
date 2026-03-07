@@ -19,6 +19,7 @@ import {
   Download,
   Play,
   RefreshCw,
+  HeartPulse,
 } from 'lucide-react';
 
 const TrendsSection = lazy(() => import('../components/admin/dashboard/TrendsSection'));
@@ -284,6 +285,83 @@ const HealthCard = ({ health }) => (
   </div>
 );
 
+const resolveComponentApiCheckState = (httpStatus) => {
+  if (httpStatus >= 200 && httpStatus < 300) return 'healthy';
+  if (httpStatus === 401 || httpStatus === 403) return 'restricted';
+  if (httpStatus === 0) return 'down';
+  return 'degraded';
+};
+
+const ComponentApiHealthCard = ({ health, onRefresh }) => {
+  const items = Array.isArray(health?.items) ? health.items : [];
+
+  const statusStyle = (status) => {
+    if (status === 'healthy') return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+    if (status === 'restricted') return 'border-amber-200 bg-amber-50 text-amber-700';
+    if (status === 'down') return 'border-rose-200 bg-rose-50 text-rose-700';
+    return 'border-orange-200 bg-orange-50 text-orange-700';
+  };
+
+  return (
+    <div className="bg-card rounded-md border p-6" data-testid="dashboard-component-api-health-card">
+      <div className="flex items-center justify-between mb-4" data-testid="dashboard-component-api-health-header">
+        <div>
+          <h3 className="font-semibold" data-testid="dashboard-component-api-health-title">Component API Health</h3>
+          <p className="text-xs text-muted-foreground" data-testid="dashboard-component-api-health-subtitle">Content Builder API uçlarının canlı durum kontrolü.</p>
+        </div>
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="rounded border px-2 py-1 text-xs"
+          disabled={Boolean(health?.loading)}
+          data-testid="dashboard-component-api-health-refresh"
+        >
+          <RefreshCw size={14} className={health?.loading ? 'animate-spin' : ''} />
+        </button>
+      </div>
+
+      {health?.error ? (
+        <div className="mb-3 rounded border border-rose-200 bg-rose-50 px-2 py-2 text-xs text-rose-700" data-testid="dashboard-component-api-health-error">
+          {health.error}
+        </div>
+      ) : null}
+
+      <div className="space-y-2" data-testid="dashboard-component-api-health-list">
+        {items.length === 0 ? (
+          <div className="rounded border border-dashed px-3 py-2 text-xs text-muted-foreground" data-testid="dashboard-component-api-health-empty">
+            API health verisi yok.
+          </div>
+        ) : (
+          items.map((item, index) => (
+            <article
+              key={item.id || index}
+              className="rounded border px-3 py-2"
+              data-testid={`dashboard-component-api-health-item-${item.id || index}`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2" data-testid={`dashboard-component-api-health-item-head-${item.id || index}`}>
+                <span className="text-xs font-semibold" data-testid={`dashboard-component-api-health-item-name-${item.id || index}`}>{item.label || '-'}</span>
+                <span className={`rounded border px-2 py-0.5 text-[11px] font-semibold ${statusStyle(item.state)}`} data-testid={`dashboard-component-api-health-item-state-${item.id || index}`}>
+                  {item.state}
+                </span>
+              </div>
+              <div className="mt-1 text-[11px] text-muted-foreground" data-testid={`dashboard-component-api-health-item-meta-${item.id || index}`}>
+                HTTP {item.http_status ?? '-'} • {item.response_time_ms ?? '-'} ms
+              </div>
+              <div className="mt-1 text-[11px] text-muted-foreground break-all" data-testid={`dashboard-component-api-health-item-endpoint-${item.id || index}`}>
+                {item.endpoint || '-'}
+              </div>
+            </article>
+          ))
+        )}
+      </div>
+
+      <div className="mt-3 text-[11px] text-muted-foreground" data-testid="dashboard-component-api-health-checked-at">
+        Son kontrol: {health?.checkedAt ? new Date(health.checkedAt).toLocaleString('tr-TR') : '-'}
+      </div>
+    </div>
+  );
+};
+
 const KpiCard = ({ title, subtitle, data, canViewFinance, testId, to }) => (
   <Link
     to={to}
@@ -423,6 +501,12 @@ export default function Dashboard({ title = 'Kontrol Paneli' }) {
   const [trendDays, setTrendDays] = useState(DEFAULT_TREND_DAYS);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
+  const [componentApiHealth, setComponentApiHealth] = useState({
+    loading: false,
+    items: [],
+    checkedAt: '',
+    error: '',
+  });
   const { t } = useLanguage();
   const { selectedCountry } = useCountry();
   const { user } = useAuth();
@@ -436,8 +520,67 @@ export default function Dashboard({ title = 'Kontrol Paneli' }) {
   const urlCountry = searchParams.get('country');
   const effectiveCountry = (urlCountry || selectedCountry || 'DE').toUpperCase();
 
+  const fetchComponentApiHealth = async () => {
+    setComponentApiHealth((prev) => ({ ...prev, loading: true, error: '' }));
+    try {
+      const token = localStorage.getItem('access_token');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const endpointChecks = [
+        { id: 'component-definitions', label: 'Component Definitions', endpoint: `${API}/admin/site/content-layout/components`, params: { page: 1, limit: 1 } },
+        { id: 'layout-revisions', label: 'Layout Revisions', endpoint: `${API}/admin/layouts`, params: { page: 1, limit: 1 } },
+        { id: 'menu-health', label: 'Menu Health', endpoint: `${API}/admin/menu-items/health` },
+      ];
+
+      const results = await Promise.all(
+        endpointChecks.map(async (check) => {
+          const startedAt = performance.now();
+          try {
+            const response = await axios.get(check.endpoint, {
+              headers,
+              params: check.params,
+              validateStatus: () => true,
+            });
+            const responseTimeMs = Math.round(performance.now() - startedAt);
+            return {
+              id: check.id,
+              label: check.label,
+              endpoint: check.endpoint,
+              http_status: response.status,
+              response_time_ms: responseTimeMs,
+              state: resolveComponentApiCheckState(response.status),
+            };
+          } catch (_error) {
+            return {
+              id: check.id,
+              label: check.label,
+              endpoint: check.endpoint,
+              http_status: 0,
+              response_time_ms: Math.round(performance.now() - startedAt),
+              state: 'down',
+            };
+          }
+        })
+      );
+
+      setComponentApiHealth({
+        loading: false,
+        items: results,
+        checkedAt: new Date().toISOString(),
+        error: '',
+      });
+    } catch (_error) {
+      setComponentApiHealth((prev) => ({
+        ...prev,
+        loading: false,
+        checkedAt: new Date().toISOString(),
+        error: 'Component API health kontrolü alınamadı.',
+      }));
+    }
+  };
+
   useEffect(() => {
     fetchSummary();
+    fetchComponentApiHealth();
   }, [isCountryMode, effectiveCountry, trendDays]);
 
   const fetchSummary = async () => {
@@ -687,9 +830,10 @@ export default function Dashboard({ title = 'Kontrol Paneli' }) {
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-4">
         <RiskPanel data={summary?.risk_panel} canViewFinance={canViewFinance} />
         <HealthCard health={summary?.health} />
+        <ComponentApiHealthCard health={componentApiHealth} onRefresh={fetchComponentApiHealth} />
         <RoleDistribution data={summary?.role_distribution || {}} t={t} />
       </div>
 

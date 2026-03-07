@@ -1941,6 +1941,236 @@ const computeLayoutDiff = (publishedPayload, draftPayload) => {
   };
 };
 
+const safeJsonStringify = (value) => {
+  try {
+    return JSON.stringify(value ?? null);
+  } catch (_err) {
+    return String(value ?? '');
+  }
+};
+
+const collectChangedPaths = (beforeValue, afterValue, prefix = '', bucket = [], limit = 8) => {
+  if (bucket.length >= limit) return bucket;
+
+  const beforeType = Array.isArray(beforeValue) ? 'array' : typeof beforeValue;
+  const afterType = Array.isArray(afterValue) ? 'array' : typeof afterValue;
+  if (beforeType !== afterType) {
+    bucket.push(prefix || 'value');
+    return bucket;
+  }
+
+  if (beforeType !== 'object' || beforeValue === null || afterValue === null) {
+    if (safeJsonStringify(beforeValue) !== safeJsonStringify(afterValue)) {
+      bucket.push(prefix || 'value');
+    }
+    return bucket;
+  }
+
+  if (beforeType === 'array') {
+    const beforeArray = Array.isArray(beforeValue) ? beforeValue : [];
+    const afterArray = Array.isArray(afterValue) ? afterValue : [];
+    if (beforeArray.length !== afterArray.length) {
+      bucket.push(prefix ? `${prefix}.length` : 'length');
+    }
+    const minLength = Math.min(beforeArray.length, afterArray.length);
+    for (let index = 0; index < minLength; index += 1) {
+      if (bucket.length >= limit) break;
+      collectChangedPaths(beforeArray[index], afterArray[index], `${prefix}[${index}]`, bucket, limit);
+    }
+    return bucket;
+  }
+
+  const beforeObject = beforeValue || {};
+  const afterObject = afterValue || {};
+  const keys = new Set([...Object.keys(beforeObject), ...Object.keys(afterObject)]);
+  for (const key of keys) {
+    if (bucket.length >= limit) break;
+    const nextPrefix = prefix ? `${prefix}.${key}` : key;
+    if (!(key in beforeObject) || !(key in afterObject)) {
+      bucket.push(nextPrefix);
+      continue;
+    }
+    collectChangedPaths(beforeObject[key], afterObject[key], nextPrefix, bucket, limit);
+  }
+  return bucket;
+};
+
+const normalizeRevisionRows = (payload, side = 'left') => {
+  const rows = Array.isArray(payload?.rows) ? payload.rows : [];
+  return rows.map((row, rowIndex) => {
+    const rowId = row?.id || `${side}-row-${rowIndex + 1}`;
+    const columns = Array.isArray(row?.columns) ? row.columns : [];
+    return {
+      ...row,
+      id: rowId,
+      columns: columns.map((column, columnIndex) => {
+        const columnId = column?.id || `${rowId}-col-${columnIndex + 1}`;
+        const components = Array.isArray(column?.components) ? column.components : [];
+        return {
+          ...column,
+          id: columnId,
+          components: components.map((component, componentIndex) => ({
+            ...component,
+            id: component?.id || `${columnId}-cmp-${componentIndex + 1}`,
+          })),
+        };
+      }),
+    };
+  });
+};
+
+const buildRevisionVisualDiff = (leftPayload, rightPayload) => {
+  const leftRows = normalizeRevisionRows(leftPayload, 'left');
+  const rightRows = normalizeRevisionRows(rightPayload, 'right');
+  const leftRowMap = new Map(leftRows.map((row) => [row.id, row]));
+  const rightRowMap = new Map(rightRows.map((row) => [row.id, row]));
+  const rowIds = new Set([...leftRowMap.keys(), ...rightRowMap.keys()]);
+
+  const items = [];
+  const summary = {
+    total: 0,
+    row: 0,
+    column: 0,
+    component: 0,
+    added: 0,
+    removed: 0,
+    updated: 0,
+  };
+
+  const pushItem = ({ scope, changeType, label, detail, before, after }) => {
+    const nextItem = {
+      id: `${scope}-${changeType}-${items.length + 1}`,
+      scope,
+      changeType,
+      label,
+      detail,
+      before,
+      after,
+    };
+    items.push(nextItem);
+    summary.total += 1;
+    summary[scope] += 1;
+    summary[changeType] += 1;
+  };
+
+  rowIds.forEach((rowId) => {
+    const leftRow = leftRowMap.get(rowId);
+    const rightRow = rightRowMap.get(rowId);
+
+    if (!leftRow || !rightRow) {
+      pushItem({
+        scope: 'row',
+        changeType: leftRow ? 'removed' : 'added',
+        label: `Row ${rowId}`,
+        detail: leftRow ? 'Bu row yeni revizyonda kaldırıldı.' : 'Bu row yeni revizyona eklendi.',
+        before: leftRow || null,
+        after: rightRow || null,
+      });
+      return;
+    }
+
+    const leftRowOrder = (leftRow.columns || []).map((column) => column.id);
+    const rightRowOrder = (rightRow.columns || []).map((column) => column.id);
+    if (safeJsonStringify(leftRowOrder) !== safeJsonStringify(rightRowOrder)) {
+      pushItem({
+        scope: 'row',
+        changeType: 'updated',
+        label: `Row ${rowId}`,
+        detail: 'Sütun sırası değişti.',
+        before: leftRowOrder,
+        after: rightRowOrder,
+      });
+    }
+
+    const leftColumnMap = new Map((leftRow.columns || []).map((column) => [column.id, column]));
+    const rightColumnMap = new Map((rightRow.columns || []).map((column) => [column.id, column]));
+    const columnIds = new Set([...leftColumnMap.keys(), ...rightColumnMap.keys()]);
+
+    columnIds.forEach((columnId) => {
+      const leftColumn = leftColumnMap.get(columnId);
+      const rightColumn = rightColumnMap.get(columnId);
+
+      if (!leftColumn || !rightColumn) {
+        pushItem({
+          scope: 'column',
+          changeType: leftColumn ? 'removed' : 'added',
+          label: `Row ${rowId} • Column ${columnId}`,
+          detail: leftColumn ? 'Column kaldırıldı.' : 'Column eklendi.',
+          before: leftColumn || null,
+          after: rightColumn || null,
+        });
+        return;
+      }
+
+      if (safeJsonStringify(leftColumn.width || {}) !== safeJsonStringify(rightColumn.width || {})) {
+        pushItem({
+          scope: 'column',
+          changeType: 'updated',
+          label: `Row ${rowId} • Column ${columnId}`,
+          detail: 'Column width ayarı değişti.',
+          before: leftColumn.width || {},
+          after: rightColumn.width || {},
+        });
+      }
+
+      const leftComponentOrder = (leftColumn.components || []).map((component) => component.id);
+      const rightComponentOrder = (rightColumn.components || []).map((component) => component.id);
+      if (safeJsonStringify(leftComponentOrder) !== safeJsonStringify(rightComponentOrder)) {
+        pushItem({
+          scope: 'column',
+          changeType: 'updated',
+          label: `Row ${rowId} • Column ${columnId}`,
+          detail: 'Component sırası değişti.',
+          before: leftComponentOrder,
+          after: rightComponentOrder,
+        });
+      }
+
+      const leftComponentMap = new Map((leftColumn.components || []).map((component) => [component.id, component]));
+      const rightComponentMap = new Map((rightColumn.components || []).map((component) => [component.id, component]));
+      const componentIds = new Set([...leftComponentMap.keys(), ...rightComponentMap.keys()]);
+
+      componentIds.forEach((componentId) => {
+        const leftComponent = leftComponentMap.get(componentId);
+        const rightComponent = rightComponentMap.get(componentId);
+
+        if (!leftComponent || !rightComponent) {
+          pushItem({
+            scope: 'component',
+            changeType: leftComponent ? 'removed' : 'added',
+            label: `Row ${rowId} • Column ${columnId} • Component ${componentId}`,
+            detail: leftComponent ? 'Component kaldırıldı.' : 'Component eklendi.',
+            before: leftComponent || null,
+            after: rightComponent || null,
+          });
+          return;
+        }
+
+        const changedPaths = collectChangedPaths(
+          { key: leftComponent.key, props: leftComponent.props || {} },
+          { key: rightComponent.key, props: rightComponent.props || {} },
+        );
+
+        if (changedPaths.length > 0) {
+          pushItem({
+            scope: 'component',
+            changeType: 'updated',
+            label: `Row ${rowId} • Column ${columnId} • Component ${componentId}`,
+            detail: `Değişen alanlar: ${changedPaths.join(', ')}`,
+            before: { key: leftComponent.key, props: leftComponent.props || {} },
+            after: { key: rightComponent.key, props: rightComponent.props || {} },
+          });
+        }
+      });
+    });
+  });
+
+  return {
+    summary,
+    items,
+  };
+};
+
 export default function AdminContentBuilder() {
   const resolveRequestLocale = () => {
     const pathLocale = String(window.location.pathname || '').split('/').filter(Boolean)[0]?.toLowerCase();
@@ -1976,6 +2206,9 @@ export default function AdminContentBuilder() {
   const [pageId, setPageId] = useState('');
   const [activeDraftId, setActiveDraftId] = useState('');
   const [revisionList, setRevisionList] = useState([]);
+  const [selectedRevisionCompareIds, setSelectedRevisionCompareIds] = useState([]);
+  const [visualDiffModalOpen, setVisualDiffModalOpen] = useState(false);
+  const [showRevisionDiffRawJson, setShowRevisionDiffRawJson] = useState(false);
   const [payloadJson, setPayloadJson] = useState(createEmptyPayload('home'));
 
   const [bindingCategoryId, setBindingCategoryId] = useState('');
@@ -2382,6 +2615,17 @@ export default function AdminContentBuilder() {
     [revisionList],
   );
 
+  useEffect(() => {
+    setSelectedRevisionCompareIds((previous) => {
+      const validRevisionIds = new Set(
+        revisionList
+          .map((revision) => String(revision?.id || revision?.revision_id || '').trim())
+          .filter(Boolean)
+      );
+      return previous.filter((revisionId) => validRevisionIds.has(revisionId));
+    });
+  }, [revisionList]);
+
   const templateScopeLocked = useMemo(() => {
     const scopeKey = makeTemplateScopeKey(country, moduleName, pageType);
     return hasFinalTemplatePublished && TEMPLATE_LOCKED_SCOPE_KEYS.has(scopeKey);
@@ -2391,6 +2635,58 @@ export default function AdminContentBuilder() {
     () => computeLayoutDiff(publishedRevisionPayload, payloadJson),
     [publishedRevisionPayload, payloadJson],
   );
+
+  const sortedRevisionList = useMemo(() => {
+    const toTimestamp = (value) => {
+      const raw = value ? new Date(value).getTime() : 0;
+      return Number.isFinite(raw) ? raw : 0;
+    };
+
+    return [...revisionList].sort((left, right) => {
+      const rightTs = toTimestamp(right?.updated_at || right?.published_at || right?.created_at);
+      const leftTs = toTimestamp(left?.updated_at || left?.published_at || left?.created_at);
+      return rightTs - leftTs;
+    });
+  }, [revisionList]);
+
+  const selectedRevisionPair = useMemo(
+    () => selectedRevisionCompareIds
+      .map((revisionId) => revisionList.find((item) => String(item?.id || item?.revision_id || '') === revisionId))
+      .filter(Boolean)
+      .slice(0, 2),
+    [revisionList, selectedRevisionCompareIds],
+  );
+
+  const revisionVisualDiff = useMemo(() => {
+    if (selectedRevisionPair.length < 2) {
+      return { summary: { total: 0, row: 0, column: 0, component: 0, added: 0, removed: 0, updated: 0 }, items: [] };
+    }
+    return buildRevisionVisualDiff(
+      selectedRevisionPair[0]?.payload_json || { rows: [] },
+      selectedRevisionPair[1]?.payload_json || { rows: [] },
+    );
+  }, [selectedRevisionPair]);
+
+  const filteredRevisionDiffItems = useMemo(() => {
+    if (diffFilter === 'all') return revisionVisualDiff.items;
+    return revisionVisualDiff.items.filter((item) => item.scope === diffFilter);
+  }, [diffFilter, revisionVisualDiff.items]);
+
+  useEffect(() => {
+    setDiffJumpCursor((prev) => {
+      if (!filteredRevisionDiffItems.length) return { ...prev, row: -1 };
+      if (prev.row < 0 || prev.row >= filteredRevisionDiffItems.length) {
+        return { ...prev, row: 0 };
+      }
+      return prev;
+    });
+  }, [filteredRevisionDiffItems]);
+
+  const activeRevisionDiffItem = useMemo(() => {
+    if (!filteredRevisionDiffItems.length) return null;
+    if (diffJumpCursor.row < 0 || diffJumpCursor.row >= filteredRevisionDiffItems.length) return filteredRevisionDiffItems[0];
+    return filteredRevisionDiffItems[diffJumpCursor.row];
+  }, [diffJumpCursor.row, filteredRevisionDiffItems]);
 
   const getComponentSchema = (componentKey) => {
     const componentDef = componentLibrary.find((item) => item.key === componentKey);
@@ -3155,6 +3451,68 @@ export default function AdminContentBuilder() {
     }
   };
 
+  const formatRevisionDate = (value) => {
+    if (!value) return '-';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '-';
+    return parsed.toLocaleString('tr-TR');
+  };
+
+  const toggleRevisionCompareSelection = (revisionId) => {
+    if (!revisionId) return;
+    setSelectedRevisionCompareIds((previous) => {
+      if (previous.includes(revisionId)) {
+        return previous.filter((id) => id !== revisionId);
+      }
+      if (previous.length >= 2) {
+        return [previous[1], revisionId];
+      }
+      return [...previous, revisionId];
+    });
+  };
+
+  const clearRevisionCompareSelection = () => {
+    setSelectedRevisionCompareIds([]);
+    setVisualDiffModalOpen(false);
+    setShowRevisionDiffRawJson(false);
+    setDiffJumpCursor({ row: -1, component: -1 });
+  };
+
+  const openVisualDiffModal = () => {
+    if (selectedRevisionPair.length < 2) {
+      toast.error('Karşılaştırma için iki revizyon seçin.');
+      return;
+    }
+    setVisualDiffModalOpen(true);
+    setShowRevisionDiffRawJson(false);
+    setDiffJumpCursor({ row: 0, component: -1 });
+  };
+
+  const jumpVisualDiffCursor = (direction) => {
+    if (!filteredRevisionDiffItems.length) return;
+    setDiffJumpCursor((prev) => {
+      const currentIndex = prev.row < 0 ? 0 : prev.row;
+      const nextIndex = direction === 'next'
+        ? (currentIndex + 1) % filteredRevisionDiffItems.length
+        : (currentIndex - 1 + filteredRevisionDiffItems.length) % filteredRevisionDiffItems.length;
+      return { ...prev, row: nextIndex };
+    });
+  };
+
+  const loadRevisionToCanvas = (revision) => {
+    if (!revision) return;
+    const revisionId = String(revision?.id || revision?.revision_id || '').trim();
+    const revisionStatus = String(revision?.status || '').trim().toLowerCase();
+    setPayloadJson(normalizePayload(revision?.payload_json || { rows: [] }, pageType));
+    setActiveDraftId(revisionStatus === 'draft' ? revisionId : '');
+    setSelectedRowId('');
+    setSelectedColumnId('');
+    setSelectedComponentId('');
+    refreshPreviewAfterInteraction();
+    setStatus(`Revizyon yüklendi: ${revisionId || '-'}`);
+    toast.success('Seçilen revizyon canvas üzerine yüklendi.');
+  };
+
   return (
     <div className="space-y-5" data-testid="admin-content-builder-page">
       <header className="rounded-xl border bg-white p-4" data-testid="admin-content-builder-header">
@@ -3464,6 +3822,89 @@ export default function AdminContentBuilder() {
             )}
           </span>
         </div>
+
+        <section className="mt-3 rounded-lg border bg-slate-50 p-3" data-testid="admin-content-builder-revision-list-panel">
+          <div className="flex flex-wrap items-center justify-between gap-2" data-testid="admin-content-builder-revision-list-header">
+            <div>
+              <h3 className="text-xs font-semibold" data-testid="admin-content-builder-revision-list-title">Revision Listesi</h3>
+              <p className="text-[11px] text-slate-500" data-testid="admin-content-builder-revision-list-subtitle">2 revizyon seçip görsel diff modalını açabilirsiniz.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2" data-testid="admin-content-builder-revision-list-actions">
+              <button
+                type="button"
+                className="h-8 rounded border px-2 text-xs"
+                onClick={clearRevisionCompareSelection}
+                data-testid="admin-content-builder-revision-list-clear-selection"
+              >
+                Seçimi Temizle
+              </button>
+              <button
+                type="button"
+                className="h-8 rounded bg-slate-900 px-3 text-xs text-white disabled:opacity-60"
+                onClick={openVisualDiffModal}
+                disabled={selectedRevisionPair.length < 2}
+                data-testid="admin-content-builder-revision-list-open-diff"
+              >
+                Visual Diff Aç
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-2 grid gap-2" data-testid="admin-content-builder-revision-list-body">
+            {sortedRevisionList.length === 0 ? (
+              <div className="rounded border border-dashed bg-white px-3 py-2 text-[11px] text-slate-500" data-testid="admin-content-builder-revision-list-empty">
+                Revizyon bulunamadı. Önce bir draft kaydedin.
+              </div>
+            ) : (
+              sortedRevisionList.map((revision, index) => {
+                const revisionId = String(revision?.id || revision?.revision_id || '').trim();
+                const selectedForCompare = selectedRevisionCompareIds.includes(revisionId);
+                const isDraft = String(revision?.status || '').toLowerCase() === 'draft';
+                return (
+                  <article
+                    key={revisionId || index}
+                    className={`rounded border bg-white px-3 py-2 ${selectedForCompare ? 'border-sky-400 ring-1 ring-sky-300' : 'border-slate-200'}`}
+                    data-testid={`admin-content-builder-revision-item-${index}`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2" data-testid={`admin-content-builder-revision-item-header-${index}`}>
+                      <div className="flex items-center gap-2" data-testid={`admin-content-builder-revision-item-main-${index}`}>
+                        <input
+                          type="checkbox"
+                          checked={selectedForCompare}
+                          onChange={() => toggleRevisionCompareSelection(revisionId)}
+                          data-testid={`admin-content-builder-revision-item-compare-checkbox-${index}`}
+                        />
+                        <span className="font-medium text-xs" data-testid={`admin-content-builder-revision-item-id-${index}`}>{revisionId || '-'}</span>
+                        <span
+                          className={`rounded px-2 py-0.5 text-[10px] font-semibold ${isDraft ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}
+                          data-testid={`admin-content-builder-revision-item-status-${index}`}
+                        >
+                          {revision?.status || 'unknown'}
+                        </span>
+                        {revision?.is_active ? (
+                          <span className="rounded bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700" data-testid={`admin-content-builder-revision-item-active-${index}`}>
+                            active
+                          </span>
+                        ) : null}
+                      </div>
+                      <button
+                        type="button"
+                        className="h-7 rounded border px-2 text-[11px]"
+                        onClick={() => loadRevisionToCanvas(revision)}
+                        data-testid={`admin-content-builder-revision-item-load-${index}`}
+                      >
+                        Canvas'a Yükle
+                      </button>
+                    </div>
+                    <div className="mt-1 text-[11px] text-slate-500" data-testid={`admin-content-builder-revision-item-meta-${index}`}>
+                      created: {formatRevisionDate(revision?.created_at)} • updated: {formatRevisionDate(revision?.updated_at || revision?.published_at)}
+                    </div>
+                  </article>
+                );
+              })
+            )}
+          </div>
+        </section>
 
         {showPreviewComparison ? (
           <div ref={previewComparisonRef} className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-2" data-testid="admin-content-builder-preview-iframes">
@@ -4105,6 +4546,136 @@ export default function AdminContentBuilder() {
 
         </section>
       </div>
+
+      {visualDiffModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 p-4" data-testid="admin-content-builder-visual-diff-modal-overlay">
+          <div className="w-full max-w-6xl rounded-xl border bg-white p-4 shadow-2xl" data-testid="admin-content-builder-visual-diff-modal">
+            <div className="flex flex-wrap items-center justify-between gap-2" data-testid="admin-content-builder-visual-diff-modal-header">
+              <div>
+                <h3 className="text-sm font-semibold" data-testid="admin-content-builder-visual-diff-title">Visual Diff (Revision ↔ Revision)</h3>
+                <p className="text-[11px] text-slate-500" data-testid="admin-content-builder-visual-diff-subtitle">
+                  Sol: {selectedRevisionPair[0]?.id || selectedRevisionPair[0]?.revision_id || '-'} • Sağ: {selectedRevisionPair[1]?.id || selectedRevisionPair[1]?.revision_id || '-'}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="h-8 rounded border px-2 text-xs"
+                onClick={() => setVisualDiffModalOpen(false)}
+                data-testid="admin-content-builder-visual-diff-close"
+              >
+                Kapat
+              </button>
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-7" data-testid="admin-content-builder-visual-diff-summary-grid">
+              <div className="rounded border bg-slate-50 px-2 py-1 text-[11px]" data-testid="admin-content-builder-visual-diff-summary-total">Toplam: <strong>{revisionVisualDiff.summary.total}</strong></div>
+              <div className="rounded border bg-slate-50 px-2 py-1 text-[11px]" data-testid="admin-content-builder-visual-diff-summary-row">Row: <strong>{revisionVisualDiff.summary.row}</strong></div>
+              <div className="rounded border bg-slate-50 px-2 py-1 text-[11px]" data-testid="admin-content-builder-visual-diff-summary-column">Column: <strong>{revisionVisualDiff.summary.column}</strong></div>
+              <div className="rounded border bg-slate-50 px-2 py-1 text-[11px]" data-testid="admin-content-builder-visual-diff-summary-component">Component: <strong>{revisionVisualDiff.summary.component}</strong></div>
+              <div className="rounded border bg-emerald-50 px-2 py-1 text-[11px] text-emerald-700" data-testid="admin-content-builder-visual-diff-summary-added">Added: <strong>{revisionVisualDiff.summary.added}</strong></div>
+              <div className="rounded border bg-rose-50 px-2 py-1 text-[11px] text-rose-700" data-testid="admin-content-builder-visual-diff-summary-removed">Removed: <strong>{revisionVisualDiff.summary.removed}</strong></div>
+              <div className="rounded border bg-amber-50 px-2 py-1 text-[11px] text-amber-700" data-testid="admin-content-builder-visual-diff-summary-updated">Updated: <strong>{revisionVisualDiff.summary.updated}</strong></div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2" data-testid="admin-content-builder-visual-diff-controls">
+              <label className="text-xs" data-testid="admin-content-builder-visual-diff-filter-wrap">
+                Kapsam
+                <select
+                  className="ml-1 h-8 rounded border px-2"
+                  value={diffFilter}
+                  onChange={(event) => setDiffFilter(event.target.value)}
+                  data-testid="admin-content-builder-visual-diff-filter"
+                >
+                  <option value="all">Tümü</option>
+                  <option value="row">Row</option>
+                  <option value="column">Column</option>
+                  <option value="component">Component</option>
+                </select>
+              </label>
+
+              <button
+                type="button"
+                className="h-8 rounded border px-2 text-xs"
+                onClick={() => jumpVisualDiffCursor('prev')}
+                disabled={!filteredRevisionDiffItems.length}
+                data-testid="admin-content-builder-visual-diff-prev"
+              >
+                Önceki
+              </button>
+              <button
+                type="button"
+                className="h-8 rounded border px-2 text-xs"
+                onClick={() => jumpVisualDiffCursor('next')}
+                disabled={!filteredRevisionDiffItems.length}
+                data-testid="admin-content-builder-visual-diff-next"
+              >
+                Sonraki
+              </button>
+
+              <span className="text-xs text-slate-500" data-testid="admin-content-builder-visual-diff-cursor">
+                {filteredRevisionDiffItems.length > 0 ? `${(diffJumpCursor.row >= 0 ? diffJumpCursor.row : 0) + 1}/${filteredRevisionDiffItems.length}` : '0/0'}
+              </span>
+
+              <button
+                type="button"
+                className="ml-auto h-8 rounded border px-2 text-xs"
+                onClick={() => setShowRevisionDiffRawJson((prev) => !prev)}
+                data-testid="admin-content-builder-visual-diff-raw-toggle"
+              >
+                {showRevisionDiffRawJson ? 'Raw JSON Gizle' : 'Raw JSON Göster'}
+              </button>
+            </div>
+
+            <div className="mt-3 max-h-[420px] space-y-2 overflow-y-auto" data-testid="admin-content-builder-visual-diff-list">
+              {filteredRevisionDiffItems.length === 0 ? (
+                <div className="rounded border border-dashed px-3 py-3 text-xs text-slate-500" data-testid="admin-content-builder-visual-diff-empty">
+                  Seçili filtre için değişiklik bulunamadı.
+                </div>
+              ) : (
+                filteredRevisionDiffItems.map((item, index) => {
+                  const active = activeRevisionDiffItem?.id === item.id;
+                  const tone = item.changeType === 'added'
+                    ? 'border-emerald-300 bg-emerald-50'
+                    : item.changeType === 'removed'
+                    ? 'border-rose-300 bg-rose-50'
+                    : 'border-amber-300 bg-amber-50';
+                  return (
+                    <article
+                      key={item.id}
+                      className={`rounded border px-3 py-2 text-xs ${tone} ${active ? 'ring-2 ring-sky-300' : ''}`}
+                      data-testid={`admin-content-builder-visual-diff-item-${index}`}
+                    >
+                      <div className="flex flex-wrap items-center gap-2" data-testid={`admin-content-builder-visual-diff-item-head-${index}`}>
+                        <span className="rounded bg-white/80 px-2 py-0.5 text-[10px] font-semibold" data-testid={`admin-content-builder-visual-diff-item-scope-${index}`}>{item.scope}</span>
+                        <span className="rounded bg-white/80 px-2 py-0.5 text-[10px] font-semibold" data-testid={`admin-content-builder-visual-diff-item-change-${index}`}>{item.changeType}</span>
+                        <span className="font-semibold" data-testid={`admin-content-builder-visual-diff-item-label-${index}`}>{item.label}</span>
+                      </div>
+                      <p className="mt-1 text-[11px] text-slate-700" data-testid={`admin-content-builder-visual-diff-item-detail-${index}`}>{item.detail}</p>
+                    </article>
+                  );
+                })
+              )}
+            </div>
+
+            {showRevisionDiffRawJson ? (
+              <div className="mt-3 grid gap-3 xl:grid-cols-2" data-testid="admin-content-builder-visual-diff-raw-grid">
+                <div className="rounded border bg-slate-50 p-2" data-testid="admin-content-builder-visual-diff-raw-left">
+                  <div className="text-[11px] font-semibold" data-testid="admin-content-builder-visual-diff-raw-left-title">Sol Revision Raw JSON</div>
+                  <pre className="mt-1 max-h-64 overflow-auto rounded border bg-white p-2 text-[11px]" data-testid="admin-content-builder-visual-diff-raw-left-body">
+                    {JSON.stringify(selectedRevisionPair[0]?.payload_json || { rows: [] }, null, 2)}
+                  </pre>
+                </div>
+                <div className="rounded border bg-slate-50 p-2" data-testid="admin-content-builder-visual-diff-raw-right">
+                  <div className="text-[11px] font-semibold" data-testid="admin-content-builder-visual-diff-raw-right-title">Sağ Revision Raw JSON</div>
+                  <pre className="mt-1 max-h-64 overflow-auto rounded border bg-white p-2 text-[11px]" data-testid="admin-content-builder-visual-diff-raw-right-body">
+                    {JSON.stringify(selectedRevisionPair[1]?.payload_json || { rows: [] }, null, 2)}
+                  </pre>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
     </div>
   );

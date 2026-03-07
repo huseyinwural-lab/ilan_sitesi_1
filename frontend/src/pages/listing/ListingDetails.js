@@ -268,6 +268,62 @@ export default function ListingDetails() {
     () => (listingCreateConfig.apply_modules || []).includes(activeModuleKey),
     [activeModuleKey, listingCreateConfig.apply_modules]
   );
+  const addressFieldChecklist = useMemo(() => {
+    const rows = [
+      { key: 'address_country', label: 'Ülke', required: true, filled: Boolean(form.address_country) },
+      { key: 'postal_code', label: addressFormLabels.postalCode, required: listingCreateConfig.postal_code_required, filled: Boolean(String(form.postal_code || '').trim()) },
+      { key: 'city', label: addressFormLabels.city, required: listingCreateConfig.require_city, filled: Boolean(String(form.city || '').trim()) },
+      { key: 'district', label: addressFormLabels.district, required: listingCreateConfig.require_district, filled: Boolean(String(form.district || '').trim()) },
+      { key: 'neighborhood', label: addressFormLabels.neighborhood, required: listingCreateConfig.require_neighborhood, filled: Boolean(String(form.neighborhood || '').trim()) },
+      { key: 'address_line', label: addressFormLabels.street, required: listingCreateConfig.require_address_line, filled: Boolean(String(form.address_line || '').trim()) },
+      { key: 'latitude', label: 'Latitude', required: listingCreateConfig.require_latitude, filled: form.latitude !== '' && form.latitude !== null && form.latitude !== undefined },
+      { key: 'longitude', label: 'Longitude', required: listingCreateConfig.require_longitude, filled: form.longitude !== '' && form.longitude !== null && form.longitude !== undefined },
+      { key: 'map_selection', label: 'Harita seçimi', required: listingCreateConfig.map_required, filled: Boolean(postalLookupItem?.map_embed_url) },
+      { key: 'street_selection', label: 'Sokak seçimi', required: listingCreateConfig.street_selection_required, filled: Boolean(selectedStreetPlaceId) },
+    ];
+    return rows;
+  }, [
+    addressFormLabels.city,
+    addressFormLabels.district,
+    addressFormLabels.neighborhood,
+    addressFormLabels.postalCode,
+    addressFormLabels.street,
+    form.address_country,
+    form.address_line,
+    form.city,
+    form.district,
+    form.latitude,
+    form.longitude,
+    form.neighborhood,
+    form.postal_code,
+    listingCreateConfig.map_required,
+    listingCreateConfig.postal_code_required,
+    listingCreateConfig.require_address_line,
+    listingCreateConfig.require_city,
+    listingCreateConfig.require_district,
+    listingCreateConfig.require_latitude,
+    listingCreateConfig.require_longitude,
+    listingCreateConfig.require_neighborhood,
+    listingCreateConfig.street_selection_required,
+    postalLookupItem?.map_embed_url,
+    selectedStreetPlaceId,
+  ]);
+  const requiredAddressFields = useMemo(
+    () => addressFieldChecklist.filter((item) => item.required),
+    [addressFieldChecklist]
+  );
+  const addressCompletionStats = useMemo(() => {
+    const total = requiredAddressFields.length;
+    const filled = requiredAddressFields.filter((item) => item.filled).length;
+    const percentage = total > 0 ? Math.round((filled / total) * 100) : 100;
+    const missing = requiredAddressFields.filter((item) => !item.filled).map((item) => item.label);
+    return {
+      total,
+      filled,
+      percentage,
+      missing,
+    };
+  }, [requiredAddressFields]);
   const mediaConfig = useMemo(() => {
     const raw = listingSiteDesign?.step3?.media && typeof listingSiteDesign.step3.media === 'object'
       ? listingSiteDesign.step3.media
@@ -468,6 +524,49 @@ export default function ListingDetails() {
     patchDraft,
     selectedPath,
   ]);
+
+  const clearAddressFields = useCallback(async () => {
+    const nextCountry = (form.address_country || localStorage.getItem('selected_country') || 'DE').toUpperCase();
+    setPlaceSuggestions([]);
+    setPostalLookupItem(null);
+    setSelectedStreetPlaceId('');
+    setPlacesError('');
+    saveFormLocal((prev) => ({
+      ...prev,
+      city: '',
+      postal_code: '',
+      district: '',
+      neighborhood: '',
+      latitude: '',
+      longitude: '',
+      address_line: '',
+      house_number: '',
+      address_extra: '',
+      google_autocomplete_query: '',
+      address_country: nextCountry,
+    }));
+
+    if (!addressBlockEnabled) return;
+    try {
+      await patchDraft('address', {
+        location: {
+          city: '',
+          country: nextCountry,
+          postal_code: '',
+          district: '',
+          neighborhood: '',
+          latitude: null,
+          longitude: null,
+          address_line: '',
+          house_number: '',
+          address_extra: '',
+        },
+        selected_category_path: selectedPath,
+      }, { silent: true });
+    } catch (_err) {
+      // non-blocking
+    }
+  }, [addressBlockEnabled, form.address_country, patchDraft, saveFormLocal, selectedPath]);
 
   const saveDetailGroupsBlock = useCallback(async (overrideMap) => {
     if (!detailBlockEnabled) return;
@@ -1554,6 +1653,45 @@ export default function ListingDetails() {
           </div>
         ) : (
           <div className="space-y-4" data-testid="ilan-ver-address-fields">
+            <div className="rounded-md border bg-slate-50 p-3" data-testid="ilan-ver-address-completion-panel">
+              <div className="flex flex-wrap items-center justify-between gap-2" data-testid="ilan-ver-address-completion-header">
+                <div>
+                  <div className="text-xs font-semibold text-slate-800" data-testid="ilan-ver-address-completion-title">Adres Tamamlanma Durumu</div>
+                  <div className="text-[11px] text-slate-600" data-testid="ilan-ver-address-completion-subtitle">
+                    {addressCompletionStats.filled}/{addressCompletionStats.total} zorunlu alan tamamlandı
+                  </div>
+                </div>
+                <span
+                  className={`rounded-full px-2 py-1 text-[11px] font-semibold ${addressCompletionStats.percentage === 100 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}
+                  data-testid="ilan-ver-address-completion-percentage"
+                >
+                  %{addressCompletionStats.percentage}
+                </span>
+              </div>
+              <div className="mt-2 h-2 w-full rounded bg-slate-200" data-testid="ilan-ver-address-completion-progress-track">
+                <div
+                  className={`h-2 rounded ${addressCompletionStats.percentage === 100 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                  style={{ width: `${addressCompletionStats.percentage}%` }}
+                  data-testid="ilan-ver-address-completion-progress-bar"
+                />
+              </div>
+              {addressCompletionStats.missing.length > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-1" data-testid="ilan-ver-address-completion-missing-list">
+                  {addressCompletionStats.missing.map((label, index) => (
+                    <span
+                      key={`${label}-${index}`}
+                      className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[11px] text-amber-800"
+                      data-testid={`ilan-ver-address-completion-missing-${index}`}
+                    >
+                      Eksik: {label}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-2 text-[11px] text-emerald-700" data-testid="ilan-ver-address-completion-ready">Adres zorunlu alanları tamamlandı.</div>
+              )}
+            </div>
+
             <div className="rounded-md border bg-slate-50 p-3 text-xs text-slate-700" data-testid="ilan-ver-google-mode-info">
               <div className="font-semibold">Adres Servis Modu</div>
               <div className="mt-1">Mod: {googleModeLabel}</div>
@@ -1596,18 +1734,28 @@ export default function ListingDetails() {
               )}
             </div>
 
-            <div className="flex justify-end" data-testid="ilan-ver-postal-lookup-action-wrap">
-                <button
-                  type="button"
-                  onClick={() => {
-                    void runPostalLookup();
-                  }}
-                  disabled={!listingCreateConfig.map_required}
-                  className="h-10 rounded-md border px-4 text-xs font-semibold"
-                  data-testid="ilan-ver-postal-lookup-button"
-                >
-                  Haritada Aç
-                </button>
+            <div className="flex flex-wrap justify-end gap-2" data-testid="ilan-ver-address-action-row">
+              <button
+                type="button"
+                onClick={() => {
+                  void runPostalLookup();
+                }}
+                disabled={!listingCreateConfig.map_required}
+                className="h-10 rounded-md border px-4 text-xs font-semibold"
+                data-testid="ilan-ver-postal-lookup-button"
+              >
+                Haritada Aç
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void clearAddressFields();
+                }}
+                className="h-10 rounded-md border border-rose-300 px-4 text-xs font-semibold text-rose-700"
+                data-testid="ilan-ver-address-clear-button"
+              >
+                Adresi Temizle
+              </button>
             </div>
 
             {placesLoading ? (

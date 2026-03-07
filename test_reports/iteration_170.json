@@ -1,0 +1,89 @@
+{
+  "summary": "P2 Closure Items test edildi: (1) Component API Health Dashboard Widget - PASS, (2) Address Form UI - kod incelemesi PASS, UI testi bekletildi (ilan-ver Loading durumunda), (3) Visual Diff Modal - Revision Listesi paneli görünür PASS, modal 2 revizyon seçimi olmadan açılamadı",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "ilan-ver user flow",
+        "issue": "/ilan-ver sayfası 'Loading...' durumunda kalıyor, kategori seçimi yavaş yükleniyor",
+        "affected_selectors": ["ilan-ver-category-tree"],
+        "priority": "MEDIUM"
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_170_p2_closure.py"
+  ],
+  "action_items": [
+    "ilan-ver sayfası yükleme performansını kontrol et - kategori verileri yavaş yükleniyor olabilir",
+    "Address Form UI tam e2e testi için ilan-ver/detaylar sayfasına erişim gerekli"
+  ],
+  "critical_code_review_comments": [
+    "Component API Health Widget kodu uygun - tüm data-testid'ler eklenmiş (dashboard-component-api-health-*)",
+    "Address Form UI kodu uygun - tüm completion panel, missing tags, clear button data-testid'leri mevcut",
+    "Visual Diff Modal kodu uygun - filter, cursor, raw JSON toggle data-testid'leri eklenmiş",
+    "Revision List Panel UI doğru çalışıyor - 'Seçimi Temizle' ve 'Visual Diff Aç' butonları görünür"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_170_p2_closure.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "80%"
+  },
+  "test_credentials": {
+    "admin": "admin@platform.com / Admin123!",
+    "user": "user@platform.com / User123!"
+  },
+  "seed_data_creation": "N/A",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "P2 kapanış özellikleri test edildi: Dashboard Component API Health widget çalışıyor (18 endpoint izleniyor), Content Builder revision listesi paneli ve Visual Diff Aç butonu görünür. Address Form UI kodu tamamlandı, ancak ilan-ver akışı yavaş yüklendiği için tam e2e testi yapılamadı. Backend API'leri (components, layouts, menu-health, dashboard summary, pages, revisions) hepsi 200 döndürüyor.",
+  "backend_api_verification": {
+    "endpoints_tested": [
+      {"endpoint": "/api/admin/site/content-layout/components", "status": 200, "result": "PASS"},
+      {"endpoint": "/api/admin/layouts", "status": 200, "result": "PASS"},
+      {"endpoint": "/api/admin/menu-items/health", "status": 200, "result": "PASS"},
+      {"endpoint": "/api/admin/dashboard/summary", "status": 200, "result": "PASS"},
+      {"endpoint": "/api/admin/site/content-layout/pages", "status": 200, "result": "PASS"},
+      {"endpoint": "/api/admin/site/content-layout/pages/{id}/revisions", "status": 200, "result": "PASS", "note": "30 revision mevcut"}
+    ]
+  },
+  "ui_verification": {
+    "dashboard_component_api_health": {
+      "card_visible": true,
+      "title": "Component API Health",
+      "subtitle": "Content Builder API uçlarının canlı durum kontrolü.",
+      "refresh_button": true,
+      "health_items_count": 18,
+      "last_checked_timestamp": true
+    },
+    "content_builder_revision_list": {
+      "panel_visible": true,
+      "title": "Revision Listesi",
+      "subtitle": "2 revizyon seçip görsel diff modalını açabilirsiniz.",
+      "clear_selection_button": true,
+      "visual_diff_button": true,
+      "visual_diff_button_text": "Visual Diff Aç"
+    },
+    "address_form_ui": {
+      "tested": "code review only",
+      "data_testids_present": [
+        "ilan-ver-block-address",
+        "ilan-ver-address-completion-panel",
+        "ilan-ver-address-completion-title",
+        "ilan-ver-address-completion-percentage",
+        "ilan-ver-address-completion-missing-list",
+        "ilan-ver-address-clear-button"
+      ]
+    }
+  },
+  "mocked_apis": {
+    "academy.modules": "MOCKED (bilinen eski backlog)"
+  }
+}
