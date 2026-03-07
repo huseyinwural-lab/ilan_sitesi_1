@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { ConfirmModal } from '@/components/ConfirmModal';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -120,17 +122,6 @@ const extractScopeConflictDetail = (error) => {
   };
 };
 
-const buildCopyConflictPrompt = (conflictDetail) => {
-  const conflictCount = Array.isArray(conflictDetail?.conflicts) ? conflictDetail.conflicts.length : 0;
-  return [
-    conflictDetail?.message || 'Aynı kapsamda aktif bir yayın zaten var.',
-    `Scope: ${conflictDetail?.scope || '-'}`,
-    `Çakışan aktif yayın sayısı: ${conflictCount}`,
-    '',
-    'Eski aktif yayını pasifleştirip bu kopyayı publish etmek ister misiniz?',
-  ].join('\n');
-};
-
 const isAxiosTimeoutError = (error) => {
   if (!error) return false;
   return error.code === 'ECONNABORTED' || String(error?.message || '').toLowerCase().includes('timeout');
@@ -138,6 +129,7 @@ const isAxiosTimeoutError = (error) => {
 
 export default function AdminContentList() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const resolveRequestLocale = () => {
     const pathLocale = String(window.location.pathname || '').split('/').filter(Boolean)[0]?.toLowerCase();
@@ -173,6 +165,9 @@ export default function AdminContentList() {
   const [copyTargetModule, setCopyTargetModule] = useState('global');
   const [copyTargetCategoryId, setCopyTargetCategoryId] = useState('');
   const [copyPublishAfterCopy, setCopyPublishAfterCopy] = useState(false);
+  const [copyConflictModalOpen, setCopyConflictModalOpen] = useState(false);
+  const [copyConflictLoading, setCopyConflictLoading] = useState(false);
+  const [pendingCopyConflict, setPendingCopyConflict] = useState(null);
 
   const [presetCountriesInput, setPresetCountriesInput] = useState('TR,DE,FR');
   const [presetModule, setPresetModule] = useState('global');
@@ -316,13 +311,78 @@ export default function AdminContentList() {
     }
   };
 
+  const handleCopySuccess = async ({ response, normalizedCountry, normalizedModule, fallbackPageType }) => {
+    const targetPage = response?.data?.target_page;
+    const targetPageId = targetPage?.id;
+
+    await fetchContentList({ silent: true });
+    setStatusMessage('Sayfa bire bir kopyalandı. Hedef sayfa Content Builder’da açılıyor.');
+    toast.success('Bire bir kopyalama tamamlandı.');
+
+    if (targetPageId) {
+      const params = new URLSearchParams();
+      params.set('autoload_page_id', targetPageId);
+      params.set('page_type', targetPage?.page_type || fallbackPageType || 'home');
+      params.set('country', String(targetPage?.country || normalizedCountry || 'DE').toUpperCase());
+      params.set('module', String(targetPage?.module || normalizedModule || 'global'));
+      if (targetPage?.category_id) {
+        params.set('category_id', targetPage.category_id);
+      }
+      navigate(`/admin/site-design/content-builder?${params.toString()}`);
+    }
+  };
+
+  const handleCopyConflictCancel = () => {
+    setCopyConflictModalOpen(false);
+    setPendingCopyConflict(null);
+    setStatusMessage('Kopyalama iptal edildi: conflict çözümü onaylanmadı.');
+    toast.info('Kopyalama iptal edildi.');
+  };
+
+  const handleCopyConflictProceed = async () => {
+    if (!pendingCopyConflict?.sourceRevisionId || !pendingCopyConflict?.requestPayload) return;
+
+    setCopyConflictLoading(true);
+    setContentListError('');
+    try {
+      const response = await axios.post(
+        `${API}/admin/layouts/${pendingCopyConflict.sourceRevisionId}/copy`,
+        pendingCopyConflict.requestPayload,
+        {
+          headers: authHeaders,
+          params: { force: true },
+        },
+      );
+      setCopyConflictModalOpen(false);
+      setPendingCopyConflict(null);
+      await handleCopySuccess({
+        response,
+        normalizedCountry: pendingCopyConflict.normalizedCountry,
+        normalizedModule: pendingCopyConflict.normalizedModule,
+        fallbackPageType: pendingCopyConflict.fallbackPageType,
+      });
+    } catch (err) {
+      const message = extractApiErrorText(err, 'Kopyalama başarısız');
+      setContentListError(message);
+      toast.error(message);
+    } finally {
+      setCopyConflictLoading(false);
+    }
+  };
+
   const handleContentListCopy = async (item) => {
-    if (!item?.revision_id) return;
+    if (!item?.revision_id) {
+      const sourceErrorMessage = t('copy_page.invalid_source', { defaultValue: 'Kopya kaynağı geçersiz.' });
+      setContentListError(sourceErrorMessage);
+      toast.error(sourceErrorMessage);
+      return;
+    }
     const normalizedModule = String(copyTargetModule || '').trim();
     const normalizedCountry = String(copyTargetCountry || '').trim().toUpperCase();
 
     if (!normalizedCountry || !normalizedModule) {
-      toast.error('Kopya hedefi için ülke ve module zorunludur.');
+      const targetErrorMessage = t('copy_page.invalid_target', { defaultValue: 'Kopya hedefi için ülke ve module zorunludur.' });
+      toast.error(targetErrorMessage);
       return;
     }
 
@@ -350,41 +410,25 @@ export default function AdminContentList() {
           throw copyError;
         }
 
-        const confirmed = window.confirm(buildCopyConflictPrompt(conflictDetail));
-        if (!confirmed) {
-          setStatusMessage('Kopyalama iptal edildi: conflict çözümü onaylanmadı.');
-          toast.info('Kopyalama iptal edildi.');
-          return;
-        }
-
-        response = await axios.post(
-          `${API}/admin/layouts/${item.revision_id}/copy`,
+        setPendingCopyConflict({
+          sourceRevisionId: item.revision_id,
           requestPayload,
-          {
-            headers: authHeaders,
-            params: { force: true },
-          },
-        );
+          normalizedCountry,
+          normalizedModule,
+          fallbackPageType: copyTargetPageType,
+          conflictDetail,
+        });
+        setCopyConflictModalOpen(true);
+        setStatusMessage(t('copy_page.conflict_warning', { defaultValue: 'Kopyalama çakışması tespit edildi. Onay bekleniyor.' }));
+        return;
       }
 
-      const targetPage = response?.data?.target_page;
-      const targetPageId = targetPage?.id;
-
-      await fetchContentList({ silent: true });
-      setStatusMessage('Sayfa bire bir kopyalandı. Hedef sayfa Content Builder’da açılıyor.');
-      toast.success('Bire bir kopyalama tamamlandı.');
-
-      if (targetPageId) {
-        const params = new URLSearchParams();
-        params.set('autoload_page_id', targetPageId);
-        params.set('page_type', targetPage?.page_type || copyTargetPageType || 'home');
-        params.set('country', String(targetPage?.country || normalizedCountry || 'DE').toUpperCase());
-        params.set('module', String(targetPage?.module || normalizedModule || 'global'));
-        if (targetPage?.category_id) {
-          params.set('category_id', targetPage.category_id);
-        }
-        navigate(`/admin/site-design/content-builder?${params.toString()}`);
-      }
+      await handleCopySuccess({
+        response,
+        normalizedCountry,
+        normalizedModule,
+        fallbackPageType: copyTargetPageType,
+      });
     } catch (err) {
       const message = extractApiErrorText(err, 'Kopyalama başarısız');
       setContentListError(message);
@@ -1169,6 +1213,26 @@ export default function AdminContentList() {
             </tbody>
           </table>
         </div>
+
+        <ConfirmModal
+          open={copyConflictModalOpen}
+          onOpenChange={(nextOpen) => {
+            setCopyConflictModalOpen(nextOpen);
+            if (!nextOpen && !copyConflictLoading) {
+              setPendingCopyConflict(null);
+            }
+          }}
+          title={t('copy_page.conflict_warning', { defaultValue: 'Kopyalama Çakışması' })}
+          description={pendingCopyConflict?.conflictDetail?.message || t('copy_page.conflict_warning', { defaultValue: 'Aynı kapsamda aktif bir yayın zaten var.' })}
+          warningText={t('copy_page.force_publish_effect', { defaultValue: 'Devam ederseniz eski aktif yayın pasifleştirilir ve yeni kopya publish edilir.' })}
+          cancelLabel={t('cancel', { defaultValue: 'İptal' })}
+          proceedLabel={t('copy_page.proceed', { defaultValue: 'Devam Et' })}
+          onCancel={handleCopyConflictCancel}
+          onProceed={handleCopyConflictProceed}
+          conflictItems={pendingCopyConflict?.conflictDetail?.conflicts || []}
+          loading={copyConflictLoading}
+          testIdPrefix="admin-content-list-copy-conflict-modal"
+        />
 
         {statusMessage ? (
           <p className="mt-2 text-xs text-emerald-700" data-testid="admin-content-list-status-message">{statusMessage}</p>

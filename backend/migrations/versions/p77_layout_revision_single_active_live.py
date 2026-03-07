@@ -1,6 +1,6 @@
 """enforce single active live revision per layout page
 
-Revision ID: p77_layout_revision_single_active_live
+Revision ID: p77_active_live_idx
 Revises: p76_layout_revision_active_state
 Create Date: 2026-03-07 00:00:00.000000
 """
@@ -10,7 +10,7 @@ from typing import Sequence, Union
 from alembic import op
 
 
-revision: str = "p77_layout_revision_single_active_live"
+revision: str = "p77_active_live_idx"
 down_revision: Union[str, Sequence[str], None] = "p76_layout_revision_active_state"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

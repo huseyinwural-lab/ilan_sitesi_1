@@ -123,5 +123,12 @@
   "admin_header_add_link": "Link Ekle",
   "admin_header_links_empty": "Bu header için link bulunmuyor.",
   "admin_header_link_label_placeholder": "Link etiketi",
-  "admin_header_link_url_placeholder": "URL (örn: /search)"
+  "admin_header_link_url_placeholder": "URL (örn: /search)",
+  "copy_page": {
+    "invalid_source": "Kopya kaynağı geçersiz.",
+    "invalid_target": "Kopya hedefi için ülke ve module zorunludur.",
+    "conflict_warning": "Kopyalama çakışması tespit edildi.",
+    "force_publish_effect": "Devam ederseniz eski aktif yayın pasifleştirilir ve yeni kopya publish edilir.",
+    "proceed": "Devam Et"
+  }
 }

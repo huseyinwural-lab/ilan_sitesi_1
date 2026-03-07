@@ -124,5 +124,12 @@
   "admin_header_add_link": "Link hinzufügen",
   "admin_header_links_empty": "Keine Links für diesen Header.",
   "admin_header_link_label_placeholder": "Link-Titel",
-  "admin_header_link_url_placeholder": "URL (z.B. /search)"
+  "admin_header_link_url_placeholder": "URL (z.B. /search)",
+  "copy_page": {
+    "invalid_source": "Ungültige Kopierquelle.",
+    "invalid_target": "Land und Modul sind für das Kopierziel erforderlich.",
+    "conflict_warning": "Kopierkonflikt erkannt.",
+    "force_publish_effect": "Wenn Sie fortfahren, wird die alte aktive Veröffentlichung deaktiviert und die neue Kopie veröffentlicht.",
+    "proceed": "Fortfahren"
+  }
 }

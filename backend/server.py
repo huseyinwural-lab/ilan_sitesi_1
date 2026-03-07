@@ -301,6 +301,8 @@ _audit_perf_indexes_ready: bool = False
 _permissions_query_indexes_ready: bool = False
 _audit_list_cache: Dict[str, Tuple[float, Dict[str, Any]]] = {}
 _audit_list_cache_ttl_seconds: int = 600
+ACADEMY_MODULES_CACHE_TTL_SECONDS = 300
+_academy_modules_cache: Dict[str, Tuple[float, List[Dict[str, Any]]]] = {}
 
 MEILI_SETTINGS_SYNC_INTERVAL_SECONDS = 300
 MEILI_SETTINGS_RETRY_ATTEMPTS = 3
@@ -21600,6 +21602,156 @@ async def dealer_dashboard_summary(
         )
 
 
+def _resolve_academy_modules_locale(request: Request, current_user: Dict[str, Any]) -> str:
+    url_locale = str(request.headers.get("X-URL-Locale") or "").strip().lower()
+    if url_locale in SUPPORTED_COUNTRIES:
+        return url_locale
+    accept_header = str(request.headers.get("Accept-Language") or "").strip().lower()
+    if accept_header:
+        candidate = accept_header.split(",")[0].split("-")[0].strip()
+        if candidate in SUPPORTED_COUNTRIES:
+            return candidate
+    user_locale = str(current_user.get("language") or "").strip().lower()
+    if user_locale in SUPPORTED_COUNTRIES:
+        return user_locale
+    return "tr"
+
+
+async def _load_academy_modules_from_db(
+    session: AsyncSession,
+    *,
+    locale: str,
+    include_hidden: bool,
+) -> List[Dict[str, Any]]:
+    await _ensure_dealer_portal_nav_baseline(session)
+    rows = (
+        await session.execute(
+            select(DealerModule)
+            .order_by(DealerModule.order_index.asc(), DealerModule.key.asc())
+        )
+    ).scalars().all()
+    if not rows:
+        return []
+
+    feature_map = await _resolve_feature_flags_readonly(
+        session,
+        [row.feature_flag for row in rows if row.feature_flag],
+    )
+
+    modules: List[Dict[str, Any]] = []
+    for row in rows:
+        flag_enabled = True
+        if row.feature_flag:
+            flag_enabled = bool(feature_map.get(row.feature_flag, True))
+        effective_visible = bool(row.visible) and flag_enabled
+        if not include_hidden and not effective_visible:
+            continue
+
+        modules.append(
+            {
+                "id": str(row.id),
+                "title": row.title_i18n_key or row.key,
+                "slug": row.key,
+                "locale": locale,
+                "status": "active" if effective_visible else "inactive",
+                "updated_at": row.updated_at.isoformat() if row.updated_at else None,
+                "order_index": int(row.order_index or 0),
+                "feature_flag": row.feature_flag,
+                "visible": bool(row.visible),
+            }
+        )
+    return modules
+
+
+async def _get_academy_modules_with_cache(
+    session: AsyncSession,
+    *,
+    locale: str,
+    include_hidden: bool,
+    force_refresh: bool,
+) -> Dict[str, Any]:
+    cache_key = "admin_override" if include_hidden else "default"
+    now_ts = time.time()
+    cached_entry = _academy_modules_cache.get(cache_key)
+    if not force_refresh and cached_entry and (now_ts - cached_entry[0]) < ACADEMY_MODULES_CACHE_TTL_SECONDS:
+        cached_modules = [
+            {**item, "locale": locale}
+            for item in (cached_entry[1] or [])
+        ]
+        return {
+            "items": cached_modules,
+            "source": "cache",
+            "cache": {"hit": True, "ttl_seconds": ACADEMY_MODULES_CACHE_TTL_SECONDS},
+            "fallback": None,
+        }
+
+    try:
+        fresh_modules = await _load_academy_modules_from_db(
+            session,
+            locale=locale,
+            include_hidden=include_hidden,
+        )
+        _academy_modules_cache[cache_key] = (
+            now_ts,
+            [{k: v for k, v in item.items() if k != "locale"} for item in fresh_modules],
+        )
+        return {
+            "items": fresh_modules,
+            "source": "dealer_modules_db",
+            "cache": {"hit": False, "ttl_seconds": ACADEMY_MODULES_CACHE_TTL_SECONDS},
+            "fallback": None,
+        }
+    except Exception as exc:
+        logging.getLogger("academy_modules").warning("academy_modules_fetch_failed", exc_info=True)
+        if cached_entry:
+            cached_modules = [
+                {**item, "locale": locale}
+                for item in (cached_entry[1] or [])
+            ]
+            return {
+                "items": cached_modules,
+                "source": "cache_fallback",
+                "cache": {"hit": True, "ttl_seconds": ACADEMY_MODULES_CACHE_TTL_SECONDS},
+                "fallback": str(exc),
+            }
+        return {
+            "items": [],
+            "source": "empty_fallback",
+            "cache": {"hit": False, "ttl_seconds": ACADEMY_MODULES_CACHE_TTL_SECONDS},
+            "fallback": str(exc),
+        }
+
+
+@api_router.get("/academy/modules")
+async def academy_modules(
+    request: Request,
+    force_refresh: bool = Query(default=False),
+    admin_override: bool = Query(default=False),
+    current_user=Depends(get_current_user),
+    session: AsyncSession = Depends(get_sql_session),
+):
+    role = str(current_user.get("role") or "").strip().lower()
+    if role not in {"dealer", "super_admin", "country_admin"}:
+        raise HTTPException(status_code=403, detail="academy_modules_forbidden")
+    if admin_override and role not in {"super_admin", "country_admin"}:
+        raise HTTPException(status_code=403, detail="admin_override_forbidden")
+
+    locale = _resolve_academy_modules_locale(request, current_user)
+    payload = await _get_academy_modules_with_cache(
+        session,
+        locale=locale,
+        include_hidden=bool(admin_override),
+        force_refresh=bool(force_refresh),
+    )
+    return {
+        "items": payload.get("items", []),
+        "source": payload.get("source"),
+        "cache": payload.get("cache"),
+        "fallback": payload.get("fallback"),
+        "locale": locale,
+    }
+
+
 @api_router.get("/dealer/dashboard/navigation-summary")
 async def dealer_dashboard_navigation_summary(
     request: Request,
@@ -21682,10 +21834,17 @@ async def dealer_dashboard_navigation_summary(
         await session.execute(select(FeatureFlag).where(FeatureFlag.key == "academy.enabled").limit(1))
     ).scalar_one_or_none()
     academy_enabled = bool(academy_flag_row and academy_flag_row.is_enabled)
+    academy_locale = _resolve_academy_modules_locale(request, current_user)
+    academy_modules_payload = await _get_academy_modules_with_cache(
+        session,
+        locale=academy_locale,
+        include_hidden=False,
+        force_refresh=False,
+    )
     academy_data = {
         "enabled": academy_enabled,
-        "data_source": "feature_flag_enabled" if academy_enabled else "feature_flag_disabled",
-        "modules": [],
+        "data_source": academy_modules_payload.get("source") if academy_enabled else "feature_flag_disabled",
+        "modules": academy_modules_payload.get("items", []) if academy_enabled else [],
     }
 
     return {

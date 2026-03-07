@@ -311,3 +311,46 @@ class LayoutPresetEvent(Base):
         Index("ix_layout_preset_events_grouping", "preset_id", "persona", "variant", "event_type", "created_at"),
         Index("ix_layout_preset_events_scope", "country", "module", "created_at"),
     )
+
+
+class LayoutPresetRunLog(Base):
+    __tablename__ = "layout_preset_run_logs"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    executed_by: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    executed_by_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    executed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+    target_countries: Mapped[list] = mapped_column(JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb"))
+    total_jobs: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    success_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    failure_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    duration_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    status: Mapped[str] = mapped_column(String(24), nullable=False, default="success", index=True)
+    module: Mapped[str] = mapped_column(String(64), nullable=False)
+    persona: Mapped[str] = mapped_column(String(32), nullable=False)
+    variant: Mapped[str] = mapped_column(String(16), nullable=False)
+    fail_fast: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    publish_after_seed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    include_extended_templates: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    summary_json: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"))
+    error_logs_json: Mapped[list] = mapped_column(JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb"))
+
+    __table_args__ = (
+        CheckConstraint("char_length(module) > 0", name="ck_layout_preset_run_logs_module_not_empty"),
+        CheckConstraint("char_length(persona) > 0", name="ck_layout_preset_run_logs_persona_not_empty"),
+        CheckConstraint("char_length(variant) > 0", name="ck_layout_preset_run_logs_variant_not_empty"),
+        CheckConstraint("jsonb_typeof(target_countries) = 'array'", name="ck_layout_preset_run_logs_target_countries_array"),
+        CheckConstraint("jsonb_typeof(summary_json) = 'object'", name="ck_layout_preset_run_logs_summary_json_object"),
+        CheckConstraint("jsonb_typeof(error_logs_json) = 'array'", name="ck_layout_preset_run_logs_error_logs_json_array"),
+        Index("ix_layout_preset_run_logs_status_executed", "status", "executed_at"),
+        Index("ix_layout_preset_run_logs_module_executed", "module", "executed_at"),
+    )

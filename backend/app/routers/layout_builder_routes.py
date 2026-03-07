@@ -38,6 +38,7 @@ from app.models.layout_builder import (
     LayoutPageType,
     LayoutPresetEvent,
     LayoutPresetEventType,
+    LayoutPresetRunLog,
     LayoutRevision,
     LayoutRevisionStatus,
 )
@@ -1004,6 +1005,20 @@ def _as_uuid_or_400(raw_value: Optional[str], *, field_name: str) -> Optional[uu
         raise HTTPException(status_code=400, detail=f"Invalid {field_name}") from exc
 
 
+def _safe_uuid_or_none(raw_value: Optional[Any]) -> Optional[uuid.UUID]:
+    if raw_value is None:
+        return None
+    if isinstance(raw_value, uuid.UUID):
+        return raw_value
+    value = str(raw_value or "").strip()
+    if not value:
+        return None
+    try:
+        return uuid.UUID(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def _serialize_component(row: LayoutComponentDefinition) -> dict[str, Any]:
     serialized = {
         "id": str(row.id),
@@ -1382,6 +1397,32 @@ def _serialize_preset_event(row: LayoutPresetEvent) -> dict[str, Any]:
         "actor_user_id": str(row.actor_user_id) if row.actor_user_id else None,
         "metadata_json": row.metadata_json or {},
         "created_at": row.created_at.isoformat() if row.created_at else None,
+    }
+
+
+def _serialize_preset_run_log(row: LayoutPresetRunLog) -> dict[str, Any]:
+    total_jobs = int(row.total_jobs or 0)
+    success_count = int(row.success_count or 0)
+    return {
+        "id": str(row.id),
+        "executed_by": str(row.executed_by) if row.executed_by else None,
+        "executed_by_email": row.executed_by_email,
+        "executed_at": row.executed_at.isoformat() if row.executed_at else None,
+        "target_countries": list(row.target_countries or []),
+        "total_jobs": total_jobs,
+        "success_count": success_count,
+        "failure_count": int(row.failure_count or 0),
+        "success_ratio": round((success_count / total_jobs) * 100, 2) if total_jobs > 0 else 0.0,
+        "duration_ms": int(row.duration_ms or 0),
+        "status": row.status,
+        "module": row.module,
+        "persona": row.persona,
+        "variant": row.variant,
+        "fail_fast": bool(row.fail_fast),
+        "publish_after_seed": bool(row.publish_after_seed),
+        "include_extended_templates": bool(row.include_extended_templates),
+        "summary_json": row.summary_json or {},
+        "error_logs": list(row.error_logs_json or []),
     }
 
 
@@ -3539,6 +3580,7 @@ async def install_standard_template_pack(
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
 ):
+    run_started_at = time.perf_counter()
     normalized_countries = _normalize_countries_or_400(payload.countries)
     normalized_module = payload.module.strip()
     normalized_persona = _normalize_standard_persona_or_400(payload.persona)
@@ -3663,7 +3705,52 @@ async def install_standard_template_pack(
                 stopped_early = True
                 break
 
-    return {
+    run_duration_ms = int((time.perf_counter() - run_started_at) * 1000)
+    if bool(payload.publish_after_seed) and int(aggregate_summary.get("published_revisions", 0)) > 0:
+        _invalidate_resolve_cache()
+    total_jobs = len(normalized_countries) * len(target_page_types)
+    success_count = int(aggregate_summary.get("processed_countries", 0))
+    failure_count = int(aggregate_summary.get("failed_countries", 0))
+    if failure_count <= 0:
+        run_status = "success"
+    elif success_count <= 0:
+        run_status = "failed"
+    else:
+        run_status = "partial_success"
+
+    run_row = LayoutPresetRunLog(
+        id=uuid.uuid4(),
+        executed_by=_safe_uuid_or_none(current_user.get("id")),
+        executed_by_email=current_user.get("email"),
+        executed_at=datetime.now(timezone.utc),
+        target_countries=_sanitize_payload_for_sql_ascii(list(normalized_countries)),
+        total_jobs=total_jobs,
+        success_count=success_count,
+        failure_count=failure_count,
+        duration_ms=run_duration_ms,
+        status=run_status,
+        module=normalized_module,
+        persona=normalized_persona,
+        variant=normalized_variant,
+        fail_fast=fail_fast,
+        publish_after_seed=bool(payload.publish_after_seed),
+        include_extended_templates=bool(payload.include_extended_templates),
+        summary_json=_sanitize_payload_for_sql_ascii(aggregate_summary),
+        error_logs_json=_sanitize_payload_for_sql_ascii(failed_countries),
+    )
+
+    async def _persist_run_log_op():
+        session.add(run_row)
+        await session.commit()
+        return run_row
+
+    try:
+        run_row = await _run_with_db_retry(session, _persist_run_log_op, retries=2)
+    except Exception:
+        await session.rollback()
+        logger.warning("layout_preset_run_log_write_failed", exc_info=True)
+
+    response_payload = {
         "ok": len(failed_countries) == 0,
         "module": normalized_module,
         "countries": normalized_countries,
@@ -3678,6 +3765,11 @@ async def install_standard_template_pack(
         "results": results,
         "failed_countries": failed_countries,
     }
+
+    if run_row:
+        response_payload["run_log"] = _serialize_preset_run_log(run_row)
+
+    return response_payload
 
 
 @router.get("/admin/site/content-layout/preset/verify-standard-pack")
@@ -3808,6 +3900,61 @@ async def verify_standard_template_pack(
         "items": matrix,
         "failed_countries": failed_countries,
     }
+
+
+@router.get("/admin/site/content-layout/preset-runs")
+async def list_layout_preset_runs(
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, ge=1, le=100),
+    status: Optional[str] = Query(default=None),
+    module: Optional[str] = Query(default=None),
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    del current_user
+    query = select(LayoutPresetRunLog)
+    count_query = select(func.count()).select_from(LayoutPresetRunLog)
+
+    normalized_status = str(status or "").strip().lower()
+    if normalized_status:
+        query = query.where(func.lower(LayoutPresetRunLog.status) == normalized_status)
+        count_query = count_query.where(func.lower(LayoutPresetRunLog.status) == normalized_status)
+
+    normalized_module = str(module or "").strip()
+    if normalized_module:
+        query = query.where(LayoutPresetRunLog.module == normalized_module)
+        count_query = count_query.where(LayoutPresetRunLog.module == normalized_module)
+
+    total = int((await session.execute(count_query)).scalar_one() or 0)
+    result = await session.execute(
+        query
+        .order_by(desc(LayoutPresetRunLog.executed_at), desc(LayoutPresetRunLog.id))
+        .offset((page - 1) * limit)
+        .limit(limit)
+    )
+    rows = result.scalars().all()
+
+    return {
+        "items": [_serialize_preset_run_log(row) for row in rows],
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "has_next": (page * limit) < total,
+    }
+
+
+@router.get("/admin/site/content-layout/preset-runs/{run_id}")
+async def get_layout_preset_run_detail(
+    run_id: str,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    del current_user
+    run_uuid = _as_uuid_or_400(run_id, field_name="run_id")
+    row = await session.get(LayoutPresetRunLog, run_uuid)
+    if not row:
+        raise HTTPException(status_code=404, detail="preset_run_not_found")
+    return {"ok": True, "item": _serialize_preset_run_log(row)}
 
 
 @router.post("/admin/site/content-layout/pages/{page_id}/revisions/draft")

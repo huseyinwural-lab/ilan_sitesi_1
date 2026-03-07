@@ -1,0 +1,103 @@
+{
+  "summary": "Iteration 159: Kapanış toplu görev listesi (Faz1-Faz5) testing completed. All 5 phases verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_159_kapani_test.py",
+    "/app/test_reports/pytest/pytest_results_159.xml",
+    "/app/publish_validation_report.md",
+    "/app/preset_stress_test_report.md"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_159_kapani_test.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@platform.com / Admin123!, dealer@platform.com / Dealer123!",
+  "seed_data_creation": "None - used existing data from P77/P78 migrations",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Faz1-5 kapanış görevleri test edildi. P77/P78 migrations uygulandı. Tüm API'ler ve UI akışları çalışıyor.",
+  "phase_results": {
+    "faz1_release_safety": {
+      "status": "PASS",
+      "details": {
+        "preset_verify_TR_DE_FR": "ready_ratio=100%, missing_rows=0",
+        "preset_install_summary": "created_pages, updated_drafts, published_revisions fields present",
+        "cache_invalidation": "resolve source cycle working (default/cache)",
+        "publish_validation_report": "File exists with PASS status",
+        "preset_stress_test_report": "100/100 success, 100% success_ratio"
+      }
+    },
+    "faz2_preset_run_history": {
+      "status": "PASS",
+      "details": {
+        "list_endpoint": "GET /api/admin/site/content-layout/preset-runs returns items, total, page, limit, has_next",
+        "filter_by_status": "Works correctly",
+        "filter_by_module": "Works correctly",
+        "ui_panel": "AdminPresetRuns page shows table with filters, pagination, 'Log Gör' actions"
+      }
+    },
+    "faz3_copy_conflict_modal": {
+      "status": "PASS",
+      "details": {
+        "409_conflict_response": "Returns publish_scope_conflict with scope and conflicts array",
+        "force_true_deactivates": "conflict_resolution.deactivated_revision_ids populated",
+        "confirm_modal_component": "ConfirmModal.jsx has data-testid, warningText, conflictItems props",
+        "i18n_keys": "TR/DE/FR locale files have copy_page keys (conflict_warning, force_publish_effect, proceed)"
+      }
+    },
+    "faz4_academy_modules_backend": {
+      "status": "PASS",
+      "details": {
+        "endpoint": "GET /api/academy/modules returns real data from DealerModule table",
+        "contract": "items with id, title, slug, locale, status, updated_at, order_index, visible",
+        "source": "dealer_modules_db (not mock)",
+        "cache_fallback": "ttl_seconds=300, cache hit works"
+      }
+    },
+    "faz5_ui_consistency": {
+      "status": "PASS",
+      "details": {
+        "dealer_academy_page": "Shows modules from real backend with 'Veri kaynağı: cache'",
+        "admin_content_list": "Shows page table with Edit/Delete/Kopyala/Pasif Et actions",
+        "admin_preset_runs": "Shows run history with filters and Log Gör expand"
+      }
+    }
+  },
+  "api_verification_results": {
+    "preset_verify_standard_pack": {
+      "url": "GET /api/admin/site/content-layout/preset/verify-standard-pack",
+      "status": 200,
+      "response_fields": ["ok", "summary.ready_ratio", "summary.missing_rows", "country_summaries"]
+    },
+    "preset_runs_list": {
+      "url": "GET /api/admin/site/content-layout/preset-runs",
+      "status": 200,
+      "response_fields": ["items", "total", "page", "limit", "has_next"],
+      "item_fields": ["id", "executed_at", "target_countries", "success_ratio", "status", "summary_json"]
+    },
+    "copy_conflict": {
+      "url": "POST /api/admin/layouts/{id}/copy",
+      "409_response": {"code": "publish_scope_conflict", "scope": "TR/module/global", "conflicts": []},
+      "force_true_200_response": {"ok": true, "conflict_resolution": {"deactivated_revision_ids": []}}
+    },
+    "academy_modules": {
+      "url": "GET /api/academy/modules",
+      "status": 200,
+      "response_fields": ["items", "source", "cache", "fallback", "locale"],
+      "source_values": ["dealer_modules_db", "cache", "cache_fallback"]
+    }
+  }
+}

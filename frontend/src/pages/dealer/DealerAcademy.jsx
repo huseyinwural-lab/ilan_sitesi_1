@@ -1,30 +1,89 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const ACADEMY_MODULES_CACHE_KEY = 'dealer_academy_modules_cache_v2';
+const ACADEMY_MODULES_CACHE_TTL_MS = 5 * 60 * 1000;
+
+const loadCachedAcademyModules = () => {
+  try {
+    const raw = localStorage.getItem(ACADEMY_MODULES_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed?.items)) return null;
+    const cachedAt = Number(parsed?.cached_at || 0);
+    if (!cachedAt || Date.now() - cachedAt > ACADEMY_MODULES_CACHE_TTL_MS) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const persistCachedAcademyModules = (items) => {
+  try {
+    localStorage.setItem(ACADEMY_MODULES_CACHE_KEY, JSON.stringify({
+      cached_at: Date.now(),
+      items,
+    }));
+  } catch {
+    // ignore cache write errors
+  }
+};
+
+const adaptAcademyModule = (moduleItem, index) => {
+  const safeSlug = String(moduleItem?.slug || `module-${index}`);
+  const safeStatus = String(moduleItem?.status || 'inactive');
+  const isActive = safeStatus === 'active';
+  const label = String(moduleItem?.title || safeSlug);
+
+  return {
+    id: String(moduleItem?.id || safeSlug),
+    title: label,
+    tag: isActive ? 'Aktif' : 'Pasif',
+    description: `Slug: ${safeSlug} • Locale: ${String(moduleItem?.locale || 'tr').toLowerCase()}`,
+    progress: isActive ? 100 : 0,
+    duration_minutes: isActive ? 10 : 0,
+    updated_at: moduleItem?.updated_at || null,
+  };
+};
 
 export default function DealerAcademy() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [modules, setModules] = useState([]);
-  const [source, setSource] = useState('mocked');
+  const [source, setSource] = useState('empty_state');
 
   const fetchAcademy = async () => {
     setLoading(true);
     setError('');
+
+    const cachedPayload = loadCachedAcademyModules();
+    if (cachedPayload?.items?.length) {
+      setModules(cachedPayload.items.map(adaptAcademyModule));
+      setSource('local_cache');
+    }
+
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`${API}/dealer/dashboard/navigation-summary`, {
+      const response = await axios.get(`${API}/academy/modules`, {
         headers: { Authorization: `Bearer ${token}` },
+        timeout: 12000,
       });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload?.detail || 'Akademi verisi alınamadı');
-      const academy = payload?.academy || {};
-      setModules(Array.isArray(academy.modules) ? academy.modules : []);
-      setSource(academy.data_source || 'mocked');
+      const backendItems = Array.isArray(response.data?.items) ? response.data.items : [];
+      setModules(backendItems.map(adaptAcademyModule));
+      setSource(response.data?.source || 'dealer_modules_db');
+      persistCachedAcademyModules(backendItems);
     } catch (requestError) {
-      setError(requestError?.message || 'Akademi verisi alınamadı');
-      setModules([]);
-      setSource('mocked');
+      const cachedFallback = loadCachedAcademyModules();
+      if (cachedFallback?.items?.length) {
+        setModules(cachedFallback.items.map(adaptAcademyModule));
+        setSource('local_cache_fallback');
+        setError('API hatası nedeniyle cache verisi gösteriliyor.');
+      } else {
+        setError(requestError?.response?.data?.detail || requestError?.message || 'Akademi verisi alınamadı');
+        setModules([]);
+        setSource('empty_state');
+      }
     } finally {
       setLoading(false);
     }
@@ -67,6 +126,9 @@ export default function DealerAcademy() {
               <span data-testid={`dealer-academy-card-progress-text-${module.id}`}>İlerleme %{module.progress || 0}</span>
               <span data-testid={`dealer-academy-card-duration-${module.id}`}>{module.duration_minutes || 0} dk</span>
             </div>
+            <p className="mt-2 text-[11px] text-slate-500" data-testid={`dealer-academy-card-updated-at-${module.id}`}>
+              Güncelleme: {module.updated_at || '-'}
+            </p>
             <button type="button" className="mt-3 h-8 rounded-md border border-slate-300 px-3 text-xs font-semibold text-slate-900" data-testid={`dealer-academy-card-action-${module.id}`}>Özellikleri Keşfet</button>
           </article>
         ))}

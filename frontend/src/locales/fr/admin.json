@@ -124,5 +124,12 @@
   "admin_header_add_link": "Ajouter un lien",
   "admin_header_links_empty": "Aucun lien pour ce header.",
   "admin_header_link_label_placeholder": "Libellé du lien",
-  "admin_header_link_url_placeholder": "URL (ex: /search)"
+  "admin_header_link_url_placeholder": "URL (ex: /search)",
+  "copy_page": {
+    "invalid_source": "Source de copie invalide.",
+    "invalid_target": "Le pays et le module sont obligatoires pour la cible de copie.",
+    "conflict_warning": "Conflit de copie détecté.",
+    "force_publish_effect": "Si vous continuez, l’ancienne publication active sera désactivée et la nouvelle copie sera publiée.",
+    "proceed": "Continuer"
+  }
 }
