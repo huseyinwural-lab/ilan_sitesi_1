@@ -1,0 +1,73 @@
+{
+  "summary": "Faz B + Faz C + RBAC verification complete. All source_policy enforcement working correctly. No silent fallbacks - deterministic error states implemented.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "AdminContentList",
+        "issue": "React hydration warning: <span> cannot be child of <option>, <select>, <tbody>, <tr>. Minor console warning, not functional issue.",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_169_home_source_policy.py",
+    "/app/backend/tests/test_iteration_170_source_policy_gate.py",
+    "/app/backend/tests/test_iteration_169_faz_b_c_rbac.py",
+    "/app/test_reports/pytest/pytest_results_iteration_169.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "React hydration warnings in AdminContentList.js - dynamic span wrappers inside select/table elements causing console warnings. Not blocking but should be cleaned up."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_169_faz_b_c_rbac.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Faz B/C source_policy gates verified. RBAC for dealer/user on admin content endpoints working (403). Home page loads with published layout at /tr. SearchPage shows deterministic empty state at /tr/kategori/autos (409 status from backend indicating no published revision). Admin Content List loads correctly after login.",
+  "test_results": {
+    "faz_b_tests": {
+      "resolve_rejects_invalid_source_policy": "PASS - Returns 400 with 'invalid_source_policy'",
+      "content_builder_only_rejects_draft_preview": "PASS - Returns 400 with 'content_builder_only_requires_published_preview'"
+    },
+    "faz_c_tests": {
+      "search_page_content_builder_only_policy": "PASS - sourcePolicy: 'content_builder_only' and allowDraftPreview: false in code",
+      "detail_page_empty_state": "PASS - listing-detail-layout-empty-state data-testid present",
+      "deterministic_error_behavior": "PASS - 409 status with 'default_layout_has_no_published_revision' for unpublished layouts"
+    },
+    "rbac_tests": {
+      "dealer_admin_layouts_list": "PASS - Returns 403",
+      "user_admin_layouts_list": "PASS - Returns 403",
+      "dealer_create_layout_page": "PASS - Returns 403",
+      "user_create_layout_page": "PASS - Returns 403",
+      "dealer_template_pack_install": "PASS - Returns 403",
+      "user_template_pack_verify": "PASS - Returns 403",
+      "admin_layouts_list": "PASS - Returns 200"
+    },
+    "frontend_code_gates": {
+      "HomePageRefreshed.js": "PASS - sourcePolicy: 'content_builder_only', allowDraftPreview: false",
+      "SearchPage.js": "PASS - sourcePolicy: 'content_builder_only', allowDraftPreview: false",
+      "DetailPage.js": "PASS - sourcePolicy: 'content_builder_only', allowDraftPreview: false, listing-detail-layout-empty-state"
+    },
+    "content_list_admin": {
+      "page_loading": "PASS - Admin Content List loads after login",
+      "table_visible": "PASS - 3 Ana Sayfa layouts visible for FR, DE, TR",
+      "template_pack_panel": "PASS - Visible with Publish Doğrula and Tek Tık Kurulum Başlat buttons"
+    }
+  },
+  "pytest_summary": "19 passed in 27.22s",
+  "mocked_apis": {
+    "academy.modules": "May be mocked as per main agent context"
+  }
+}

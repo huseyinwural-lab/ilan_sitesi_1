@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useContentLayoutResolve } from '@/hooks/useContentLayoutResolve';
 import {
   Select,
   SelectContent,
@@ -172,6 +173,7 @@ const DetailPage = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [favoriteError, setFavoriteError] = useState('');
+  const countryCode = useMemo(() => (localStorage.getItem('selected_country') || 'DE').toUpperCase(), []);
 
   const realId = useMemo(() => {
     const match = String(id || '').match(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/i);
@@ -187,6 +189,20 @@ const DetailPage = () => {
     { value: 'copyright', label: 'copyright' },
     { value: 'other', label: 'other' },
   ];
+
+  const detailRuntimeModule = useMemo(() => String(listing?.module || 'vehicle'), [listing?.module]);
+  const {
+    loading: detailLayoutLoading,
+    error: detailLayoutError,
+    hasLayoutRows: hasDetailLayoutRows,
+  } = useContentLayoutResolve({
+    country: countryCode,
+    module: detailRuntimeModule,
+    pageType: 'listing_detail',
+    sourcePolicy: 'content_builder_only',
+    allowDraftPreview: false,
+    enabled: Boolean(countryCode && listing?.id && detailRuntimeModule),
+  });
 
   const fetchFavoriteState = async (listingId) => {
     if (!user || !listingId) {
@@ -328,6 +344,20 @@ const DetailPage = () => {
 
   if (loading) return <div className="p-8 text-center" data-testid="listing-detail-loading">Loading...</div>;
   if (!listing) return <div className="p-8 text-center" data-testid="listing-detail-not-found">Not Found</div>;
+  if (detailLayoutLoading) return <div className="p-8 text-center" data-testid="listing-detail-layout-loading">Layout loading...</div>;
+  if (!hasDetailLayoutRows) {
+    return (
+      <section className="mx-auto mt-8 max-w-4xl rounded-xl border border-dashed bg-white p-6 text-center" data-testid="listing-detail-layout-empty-state">
+        <h1 className="text-base font-semibold" data-testid="listing-detail-layout-empty-title">Layout bulunamadı</h1>
+        <p className="mt-1 text-sm text-slate-600" data-testid="listing-detail-layout-empty-description">
+          Bu detay sayfası yalnızca Content Builder publish edilmiş layoutlardan beslenir.
+        </p>
+        <p className="mt-2 text-xs text-slate-500" data-testid="listing-detail-layout-empty-meta">
+          country={countryCode} · page_type=listing_detail · module={detailRuntimeModule} · error={detailLayoutError || 'none'}
+        </p>
+      </section>
+    );
+  }
 
   const seller = listing.seller || {};
   const location = listing.location || {};

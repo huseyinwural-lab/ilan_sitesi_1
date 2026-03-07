@@ -119,6 +119,8 @@ export default function SearchPage() {
     module: runtimeModule,
     pageType: runtimePageType,
     categoryId: runtimeCategoryId,
+    sourcePolicy: 'content_builder_only',
+    allowDraftPreview: false,
     enabled: Boolean(countryCode && runtimePageType && runtimeModule),
   });
 
