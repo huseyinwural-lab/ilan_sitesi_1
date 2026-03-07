@@ -1,65 +1,64 @@
 #!/usr/bin/env python3
 
 """
-Final Backend Closure Check - Turkish Review Request
-Testing specific API endpoints and page version validation.
+Category Backend API Validation - Turkish Review Request  
+Testing category deletion cascade functionality and error handling.
 
-Review Request: Final backend closure check
+Review Request: "Kategori tarafı için backend hedefli doğrulama yap."
 Base URL: https://builder-hub-151.preview.emergentagent.com
+Hesap: admin@platform.com / Admin123!
 
-A) Scope/page publish + version:
-- TR/vehicle: home, urgent_listings, category_l0_l1, search_ln
-- DE/global: home, urgent_listings, category_l0_l1, search_ln
-- FR/global: home, urgent_listings, category_l0_l1, search_ln
-- TR/global: home, urgent_listings, category_l0_l1, search_ln
-Beklenen: page var + published revision var + payload_json.meta.template_version=finalized-p0-v1
+Testler:
+1) DELETE /api/admin/categories/{category_id}?cascade=true
+   - parent+child oluşturup parent sil
+   - response'da deleted_count ve deleted_descendant_count alanları dönüyor mu
+   - child da siliniyor mu doğrula
 
-B) Quick filter listings:
-- /api/public/listings?country=TR&badge=urgent
-- /api/public/listings?country=TR&badge=showcase
-- /api/public/listings?country=TR&badge=campaign
-Beklenen: 200 + query.badge doğru
+2) DELETE invalid id
+   - /api/admin/categories/not-a-valid-id çağır
+   - 400 ve structured detail dönmeli:
+     - error_code=CATEGORY_ID_INVALID
+     - field_name=category_id
 
-C) Categories + ads + banners:
-- /api/categories/tree?country=TR&depth=L1&module=vehicle
-- /api/categories/children?country=TR&module=vehicle&depth=2
-- /api/categories/listing-counts?country=TR&module=vehicle
-- /api/ads/resolve?placement=home_top&country=TR
-- /api/ads/resolve?placement=urgent_top&country=TR
-- /api/banners?placement=category_top&country=TR
-Beklenen: 200
+3) Kategori create/update hatalarında detail yapısı
+   - slug conflict veya uygun bir conflict tetikle
+   - detail içinde error_code, field_name gibi alanların döndüğünü doğrula
 
-Expected: Kısa PASS/FAIL raporu
+PASS/FAIL kısa rapor ver.
 """
 
 import requests
 import json
 import sys
+import uuid
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
 
-class FinalBackendClosureTester:
+class CategoryBackendTester:
     def __init__(self):
         self.base_url = "https://builder-hub-151.preview.emergentagent.com/api"
         self.session = requests.Session()
         self.session.headers.update({
             'Content-Type': 'application/json',
-            'User-Agent': 'Final-Backend-Closure-Tester/1.0'
+            'User-Agent': 'Category-Backend-Tester/1.0'
         })
         self.results = []
         self.passed = 0
         self.failed = 0
         
-        # Login credentials for admin authentication
+        # Admin credentials
         self.admin_credentials = {
             "email": "admin@platform.com",
             "password": "Admin123!"
         }
         self.auth_token = None
+        
+        # Store created category IDs for cleanup
+        self.created_categories = []
 
     def authenticate_admin(self) -> bool:
-        """Authenticate as admin to access protected endpoints"""
+        """Authenticate as admin"""
         print("\n🔐 Authenticating as admin...")
         
         try:
@@ -91,369 +90,451 @@ class FinalBackendClosureTester:
             print(f"❌ Authentication error: {e}")
             return False
 
-    def test_endpoint(self, endpoint: str, expected_status: int = 200, 
-                     description: str = "", required_fields: List[str] = None,
-                     check_badge: str = None, check_version: bool = False) -> Dict[str, Any]:
-        """Test a single API endpoint with validation"""
-        url = f"{self.base_url}{endpoint}"
+    def create_category(self, name: str, slug: str, parent_id: Optional[str] = None) -> Optional[str]:
+        """Create a test category and return its ID"""
+        print(f"\n📝 Creating test category: {name} (slug: {slug})")
         
-        print(f"\n🔍 Testing: {endpoint}")
-        print(f"📝 {description}")
-        print(f"🌐 URL: {url}")
+        payload = {
+            "country_code": "TR",
+            "module": "vehicle",
+            "name": name,  # Use direct name field instead of translations
+            "slug": slug,
+            "sort_order": 1,
+            "is_enabled": True
+        }
+        
+        if parent_id:
+            payload["parent_id"] = parent_id
         
         try:
-            response = self.session.get(url, timeout=30)
-            status_code = response.status_code
+            url = f"{self.base_url}/admin/categories"
+            response = self.session.post(url, json=payload, timeout=30)
             
-            print(f"📊 Response Status: {status_code} (expected: {expected_status})")
-            
-            # Status code check
-            status_pass = status_code == expected_status
-            
-            # Content validation
-            content_pass = True
-            response_data = None
-            validation_details = []
-            
-            if status_code == 200:
-                try:
-                    response_data = response.json()
-                    validation_details.append("✅ Valid JSON response")
-                    
-                    # Check required fields
-                    if required_fields:
-                        for field in required_fields:
-                            if self._check_nested_field(response_data, field):
-                                validation_details.append(f"✅ Field '{field}' present")
-                            else:
-                                validation_details.append(f"❌ Field '{field}' missing")
-                                content_pass = False
-                    
-                    # Badge validation for quick filter endpoints
-                    if check_badge and 'query' in response_data:
-                        if response_data.get('query', {}).get('badge') == check_badge:
-                            validation_details.append(f"✅ Badge filter '{check_badge}' correct")
-                        else:
-                            validation_details.append(f"❌ Badge filter expected '{check_badge}', got '{response_data.get('query', {}).get('badge')}'")
-                            content_pass = False
-                    
-                    # Version validation for page endpoints  
-                    if check_version and 'revision' in response_data:
-                        revision = response_data.get('revision', {})
-                        payload = revision.get('payload_json', {}) if isinstance(revision, dict) else {}
-                        meta = payload.get('meta', {}) if isinstance(payload, dict) else {}
-                        template_version = meta.get('template_version')
-                        
-                        if template_version == 'finalized-p0-v1':
-                            validation_details.append(f"✅ Template version '{template_version}' correct")
-                        else:
-                            validation_details.append(f"❌ Template version expected 'finalized-p0-v1', got '{template_version}'")
-                            content_pass = False
-                    
-                    # Print response structure info
-                    if isinstance(response_data, dict):
-                        keys = list(response_data.keys())
-                        print(f"🔑 Response Keys: {keys}")
-                        
-                        # Special validations for specific endpoints
-                        if 'items' in response_data:
-                            items_count = len(response_data['items']) if isinstance(response_data['items'], list) else 0
-                            print(f"📦 Items Count: {items_count}")
-                            validation_details.append(f"📦 Items: {items_count} found")
-                        
-                        if 'pagination' in response_data:
-                            print(f"📄 Pagination: {response_data['pagination']}")
-                            validation_details.append("📄 Pagination data present")
-                        
-                        if 'data' in response_data and isinstance(response_data['data'], list):
-                            data_count = len(response_data['data'])
-                            print(f"📊 Data Count: {data_count}")
-                            validation_details.append(f"📊 Data: {data_count} items")
-                        
-                        # Page version details
-                        if check_version:
-                            revision = response_data.get('revision')
-                            if revision and revision.get('status') == 'published':
-                                validation_details.append(f"📄 Published revision: {revision.get('id')}")
-                            else:
-                                validation_details.append("❌ Published revision missing")
-                                content_pass = False
-                            
-                except json.JSONDecodeError as e:
-                    validation_details.append(f"❌ Invalid JSON: {e}")
-                    content_pass = False
-                    
-            elif status_code in [400, 401, 403, 404, 500]:
-                # For error responses, try to parse error message
+            if response.status_code == 201:
+                data = response.json()
+                category_id = data.get('category', {}).get('id')
+                if category_id:
+                    self.created_categories.append(category_id)
+                    print(f"✅ Created category ID: {category_id}")
+                    return category_id
+                else:
+                    print(f"❌ No category ID in response: {data}")
+                    return None
+            else:
+                print(f"❌ Category creation failed: {response.status_code}")
                 try:
                     error_data = response.json()
-                    print(f"❗ Error Response: {error_data}")
+                    print(f"   Error: {error_data}")
                 except:
-                    print(f"❗ Raw Error: {response.text[:200]}")
-            
-            # Overall test result
-            overall_pass = status_pass and content_pass
-            
-            result = {
-                'endpoint': endpoint,
-                'description': description,
-                'url': url,
-                'expected_status': expected_status,
-                'actual_status': status_code,
-                'status_pass': status_pass,
-                'content_pass': content_pass,
-                'overall_pass': overall_pass,
-                'validation_details': validation_details,
-                'response_data': response_data,
-                'timestamp': datetime.now().isoformat()
-            }
-            
-            if overall_pass:
-                print("✅ PASS")
-                self.passed += 1
-            else:
-                print("❌ FAIL")
-                self.failed += 1
+                    print(f"   Raw error: {response.text[:200]}")
+                return None
                 
-            self.results.append(result)
-            return result
-            
-        except requests.exceptions.RequestException as e:
-            print(f"💥 Network Error: {e}")
-            result = {
-                'endpoint': endpoint,
-                'description': description,
-                'url': url,
-                'expected_status': expected_status,
-                'actual_status': 'ERROR',
-                'status_pass': False,
-                'content_pass': False,
-                'overall_pass': False,
-                'validation_details': [f"❌ Network Error: {e}"],
-                'error': str(e),
-                'timestamp': datetime.now().isoformat()
+        except Exception as e:
+            print(f"❌ Category creation error: {e}")
+            return None
+
+    def test_cascade_delete(self) -> Dict[str, Any]:
+        """Test 1: DELETE with cascade=true - parent+child deletion"""
+        print(f"\n{'='*60}")
+        print("🧪 TEST 1: CASCADE DELETE (Parent + Child)")
+        print(f"{'='*60}")
+        
+        # Create parent category
+        parent_slug = f"test-parent-{uuid.uuid4().hex[:8]}"
+        parent_id = self.create_category("Test Parent Category", parent_slug)
+        
+        if not parent_id:
+            return {
+                'test': 'cascade_delete',
+                'success': False,
+                'error': 'Failed to create parent category'
             }
-            self.results.append(result)
-            self.failed += 1
-            print("❌ FAIL")
-            return result
-
-    def _check_nested_field(self, data: Dict, field_path: str) -> bool:
-        """Check if a nested field exists in the response data"""
-        keys = field_path.split('.')
-        current = data
         
-        for key in keys:
-            if isinstance(current, dict) and key in current:
-                current = current[key]
+        # Create child category
+        child_slug = f"test-child-{uuid.uuid4().hex[:8]}"
+        child_id = self.create_category("Test Child Category", child_slug, parent_id)
+        
+        if not child_id:
+            return {
+                'test': 'cascade_delete',
+                'success': False,
+                'error': 'Failed to create child category'
+            }
+        
+        print(f"\n🎯 Testing DELETE /admin/categories/{parent_id}?cascade=true")
+        
+        try:
+            url = f"{self.base_url}/admin/categories/{parent_id}?cascade=true"
+            response = self.session.delete(url, timeout=30)
+            
+            print(f"📊 Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"🔍 Response Data: {json.dumps(data, indent=2)}")
+                
+                # Check required fields
+                checks = {
+                    'deleted_count': 'deleted_count' in data,
+                    'deleted_descendant_count': 'deleted_descendant_count' in data,
+                    'cascade_flag': data.get('cascade') == True,
+                    'deleted_count_value': data.get('deleted_count', 0) >= 2,  # Parent + child
+                    'descendant_count_value': data.get('deleted_descendant_count', 0) >= 1  # Child
+                }
+                
+                all_passed = all(checks.values())
+                
+                for check, passed in checks.items():
+                    icon = "✅" if passed else "❌"
+                    print(f"   {icon} {check}: {passed}")
+                
+                if all_passed:
+                    print("✅ CASCADE DELETE: PASS")
+                    self.passed += 1
+                    
+                    # Verify child is also deleted by trying to get it
+                    child_check_url = f"{self.base_url}/admin/categories?country=TR&module=vehicle"
+                    child_response = self.session.get(child_check_url, timeout=30)
+                    
+                    if child_response.status_code == 200:
+                        categories = child_response.json().get('categories', [])
+                        child_found = any(cat.get('id') == child_id for cat in categories if not cat.get('is_deleted'))
+                        
+                        if not child_found:
+                            print("✅ Child category confirmed deleted")
+                        else:
+                            print("❌ Child category still exists (not properly deleted)")
+                            all_passed = False
+                            self.failed += 1
+                    
+                    return {
+                        'test': 'cascade_delete',
+                        'success': all_passed,
+                        'parent_id': parent_id,
+                        'child_id': child_id,
+                        'deleted_count': data.get('deleted_count'),
+                        'deleted_descendant_count': data.get('deleted_descendant_count'),
+                        'response_data': data
+                    }
+                else:
+                    print("❌ CASCADE DELETE: FAIL")
+                    self.failed += 1
+                    return {
+                        'test': 'cascade_delete',
+                        'success': False,
+                        'error': 'Missing required response fields',
+                        'checks': checks,
+                        'response_data': data
+                    }
             else:
-                return False
-        return True
+                print(f"❌ Unexpected status code: {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"   Error: {error_data}")
+                except:
+                    print(f"   Raw error: {response.text[:200]}")
+                
+                self.failed += 1
+                return {
+                    'test': 'cascade_delete',
+                    'success': False,
+                    'error': f'HTTP {response.status_code}',
+                    'response': response.text
+                }
+                
+        except Exception as e:
+            print(f"❌ Network error: {e}")
+            self.failed += 1
+            return {
+                'test': 'cascade_delete',
+                'success': False,
+                'error': str(e)
+            }
 
-    def test_page_scope_and_version(self):
-        """Test A) Scope/page publish + version validation"""
-        print("\n" + "="*60)
-        print("📄 SECTION A: PAGE SCOPE AND VERSION VALIDATION")
-        print("="*60)
+    def test_invalid_category_id(self) -> Dict[str, Any]:
+        """Test 2: DELETE with invalid category ID"""
+        print(f"\n{'='*60}")
+        print("🧪 TEST 2: INVALID CATEGORY ID")
+        print(f"{'='*60}")
         
-        # Page configurations to test
-        page_configs = [
-            # TR/vehicle pages
-            ("TR", "vehicle", "home"),
-            ("TR", "vehicle", "urgent_listings"), 
-            ("TR", "vehicle", "category_l0_l1"),
-            ("TR", "vehicle", "search_ln"),
-            
-            # DE/global pages
-            ("DE", "global", "home"),
-            ("DE", "global", "urgent_listings"),
-            ("DE", "global", "category_l0_l1"), 
-            ("DE", "global", "search_ln"),
-            
-            # FR/global pages
-            ("FR", "global", "home"),
-            ("FR", "global", "urgent_listings"),
-            ("FR", "global", "category_l0_l1"),
-            ("FR", "global", "search_ln"),
-            
-            # TR/global pages
-            ("TR", "global", "home"),
-            ("TR", "global", "urgent_listings"),
-            ("TR", "global", "category_l0_l1"),
-            ("TR", "global", "search_ln"),
-        ]
+        invalid_id = "not-a-valid-id"
+        url = f"{self.base_url}/admin/categories/{invalid_id}"
         
-        for country, module, page_type in page_configs:
-            endpoint = f"/site/content-layout/resolve?page_type={page_type}&country={country}&module={module}"
-            description = f"Page resolution for {country}/{module}/{page_type}"
+        print(f"🎯 Testing DELETE {url}")
+        
+        try:
+            response = self.session.delete(url, timeout=30)
             
-            self.test_endpoint(
-                endpoint,
-                expected_status=200,
-                description=description,
-                required_fields=['revision.status', 'revision.payload_json.meta.template_version'],
-                check_version=True
-            )
+            print(f"📊 Response Status: {response.status_code}")
+            
+            if response.status_code == 400:
+                try:
+                    data = response.json()
+                    print(f"🔍 Response Data: {json.dumps(data, indent=2)}")
+                    
+                    # Check error structure
+                    detail = data.get('detail', {})
+                    checks = {
+                        'status_400': True,
+                        'has_detail': isinstance(detail, dict),
+                        'error_code': detail.get('error_code') == 'CATEGORY_ID_INVALID',
+                        'field_name': detail.get('field_name') == 'category_id'
+                    }
+                    
+                    all_passed = all(checks.values())
+                    
+                    for check, passed in checks.items():
+                        icon = "✅" if passed else "❌"
+                        print(f"   {icon} {check}: {passed}")
+                    
+                    if all_passed:
+                        print("✅ INVALID ID TEST: PASS")
+                        self.passed += 1
+                    else:
+                        print("❌ INVALID ID TEST: FAIL")
+                        self.failed += 1
+                    
+                    return {
+                        'test': 'invalid_category_id',
+                        'success': all_passed,
+                        'checks': checks,
+                        'response_data': data
+                    }
+                    
+                except json.JSONDecodeError as e:
+                    print(f"❌ Invalid JSON response: {e}")
+                    self.failed += 1
+                    return {
+                        'test': 'invalid_category_id',
+                        'success': False,
+                        'error': 'Invalid JSON response',
+                        'raw_response': response.text
+                    }
+            else:
+                print(f"❌ Expected 400, got {response.status_code}")
+                self.failed += 1
+                return {
+                    'test': 'invalid_category_id',
+                    'success': False,
+                    'error': f'Expected 400, got {response.status_code}',
+                    'response': response.text
+                }
+                
+        except Exception as e:
+            print(f"❌ Network error: {e}")
+            self.failed += 1
+            return {
+                'test': 'invalid_category_id',
+                'success': False,
+                'error': str(e)
+            }
 
-    def test_quick_filter_listings(self):
-        """Test B) Quick filter listings APIs"""
-        print("\n" + "="*60)
-        print("🚀 SECTION B: QUICK FILTER LISTINGS")
-        print("="*60)
+    def test_create_slug_conflict(self) -> Dict[str, Any]:
+        """Test 3: Create category with slug conflict"""
+        print(f"\n{'='*60}")
+        print("🧪 TEST 3: SLUG CONFLICT ERROR STRUCTURE")
+        print(f"{'='*60}")
         
-        # Quick filter badge tests
-        quick_filters = [
-            ("urgent", "Urgent listings with badge filter"),
-            ("showcase", "Showcase listings with badge filter"), 
-            ("campaign", "Campaign listings with badge filter")
-        ]
+        # First, create a category
+        test_slug = f"conflict-test-{uuid.uuid4().hex[:8]}"
+        first_category_id = self.create_category("First Category", test_slug)
         
-        for badge, description in quick_filters:
-            endpoint = f"/public/listings?country=TR&badge={badge}"
+        if not first_category_id:
+            return {
+                'test': 'slug_conflict',
+                'success': False,
+                'error': 'Failed to create first category for conflict test'
+            }
+        
+        # Now try to create another category with the same slug
+        print(f"\n🎯 Attempting to create duplicate slug: {test_slug}")
+        
+        payload = {
+            "country_code": "TR",
+            "module": "vehicle",
+            "name": "Duplicate Slug Category",  # Use direct name field
+            "slug": test_slug,  # Same slug - should cause conflict
+            "sort_order": 2,
+            "is_enabled": True
+        }
+        
+        try:
+            url = f"{self.base_url}/admin/categories"
+            response = self.session.post(url, json=payload, timeout=30)
             
-            self.test_endpoint(
-                endpoint,
-                expected_status=200,
-                description=description,
-                required_fields=['items', 'query'],
-                check_badge=badge
-            )
+            print(f"📊 Response Status: {response.status_code}")
+            
+            if response.status_code == 400 or response.status_code == 409:
+                try:
+                    data = response.json()
+                    print(f"🔍 Response Data: {json.dumps(data, indent=2)}")
+                    
+                    # Check error structure
+                    detail = data.get('detail', {})
+                    checks = {
+                        'status_4xx': response.status_code in [400, 409],
+                        'has_detail': isinstance(detail, dict),
+                        'has_error_code': 'error_code' in detail,
+                        'has_field_name': 'field_name' in detail,
+                        'slug_related': detail.get('field_name') == 'slug' or 'slug' in detail.get('error_code', '').lower()
+                    }
+                    
+                    all_passed = all(checks.values())
+                    
+                    for check, passed in checks.items():
+                        icon = "✅" if passed else "❌"
+                        print(f"   {icon} {check}: {passed}")
+                    
+                    if all_passed:
+                        print("✅ SLUG CONFLICT TEST: PASS")
+                        self.passed += 1
+                    else:
+                        print("❌ SLUG CONFLICT TEST: FAIL")
+                        self.failed += 1
+                    
+                    return {
+                        'test': 'slug_conflict',
+                        'success': all_passed,
+                        'checks': checks,
+                        'response_data': data,
+                        'first_category_id': first_category_id
+                    }
+                    
+                except json.JSONDecodeError as e:
+                    print(f"❌ Invalid JSON response: {e}")
+                    self.failed += 1
+                    return {
+                        'test': 'slug_conflict',
+                        'success': False,
+                        'error': 'Invalid JSON response',
+                        'raw_response': response.text
+                    }
+            else:
+                print(f"❌ Expected 400/409, got {response.status_code}")
+                self.failed += 1
+                return {
+                    'test': 'slug_conflict',
+                    'success': False,
+                    'error': f'Expected 400/409, got {response.status_code}',
+                    'response': response.text
+                }
+                
+        except Exception as e:
+            print(f"❌ Network error: {e}")
+            self.failed += 1
+            return {
+                'test': 'slug_conflict',
+                'success': False,
+                'error': str(e)
+            }
 
-    def test_categories_ads_banners(self):
-        """Test C) Categories + ads + banners APIs"""
-        print("\n" + "="*60)
-        print("🏗️ SECTION C: CATEGORIES, ADS AND BANNERS")
-        print("="*60)
+    def cleanup_created_categories(self):
+        """Clean up any test categories that were created"""
+        if not self.created_categories:
+            return
+            
+        print(f"\n🧹 Cleaning up {len(self.created_categories)} test categories...")
         
-        # Categories APIs
-        categories_tests = [
-            ("/categories/tree?country=TR&depth=L1&module=vehicle", "Category tree for TR vehicle L1 depth"),
-            ("/categories/children?country=TR&module=vehicle&depth=2", "Category children for TR vehicle depth 2"),
-            ("/categories/listing-counts?country=TR&module=vehicle", "Listing counts for TR vehicle module")
-        ]
-        
-        for endpoint, description in categories_tests:
-            self.test_endpoint(endpoint, 200, description)
-        
-        # Ads APIs
-        ads_tests = [
-            ("/ads/resolve?placement=home_top&country=TR", "Ad resolution for home_top placement in TR"),
-            ("/ads/resolve?placement=urgent_top&country=TR", "Ad resolution for urgent_top placement in TR")
-        ]
-        
-        for endpoint, description in ads_tests:
-            self.test_endpoint(endpoint, 200, description)
-        
-        # Banners API
-        self.test_endpoint(
-            "/banners?placement=category_top&country=TR",
-            200,
-            "Banners for category_top placement in TR"
-        )
+        for category_id in self.created_categories:
+            try:
+                url = f"{self.base_url}/admin/categories/{category_id}?cascade=true"
+                response = self.session.delete(url, timeout=30)
+                if response.status_code == 200:
+                    print(f"   ✅ Deleted {category_id}")
+                else:
+                    print(f"   ⚠️ Could not delete {category_id}: {response.status_code}")
+            except Exception as e:
+                print(f"   ⚠️ Error deleting {category_id}: {e}")
 
-    def run_final_backend_closure_tests(self):
-        """Run all final backend closure tests"""
-        print("🏁 FINAL BACKEND CLOSURE CHECK")
+    def run_category_tests(self):
+        """Run all category backend tests"""
+        print("🏁 CATEGORY BACKEND VALIDATION")
         print("="*60)
         print(f"Base URL: {self.base_url}")
-        print(f"Test Focus: Turkish Review Request - Final Backend Closure")
+        print(f"Test Focus: Turkish Review Request - Category Backend Testing")
         print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("="*60)
 
-        # Authenticate admin (needed for some endpoints)
+        # Authenticate admin
         if not self.authenticate_admin():
-            print("⚠️ Admin authentication failed - continuing with public endpoints only")
+            print("❌ Admin authentication failed - cannot continue")
+            return False
 
-        # Run test sections
-        self.test_page_scope_and_version()
-        self.test_quick_filter_listings()
-        self.test_categories_ads_banners()
+        # Run tests
+        test1_result = self.test_cascade_delete()
+        test2_result = self.test_invalid_category_id()
+        test3_result = self.test_create_slug_conflict()
+        
+        self.results = [test1_result, test2_result, test3_result]
+        
+        # Cleanup
+        self.cleanup_created_categories()
+        
+        return True
 
     def print_summary(self):
         """Print comprehensive test summary"""
-        total_tests = len(self.results)
+        total_tests = 3
         success_rate = (self.passed / total_tests * 100) if total_tests > 0 else 0
         
         print(f"\n{'='*60}")
-        print("🏁 FINAL BACKEND CLOSURE SUMMARY")
+        print("🏁 CATEGORY BACKEND TEST SUMMARY")
         print(f"{'='*60}")
         print(f"📊 Total Tests: {total_tests}")
         print(f"✅ Passed: {self.passed}")
         print(f"❌ Failed: {self.failed}")
         print(f"📈 Success Rate: {success_rate:.1f}%")
         
-        print(f"\n📋 DETAILED RESULTS BY SECTION:")
+        print(f"\n📋 DETAILED RESULTS:")
         print("-" * 60)
         
-        # Group results by section
-        sections = {
-            "A) PAGE SCOPE & VERSION": [],
-            "B) QUICK FILTER LISTINGS": [],
-            "C) CATEGORIES, ADS & BANNERS": []
+        test_names = {
+            'cascade_delete': '1) CASCADE DELETE (parent+child deletion)',
+            'invalid_category_id': '2) INVALID ID ERROR HANDLING',
+            'slug_conflict': '3) SLUG CONFLICT ERROR STRUCTURE'
         }
         
         for result in self.results:
-            endpoint = result['endpoint']
-            if '/site/content-layout/resolve' in endpoint:
-                sections["A) PAGE SCOPE & VERSION"].append(result)
-            elif '/public/listings' in endpoint and 'badge=' in endpoint:
-                sections["B) QUICK FILTER LISTINGS"].append(result)
-            else:
-                sections["C) CATEGORIES, ADS & BANNERS"].append(result)
-        
-        for section_name, section_results in sections.items():
-            if section_results:
-                section_passed = sum(1 for r in section_results if r['overall_pass'])
-                section_total = len(section_results)
-                section_rate = (section_passed / section_total * 100) if section_total > 0 else 0
-                
-                print(f"\n{section_name}: {section_passed}/{section_total} ({section_rate:.0f}%)")
-                
-                for result in section_results:
-                    status_icon = "✅" if result['overall_pass'] else "❌"
-                    endpoint_short = result['endpoint'][:50] + "..." if len(result['endpoint']) > 50 else result['endpoint']
-                    actual_status = result['actual_status']
-                    
-                    print(f"  {status_icon} {endpoint_short} ({actual_status})")
-                    
-                    # Show key validation details
-                    if result['validation_details']:
-                        for detail in result['validation_details'][:2]:  # Show first 2 details
-                            print(f"      {detail}")
-                    
-                    if not result['overall_pass'] and 'error' in result:
-                        print(f"      ⚠️ Error: {result['error']}")
+            test_key = result.get('test', 'unknown')
+            test_name = test_names.get(test_key, test_key)
+            success = result.get('success', False)
+            status_icon = "✅" if success else "❌"
+            
+            print(f"{status_icon} {test_name}")
+            
+            if success and test_key == 'cascade_delete':
+                deleted_count = result.get('deleted_count', 0)
+                descendant_count = result.get('deleted_descendant_count', 0)
+                print(f"   📊 Deleted: {deleted_count} total, {descendant_count} descendants")
+            
+            if not success and 'error' in result:
+                print(f"   ⚠️ Error: {result['error']}")
 
         # Final verdict
         print(f"\n🎯 FINAL VERDICT:")
         if self.failed == 0:
             print(f"✅ ALL TESTS PASSED")
-            print(f"🚀 All {self.passed} endpoints working correctly")
-            print(f"🔥 Final backend closure: SUCCESSFUL")
+            print(f"🚀 All {self.passed} category backend tests working correctly")
+            print(f"🔥 Category backend validation: SUCCESSFUL")
         else:
             print(f"❌ {self.failed}/{total_tests} TESTS FAILED") 
-            print(f"⚠️ Final backend closure: REQUIRES ATTENTION")
+            print(f"⚠️ Category backend validation: REQUIRES ATTENTION")
         
         # Kısa PASS/FAIL as requested
         verdict = "PASS" if self.failed == 0 else "FAIL"
         print(f"\n🏆 Kısa PASS/FAIL Raporu: {verdict}")
-        
-        if self.failed > 0:
-            print(f"\n🔧 Failed Endpoints Summary:")
-            for result in self.results:
-                if not result['overall_pass']:
-                    print(f"   ❌ {result['endpoint']} - {result['actual_status']}")
         
         return self.failed == 0
 
 
 def main():
     """Main execution function"""
-    tester = FinalBackendClosureTester()
+    tester = CategoryBackendTester()
     
     try:
-        # Run the final backend closure tests
-        tester.run_final_backend_closure_tests()
+        # Run the category backend tests
+        if not tester.run_category_tests():
+            sys.exit(1)
         
         # Print summary
         success = tester.print_summary()

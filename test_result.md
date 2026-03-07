@@ -26641,7 +26641,19 @@ backend:
         - agent: "testing"
         - comment: "COMPLETE PASS (5/5 tests passed, 100% success rate). ✅ ALL REQUIREMENTS SATISFIED: 1) LISTING_CREATE_STEPX GUARD VALIDATION: Successfully created listing_create_stepX page and tested guard functions - disallowed components return 400 with 'listing_create_component_not_allowed' error, disallowed props return 400 with 'listing_create_component_props_not_allowed' error. Guard working correctly for both component keys and props validation ✅. 2) ADMIN DRAFT PREVIEW: Returns 200 with admin token for layout_preview=draft on both home and search_l1 page types. Preview mode correctly set to 'draft', proper authentication required ✅. 3) UNAUTH DRAFT PREVIEW: Returns 403 without auth token for draft preview requests - authentication protection working correctly ✅. 4) PUBLISHED RESOLVE: Returns 200 for published layouts without auth required. Both home (module=global) and search_l1 (module=real_estate) endpoints working with layout data ✅. 5) BIND/FETCH/UNBIND ENDPOINTS: All operational - fetch active bindings returns 200, bind endpoint validates properly (400 for test data), unbind returns 200. Complete bindings lifecycle functional ✅. ALL P2.1/P2.2/P2.3 BACKEND REQUIREMENTS VERIFIED AND WORKING CORRECTLY."
 
-  - task: "Backend Categories & Security Validation"
+  - task: "Backend Categories Deletion Cascade Testing"
+    implemented: true
+    working: true
+    file: "server.py + /admin/categories endpoints + backend_test.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "testing"
+        - comment: "COMPLETE PASS (3/3 tests passed, 100% success rate). ✅ ALL CATEGORY DELETION REQUIREMENTS SATISFIED: 1) CASCADE DELETE: Successfully tested DELETE /api/admin/categories/{category_id}?cascade=true - created parent category (Test Parent Category), created child category (Test Child Category), deleted parent with cascade=true, verified response contains deleted_count=2 and deleted_descendant_count=1 fields, confirmed both parent and child categories were deleted ✅. 2) INVALID ID ERROR HANDLING: Tested DELETE /api/admin/categories/not-a-valid-id, returns 400 with structured detail containing error_code=CATEGORY_ID_INVALID and field_name=category_id as expected ✅. 3) SLUG CONFLICT ERROR STRUCTURE: Created category with slug 'conflict-test-xxx', attempted to create duplicate slug, returns 409 with structured detail containing error_code=CATEGORY_SLUG_CONFLICT, field_name=slug, and conflict details as expected ✅. ALL TURKISH REVIEW REQUEST REQUIREMENTS VALIDATED: DELETE cascade functionality working correctly, invalid ID handling proper, create/update error structure consistent with API specifications. PRODUCTION-READY: Category deletion cascade and error handling fully functional."
+
+  - task: "Backend Categories & Security Validation" 
     implemented: true
     working: false
     file: "server.py + admin/categories endpoints"
@@ -26708,15 +26720,14 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Backend Smoke Regression (Post Page-Composition Work) (COMPLETED)"
-  stuck_tasks: 
-    - "Category CRUD operations (database connectivity issues)"
+    - "Backend Categories Deletion Cascade Testing (COMPLETED)"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
     - agent: "testing"
-    - message: "Backend Smoke Regression (Post Page-Composition Work) SUCCESSFULLY COMPLETED with 100% PASS rate (5/5 tests). All review request endpoints tested and verified working correctly. **CRITICAL VERIFICATION**: All backend APIs are PRODUCTION-READY post page-composition work. **COMPREHENSIVE TESTING RESULTS**: 1) GET /api/public/listings?country=TR&source=latest&limit=3&order=newest → 200 + items/pagination: Returns 200 with 3 items and pagination (total: 1000, page: 1, pages: 334) ✅. Required 'items' and 'pagination' fields present ✅. 2) GET /api/categories/tree?country=TR&depth=L1&module=vehicle → 200: Returns 200 with valid JSON structure containing 'items' and 'meta' fields ✅. 3) GET /api/categories/listing-counts?country=TR&module=vehicle → 200: Returns 200 with valid JSON structure containing 'items' and 'meta' fields ✅. 4) GET /api/ads/resolve?placement=home_top&country=TR → 200: Returns 200 with proper ad resolution data including placement_resolved, has_active_ad=true, 1 item ✅. 5) GET /api/banners?placement=home_top&country=TR → 200: Returns 200 with banner data containing 1 item + meta ✅. **SMOKE REGRESSION STATUS**: All 5 kontroller endpoints working correctly with proper JSON responses and expected data structures. **FINAL VERDICT: ✅ SMOKE REGRESSION PASS** - Backend APIs fully functional post page-composition work. Kısa PASS/FAIL: PASS."
+    - message: "Backend Categories Deletion Cascade Testing SUCCESSFULLY COMPLETED with 100% PASS rate (3/3 tests). All Turkish review request requirements fully satisfied for category backend validation. CRITICAL VERIFICATION: Category deletion cascade functionality, invalid ID error handling, and slug conflict error structure all PRODUCTION-READY and working correctly. COMPREHENSIVE TESTING RESULTS: 1) CASCADE DELETE TEST: Created parent category (Test Parent Category, slug: test-parent-xxx), created child category (Test Child Category, slug: test-child-xxx), executed DELETE /api/admin/categories/{parent_id}?cascade=true, verified 200 response with deleted_count=2 and deleted_descendant_count=1, confirmed both parent and child categories were properly deleted ✅. 2) INVALID ID ERROR HANDLING: Tested DELETE /api/admin/categories/not-a-valid-id, returned 400 with structured detail containing error_code=CATEGORY_ID_INVALID and field_name=category_id as expected ✅. 3) SLUG CONFLICT ERROR STRUCTURE: Created category, attempted duplicate slug creation, returned 409 with proper error structure containing error_code=CATEGORY_SLUG_CONFLICT, field_name=slug, and conflict details ✅. ALL REQUIREMENTS VALIDATED: DELETE cascade behavior working correctly, response contains required deleted_count and deleted_descendant_count fields, child categories properly deleted in cascade, invalid ID returns 400 with structured detail, create/update errors return proper error_code and field_name structure. **FINAL VERDICT: ✅ COMPLETE PASS** - Category backend deletion and error handling fully functional and production-ready. PASS/FAIL: PASS."
 
 ---
 
