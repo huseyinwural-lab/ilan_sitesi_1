@@ -275,20 +275,50 @@ const parseApiError = (payload, fallbackMessage) => {
     return {
       errorCode: payload?.error_code || "",
       message: location ? `${location}: ${baseMessage}` : baseMessage,
+      fieldName: "",
+      conflict: null,
     };
   }
   if (typeof detail === "string") {
-    return { errorCode: payload?.error_code || "", message: detail || fallbackMessage };
+    return {
+      errorCode: payload?.error_code || "",
+      message: detail || fallbackMessage,
+      fieldName: "",
+      conflict: null,
+    };
   }
   if (detail && typeof detail === "object") {
+    const fieldName = detail.field_name || detail.field || "";
+    const rawMessage = detail.message || payload?.message || fallbackMessage;
+    const conflict = detail.conflict || null;
+    let humanMessage = fieldName ? `Alan: ${fieldName} • ${rawMessage}` : rawMessage;
+
+    if (fieldName === "sort_order" && conflict && (conflict.sort_order || conflict.slug || conflict.name)) {
+      const conflictBits = [
+        conflict.sort_order ? `sıra: ${conflict.sort_order}` : "",
+        conflict.slug ? `slug: ${conflict.slug}` : "",
+      ].filter(Boolean);
+      if (conflictBits.length > 0) {
+        humanMessage = `${humanMessage} (Çakışan kayıt: ${conflictBits.join(", ")})`;
+      }
+    }
+
+    if (fieldName === "slug" && conflict?.slug) {
+      humanMessage = `${humanMessage} (Çakışan slug: ${conflict.slug})`;
+    }
+
     return {
       errorCode: detail.error_code || payload?.error_code || "",
-      message: detail.message || payload?.message || fallbackMessage,
+      message: humanMessage,
+      fieldName,
+      conflict,
     };
   }
   return {
     errorCode: payload?.error_code || "",
     message: payload?.message || fallbackMessage,
+    fieldName: "",
+    conflict: null,
   };
 };
 
@@ -1032,7 +1062,7 @@ const AdminCategories = () => {
       const parsed = parseApiError(data, fallbackMessage);
 
       const parsedMessageLower = String(parsed?.message || "").toLowerCase();
-      const hasSlugConflict = parsedMessageLower.includes("slug") && parsedMessageLower.includes("exists");
+      const hasSlugConflict = parsed.errorCode === "CATEGORY_SLUG_CONFLICT" || parsed.fieldName === "slug";
       const hasSlugFormatError = parsedMessageLower.includes("slug") && parsedMessageLower.includes("format");
       if ((hasSlugConflict || hasSlugFormatError) && baseSlug) {
         const uniqueSuffix = `${Date.now().toString().slice(-4)}-${attempt + 2}`;
@@ -2976,6 +3006,9 @@ const AdminCategories = () => {
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
           const parsed = parseApiError(data, "Kategori güncellenemedi.");
+          if (parsed.fieldName === "slug") {
+            setHierarchyFieldErrors((prev) => ({ ...prev, main_slug: parsed.message }));
+          }
           if (parsed.errorCode === "ORDER_INDEX_ALREADY_USED") {
             setHierarchyFieldErrors((prev) => ({ ...prev, main_sort_order: parsed.message }));
           }
@@ -3002,6 +3035,9 @@ const AdminCategories = () => {
         const createdParent = await createCategoryWithSortFallback(parentPayload, "Modül oluşturulamadı.");
         if (!createdParent.ok) {
           const parsed = createdParent.parsed;
+          if (parsed.fieldName === "slug") {
+            setHierarchyFieldErrors((prev) => ({ ...prev, main_slug: parsed.message }));
+          }
           if (parsed.errorCode === "ORDER_INDEX_ALREADY_USED") {
             setHierarchyFieldErrors((prev) => ({ ...prev, main_sort_order: parsed.message }));
           }

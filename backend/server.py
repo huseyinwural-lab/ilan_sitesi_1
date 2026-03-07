@@ -15691,16 +15691,36 @@ def _normalize_category_slug_input(value: Any) -> str:
     slug = str(value or "").strip().lower()
     slug = re.sub(r"\s+", " ", slug)
     if not slug:
-        raise HTTPException(status_code=400, detail="slug format invalid")
+        raise _category_error(
+            "CATEGORY_SLUG_INVALID",
+            "Slug formatı geçersiz.",
+            status_code=400,
+            field_name="slug",
+        )
 
     if any(char in CATEGORY_SLUG_FORBIDDEN_CHARS for char in slug):
-        raise HTTPException(status_code=400, detail="slug format invalid")
+        raise _category_error(
+            "CATEGORY_SLUG_INVALID",
+            "Slug formatı geçersiz.",
+            status_code=400,
+            field_name="slug",
+        )
 
     if not any(char.isalnum() for char in slug):
-        raise HTTPException(status_code=400, detail="slug format invalid")
+        raise _category_error(
+            "CATEGORY_SLUG_INVALID",
+            "Slug formatı geçersiz.",
+            status_code=400,
+            field_name="slug",
+        )
 
     if not all(char.isalnum() or char in CATEGORY_SLUG_ALLOWED_SPECIAL_CHARS for char in slug):
-        raise HTTPException(status_code=400, detail="slug format invalid")
+        raise _category_error(
+            "CATEGORY_SLUG_INVALID",
+            "Slug formatı geçersiz.",
+            status_code=400,
+            field_name="slug",
+        )
 
     return slug
 
@@ -15746,8 +15766,23 @@ def _normalize_segment_key(value: Optional[str]) -> Optional[str]:
     return normalized or None
 
 
-def _category_error(code: str, message: str, *, status_code: int = 400) -> HTTPException:
-    return HTTPException(status_code=status_code, detail={"error_code": code, "message": message})
+def _category_error(
+    code: str,
+    message: str,
+    *,
+    status_code: int = 400,
+    field_name: Optional[str] = None,
+    conflict: Optional[Dict[str, Any]] = None,
+) -> HTTPException:
+    detail: Dict[str, Any] = {
+        "error_code": code,
+        "message": message,
+    }
+    if field_name:
+        detail["field_name"] = field_name
+    if conflict is not None:
+        detail["conflict"] = conflict
+    return HTTPException(status_code=status_code, detail=detail)
 
 
 async def _resolve_vehicle_segment_from_master(
@@ -15907,6 +15942,17 @@ async def _assert_category_sort_available(
         raise _category_error(
             "ORDER_INDEX_ALREADY_USED",
             "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor.",
+            status_code=409,
+            field_name="sort_order",
+            conflict={
+                "id": str(conflict.id),
+                "name": _pick_category_slug(conflict.slug) or "-",
+                "slug": _pick_category_slug(conflict.slug),
+                "sort_order": conflict.sort_order,
+                "parent_id": str(conflict.parent_id) if conflict.parent_id else None,
+                "module": conflict.module,
+                "country_code": conflict.country_code,
+            },
         )
 
 
@@ -15920,15 +15966,37 @@ def _assert_category_parent_compatible(
     if not parent:
         return
     if parent.module != module_value:
-        raise HTTPException(status_code=409, detail="parent module mismatch")
+        raise _category_error(
+            "PARENT_MODULE_MISMATCH",
+            "Üst kategori modülü ile hedef modül uyumlu değil.",
+            status_code=409,
+            field_name="parent_id",
+            conflict={"parent_module": parent.module, "target_module": module_value},
+        )
     if category and parent.id == category.id:
-        raise HTTPException(status_code=409, detail="parent cycle detected")
+        raise _category_error(
+            "PARENT_CYCLE_DETECTED",
+            "Kategori kendisini üst kategori olarak seçemez.",
+            status_code=409,
+            field_name="parent_id",
+        )
     if category and category.path and parent.path:
         if parent.path == category.path or parent.path.startswith(f"{category.path}."):
-            raise HTTPException(status_code=409, detail="parent cycle detected")
+            raise _category_error(
+                "PARENT_CYCLE_DETECTED",
+                "Seçilen üst kategori döngü oluşturuyor.",
+                status_code=409,
+                field_name="parent_id",
+            )
     if parent.country_code:
         if not country_code or parent.country_code != country_code:
-            raise HTTPException(status_code=409, detail="parent country mismatch")
+            raise _category_error(
+                "PARENT_COUNTRY_MISMATCH",
+                "Üst kategori ülke kapsamı ile hedef ülke uyumlu değil.",
+                status_code=409,
+                field_name="parent_id",
+                conflict={"parent_country": parent.country_code, "target_country": country_code},
+            )
 
 
 
@@ -15938,8 +16006,10 @@ def _raise_category_integrity_error(exc: IntegrityError) -> None:
         raise _category_error(
             "ORDER_INDEX_ALREADY_USED",
             "Bu modül ve seviye içinde bu sıra numarası zaten kullanılıyor.",
+            status_code=409,
+            field_name="sort_order",
         ) from exc
-    raise _category_error("CATEGORY_CONFLICT", "Kategori kaydı çakıştı.") from exc
+    raise _category_error("CATEGORY_CONFLICT", "Kategori kaydı çakıştı.", status_code=409) from exc
 
 
 async def _next_category_sort_order(
@@ -30477,10 +30547,20 @@ async def admin_create_category(
         try:
             parent_uuid = uuid.UUID(payload.parent_id)
         except ValueError as exc:
-            raise HTTPException(status_code=400, detail="parent_id not valid") from exc
+            raise _category_error(
+                "PARENT_ID_INVALID",
+                "Üst kategori kimliği geçersiz.",
+                status_code=400,
+                field_name="parent_id",
+            ) from exc
         parent = await session.get(Category, parent_uuid)
         if not parent:
-            raise HTTPException(status_code=400, detail="parent_id not found")
+            raise _category_error(
+                "PARENT_ID_NOT_FOUND",
+                "Seçilen üst kategori bulunamadı.",
+                status_code=400,
+                field_name="parent_id",
+            )
 
     country_code = payload.country_code.upper() if payload.country_code else None
     module_input = payload.module or (parent.module if parent else None)
@@ -30524,7 +30604,18 @@ async def admin_create_category(
     )
     existing_categories = slug_query.scalars().all()
     if any(_pick_category_slug(cat.slug) == slug for cat in existing_categories):
-        raise HTTPException(status_code=409, detail="Category slug already exists for parent")
+        raise _category_error(
+            "CATEGORY_SLUG_CONFLICT",
+            "Bu slug seçili üst kategori altında zaten kullanılıyor.",
+            status_code=409,
+            field_name="slug",
+            conflict={
+                "slug": slug,
+                "parent_id": str(parent.id) if parent else None,
+                "module": module_value,
+                "country_code": country_code,
+            },
+        )
 
     now = datetime.now(timezone.utc)
     hierarchy_complete = payload.hierarchy_complete if payload.hierarchy_complete is not None else True
@@ -30708,7 +30799,16 @@ async def admin_update_category(
     if payload.expected_updated_at is not None:
         current_updated_at = category.updated_at.isoformat() if category.updated_at else None
         if current_updated_at and payload.expected_updated_at != current_updated_at:
-            raise HTTPException(status_code=409, detail="Category updated in another session")
+            raise _category_error(
+                "CATEGORY_STALE_VERSION",
+                "Kayıt başka bir oturumda güncellendi. Lütfen veriyi yenileyip tekrar deneyin.",
+                status_code=409,
+                field_name="expected_updated_at",
+                conflict={
+                    "current_updated_at": current_updated_at,
+                    "expected_updated_at": payload.expected_updated_at,
+                },
+            )
 
     updates: Dict[str, Any] = {}
     module_value = category.module
@@ -30731,7 +30831,15 @@ async def admin_update_category(
             )
             existing_categories = existing_query.scalars().all()
             if any(_pick_category_slug(cat.slug) == slug for cat in existing_categories):
-                raise HTTPException(status_code=409, detail="Category slug already exists")
+                raise _category_error(
+                    "CATEGORY_SLUG_CONFLICT",
+                    "Bu slug zaten kullanılıyor.",
+                    status_code=409,
+                    field_name="slug",
+                    conflict={
+                        "slug": slug,
+                    },
+                )
             updates["slug"] = slug
 
     if payload.module is not None:
@@ -30754,10 +30862,20 @@ async def admin_update_category(
             try:
                 parent_uuid = uuid.UUID(parent_id_value)
             except ValueError as exc:
-                raise HTTPException(status_code=400, detail="parent_id not valid") from exc
+                raise _category_error(
+                    "PARENT_ID_INVALID",
+                    "Üst kategori kimliği geçersiz.",
+                    status_code=400,
+                    field_name="parent_id",
+                ) from exc
             parent = await session.get(Category, parent_uuid)
             if not parent:
-                raise HTTPException(status_code=400, detail="parent_id not found")
+                raise _category_error(
+                    "PARENT_ID_NOT_FOUND",
+                    "Seçilen üst kategori bulunamadı.",
+                    status_code=400,
+                    field_name="parent_id",
+                )
         parent_candidate = parent
         updates["parent_id"] = parent.id if parent else None
         updates["path"] = f"{parent.path}.{updates.get('slug') or _pick_category_slug(category.slug)}" if parent and parent.path else (updates.get("slug") or _pick_category_slug(category.slug))
