@@ -30599,6 +30599,8 @@ async def admin_create_category(
         select(Category)
         .where(
             Category.is_deleted.is_(False),
+            Category.module == module_value,
+            Category.country_code == country_code,
             Category.parent_id == (parent.id if parent else None),
         )
     )
@@ -30826,20 +30828,6 @@ async def admin_update_category(
         slug = _normalize_category_slug_input(payload.slug)
         current_slug = _normalize_category_slug_input(_pick_category_slug(category.slug) or "")
         if slug != current_slug:
-            existing_query = await session.execute(
-                select(Category).where(Category.is_deleted.is_(False), Category.id != category.id)
-            )
-            existing_categories = existing_query.scalars().all()
-            if any(_pick_category_slug(cat.slug) == slug for cat in existing_categories):
-                raise _category_error(
-                    "CATEGORY_SLUG_CONFLICT",
-                    "Bu slug zaten kullanılıyor.",
-                    status_code=409,
-                    field_name="slug",
-                    conflict={
-                        "slug": slug,
-                    },
-                )
             updates["slug"] = slug
 
     if payload.module is not None:
@@ -30986,6 +30974,32 @@ async def admin_update_category(
         raise _category_error("CATEGORY_IMAGE_ROOT_ONLY", "Kategori görseli sadece ana kategoride kullanılabilir.")
 
     effective_sort_order = updates.get("sort_order", category.sort_order)
+
+    if "slug" in updates:
+        scope_query = await session.execute(
+            select(Category).where(
+                Category.is_deleted.is_(False),
+                Category.id != category.id,
+                Category.module == module_value,
+                Category.country_code == country_value,
+                Category.parent_id == effective_parent_id,
+            )
+        )
+        scope_categories = scope_query.scalars().all()
+        if any(_pick_category_slug(cat.slug) == updates["slug"] for cat in scope_categories):
+            raise _category_error(
+                "CATEGORY_SLUG_CONFLICT",
+                "Bu slug aynı üst kategori altında zaten kullanılıyor.",
+                status_code=409,
+                field_name="slug",
+                conflict={
+                    "slug": updates["slug"],
+                    "parent_id": str(effective_parent_id) if effective_parent_id else None,
+                    "module": module_value,
+                    "country_code": country_value,
+                },
+            )
+
     await _assert_category_sort_available(
         session,
         country_code=country_value,

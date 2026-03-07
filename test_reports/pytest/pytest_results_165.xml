@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="12" time="177.751" timestamp="2026-03-07T14:03:37.257467+00:00" hostname="agent-env-28e2f1eb-3adc-4db2-88b2-f3c06cd2758f"><testcase classname="backend.tests.test_iteration_165_slug_sibling_scope.TestSlugSiblingScope" name="test_same_slug_different_parents_allowed" time="30.117"><error message="failed on setup with &quot;requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='layout-uniqueness.preview.emergentagent.com', port=443): Read timed out. (read timeout=30)&quot;">/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:534: in _make_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/urllib3/connection.py:571: in getresponse
+    httplib_response = super().getresponse()
+                       ^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/http/client.py:1395: in getresponse
+    response.begin()
+/usr/local/lib/python3.11/http/client.py:325: in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/http/client.py:286: in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/socket.py:718: in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/ssl.py:1314: in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.11/ssl.py:1166: in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TimeoutError: The read operation timed out
+
+The above exception was the direct cause of the following exception:
+/root/.venv/lib/python3.11/site-packages/requests/adapters.py:644: in send
+    resp = conn.urlopen(
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:841: in urlopen
+    retries = retries.increment(
+/root/.venv/lib/python3.11/site-packages/urllib3/util/retry.py:490: in increment
+    raise reraise(type(error), error, _stacktrace)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/urllib3/util/util.py:39: in reraise
+    raise value
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:787: in urlopen
+    response = self._make_request(
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:536: in _make_request
+    self._raise_timeout(err=e, url=url, timeout_value=read_timeout)
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:367: in _raise_timeout
+    raise ReadTimeoutError(
+E   urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='layout-uniqueness.preview.emergentagent.com', port=443): Read timed out. (read timeout=30)
+
+During handling of the above exception, another exception occurred:
+backend/tests/test_iteration_165_slug_sibling_scope.py:41: in auth_headers
+    response = requests.post(login_url, json=login_payload, timeout=30)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/api.py:115: in post
+    return request("post", url, data=data, json=json, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/api.py:59: in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/sessions.py:589: in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/sessions.py:703: in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/adapters.py:690: in send
+    raise ReadTimeout(e, request=request)
+E   requests.exceptions.ReadTimeout: HTTPSConnectionPool(host='layout-uniqueness.preview.emergentagent.com', port=443): Read timed out. (read timeout=30)</error></testcase><testcase classname="backend.tests.test_iteration_165_slug_sibling_scope.TestSlugSiblingScope" name="test_haus_exists_under_all_l2" time="37.096" /><testcase classname="backend.tests.test_iteration_165_slug_sibling_scope.TestSlugSiblingScope" name="test_duplicate_slug_same_parent_returns_409" time="10.196" /><testcase classname="backend.tests.test_iteration_165_slug_sibling_scope.TestSlugSiblingScope" name="test_create_new_slug_under_existing_parent_succeeds" time="15.719" /><testcase classname="backend.tests.test_iteration_165_slug_sibling_scope.TestUpdateSlugConflict" name="test_update_slug_to_sibling_returns_409" time="11.534" /><testcase classname="backend.tests.test_iteration_165_slug_sibling_scope.TestUpdateSlugConflict" name="test_update_slug_to_non_sibling_succeeds" time="19.940" /><testcase classname="backend.tests.test_iteration_165_slug_sibling_scope.TestDEWohnenHierarchy" name="test_wohnen_l1_exists" time="3.922" /><testcase classname="backend.tests.test_iteration_165_slug_sibling_scope.TestDEWohnenHierarchy" name="test_l2_verkauf_miete_kurzzeitmiete_exist" time="6.779" /><testcase classname="backend.tests.test_iteration_165_slug_sibling_scope.TestDEWohnenHierarchy" name="test_l3_categories_exist_under_each_l2" time="8.299" /><testcase classname="backend.tests.test_iteration_165_slug_sibling_scope.TestCategoryEditRegression" name="test_edit_category_without_slug_change" time="10.693" /><testcase classname="backend.tests.test_iteration_165_slug_sibling_scope.TestCategoryEditRegression" name="test_edit_category_name_only" time="14.420" /><testcase classname="backend.tests.test_iteration_165_slug_sibling_scope.TestSlugConflictErrorFormat" name="test_conflict_error_has_correct_structure" time="8.841" /></testsuite></testsuites>
