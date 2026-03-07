@@ -3147,3 +3147,50 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - content-list kapanış kriterleri doğrulaması
   - deep-link hata ekranı/aksiyonlar doğrulaması
 - Backend deep test: ✅ PASS (`invalid_source_policy`, `content_builder_only_requires_published_preview`, no 500)
+
+---
+
+## 2026-03-07 (Toplu Faz Kapanışı: B + C + CI Hard Fail + Final Regression)
+
+### Kullanıcı Net Onayı
+- Strict mod başarısızsa: **hata ekranı, fallback yok**
+- CI gate: **hard fail**
+
+### Faz B (Kategori Landing)
+- `/kategori/:slug` akışı Search runtime üzerinden strict policy ile devam ettirildi.
+- Category landing tarafında sessiz fallback yaklaşımı korunmadı; runtime resolve policy standardına bağlandı.
+
+### Faz C (Search + Detail)
+- `SearchPage`:
+  - `sourcePolicy: 'content_builder_only'`
+  - `allowDraftPreview: false`
+- `DetailPage`:
+  - aynı source-policy standardı bağlandı
+  - layout yok/policy ihlali durumunda deterministik hata ekranı (`listing-detail-layout-empty-state`), fallback yok
+
+### Backend Policy Enforcement
+- `resolve_content_layout` endpointi genişletildi:
+  - `source_policy` query param
+  - invalid policy => `400 invalid_source_policy`
+  - `content_builder_only` + `home` + `draft` => `400 content_builder_only_requires_published_preview`
+  - cache key policy bazlı ayrıştırıldı (`policy` cache key parçası)
+
+### CI / Regression Hard-Fail Gate
+- Gate testleri eklendi:
+  - `test_iteration_169_home_source_policy.py`
+  - `test_iteration_170_source_policy_gate.py`
+- Gate runner script eklendi:
+  - `/app/scripts/source_policy_gate.py`
+  - env’den `REACT_APP_BACKEND_URL` çözerek testleri zorunlu geçirir; fail durumunda non-zero döner
+
+### Content-List Kapanış Destekleri
+- `AdminContentList` hata bloğuna quick actions eklendi:
+  - `Yeniden Dene`
+  - `Deep-Link Kontrol`
+
+### Final Doğrulama
+- Toplu backend regresyon: **37 passed** (166/167/168/169/170 paket)
+- Testing agent: `/app/test_reports/iteration_169.json` ✅
+  - Faz B/C policy enforcement PASS
+  - RBAC PASS (dealer/user admin endpointlerinde 403)
+  - policy bypass noktaları PASS
