@@ -53,6 +53,7 @@ export default function AdminPresetRuns() {
   const [statusFilter, setStatusFilter] = useState('');
   const [fromDateFilter, setFromDateFilter] = useState('');
   const [toDateFilter, setToDateFilter] = useState('');
+  const [extendedExport, setExtendedExport] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [expandedRunIds, setExpandedRunIds] = useState([]);
 
@@ -112,6 +113,7 @@ export default function AdminPresetRuns() {
           status: statusFilter || undefined,
           from: fromDateFilter || undefined,
           to: toDateFilter || undefined,
+          extended: extendedExport ? 'true' : undefined,
         },
         responseType: 'blob',
       });
@@ -214,15 +216,26 @@ export default function AdminPresetRuns() {
           </label>
 
           <div className="flex items-end" data-testid="admin-preset-runs-filter-apply-wrap">
-            <button
-              type="button"
-              className="h-9 rounded border px-3 text-xs"
-              onClick={() => fetchRuns()}
-              disabled={loading}
-              data-testid="admin-preset-runs-filter-apply-button"
-            >
-              Filtreyi Uygula
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="inline-flex items-center gap-1 text-[11px]" data-testid="admin-preset-runs-extended-export-wrap">
+                <input
+                  type="checkbox"
+                  checked={extendedExport}
+                  onChange={(event) => setExtendedExport(event.target.checked)}
+                  data-testid="admin-preset-runs-extended-export-checkbox"
+                />
+                extended CSV (schema v2)
+              </label>
+              <button
+                type="button"
+                className="h-9 rounded border px-3 text-xs"
+                onClick={() => fetchRuns()}
+                disabled={loading}
+                data-testid="admin-preset-runs-filter-apply-button"
+              >
+                Filtreyi Uygula
+              </button>
+            </div>
           </div>
         </div>
 

@@ -1,0 +1,151 @@
+{
+  "summary": "Iteration 161: All Faz1/Faz2/Faz3 features tested and verified. Backend APIs (100% pass rate), frontend UI routes and components working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_161_revision_redirect_telemetry.py",
+    "/app/test_reports/pytest/pytest_results_161.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_161_revision_redirect_telemetry.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@platform.com / Admin123!, dealer@platform.com / Dealer123!",
+  "seed_data_creation": "None - created test telemetry events during testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All Faz1-Faz3 features fully verified. Telemetry endpoints, preset runs export, and release artifact scripts all working.",
+  "phase_results": {
+    "faz1_telemetry": {
+      "status": "PASS",
+      "details": {
+        "telemetry_create_endpoint": "POST /api/admin/revision-redirect-telemetry/events - creates success/failed events with duration, failure_reason fields",
+        "telemetry_list_endpoint": "GET /api/admin/revision-redirect-telemetry - returns items with summary (total, success, failed, avg_duration_ms, p95_duration_ms) and duration_histogram",
+        "status_filter": "?status=success|failed filters correctly",
+        "failure_reason_filter": "?failure_reason=REVISION_NOT_FOUND|REVISION_NOT_PUBLISHED|TARGET_ROUTE_INVALID|PERMISSION_DENIED filters correctly",
+        "permission_check": "Non-admin users (dealer role) receive 403 Forbidden as expected",
+        "frontend_page": "/admin/revision-redirect-telemetry shows title, filters, summary cards, histogram, and table"
+      }
+    },
+    "faz2_preset_runs_filters": {
+      "status": "PASS",
+      "details": {
+        "list_endpoint": "GET /api/admin/preset-runs returns items with pagination (page, limit, total, has_next)",
+        "status_filter": "?status=success|partial_success|failed filters correctly",
+        "from_date_filter": "?from=YYYY-MM-DD filters by start date",
+        "to_date_filter": "?to=YYYY-MM-DD filters by end date",
+        "date_range_filter": "Combined from+to filters work correctly",
+        "frontend_page": "/admin/preset-runs shows Status dropdown, From/To date inputs, Export CSV button"
+      }
+    },
+    "faz3_preset_csv_export": {
+      "status": "PASS",
+      "details": {
+        "default_export": "GET /api/admin/preset-runs/export - returns CSV with 9 columns (run_id, operator, executed_at, countries, total_jobs, success_count, failure_count, duration, status)",
+        "extended_export": "GET /api/admin/preset-runs/export?extended=true - adds meta row (meta,schema_version,2) + extra columns (module, persona, variant)",
+        "row_limit_header": "X-Export-Row-Limit header present with value >= 1000",
+        "frontend_checkbox": "extended CSV (schema v2) checkbox present on /admin/preset-runs page"
+      }
+    },
+    "revision_context": {
+      "status": "PASS",
+      "details": {
+        "endpoint": "GET /api/admin/layouts/{revision_id} returns item with page context (id, page_type, country, module)",
+        "frontend_route": "/admin/revisions/:revisionId route exists and redirects to content-builder"
+      }
+    },
+    "release_artifact_scripts": {
+      "status": "PASS",
+      "details": {
+        "archive_script": "/app/scripts/archive_release_artifacts.sh exists with release_meta.json fields (release_id, is_active, is_rollback_candidate, retention_locked)",
+        "cleanup_script": "/app/scripts/cleanup_release_artifacts.py has retention rules and fail-safe for missing meta"
+      }
+    }
+  },
+  "api_verification_results": {
+    "telemetry_create_success": {
+      "url": "POST /api/admin/revision-redirect-telemetry/events",
+      "status": 200,
+      "payload": {"status": "success", "redirect_duration_ms": 150},
+      "response": {"ok": true, "item": {"status": "success", "redirect_duration_ms": 150}}
+    },
+    "telemetry_create_failed": {
+      "url": "POST /api/admin/revision-redirect-telemetry/events",
+      "status": 200,
+      "payload": {"status": "failed", "failure_reason": "REVISION_NOT_FOUND"},
+      "response": {"ok": true, "item": {"status": "failed", "failure_reason": "REVISION_NOT_FOUND"}}
+    },
+    "telemetry_list": {
+      "url": "GET /api/admin/revision-redirect-telemetry?limit=50",
+      "status": 200,
+      "response_keys": ["items", "summary", "filters", "limit"]
+    },
+    "telemetry_non_admin": {
+      "url": "GET /api/admin/revision-redirect-telemetry",
+      "status": 403,
+      "user": "dealer@platform.com"
+    },
+    "preset_runs_list": {
+      "url": "GET /api/admin/preset-runs?page=1&limit=20",
+      "status": 200,
+      "response_keys": ["items", "page", "limit", "total", "has_next"]
+    },
+    "preset_export_default": {
+      "url": "GET /api/admin/preset-runs/export",
+      "status": 200,
+      "content_type": "text/csv",
+      "headers": {"X-Export-Row-Limit": "10000"}
+    },
+    "preset_export_extended": {
+      "url": "GET /api/admin/preset-runs/export?extended=true",
+      "status": 200,
+      "first_row": "meta,schema_version,2",
+      "extra_columns": ["module", "persona", "variant"]
+    }
+  },
+  "frontend_verification_results": {
+    "telemetry_page": {
+      "url": "/admin/revision-redirect-telemetry",
+      "status": "ACCESSIBLE",
+      "elements": {
+        "title": "Revision Redirect Telemetry",
+        "subtitle": "Son 50 redirect event, failure reason ve duration dağılımı.",
+        "status_filter": "Status dropdown (Tümü, success, failed)",
+        "failure_filter": "Failure reason dropdown with enum values",
+        "summary_cards": ["total", "success", "failed", "avg/p95(ms)"],
+        "histogram": ["0_250", "251_500", "501_1000", "1001_2000", "2001_plus"],
+        "table_columns": ["timestamp", "revision_id", "status", "failure_reason", "duration(ms)", "redirect_target"]
+      }
+    },
+    "preset_runs_page": {
+      "url": "/admin/preset-runs",
+      "status": "ACCESSIBLE",
+      "elements": {
+        "title": "Template Preset Run History",
+        "status_filter": "Status dropdown",
+        "from_filter": "From date input",
+        "to_filter": "To date input",
+        "extended_checkbox": "extended CSV (schema v2) checkbox",
+        "export_button": "Export CSV button",
+        "table_columns": ["run id", "operator", "timestamp", "countries", "success %", "duration", "status", "actions"]
+      }
+    },
+    "revision_redirect_route": {
+      "url": "/admin/revisions/:revisionId",
+      "status": "ACCESSIBLE",
+      "behavior": "Shows loading state then redirects to content-builder or shows error"
+    }
+  }
+}

@@ -55,6 +55,7 @@ import AdminContentBuilder from '@/pages/admin/AdminContentBuilder';
 import AdminContentList from '@/pages/admin/AdminContentList';
 import AdminPresetRuns from '@/pages/admin/AdminPresetRuns';
 import AdminRevisionRedirect from '@/pages/admin/AdminRevisionRedirect';
+import AdminRevisionRedirectTelemetry from '@/pages/admin/AdminRevisionRedirectTelemetry';
 import AdminInfoPages from '@/pages/admin/AdminInfoPages';
 import AdminUserInterfaceDesignV2 from '@/pages/admin/AdminUserInterfaceDesignV2';
 import AdminPublishHealthPage from '@/pages/admin/ops/AdminPublishHealthPage';
@@ -253,6 +254,16 @@ export default function BackofficePortalApp() {
           <AdminLayout>
             <AdminRouteGuard roles={["super_admin", "country_admin"]}>
               <AdminRevisionRedirect />
+            </AdminRouteGuard>
+          </AdminLayout>
+        }
+      />
+      <Route
+        path="/revision-redirect-telemetry"
+        element={
+          <AdminLayout>
+            <AdminRouteGuard roles={["super_admin", "country_admin"]}>
+              <AdminRevisionRedirectTelemetry />
             </AdminRouteGuard>
           </AdminLayout>
         }

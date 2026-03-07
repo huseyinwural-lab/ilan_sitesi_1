@@ -354,3 +354,37 @@ class LayoutPresetRunLog(Base):
         Index("ix_layout_preset_run_logs_status_executed", "status", "executed_at"),
         Index("ix_layout_preset_run_logs_module_executed", "module", "executed_at"),
     )
+
+
+class AdminRevisionRedirectEvent(Base):
+    __tablename__ = "admin_revision_redirect_events"
+
+    id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    event_name: Mapped[str] = mapped_column(String(64), nullable=False, default="admin_revision_redirect", index=True)
+    revision_id: Mapped[uuid.UUID | None] = mapped_column(PGUUID(as_uuid=True), nullable=True, index=True)
+    admin_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    redirect_target: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    redirect_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    redirect_completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    redirect_duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="success", index=True)
+    failure_reason: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+    meta_json: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"))
+
+    __table_args__ = (
+        CheckConstraint("char_length(event_name) > 0", name="ck_admin_rev_redirect_event_name_not_empty"),
+        CheckConstraint("status IN ('success','failed')", name="ck_admin_rev_redirect_status"),
+        CheckConstraint("jsonb_typeof(meta_json) = 'object'", name="ck_admin_rev_redirect_meta_json_object"),
+        Index("ix_admin_rev_redirect_created_status", "created_at", "status"),
+        Index("ix_admin_rev_redirect_failure_reason", "failure_reason", "created_at"),
+    )

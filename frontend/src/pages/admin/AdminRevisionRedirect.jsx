@@ -23,9 +23,51 @@ export default function AdminRevisionRedirect() {
 
   useEffect(() => {
     let mounted = true;
+
+    const sendTelemetryEvent = async ({
+      status,
+      failureReason = null,
+      redirectTarget = null,
+      startedAtIso,
+      completedAtIso,
+      durationMs,
+    }) => {
+      try {
+        await axios.post(
+          `${API}/admin/revision-redirect-telemetry/events`,
+          {
+            revision_id: revisionId || null,
+            redirect_target: redirectTarget,
+            redirect_started_at: startedAtIso,
+            redirect_completed_at: completedAtIso,
+            redirect_duration_ms: durationMs,
+            status,
+            failure_reason: failureReason,
+          },
+          {
+            headers: authHeaders,
+            timeout: 8000,
+          },
+        );
+      } catch {
+        // telemetry best-effort
+      }
+    };
+
     const run = async () => {
+      const redirectStartTimestamp = Date.now();
+      const startedAtIso = new Date(redirectStartTimestamp).toISOString();
+
       if (!revisionId) {
         setError('revision_id bulunamadı');
+        const completedAtIso = new Date().toISOString();
+        await sendTelemetryEvent({
+          status: 'failed',
+          failureReason: 'REVISION_NOT_FOUND',
+          startedAtIso,
+          completedAtIso,
+          durationMs: Math.max(0, Date.now() - redirectStartTimestamp),
+        });
         return;
       }
 
@@ -37,8 +79,31 @@ export default function AdminRevisionRedirect() {
         if (!mounted) return;
 
         const page = response.data?.page;
+        const revisionStatus = String(response.data?.item?.status || '').toLowerCase();
+
+        if (revisionStatus !== 'published') {
+          setError('Revision publish durumda değil.');
+          const completedAtIso = new Date().toISOString();
+          await sendTelemetryEvent({
+            status: 'failed',
+            failureReason: 'REVISION_NOT_PUBLISHED',
+            startedAtIso,
+            completedAtIso,
+            durationMs: Math.max(0, Date.now() - redirectStartTimestamp),
+          });
+          return;
+        }
+
         if (!page?.id) {
           setError('Revision context bulunamadı');
+          const completedAtIso = new Date().toISOString();
+          await sendTelemetryEvent({
+            status: 'failed',
+            failureReason: 'TARGET_ROUTE_INVALID',
+            startedAtIso,
+            completedAtIso,
+            durationMs: Math.max(0, Date.now() - redirectStartTimestamp),
+          });
           return;
         }
 
@@ -52,11 +117,50 @@ export default function AdminRevisionRedirect() {
           params.set('category_id', page.category_id);
         }
 
-        navigate(`/admin/site-design/content-builder?${params.toString()}`, { replace: true });
+        const redirectTarget = `/admin/site-design/content-builder?${params.toString()}`;
+        if (!redirectTarget.startsWith('/admin/site-design/content-builder?')) {
+          setError('Redirect hedef rotası geçersiz.');
+          const completedAtIso = new Date().toISOString();
+          await sendTelemetryEvent({
+            status: 'failed',
+            failureReason: 'TARGET_ROUTE_INVALID',
+            redirectTarget,
+            startedAtIso,
+            completedAtIso,
+            durationMs: Math.max(0, Date.now() - redirectStartTimestamp),
+          });
+          return;
+        }
+
+        const completedAtIso = new Date().toISOString();
+        await sendTelemetryEvent({
+          status: 'success',
+          redirectTarget,
+          startedAtIso,
+          completedAtIso,
+          durationMs: Math.max(0, Date.now() - redirectStartTimestamp),
+        });
+
+        navigate(redirectTarget, { replace: true });
       } catch (requestError) {
         if (!mounted) return;
         const message = requestError?.response?.data?.detail || requestError?.message || 'Revision açılamadı';
         setError(String(message));
+
+        const httpStatus = Number(requestError?.response?.status || 0);
+        const failureReason = httpStatus === 403
+          ? 'PERMISSION_DENIED'
+          : httpStatus === 404
+            ? 'REVISION_NOT_FOUND'
+            : 'TARGET_ROUTE_INVALID';
+        const completedAtIso = new Date().toISOString();
+        await sendTelemetryEvent({
+          status: 'failed',
+          failureReason,
+          startedAtIso,
+          completedAtIso,
+          durationMs: Math.max(0, Date.now() - redirectStartTimestamp),
+        });
       }
     };
 

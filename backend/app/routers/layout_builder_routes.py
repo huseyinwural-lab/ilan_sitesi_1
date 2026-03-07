@@ -11,6 +11,7 @@ import uuid
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi.responses import StreamingResponse
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import SchemaError
 from pydantic import BaseModel, Field
@@ -41,6 +42,7 @@ from app.models.layout_builder import (
     LayoutPresetEvent,
     LayoutPresetEventType,
     LayoutPresetRunLog,
+    AdminRevisionRedirectEvent,
     LayoutRevision,
     LayoutRevisionStatus,
 )
@@ -64,6 +66,27 @@ _METRICS = {
     "resolve_total_latency_ms": 0.0,
 }
 _LAYOUT_ENUM_SYNCED = False
+
+REVISION_REDIRECT_FAILURE_REASONS = {
+    "REVISION_NOT_FOUND",
+    "REVISION_NOT_PUBLISHED",
+    "TARGET_ROUTE_INVALID",
+    "PERMISSION_DENIED",
+}
+
+_REVISION_REDIRECT_METRICS = {
+    "total": 0,
+    "success": 0,
+    "failed": 0,
+    "failure_reason_counts": {},
+    "duration_buckets": {
+        "0_250": 0,
+        "251_500": 0,
+        "501_1000": 0,
+        "1001_2000": 0,
+        "2001_plus": 0,
+    },
+}
 
 TRANSIENT_DB_ERROR_MARKERS = (
     "timeout",
@@ -558,6 +581,23 @@ def _classify_preset_operation_error(exc: Exception) -> str:
     return "operation_error"
 
 
+def _record_revision_redirect_metrics(*, status: str, failure_reason: Optional[str], duration_ms: Optional[int]) -> None:
+    _REVISION_REDIRECT_METRICS["total"] = int(_REVISION_REDIRECT_METRICS.get("total", 0)) + 1
+    if status == "success":
+        _REVISION_REDIRECT_METRICS["success"] = int(_REVISION_REDIRECT_METRICS.get("success", 0)) + 1
+    else:
+        _REVISION_REDIRECT_METRICS["failed"] = int(_REVISION_REDIRECT_METRICS.get("failed", 0)) + 1
+
+    if failure_reason:
+        reason_counts = _REVISION_REDIRECT_METRICS.setdefault("failure_reason_counts", {})
+        reason_counts[failure_reason] = int(reason_counts.get(failure_reason, 0)) + 1
+
+    bucket = _revision_redirect_duration_bucket(duration_ms)
+    if bucket:
+        duration_buckets = _REVISION_REDIRECT_METRICS.setdefault("duration_buckets", {})
+        duration_buckets[bucket] = int(duration_buckets.get(bucket, 0)) + 1
+
+
 async def _run_with_db_retry(session: AsyncSession, operation, *, retries: int = 6):
     last_exc: Optional[Exception] = None
     for attempt in range(1, retries + 1):
@@ -964,6 +1004,16 @@ class LayoutPermanentDeletePayload(BaseModel):
     revision_ids: list[str] = Field(min_length=1, max_length=200)
 
 
+class RevisionRedirectTelemetryPayload(BaseModel):
+    revision_id: Optional[str] = None
+    redirect_target: Optional[str] = Field(default=None, min_length=1, max_length=512)
+    redirect_started_at: Optional[str] = None
+    redirect_completed_at: Optional[str] = None
+    redirect_duration_ms: Optional[int] = Field(default=None, ge=0, le=120000)
+    status: str = Field(default="success", min_length=6, max_length=7)
+    failure_reason: Optional[str] = Field(default=None, min_length=3, max_length=64)
+
+
 class StandardTemplatePackInstallPayload(BaseModel):
     countries: list[str] = Field(min_length=1, max_length=20)
     module: str = Field(min_length=2, max_length=64)
@@ -1029,6 +1079,19 @@ def _parse_iso_date_or_400(raw_value: Optional[str], *, field_name: str) -> Opti
         return datetime.strptime(value, "%Y-%m-%d").date()
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=f"invalid_{field_name}_format") from exc
+
+
+def _parse_iso_datetime_or_none(raw_value: Optional[str], *, field_name: str) -> Optional[datetime]:
+    value = str(raw_value or "").strip()
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"invalid_{field_name}") from exc
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
 
 
 def _serialize_component(row: LayoutComponentDefinition) -> dict[str, Any]:
@@ -1435,6 +1498,86 @@ def _serialize_preset_run_log(row: LayoutPresetRunLog) -> dict[str, Any]:
         "include_extended_templates": bool(row.include_extended_templates),
         "summary_json": row.summary_json or {},
         "error_logs": list(row.error_logs_json or []),
+    }
+
+
+def _revision_redirect_duration_bucket(duration_ms: Optional[int]) -> Optional[str]:
+    if duration_ms is None:
+        return None
+    safe_duration = max(0, int(duration_ms))
+    if safe_duration <= 250:
+        return "0_250"
+    if safe_duration <= 500:
+        return "251_500"
+    if safe_duration <= 1000:
+        return "501_1000"
+    if safe_duration <= 2000:
+        return "1001_2000"
+    return "2001_plus"
+
+
+def _serialize_revision_redirect_event(row: AdminRevisionRedirectEvent) -> dict[str, Any]:
+    return {
+        "id": str(row.id),
+        "event_name": row.event_name,
+        "revision_id": str(row.revision_id) if row.revision_id else None,
+        "admin_user_id": str(row.admin_user_id) if row.admin_user_id else None,
+        "redirect_target": row.redirect_target,
+        "redirect_started_at": row.redirect_started_at.isoformat() if row.redirect_started_at else None,
+        "redirect_completed_at": row.redirect_completed_at.isoformat() if row.redirect_completed_at else None,
+        "redirect_duration_ms": int(row.redirect_duration_ms) if row.redirect_duration_ms is not None else None,
+        "status": row.status,
+        "failure_reason": row.failure_reason,
+        "timestamp": row.created_at.isoformat() if row.created_at else None,
+        "meta": row.meta_json or {},
+    }
+
+
+def _build_revision_redirect_summary(items: list[dict[str, Any]]) -> dict[str, Any]:
+    total = len(items)
+    success = sum(1 for item in items if item.get("status") == "success")
+    failed = sum(1 for item in items if item.get("status") == "failed")
+
+    durations = [int(item.get("redirect_duration_ms")) for item in items if item.get("redirect_duration_ms") is not None]
+    avg_duration_ms = round(sum(durations) / len(durations), 2) if durations else 0.0
+    p95_duration_ms = 0
+    if durations:
+        sorted_durations = sorted(durations)
+        p95_index = max(0, min(len(sorted_durations) - 1, int(len(sorted_durations) * 0.95) - 1))
+        p95_duration_ms = int(sorted_durations[p95_index])
+
+    failure_reason_counts: dict[str, int] = {}
+    duration_histogram = {
+        "0_250": 0,
+        "251_500": 0,
+        "501_1000": 0,
+        "1001_2000": 0,
+        "2001_plus": 0,
+    }
+
+    for item in items:
+        reason = str(item.get("failure_reason") or "").strip()
+        if reason:
+            failure_reason_counts[reason] = failure_reason_counts.get(reason, 0) + 1
+        bucket = _revision_redirect_duration_bucket(item.get("redirect_duration_ms"))
+        if bucket:
+            duration_histogram[bucket] = int(duration_histogram.get(bucket, 0)) + 1
+
+    return {
+        "total": total,
+        "success": success,
+        "failed": failed,
+        "avg_duration_ms": avg_duration_ms,
+        "p95_duration_ms": p95_duration_ms,
+        "failure_reason_counts": failure_reason_counts,
+        "duration_histogram": duration_histogram,
+        "metrics_aggregator_snapshot": {
+            "total": int(_REVISION_REDIRECT_METRICS.get("total", 0)),
+            "success": int(_REVISION_REDIRECT_METRICS.get("success", 0)),
+            "failed": int(_REVISION_REDIRECT_METRICS.get("failed", 0)),
+            "failure_reason_counts": dict(_REVISION_REDIRECT_METRICS.get("failure_reason_counts", {})),
+            "duration_buckets": dict(_REVISION_REDIRECT_METRICS.get("duration_buckets", {})),
+        },
     }
 
 
@@ -4001,6 +4144,7 @@ async def export_layout_preset_runs_csv(
     from_date: Optional[str] = Query(default=None, alias="from"),
     to_date: Optional[str] = Query(default=None, alias="to"),
     module: Optional[str] = Query(default=None),
+    extended: bool = Query(default=False),
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
 ):
@@ -4027,15 +4171,20 @@ async def export_layout_preset_runs_csv(
         end_dt_exclusive = datetime.combine(end_date + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc)
         query = query.where(LayoutPresetRunLog.executed_at < end_dt_exclusive)
 
-    rows = (
-        await session.execute(
-            query.order_by(desc(LayoutPresetRunLog.executed_at), desc(LayoutPresetRunLog.id)).limit(10000)
-        )
-    ).scalars().all()
+    MAX_ROW_LIMIT = 10000
 
-    stream = io.StringIO()
-    writer = csv.writer(stream)
-    writer.writerow([
+    async def _fetch_rows():
+        result = await session.execute(
+            query.order_by(desc(LayoutPresetRunLog.executed_at), desc(LayoutPresetRunLog.id)).limit(MAX_ROW_LIMIT)
+        )
+        return result.scalars().all()
+
+    try:
+        rows = await asyncio.wait_for(_fetch_rows(), timeout=15)
+    except asyncio.TimeoutError as exc:
+        raise HTTPException(status_code=504, detail="preset_runs_export_timeout") from exc
+
+    headers = [
         "run_id",
         "operator",
         "executed_at",
@@ -4045,20 +4194,42 @@ async def export_layout_preset_runs_csv(
         "failure_count",
         "duration",
         "status",
-    ])
+    ]
+    if extended:
+        headers.extend(["module", "persona", "variant"])
 
-    for row in rows:
-        writer.writerow([
-            str(row.id),
-            row.executed_by_email or (str(row.executed_by) if row.executed_by else ""),
-            row.executed_at.isoformat() if row.executed_at else "",
-            "|".join([str(item) for item in (row.target_countries or [])]),
-            int(row.total_jobs or 0),
-            int(row.success_count or 0),
-            int(row.failure_count or 0),
-            int(row.duration_ms or 0),
-            row.status,
-        ])
+    def _csv_stream_generator():
+        buffer = io.StringIO()
+        writer = csv.writer(buffer)
+        if extended:
+            writer.writerow(["meta", "schema_version", "2"])
+        writer.writerow(headers)
+        yield buffer.getvalue()
+        buffer.seek(0)
+        buffer.truncate(0)
+
+        for row in rows:
+            row_values = [
+                str(row.id),
+                row.executed_by_email or (str(row.executed_by) if row.executed_by else ""),
+                row.executed_at.isoformat() if row.executed_at else "",
+                "|".join([str(item) for item in (row.target_countries or [])]),
+                int(row.total_jobs or 0),
+                int(row.success_count or 0),
+                int(row.failure_count or 0),
+                int(row.duration_ms or 0),
+                row.status,
+            ]
+            if extended:
+                row_values.extend([
+                    row.module,
+                    row.persona,
+                    row.variant,
+                ])
+            writer.writerow(row_values)
+            yield buffer.getvalue()
+            buffer.seek(0)
+            buffer.truncate(0)
 
     filename_parts = ["preset-runs"]
     if start_date:
@@ -4067,12 +4238,17 @@ async def export_layout_preset_runs_csv(
         filename_parts.append(f"to-{end_date.isoformat()}")
     if normalized_status:
         filename_parts.append(normalized_status)
+    if extended:
+        filename_parts.append("extended")
     filename = "_".join(filename_parts) + ".csv"
 
-    return Response(
-        content=stream.getvalue(),
+    return StreamingResponse(
+        _csv_stream_generator(),
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+            "X-Export-Row-Limit": str(MAX_ROW_LIMIT),
+        },
     )
 
 
@@ -4088,6 +4264,120 @@ async def get_layout_preset_run_detail(
     if not row:
         raise HTTPException(status_code=404, detail="preset_run_not_found")
     return {"ok": True, "item": _serialize_preset_run_log(row)}
+
+
+@router.post("/admin/revision-redirect-telemetry/events")
+async def create_admin_revision_redirect_event(
+    payload: RevisionRedirectTelemetryPayload,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    normalized_status = str(payload.status or "").strip().lower()
+    if normalized_status not in {"success", "failed"}:
+        raise HTTPException(status_code=400, detail="invalid_status")
+
+    normalized_failure_reason = str(payload.failure_reason or "").strip().upper() or None
+    if normalized_status == "failed" and not normalized_failure_reason:
+        raise HTTPException(status_code=400, detail="failure_reason_required")
+    if normalized_failure_reason and normalized_failure_reason not in REVISION_REDIRECT_FAILURE_REASONS:
+        raise HTTPException(status_code=400, detail="invalid_failure_reason")
+
+    started_at = _parse_iso_datetime_or_none(payload.redirect_started_at, field_name="redirect_started_at")
+    completed_at = _parse_iso_datetime_or_none(payload.redirect_completed_at, field_name="redirect_completed_at")
+    duration_ms = payload.redirect_duration_ms
+    if duration_ms is None and started_at and completed_at:
+        duration_ms = max(0, int((completed_at - started_at).total_seconds() * 1000))
+
+    revision_uuid = _safe_uuid_or_none(payload.revision_id)
+    admin_user_uuid = _safe_uuid_or_none(current_user.get("id"))
+    redirect_target = str(payload.redirect_target or "").strip() or None
+
+    row = AdminRevisionRedirectEvent(
+        id=uuid.uuid4(),
+        event_name="admin_revision_redirect",
+        revision_id=revision_uuid,
+        admin_user_id=admin_user_uuid,
+        redirect_target=redirect_target,
+        redirect_started_at=started_at,
+        redirect_completed_at=completed_at,
+        redirect_duration_ms=duration_ms,
+        status=normalized_status,
+        failure_reason=normalized_failure_reason,
+        created_at=datetime.now(timezone.utc),
+        meta_json={
+            "actor_email": current_user.get("email"),
+        },
+    )
+
+    async def _op():
+        session.add(row)
+        await session.commit()
+        await session.refresh(row)
+        return row
+
+    row = await _run_with_db_retry(session, _op, retries=2)
+
+    _record_revision_redirect_metrics(
+        status=normalized_status,
+        failure_reason=normalized_failure_reason,
+        duration_ms=duration_ms,
+    )
+
+    logger.info(
+        "admin_revision_redirect_event status=%s revision_id=%s user_id=%s duration_ms=%s failure_reason=%s target=%s",
+        normalized_status,
+        str(revision_uuid) if revision_uuid else None,
+        str(admin_user_uuid) if admin_user_uuid else None,
+        duration_ms,
+        normalized_failure_reason,
+        redirect_target,
+    )
+
+    return {
+        "ok": True,
+        "item": _serialize_revision_redirect_event(row),
+    }
+
+
+@router.get("/admin/revision-redirect-telemetry")
+async def list_admin_revision_redirect_events(
+    status: Optional[str] = Query(default=None),
+    failure_reason: Optional[str] = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=200),
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    del current_user
+
+    query = select(AdminRevisionRedirectEvent)
+    normalized_status = str(status or "").strip().lower()
+    if normalized_status:
+        if normalized_status not in {"success", "failed"}:
+            raise HTTPException(status_code=400, detail="invalid_status")
+        query = query.where(AdminRevisionRedirectEvent.status == normalized_status)
+
+    normalized_failure_reason = str(failure_reason or "").strip().upper()
+    if normalized_failure_reason:
+        if normalized_failure_reason not in REVISION_REDIRECT_FAILURE_REASONS:
+            raise HTTPException(status_code=400, detail="invalid_failure_reason")
+        query = query.where(AdminRevisionRedirectEvent.failure_reason == normalized_failure_reason)
+
+    rows = (
+        await session.execute(
+            query.order_by(desc(AdminRevisionRedirectEvent.created_at), desc(AdminRevisionRedirectEvent.id)).limit(limit)
+        )
+    ).scalars().all()
+
+    items = [_serialize_revision_redirect_event(row) for row in rows]
+    return {
+        "items": items,
+        "summary": _build_revision_redirect_summary(items),
+        "filters": {
+            "status": normalized_status or None,
+            "failure_reason": normalized_failure_reason or None,
+        },
+        "limit": limit,
+    }
 
 
 @router.post("/admin/site/content-layout/pages/{page_id}/revisions/draft")

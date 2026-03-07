@@ -32,11 +32,13 @@ jobs:
         if: always()
         run: |
           chmod +x scripts/archive_release_artifacts.sh
-          RELEASE_VERSION="${GITHUB_SHA:0:12}" \
-          RELEASE_DATE="$(date +%F)" \
+          RELEASE_ID="release-$(date -u +%Y%m%d-%H%M)" \
+          RELEASE_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
           VALIDATED_LOCALES="TR,DE,FR" \
           PRESET_BATCH_SIZE="100" \
           VALIDATED_BY="${GITHUB_ACTOR}" \
+          TRIGGER_SOURCE="ci" \
+          MAX_RELEASES="20" \
           scripts/archive_release_artifacts.sh
 
       - name: Upload release artifacts archive

@@ -1,0 +1,26 @@
+name: Release Artifact Retention Cleanup
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  cleanup-release-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run cleanup policy
+        run: |
+          python3 scripts/cleanup_release_artifacts.py
+        env:
+          MAX_RELEASES: "20"
+          TRIGGER_SOURCE: "scheduled"
+
+      - name: Upload post-cleanup release artifacts snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts-retention-snapshot-${{ github.run_id }}
+          path: release-artifacts/
