@@ -15,7 +15,7 @@ from typing import Dict, List, Any
 from PIL import Image
 
 # Use the environment variable from frontend/.env
-BASE_URL = "https://page-builder-227.preview.emergentagent.com/api"
+BASE_URL = "https://layout-uniqueness.preview.emergentagent.com/api"
 
 # Test credentials
 ADMIN_CREDENTIALS = {"email": "admin@platform.com", "password": "Admin123!"}

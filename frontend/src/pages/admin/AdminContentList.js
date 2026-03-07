@@ -138,6 +138,8 @@ export default function AdminContentList() {
   const [contentListError, setContentListError] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
   const [contentListView, setContentListView] = useState('active');
+  const [selectedPassiveRevisionIds, setSelectedPassiveRevisionIds] = useState([]);
+  const [permanentDeleteLoading, setPermanentDeleteLoading] = useState(false);
 
   const [copyTargetPageType, setCopyTargetPageType] = useState('home');
   const [copyTargetCountry, setCopyTargetCountry] = useState('DE');
@@ -197,6 +199,43 @@ export default function AdminContentList() {
     [contentListRows],
   );
   const visibleRows = contentListView === 'passive' ? passiveRows : activeRows;
+  const passiveRevisionIds = useMemo(
+    () => passiveRows.map((item) => item?.revision_id || item?.id).filter(Boolean),
+    [passiveRows],
+  );
+  const selectedPassiveCount = useMemo(
+    () => selectedPassiveRevisionIds.filter((revisionId) => passiveRevisionIds.includes(revisionId)).length,
+    [passiveRevisionIds, selectedPassiveRevisionIds],
+  );
+  const allPassiveSelected = passiveRevisionIds.length > 0 && selectedPassiveCount === passiveRevisionIds.length;
+
+  useEffect(() => {
+    setSelectedPassiveRevisionIds((previous) => previous.filter((revisionId) => passiveRevisionIds.includes(revisionId)));
+  }, [passiveRevisionIds]);
+
+  useEffect(() => {
+    if (contentListView !== 'passive') {
+      setSelectedPassiveRevisionIds([]);
+    }
+  }, [contentListView]);
+
+  const togglePassiveSelection = (revisionId) => {
+    if (!revisionId) return;
+    setSelectedPassiveRevisionIds((previous) => {
+      if (previous.includes(revisionId)) {
+        return previous.filter((value) => value !== revisionId);
+      }
+      return [...previous, revisionId];
+    });
+  };
+
+  const toggleSelectAllPassiveRows = () => {
+    if (allPassiveSelected) {
+      setSelectedPassiveRevisionIds([]);
+      return;
+    }
+    setSelectedPassiveRevisionIds(passiveRevisionIds);
+  };
 
   const handleContentListEdit = (item) => {
     if (!item?.layout_page_id || item.is_deleted) return;
@@ -313,6 +352,54 @@ export default function AdminContentList() {
       setContentListError(message);
       toast.error(message);
     }
+  };
+
+  const handlePermanentDelete = async ({ revisionIds, mode }) => {
+    const normalizedRevisionIds = Array.isArray(revisionIds)
+      ? revisionIds.map((value) => String(value || '').trim()).filter(Boolean)
+      : [];
+    if (!normalizedRevisionIds.length) {
+      toast.error('Kalıcı silme için en az bir kayıt seçin.');
+      return;
+    }
+
+    const confirmText = mode === 'bulk'
+      ? `${normalizedRevisionIds.length} adet pasif/arsiv revision kalıcı olarak silinsin mi?`
+      : 'Bu pasif/arsiv revision kalıcı olarak silinsin mi?';
+    const confirmed = window.confirm(confirmText);
+    if (!confirmed) return;
+
+    setPermanentDeleteLoading(true);
+    setStatusMessage('');
+    setContentListError('');
+
+    try {
+      const response = await axios.delete(`${API}/admin/layouts/permanent`, {
+        headers: authHeaders,
+        data: { revision_ids: normalizedRevisionIds },
+      });
+      const deletedCount = Number(response.data?.deleted_count || normalizedRevisionIds.length || 0);
+      setStatusMessage(`${deletedCount} kayıt kalıcı olarak silindi.`);
+      toast.success(`${deletedCount} kayıt kalıcı olarak silindi.`);
+      setSelectedPassiveRevisionIds([]);
+      await fetchContentList({ silent: true });
+    } catch (err) {
+      const message = extractApiErrorText(err, 'Kalıcı silme başarısız');
+      setContentListError(message);
+      toast.error(message);
+    } finally {
+      setPermanentDeleteLoading(false);
+    }
+  };
+
+  const handlePermanentDeleteSingle = async (item) => {
+    const revisionId = item?.revision_id || item?.id;
+    if (!revisionId) return;
+    await handlePermanentDelete({ revisionIds: [revisionId], mode: 'single' });
+  };
+
+  const handlePermanentDeleteBulk = async () => {
+    await handlePermanentDelete({ revisionIds: selectedPassiveRevisionIds, mode: 'bulk' });
   };
 
   const handleResetAndSeedHomeWireframe = async () => {
@@ -482,6 +569,17 @@ export default function AdminContentList() {
             >
               Yenile
             </button>
+            {contentListView === 'passive' ? (
+              <button
+                type="button"
+                className="h-9 rounded border border-rose-300 px-3 text-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={handlePermanentDeleteBulk}
+                disabled={permanentDeleteLoading || selectedPassiveCount === 0}
+                data-testid="admin-content-list-bulk-permanent-delete-button"
+              >
+                Toplu Kalıcı Sil ({selectedPassiveCount})
+              </button>
+            ) : null}
             <div className="inline-flex rounded border p-1" data-testid="admin-content-list-view-switch">
               <button
                 type="button"
@@ -715,6 +813,20 @@ export default function AdminContentList() {
           <table className="min-w-full text-left text-xs" data-testid="admin-content-list-table">
             <thead>
               <tr className="border-b bg-slate-50" data-testid="admin-content-list-head-row">
+                <th className="px-2 py-2" data-testid="admin-content-list-select-head">
+                  {contentListView === 'passive' ? (
+                    <label className="inline-flex items-center gap-1" data-testid="admin-content-list-select-all-wrap">
+                      <input
+                        type="checkbox"
+                        checked={allPassiveSelected}
+                        onChange={toggleSelectAllPassiveRows}
+                        disabled={passiveRevisionIds.length === 0}
+                        data-testid="admin-content-list-select-all-checkbox"
+                      />
+                      <span>seç</span>
+                    </label>
+                  ) : null}
+                </th>
                 <th className="px-2 py-2">page_type</th>
                 <th className="px-2 py-2">country</th>
                 <th className="px-2 py-2">module</th>
@@ -729,23 +841,34 @@ export default function AdminContentList() {
             <tbody data-testid="admin-content-list-table-body">
               {contentListLoading ? (
                 <tr data-testid="admin-content-list-loading-row">
-                  <td className="px-2 py-3 text-slate-500" colSpan={9} data-testid="admin-content-list-loading-cell">İçerik listesi yükleniyor...</td>
+                  <td className="px-2 py-3 text-slate-500" colSpan={10} data-testid="admin-content-list-loading-cell">İçerik listesi yükleniyor...</td>
                 </tr>
               ) : visibleRows.length === 0 ? (
                 <tr data-testid="admin-content-list-empty-row">
-                  <td className="px-2 py-3 text-slate-500" colSpan={9} data-testid="admin-content-list-empty-cell">{contentListView === 'active' ? 'Aktif listede kayıt bulunamadı.' : 'Pasif/Arşiv listesinde kayıt bulunamadı.'}</td>
+                  <td className="px-2 py-3 text-slate-500" colSpan={10} data-testid="admin-content-list-empty-cell">{contentListView === 'active' ? 'Aktif listede kayıt bulunamadı.' : 'Pasif/Arşiv listesinde kayıt bulunamadı.'}</td>
                 </tr>
               ) : (
                 visibleRows.map((item) => {
                   const rowKey = item.revision_id || item.id;
                   const deleted = Boolean(item.is_deleted);
                   const active = !deleted && Boolean(item.is_active);
+                  const isSelected = selectedPassiveRevisionIds.includes(rowKey);
                   return (
                     <tr
                       key={rowKey}
                       className={`border-b ${deleted ? 'bg-rose-50 text-rose-700' : 'text-slate-700'}`}
                       data-testid={`admin-content-list-row-${rowKey}`}
                     >
+                      <td className="px-2 py-2" data-testid={`admin-content-list-select-cell-${rowKey}`}>
+                        {contentListView === 'passive' ? (
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => togglePassiveSelection(rowKey)}
+                            data-testid={`admin-content-list-select-checkbox-${rowKey}`}
+                          />
+                        ) : null}
+                      </td>
                       <td className="px-2 py-2 font-medium" data-testid={`admin-content-list-page-type-${rowKey}`}>
                         {PAGE_TYPE_LABEL_MAP[item.page_type] || item.page_type}
                       </td>
@@ -818,6 +941,24 @@ export default function AdminContentList() {
                                 data-testid={`admin-content-list-restore-button-${rowKey}`}
                               >
                                 {deleted ? 'Geri Yükle + Aktif Et' : 'Aktif Et'}
+                              </button>
+                              <button
+                                type="button"
+                                className="h-8 rounded border border-blue-300 px-2 text-[11px] text-blue-700"
+                                onClick={() => handleContentListCopy(item)}
+                                disabled={permanentDeleteLoading}
+                                data-testid={`admin-content-list-copy-button-passive-${rowKey}`}
+                              >
+                                Kopyala
+                              </button>
+                              <button
+                                type="button"
+                                className="h-8 rounded border border-rose-300 px-2 text-[11px] text-rose-700"
+                                onClick={() => handlePermanentDeleteSingle(item)}
+                                disabled={permanentDeleteLoading}
+                                data-testid={`admin-content-list-permanent-delete-button-${rowKey}`}
+                              >
+                                Kalıcı Sil
                               </button>
                             </>
                           )}

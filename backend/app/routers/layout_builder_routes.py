@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import SchemaError
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, desc, func, select, text
+from sqlalchemy import and_, delete, desc, func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -944,6 +944,10 @@ class LayoutRevisionActivePayload(BaseModel):
     is_active: bool
 
 
+class LayoutPermanentDeletePayload(BaseModel):
+    revision_ids: list[str] = Field(min_length=1, max_length=200)
+
+
 class StandardTemplatePackInstallPayload(BaseModel):
     countries: list[str] = Field(min_length=1, max_length=20)
     module: str = Field(min_length=2, max_length=64)
@@ -1089,6 +1093,63 @@ def _serialize_admin_layout_item(revision: LayoutRevision, page: LayoutPage) -> 
         "created_at": revision_item["created_at"],
         "payload_json": revision_item["payload_json"],
     }
+
+
+def _serialize_publish_scope_conflict_item(revision: LayoutRevision, page: LayoutPage) -> dict[str, Any]:
+    return {
+        "revision_id": str(revision.id),
+        "layout_page_id": str(page.id),
+        "page_type": page.page_type.value if page.page_type else None,
+        "country": page.country,
+        "module": page.module,
+        "category_id": str(page.category_id) if page.category_id else None,
+        "scope": _build_layout_scope(page.country, page.module, str(page.category_id) if page.category_id else None),
+        "status": revision.status.value,
+        "version": int(revision.version),
+        "published_at": revision.published_at.isoformat() if revision.published_at else None,
+    }
+
+
+async def _find_scope_active_publish_conflicts(
+    session: AsyncSession,
+    *,
+    target_page: LayoutPage,
+    exclude_layout_page_id: Optional[uuid.UUID] = None,
+) -> list[tuple[LayoutRevision, LayoutPage]]:
+    normalized_country = str(target_page.country or "").upper()
+    normalized_module = str(target_page.module or "").strip().lower()
+
+    query = (
+        select(LayoutRevision, LayoutPage)
+        .join(LayoutPage, LayoutPage.id == LayoutRevision.layout_page_id)
+        .where(
+            and_(
+                LayoutRevision.status == LayoutRevisionStatus.PUBLISHED,
+                LayoutRevision.is_active.is_(True),
+                LayoutRevision.is_deleted.is_(False),
+                LayoutPage.page_type == target_page.page_type,
+                func.upper(LayoutPage.country) == normalized_country,
+                func.lower(func.trim(LayoutPage.module)) == normalized_module,
+            )
+        )
+    )
+
+    if target_page.category_id:
+        query = query.where(LayoutPage.category_id == target_page.category_id)
+    else:
+        query = query.where(LayoutPage.category_id.is_(None))
+
+    if exclude_layout_page_id:
+        query = query.where(LayoutRevision.layout_page_id != exclude_layout_page_id)
+
+    rows_result = await session.execute(
+        query.order_by(
+            desc(LayoutRevision.published_at),
+            desc(LayoutRevision.created_at),
+            desc(LayoutRevision.version),
+        )
+    )
+    return rows_result.all()
 
 
 def _normalize_standard_persona_or_400(raw_persona: str) -> str:
@@ -2719,9 +2780,9 @@ async def list_admin_layouts(
     }
 
 
-@router.delete("/admin/layouts/{revision_id}")
+@router.delete("/admin/layouts/{revision_id:uuid}")
 async def soft_delete_admin_layout(
-    revision_id: str,
+    revision_id: uuid.UUID,
     request: Request,
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
@@ -2752,9 +2813,68 @@ async def soft_delete_admin_layout(
     return {"ok": True, "item": _serialize_layout_revision(row)}
 
 
-@router.patch("/admin/layouts/{revision_id}/active")
+@router.delete("/admin/layouts/permanent")
+async def permanent_delete_admin_layouts(
+    payload: LayoutPermanentDeletePayload,
+    current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
+    session: AsyncSession = Depends(get_db),
+):
+    del current_user
+    normalized_ids: list[uuid.UUID] = []
+    for raw_id in payload.revision_ids:
+        revision_uuid = _as_uuid_or_400(raw_id, field_name="revision_id")
+        if revision_uuid and revision_uuid not in normalized_ids:
+            normalized_ids.append(revision_uuid)
+
+    if not normalized_ids:
+        raise HTTPException(status_code=400, detail="revision_ids_required")
+
+    rows_result = await session.execute(
+        select(LayoutRevision).where(LayoutRevision.id.in_(normalized_ids))
+    )
+    rows = rows_result.scalars().all()
+    if not rows:
+        raise HTTPException(status_code=404, detail="layout_revisions_not_found")
+
+    active_blockers = [
+        str(row.id)
+        for row in rows
+        if bool(getattr(row, "is_active", False)) and not bool(getattr(row, "is_deleted", False))
+    ]
+    if active_blockers:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "active_revision_cannot_be_permanently_deleted",
+                "message": "Aktif revision kalıcı silinemez. Önce pasif yapın.",
+                "active_revision_ids": active_blockers,
+            },
+        )
+
+    existing_ids = {str(row.id) for row in rows}
+    requested_ids = [str(item) for item in normalized_ids]
+    missing_ids = [item for item in requested_ids if item not in existing_ids]
+
+    async def _op():
+        result = await session.execute(
+            delete(LayoutRevision).where(LayoutRevision.id.in_(normalized_ids))
+        )
+        await session.commit()
+        return int(result.rowcount or len(existing_ids))
+
+    deleted_count = await _run_with_db_retry(session, _op)
+    _invalidate_resolve_cache()
+    return {
+        "ok": True,
+        "deleted_count": int(deleted_count),
+        "deleted_revision_ids": sorted(existing_ids),
+        "missing_revision_ids": missing_ids,
+    }
+
+
+@router.patch("/admin/layouts/{revision_id:uuid}/active")
 async def set_admin_layout_active_state(
-    revision_id: str,
+    revision_id: uuid.UUID,
     payload: LayoutRevisionActivePayload,
     request: Request,
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
@@ -2794,9 +2914,9 @@ async def set_admin_layout_active_state(
     return {"ok": True, "item": _serialize_layout_revision(row)}
 
 
-@router.post("/admin/layouts/{revision_id}/restore")
+@router.post("/admin/layouts/{revision_id:uuid}/restore")
 async def restore_admin_layout_revision(
-    revision_id: str,
+    revision_id: uuid.UUID,
     request: Request,
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
@@ -2971,9 +3091,9 @@ async def reset_layouts_and_seed_home_wireframe(
         }
 
 
-@router.post("/admin/layouts/{revision_id}/copy")
+@router.post("/admin/layouts/{revision_id:uuid}/copy")
 async def copy_admin_layout_revision(
-    revision_id: str,
+    revision_id: uuid.UUID,
     payload: LayoutRevisionCopyPayload,
     request: Request,
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
@@ -3074,6 +3194,28 @@ async def copy_admin_layout_revision(
         target_revision.is_active = bool(getattr(source_revision, "is_active", True))
 
     if payload.publish_after_copy:
+        conflicts = await _find_scope_active_publish_conflicts(
+            session,
+            target_page=target_page,
+            exclude_layout_page_id=target_page.id,
+        )
+        if conflicts:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "publish_scope_conflict",
+                    "message": "Aynı kapsamda aktif bir yayın zaten var.",
+                    "scope": _build_layout_scope(
+                        target_page.country,
+                        target_page.module,
+                        str(target_page.category_id) if target_page.category_id else None,
+                    ),
+                    "conflicts": [
+                        _serialize_publish_scope_conflict_item(revision, page)
+                        for revision, page in conflicts
+                    ],
+                },
+            )
         await _validate_publish_guard_or_400(session, target_revision.payload_json or {})
         target_revision = await publish_revision(
             session,
@@ -3666,13 +3808,18 @@ async def patch_draft_revision_admin(
 
 
 @router.post("/admin/site/content-layout/revisions/{revision_id}/publish")
+@router.put("/admin/layouts/{revision_id:uuid}/publish")
 async def publish_revision_admin(
-    revision_id: str,
+    revision_id: uuid.UUID,
+    force: bool = Query(default=False),
     current_user=Depends(check_permissions(ADMIN_LAYOUT_ROLES)),
     session: AsyncSession = Depends(get_db),
 ):
     revision_uuid = _as_uuid_or_400(revision_id, field_name="revision_id")
     target_revision = await session.get(LayoutRevision, revision_uuid)
+    conflict_items: list[dict[str, Any]] = []
+    deactivated_conflict_ids: list[str] = []
+
     if target_revision:
         if bool(getattr(target_revision, "is_deleted", False)):
             raise HTTPException(status_code=404, detail="Revision not found")
@@ -3680,6 +3827,32 @@ async def publish_revision_admin(
         page_row = await session.get(LayoutPage, target_revision.layout_page_id)
         if page_row and _is_wizard_policy_page_type(page_row.page_type):
             _validate_listing_runtime_guard_or_400(target_revision.payload_json or {})
+        if page_row:
+            conflicts = await _find_scope_active_publish_conflicts(
+                session,
+                target_page=page_row,
+                exclude_layout_page_id=page_row.id,
+            )
+            conflict_items = [_serialize_publish_scope_conflict_item(revision, page) for revision, page in conflicts]
+            if conflict_items and not force:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "code": "publish_scope_conflict",
+                        "message": "Aynı kapsamda aktif bir yayın zaten var.",
+                        "scope": _build_layout_scope(
+                            page_row.country,
+                            page_row.module,
+                            str(page_row.category_id) if page_row.category_id else None,
+                        ),
+                        "conflicts": conflict_items,
+                    },
+                )
+
+            if conflict_items and force:
+                for conflict_revision, _ in conflicts:
+                    conflict_revision.is_active = False
+                    deactivated_conflict_ids.append(str(conflict_revision.id))
 
     try:
         async def _op():
@@ -3706,7 +3879,15 @@ async def publish_revision_admin(
 
     _METRICS["publish_count"] += 1
     _invalidate_resolve_cache()
-    return {"ok": True, "item": _serialize_layout_revision(published)}
+    return {
+        "ok": True,
+        "item": _serialize_layout_revision(published),
+        "conflict_resolution": {
+            "force": bool(force),
+            "conflict_count": len(conflict_items),
+            "deactivated_revision_ids": deactivated_conflict_ids,
+        },
+    }
 
 
 @router.get("/admin/site/content-layout/revisions/{revision_id}/policy-report")

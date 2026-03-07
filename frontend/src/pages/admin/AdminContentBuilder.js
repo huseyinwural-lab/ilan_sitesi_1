@@ -80,6 +80,28 @@ const extractBuilderApiErrorText = (err, fallback) => {
   return normalizeBuilderErrorText(detail ?? responseData ?? err?.message, fallback);
 };
 
+const extractPublishScopeConflict = (err) => {
+  const detail = err?.response?.data?.detail;
+  if (!detail || typeof detail !== 'object') return null;
+  if (detail.code !== 'publish_scope_conflict') return null;
+  return {
+    scope: detail.scope || '-',
+    conflicts: Array.isArray(detail.conflicts) ? detail.conflicts : [],
+    message: normalizeBuilderErrorText(detail.message, 'Aynı kapsamda aktif bir yayın zaten var.'),
+  };
+};
+
+const buildPublishConflictPrompt = (conflictDetail) => {
+  const conflictCount = Array.isArray(conflictDetail?.conflicts) ? conflictDetail.conflicts.length : 0;
+  return [
+    conflictDetail?.message || 'Aynı kapsamda aktif bir yayın zaten var.',
+    `Scope: ${conflictDetail?.scope || '-'}`,
+    `Çakışan aktif yayın sayısı: ${conflictCount}`,
+    '',
+    'Eski aktif yayını pasifleştirip bu tasarımı publish etmek ister misiniz?',
+  ].join('\n');
+};
+
 const DEFAULT_COMPONENT_LIBRARY = [
   {
     key: 'home.default-content',
@@ -2707,11 +2729,33 @@ export default function AdminContentBuilder() {
         }
       }
 
-      await withRetries(
-        () => axios.post(`${API}/admin/site/content-layout/revisions/${savedDraftId}/publish`, {}, { headers: authHeaders, timeout: 45000 }),
-        5,
-        1500,
-      );
+      const publishUrl = `${API}/admin/site/content-layout/revisions/${savedDraftId}/publish`;
+      try {
+        await axios.post(publishUrl, {}, { headers: authHeaders, timeout: 45000 });
+      } catch (publishError) {
+        const conflictDetail = extractPublishScopeConflict(publishError);
+        if (!conflictDetail) {
+          throw publishError;
+        }
+
+        const approved = window.confirm(buildPublishConflictPrompt(conflictDetail));
+        if (!approved) {
+          setStatus('Publish iptal edildi: kapsam çakışması kullanıcı tarafından onaylanmadı.');
+          toast.info('Publish iptal edildi.');
+          return;
+        }
+
+        await axios.post(
+          publishUrl,
+          {},
+          {
+            headers: authHeaders,
+            timeout: 45000,
+            params: { force: true },
+          },
+        );
+      }
+
       setStatus('Draft publish edildi. Yeni draft oluşturuluyor...');
       await getRevisionsForPage(pageId, pageType);
       setStatus('Publish tamamlandı. Yeni draft hazır.');

@@ -61,41 +61,41 @@
       "prod_total_urls": "1213"
     },
     "CANONICAL_DETERMINISTIC": {
-      "home_page": "PASS - https://page-builder-227.preview.emergentagent.com/",
-      "category_page": "PASS - https://page-builder-227.preview.emergentagent.com/kategori/{slug}",
-      "info_page": "PASS - https://page-builder-227.preview.emergentagent.com/bilgi/{slug}",
-      "trust_page": "PASS - https://page-builder-227.preview.emergentagent.com/trust",
+      "home_page": "PASS - https://layout-uniqueness.preview.emergentagent.com/",
+      "category_page": "PASS - https://layout-uniqueness.preview.emergentagent.com/kategori/{slug}",
+      "info_page": "PASS - https://layout-uniqueness.preview.emergentagent.com/bilgi/{slug}",
+      "trust_page": "PASS - https://layout-uniqueness.preview.emergentagent.com/trust",
       "trailing_slash_standard": "PASS - No trailing slashes except root"
     }
   },
   "verification_evidence": {
     "sitemap_index_sample": {
       "sections": [
-        "https://page-builder-227.preview.emergentagent.com/sitemaps/core.xml",
-        "https://page-builder-227.preview.emergentagent.com/sitemaps/categories.xml",
-        "https://page-builder-227.preview.emergentagent.com/sitemaps/listings.xml",
-        "https://page-builder-227.preview.emergentagent.com/sitemaps/info.xml"
+        "https://layout-uniqueness.preview.emergentagent.com/sitemaps/core.xml",
+        "https://layout-uniqueness.preview.emergentagent.com/sitemaps/categories.xml",
+        "https://layout-uniqueness.preview.emergentagent.com/sitemaps/listings.xml",
+        "https://layout-uniqueness.preview.emergentagent.com/sitemaps/info.xml"
       ]
     },
     "core_xml_sample_urls": [
-      "https://page-builder-227.preview.emergentagent.com/",
-      "https://page-builder-227.preview.emergentagent.com/search",
-      "https://page-builder-227.preview.emergentagent.com/trust",
-      "https://page-builder-227.preview.emergentagent.com/kurumsal",
-      "https://page-builder-227.preview.emergentagent.com/DE/vasita"
+      "https://layout-uniqueness.preview.emergentagent.com/",
+      "https://layout-uniqueness.preview.emergentagent.com/search",
+      "https://layout-uniqueness.preview.emergentagent.com/trust",
+      "https://layout-uniqueness.preview.emergentagent.com/kurumsal",
+      "https://layout-uniqueness.preview.emergentagent.com/DE/vasita"
     ],
     "categories_xml_sample_urls": [
-      "https://page-builder-227.preview.emergentagent.com/kategori/tarla",
-      "https://page-builder-227.preview.emergentagent.com/kategori/konut",
-      "https://page-builder-227.preview.emergentagent.com/kategori/ticari"
+      "https://layout-uniqueness.preview.emergentagent.com/kategori/tarla",
+      "https://layout-uniqueness.preview.emergentagent.com/kategori/konut",
+      "https://layout-uniqueness.preview.emergentagent.com/kategori/ticari"
     ],
     "listings_xml_sample_urls": [
-      "https://page-builder-227.preview.emergentagent.com/ilan/5d2a45b9-51c4-4c25-9bc5-51493975f203"
+      "https://layout-uniqueness.preview.emergentagent.com/ilan/5d2a45b9-51c4-4c25-9bc5-51493975f203"
     ],
     "info_xml_sample_urls": [
-      "https://page-builder-227.preview.emergentagent.com/trust",
-      "https://page-builder-227.preview.emergentagent.com/kurumsal",
-      "https://page-builder-227.preview.emergentagent.com/bilgi/gizlilik-politikasi"
+      "https://layout-uniqueness.preview.emergentagent.com/trust",
+      "https://layout-uniqueness.preview.emergentagent.com/kurumsal",
+      "https://layout-uniqueness.preview.emergentagent.com/bilgi/gizlilik-politikasi"
     ]
   }
 }

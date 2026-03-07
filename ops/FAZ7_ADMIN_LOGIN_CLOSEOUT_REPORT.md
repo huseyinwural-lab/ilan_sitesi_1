@@ -1,7 +1,7 @@
 ## FAZ-7 Admin Login Kapanış Kontrolleri — Closeout Raporu
 
 **Tarih:** 2026-02-19
-**Ortam:** https://page-builder-227.preview.emergentagent.com
+**Ortam:** https://layout-uniqueness.preview.emergentagent.com
 **Kullanıcı:** admin@platform.com / Admin123!
 
 ---

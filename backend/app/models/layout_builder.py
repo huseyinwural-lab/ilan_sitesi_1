@@ -183,6 +183,12 @@ class LayoutRevision(Base):
             unique=True,
             postgresql_where=text("status = 'published'"),
         ),
+        Index(
+            "uq_layout_revisions_single_active_live",
+            "layout_page_id",
+            unique=True,
+            postgresql_where=text("status = 'published' AND is_active = true AND is_deleted = false"),
+        ),
     )
 
 

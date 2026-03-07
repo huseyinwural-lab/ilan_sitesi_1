@@ -5,7 +5,7 @@ P0 Closure Backend Validation Test
 Testing specific API endpoints as per Turkish review request.
 
 Review Request: P0 kapanış backend doğrulaması
-Base URL: https://page-builder-227.preview.emergentagent.com
+Base URL: https://layout-uniqueness.preview.emergentagent.com
 
 Test Requirements:
 1) Scope/page type publish kontrolü (API read):
@@ -44,7 +44,7 @@ from typing import Dict, Any, List, Optional, Tuple
 
 class P0ValidationTester:
     def __init__(self):
-        self.base_url = "https://page-builder-227.preview.emergentagent.com/api"
+        self.base_url = "https://layout-uniqueness.preview.emergentagent.com/api"
         self.session = requests.Session()
         self.session.headers.update({
             'Content-Type': 'application/json',

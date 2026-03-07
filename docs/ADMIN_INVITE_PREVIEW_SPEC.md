@@ -1,7 +1,7 @@
 # ADMIN_INVITE_PREVIEW_SPEC
 
 **Tarih:** 2026-02-24 11:21:40 UTC
-**Ortam URL:** https://page-builder-227.preview.emergentagent.com
+**Ortam URL:** https://layout-uniqueness.preview.emergentagent.com
 
 ## Beklenen Davranış
 - Token yoksa: **422** (expected validation)

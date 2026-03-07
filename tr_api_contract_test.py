@@ -3,7 +3,7 @@
 Turkish Backend API Contract Tests
 
 Backend API contract testleri (sadece backend):
-Base URL: https://page-builder-227.preview.emergentagent.com
+Base URL: https://layout-uniqueness.preview.emergentagent.com
 
 Tests the following API endpoints:
 
@@ -41,7 +41,7 @@ from typing import Dict, Any, List
 
 class TurkishAPIContractTester:
     def __init__(self):
-        self.base_url = "https://page-builder-227.preview.emergentagent.com/api"
+        self.base_url = "https://layout-uniqueness.preview.emergentagent.com/api"
         self.session = requests.Session()
         self.session.headers.update({
             'Content-Type': 'application/json',

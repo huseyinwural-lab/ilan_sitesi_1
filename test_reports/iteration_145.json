@@ -80,7 +80,7 @@
         "clicked": "Konut (child of Emlak)",
         "child_id": "6712fdc6-977f-4930-af95-0c769511a5f0",
         "parent_id": "83aa088b-9f1a-4551-abc3-106ef8eadbcc",
-        "url_after_click": "?category=83aa088b-9f1a-4551-abc3-106ef8eadbcc",
+        "url_after_click": "?category=layout-uniqueness",
         "result": "URL uses PARENT ID (correct)"
       }
     }

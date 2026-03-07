@@ -3,7 +3,7 @@ import uuid
 import requests
 
 
-BASE_URL = "https://page-builder-227.preview.emergentagent.com"
+BASE_URL = "https://layout-uniqueness.preview.emergentagent.com"
 
 CREDS = {
     "super_admin": {"email": "admin@platform.com", "password": "Admin123!"},
