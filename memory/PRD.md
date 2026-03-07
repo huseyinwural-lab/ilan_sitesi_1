@@ -50,6 +50,16 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
   - 7/7 test PASS
   - Doğrulananlar: unchanged slug update 200, duplicate slug 409+field, parent_id hataları field bazlı, sort conflict detayları, frontend mesaj formatı.
 
+### Ek Stabilizasyon (aynı gün)
+- Kullanıcı geri bildirimi sonrası category save akışına transient DB hata retry mekanizması eklendi.
+- `AdminCategories.js`
+  - `isTransientCategorySaveError(...)`
+  - `requestCategoryMutationWithRetry(...)`
+  - `createCategoryWithSortFallback` ve PATCH save akışları retry helper ile çalışır hale getirildi.
+- Amaç: 503/timeout gibi geçici DB dalgalanmalarında tek denemede düşmek yerine otomatik tekrar deneme.
+- Testing agent tekrar doğrulama: `/app/test_reports/iteration_164.json`
+  - Backend %100, Frontend %100, 7/7 PASS.
+
 ## 2026-03-07 (Hotfix — Kategori Düzenleme 409 Slug Conflict)
 
 ### Problem
