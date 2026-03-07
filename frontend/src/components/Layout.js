@@ -393,7 +393,14 @@ export default function Layout({ children }) {
     };
   }, [systemHealth]);
 
-  const showPaymentsRuntimeBanner = Boolean(canViewSystemHealth && !paymentsRuntime.payments_enabled);
+  const showPaymentsRuntimeBanner = Boolean(
+    canViewSystemHealth
+    && !paymentsRuntime.payments_enabled
+    && (
+      location.pathname.startsWith('/admin/settings/system')
+      || location.pathname.startsWith('/admin/finance')
+    )
+  );
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

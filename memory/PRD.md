@@ -18,6 +18,62 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ---
 
+## 2026-03-07 (Kapanış Görev Listesi — Release Archive + Preset Ops + Deep-Link + CI)
+
+### Faz 1 — Release Artefact Yönetimi
+- `release-artifacts` arşiv akışı kuruldu:
+  - `/app/release-artifacts/2026-03-07_release/`
+  - `publish_validation_report.md`
+  - `preset_stress_test_report.md`
+  - `release_meta.json`
+- Yeni script: `/app/scripts/archive_release_artifacts.sh`
+  - `RELEASE_VERSION`, `RELEASE_DATE`, `VALIDATED_LOCALES`, `PRESET_BATCH_SIZE`, `VALIDATED_BY` env desteği
+- CI entegrasyonu: `.github/workflows/lint.yml`
+  - lint sonrası arşiv scripti çalışır
+  - `actions/upload-artifact` ile `release-artifacts/` upload edilir
+
+### Faz 2 — Preset Run History Operasyon Geliştirmesi
+- API alias + tarih filtreleri:
+  - `GET /api/admin/preset-runs`
+  - `from=YYYY-MM-DD`, `to=YYYY-MM-DD`, `status`
+  - pagination korunur
+- CSV export endpoint:
+  - `GET /api/admin/preset-runs/export`
+  - kolonlar: `run_id, operator, executed_at, countries, total_jobs, success_count, failure_count, duration, status`
+- Admin UI (`/admin/preset-runs`) güncellendi:
+  - `from` date input
+  - `to` date input
+  - `status` dropdown
+  - `Export CSV` butonu (mevcut filtreleri kullanır)
+
+### Faz 3 — Copy Conflict Operasyon Hızlandırma
+- ConfirmModal conflict satırlarına deep-link eklendi:
+  - `/admin/revisions/{revision_id}`
+  - `target="_blank"`
+- Conflict item `revision_id` zorunluluk kontrolü eklendi (frontend guard).
+- Yeni route: `/admin/revisions/:revisionId` ve redirect page:
+  - `AdminRevisionRedirect.jsx`
+  - backend’den revision context alıp content-builder’a yönlendirir
+- Yeni backend context endpoint:
+  - `GET /api/admin/layouts/{revision_id}`
+
+### Ek Stabilizasyon
+- `AdminContentBuilder` autoload param genişletmesi:
+  - `autoload_revision_id` desteği
+- `Layout` üzerindeki Stripe runtime warning banner’ı yalnız ilgili admin sayfalarında gösterilecek şekilde daraltıldı (preset-runs gibi operasyon ekranlarında gürültü azaltıldı).
+
+### Test Durumu
+- Self-test (API): PASS
+  - `/api/admin/preset-runs` filtreli list
+  - `/api/admin/preset-runs/export` CSV kolon doğrulama
+  - `/api/admin/layouts/{revision_id}` context
+  - copy conflict `409` + force `200`, conflicts[].revision_id dolu
+- Smoke test (UI): PASS
+  - `/admin/preset-runs` filtre/export kontrolleri
+  - `/admin/revisions/:revisionId` deep-link → content-builder yönlendirme
+- Testing agent raporu:
+  - `/app/test_reports/iteration_160.json` (Backend 100%, Frontend 100%)
+
 ## 2026-03-07 (Faz 1→5 Kapanış Paketi — Release Safety + Ops Visibility + UX + Academy Entegrasyonu)
 
 ### Faz 1 — Release Safety (tamamlandı)
