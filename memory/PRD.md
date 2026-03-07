@@ -18,6 +18,38 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ---
 
+## 2026-03-07 (P0 — Kategori UX Hata Mesajı İyileştirmesi)
+
+### Amaç
+- `/admin/categories` düzenleme akışında hata mesajlarını alan-bazlı ve anlaşılır hale getirmek.
+
+### Backend
+- `server.py` category hata modeli genişletildi:
+  - `_category_error(...)` artık opsiyonel `field_name` ve `conflict` taşıyor.
+- Aşağıdaki conflict/validation durumları structured detail döner:
+  - `CATEGORY_SLUG_CONFLICT` → `field_name=slug`
+  - `PARENT_ID_INVALID / PARENT_ID_NOT_FOUND` → `field_name=parent_id`
+  - `ORDER_INDEX_ALREADY_USED` → `field_name=sort_order` + conflict detayları
+  - parent uyumsuzlukları (`PARENT_MODULE_MISMATCH`, `PARENT_COUNTRY_MISMATCH`, cycle)
+- Slug normalize hatası da structured kategori hatasına çevrildi:
+  - `CATEGORY_SLUG_INVALID` + `field_name=slug`
+
+### Frontend
+- `AdminCategories.js` içinde `parseApiError` geliştirildi:
+  - Mesaj formatı: `Alan: <field_name> • <message>`
+  - `sort_order` conflict’te çakışan sıra/slug bilgisi ek gösterim
+  - `slug` conflict’te çakışan slug bilgisi ek gösterim
+- Root save akışında alan-bazlı mapping iyileştirildi:
+  - slug conflict’te `main_slug` field error set ediliyor
+  - sort conflict’te `main_sort_order` field error set ediliyor
+
+### Test Durumu
+- `testing_agent` raporu: `/app/test_reports/iteration_163.json`
+  - Backend: **100%**
+  - Frontend: **100%**
+  - 7/7 test PASS
+  - Doğrulananlar: unchanged slug update 200, duplicate slug 409+field, parent_id hataları field bazlı, sort conflict detayları, frontend mesaj formatı.
+
 ## 2026-03-07 (Hotfix — Kategori Düzenleme 409 Slug Conflict)
 
 ### Problem
