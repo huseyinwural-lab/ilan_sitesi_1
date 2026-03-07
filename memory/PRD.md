@@ -18,6 +18,50 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 
 ---
 
+## 2026-03-07 (P1 — Preset Stabilizasyonu + Copy Guard/Force + Auto-Open)
+
+### Kullanıcı Seçimleri (uygulandı)
+- Öncelik: Preset stabilizasyonu önce, sonra Copy akışı
+- Timeout/retry: **Hızlı fail + net rapor**
+- Copy conflict: **Onay + force**
+- Copy sonrası: **Hedef sayfayı Content Builder’da otomatik aç**
+
+### Backend Güncellemeleri
+- `install-standard-pack` iyileştirildi:
+  - `fail_fast` payload alanı eklendi
+  - hızlı-fail akışı (`stopped_early`) + detaylı ülke bazlı sonuç/başarısızlık raporu
+  - summary alanları: `failed_countries`, `processed_countries`
+- `verify-standard-pack` iyileştirildi:
+  - `fail_fast` query param eklendi
+  - summary alanları: `missing_rows`, `failed_countries`
+  - `country_summaries` ile ülke bazlı doğrulama görünürlüğü
+- Preset seed stabilizasyonu:
+  - `_sanitize_payload_for_sql_ascii` ile payload sanitize edilerek SQL_ASCII conversion hatası engellendi.
+- Copy publish guard genişletildi:
+  - `POST /api/admin/layouts/{revision_id}/copy` endpoint’ine `force` query param eklendi
+  - `publish_after_copy=true` ve conflict durumunda `409 publish_scope_conflict`
+  - onaylı tekrar çağrıda `force=true` ile conflict revision pasifleştirme + publish tamamlama
+
+### Frontend Güncellemeleri (`AdminContentList`)
+- Preset paneli:
+  - `Hızlı fail (ilk hatada durdur)` checkbox eklendi
+  - install/verify için detaylı rapor tabloları + eksik satır görünürlüğü
+  - timeout durumlarında net hata mesajı
+- Copy akışı:
+  - conflict geldiğinde onay prompt’u gösterme
+  - onay sonrası `force=true` ile retry
+  - başarılı kopya sonrası `Content Builder`’a otomatik yönlendirme (`autoload_page_id`)
+
+### Test Durumu
+- Self test (curl): PASS
+  - preset install fail_fast response alanları doğrulandı
+  - preset verify `missing_rows/country_summaries` doğrulandı
+  - copy conflict `409`, force `200` + deactivated ids doğrulandı
+- Smoke screenshot: PASS
+- `testing_agent` raporu: `/app/test_reports/iteration_158.json`
+  - Backend: **8/8 PASS**
+  - Frontend: Kod inceleme PASS (Playwright login submit test ortamı engeli not edildi)
+
 ## 2026-03-07 (P0 — Scope Conflict Guard + Kalıcı Silme + Publish Force Onayı)
 
 ### Kullanıcı Seçimleri
