@@ -3031,3 +3031,30 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Açık Kalanlar / Backlog
 - P2 backlog (önceki): Component API Health Indicator, Category cache, List/Search UX, Address Form UI, Visual diff, Apple social login.
 - Düşük öncelik not: Preset Runs tablosunda hydration warning gözlemi (işlevsel blokaj yok).
+
+---
+
+## 2026-03-07 (Kategori Hata Kaynağı Gösterimi + Toplu Silme Düzeltmesi)
+
+### Kullanıcı Talebi
+- Kategori ekranında hata kaynağı net görünsün (hem genel mesajda hem ilgili alanın yanında).
+- Kategori silme tek seferde tüm alt ağaçla çalışsın (cascade).
+
+### Uygulanan Düzeltmeler
+- Frontend `AdminCategories.js`:
+  - `safeParseJson` yeniden yazıldı; `Response.clone()` kaynaklı `body stream already read` runtime hatası giderildi.
+  - API hata parse yapısı genişletildi: `error_code`, `field_name`, `source_path` bilgileri tek mesajda gösteriliyor (`[CODE] ... • Kaynak: ...`).
+  - Alan bazlı hata eşleştirme eklendi (`slug`, `name`, `country_code`, `module`, `sort_order`, `image_url`, `vehicle_segment`) ve ilgili input yanında uyarı gösterimi güçlendirildi.
+  - Silme akışı güncellendi: kullanıcı onayı + `cascade=true` çağrısı + silinen kayıt sayısı toast + liste yenileme.
+
+- Backend `DELETE /api/admin/categories/{category_id}`:
+  - `cascade` parametresi (default `true`) ile tüm alt kategori ağacı tek işlemde soft-delete.
+  - Response genişletildi: `deleted_count`, `deleted_descendant_count`, `deleted_ids`, `cascade`.
+  - Hatalar structured hale getirildi: örn. `CATEGORY_ID_INVALID` + `field_name=category_id`.
+
+### Test Durumu
+- Backend testler:
+  - `test_iteration_168_category_delete_cascade.py` ✅
+  - `test_category_edit_save_slug_conflict.py` ✅
+- Ek backend doğrulama (`deep_testing_backend_v2`) ✅ PASS
+- Frontend doğrulama (`auto_frontend_testing_agent`) ✅ Runtime clone/body-read hatası yok; slug/delete akış kodu doğrulandı.
