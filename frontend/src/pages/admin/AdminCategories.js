@@ -4009,15 +4009,27 @@ const AdminCategories = () => {
                   <div className="rounded-lg border p-4 space-y-4">
                     <div className="flex items-center justify-between">
                       <h3 className="text-md font-semibold">Modül (Root Node)</h3>
-                      {isHierarchyLocked && (
-                        <button
-                          type="button"
-                          className="text-xs border rounded px-2 py-1"
-                          onClick={handleHierarchyEdit}
-                          data-testid="categories-hierarchy-edit"
-                        >
-                          Düzenle
-                        </button>
+                      {isHierarchyLocked ? (
+                        canEditUnlock ? (
+                          <button
+                            type="button"
+                            className="text-xs border rounded px-2 py-1"
+                            onClick={handleHierarchyEdit}
+                            data-testid="categories-hierarchy-edit"
+                          >
+                            Düzenle
+                          </button>
+                        ) : (
+                          <span className="text-xs text-amber-700" data-testid="categories-hierarchy-edit-no-permission">
+                            Hiyerarşi kilitli (düzenleme yetkisi gerekli)
+                          </span>
+                        )
+                      ) : (
+                        editing && (
+                          <span className="text-xs text-emerald-700" data-testid="categories-hierarchy-edit-mode-open">
+                            Düzenleme modu açık
+                          </span>
+                        )
                       )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -4449,14 +4461,24 @@ const AdminCategories = () => {
                     </div>
                   </div>
 
-                  {editing && (
-                    <div className="rounded-lg border border-dashed p-4 text-sm text-slate-700" data-testid="categories-hierarchy-locked">
-                      Mevcut kategori üzerinde kategori düzenleme devre dışı. Devam ederek form şemasını güncelleyebilirsiniz.
+                  {editing && isHierarchyLocked && (
+                    <div className="rounded-lg border border-dashed border-amber-300 bg-amber-50 p-4 text-sm text-amber-800" data-testid="categories-hierarchy-locked">
+                      Bu kategori için hiyerarşi alanı şu an kilitli. "Düzenle" ile açıp eksik/hatalı alanları güncelleyebilirsiniz.
+                    </div>
+                  )}
+
+                  {editing && !isHierarchyLocked && (
+                    <div className="rounded-lg border border-dashed border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-800" data-testid="categories-hierarchy-editable">
+                      Düzenleme modu açık. Eksik/hatalı alanları düzenleyip "Tamam" ile kaydedebilirsiniz.
                     </div>
                   )}
 
                   <div className="text-xs text-slate-700" data-testid="categories-hierarchy-warning">
-                    Kategori tamamlanmadan çekirdek alanlara geçilemez.
+                    {editing
+                      ? (isHierarchyLocked
+                        ? "Hiyerarşi kilitliyken çekirdek alan adımlarına geçebilirsiniz; hiyerarşi değişikliği için önce Düzenle ile kilidi açın."
+                        : "Hiyerarşi düzenleme açık. Kaydetmeden önce gerekli adımları tamamlayın.")
+                      : "Kategori tamamlanmadan çekirdek alanlara geçilemez."}
                   </div>
                 </div>
               )}
