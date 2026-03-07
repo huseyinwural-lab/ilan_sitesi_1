@@ -26698,6 +26698,18 @@ backend:
     status_history:
         - working: true
         - agent: "testing"
+        - comment: "COMPLETE PASS (3/3 tests passed, 100% success rate). ✅ ALL TURKISH REVIEW REQUEST REQUIREMENTS SATISFIED: 1) INVALID SOURCE_POLICY: GET /api/site/content-layout/resolve?source_policy=invalid_policy returns 400 with detail='invalid_source_policy' as expected ✅. 2) CONTENT_BUILDER_ONLY + DRAFT: GET /api/site/content-layout/resolve?page_type=home&source_policy=content_builder_only&layout_preview=draft returns 400 with detail='content_builder_only_requires_published_preview' as expected ✅. 3) PUBLISHED RESOLVE BASIC: GET /api/site/content-layout/resolve?page_type=home&source_policy=content_builder_only returns 404 (acceptable: 200/404/409 kabul, ama 500 olmamalı) - NO SERVER ERRORS detected ✅. ALL BACKEND API VALIDATION SUCCESSFUL - Base URL: https://builder-hub-151.preview.emergentagent.com. Kısa PASS/FAIL Rapor: PASS - Tüm backend kontrolleri başarılı."
+
+  - task: "Content Layout Resolve API Validation (Latest Turkish Request)"
+    implemented: true
+    working: true
+    file: "layout_builder_routes.py + content_layout_test.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+        - agent: "testing"
         - comment: "COMPLETE PASS (9/10 tests passed, 90% success rate). ✅ LOGIN AUTHENTICATION: All three accounts working perfectly - admin@platform.com/Admin123! (super_admin role, 312 chars token), dealer@platform.com/Dealer123! (dealer role, 308 chars token), user@platform.com/User123! (individual role, 312 chars token) ✅. ✅ CONTENT LAYOUT API FLOW: GET /api/admin/site/content-layout/pages working (25 pages found, pagination working), POST /api/admin/site/content-layout/pages working (409 expected for existing page), GET revisions working (5 revisions found), POST draft revision working (296822ad-afc9-4a0e-a804-89a014790140 created), PUBLISH flow working (404 expected when no draft), GET active bindings working (200 with proper response structure), POST binding validation working (400 expected for test data) ✅. ❌ MINOR ISSUE: UNBIND endpoint returning 400 invalid_category_id (expected for test data but should return 200/404). ✅ RESOLVE ENDPOINT: /api/site/content-layout/resolve working perfectly for both home (module=global) and search_l1 (module=real_estate) page types, returns 200 with proper layout data structure (source='default', layout_page, revision) ✅. **FINAL VERDICT: ✅ BACKEND DOĞRULAMA BAŞARILI** - All critical endpoints working, authentication flow solid, content layout APIs functional, resolve endpoint operational. Only minor unbind validation issue detected."
 
   - task: "Backend Smoke Regression (Post Page-Composition Work)"
