@@ -270,13 +270,16 @@ const parseApiError = (payload, fallbackMessage) => {
   const detail = payload?.detail;
   if (Array.isArray(detail) && detail.length > 0) {
     const firstError = detail[0] || {};
-    const location = Array.isArray(firstError.loc) ? firstError.loc.join(".") : "";
+    const locationParts = Array.isArray(firstError.loc) ? firstError.loc.map((item) => String(item || "")).filter(Boolean) : [];
+    const location = locationParts.join(".");
+    const fieldName = locationParts.length > 0 ? locationParts[locationParts.length - 1] : "";
     const baseMessage = firstError.msg || firstError.message || fallbackMessage;
     return {
       errorCode: payload?.error_code || "",
       message: location ? `${location}: ${baseMessage}` : baseMessage,
-      fieldName: "",
+      fieldName,
       conflict: null,
+      sourcePath: location,
     };
   }
   if (typeof detail === "string") {
@@ -285,10 +288,13 @@ const parseApiError = (payload, fallbackMessage) => {
       message: detail || fallbackMessage,
       fieldName: "",
       conflict: null,
+      sourcePath: "",
     };
   }
   if (detail && typeof detail === "object") {
-    const fieldName = detail.field_name || detail.field || "";
+    const sourcePathRaw = detail.source_path || detail.source || detail.path || (Array.isArray(detail.loc) ? detail.loc.join(".") : "");
+    const sourcePath = String(sourcePathRaw || "").trim();
+    const fieldName = detail.field_name || detail.field || (sourcePath ? sourcePath.split(".").pop() : "");
     const rawMessage = detail.message || payload?.message || fallbackMessage;
     const conflict = detail.conflict || null;
     let humanMessage = fieldName ? `Alan: ${fieldName} • ${rawMessage}` : rawMessage;
@@ -312,6 +318,7 @@ const parseApiError = (payload, fallbackMessage) => {
       message: humanMessage,
       fieldName,
       conflict,
+      sourcePath,
     };
   }
   return {
@@ -319,6 +326,7 @@ const parseApiError = (payload, fallbackMessage) => {
     message: payload?.message || fallbackMessage,
     fieldName: "",
     conflict: null,
+    sourcePath: "",
   };
 };
 
@@ -335,17 +343,34 @@ const isTransientCategorySaveError = (httpStatus, parsed) => {
 };
 
 const safeParseJson = async (response) => {
-  const clone = response.clone();
   try {
-    return await response.json();
-  } catch (error) {
+    const text = await response.text();
+    if (!text) return {};
     try {
-      const text = await clone.text();
-      return text ? { message: text, detail: text } : {};
-    } catch (readError) {
-      return {};
+      return JSON.parse(text);
+    } catch (error) {
+      return { message: text, detail: text };
     }
+  } catch (error) {
+    return {};
   }
+};
+
+const CATEGORY_FIELD_ERROR_KEY_MAP = {
+  name: "main_name",
+  slug: "main_slug",
+  country_code: "main_country",
+  module: "main_module",
+  sort_order: "main_sort_order",
+};
+
+const buildCategoryErrorMessage = (parsed, fallbackMessage = "İşlem başarısız.") => {
+  const baseMessage = String(parsed?.message || fallbackMessage || "İşlem başarısız.").trim();
+  const code = String(parsed?.errorCode || "").trim();
+  const sourcePath = String(parsed?.sourcePath || "").trim();
+  const withCode = code ? `[${code}] ${baseMessage}` : baseMessage;
+  if (!sourcePath) return withCode;
+  return `${withCode} • Kaynak: ${sourcePath}`;
 };
 
 const TriStateCheckbox = ({ checked, indeterminate, onChange, disabled, testId }) => {
@@ -488,6 +513,26 @@ const AdminCategories = () => {
   const authHeader = useMemo(() => ({
     Authorization: `Bearer ${localStorage.getItem('access_token')}`,
   }), []);
+
+  const applyParsedCategoryError = useCallback((parsed, { setGeneral = true } = {}) => {
+    const finalMessage = buildCategoryErrorMessage(parsed, "İşlem başarısız.");
+    const normalizedField = String(parsed?.fieldName || "").trim();
+    const mappedKey = CATEGORY_FIELD_ERROR_KEY_MAP[normalizedField];
+
+    if (mappedKey) {
+      setHierarchyFieldErrors((prev) => ({ ...prev, [mappedKey]: finalMessage }));
+    }
+    if (normalizedField === "vehicle_segment") {
+      setVehicleSegmentError(finalMessage);
+    }
+    if (normalizedField === "image_url") {
+      setCategoryImageError(finalMessage);
+    }
+    if (setGeneral) {
+      setHierarchyError(finalMessage);
+    }
+    return finalMessage;
+  }, []);
 
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const hierarchyPreviewRows = useMemo(() => {
@@ -875,7 +920,18 @@ const AdminCategories = () => {
       const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories?${params.toString()}`, {
         headers: authHeader,
       });
-      const data = await res.json();
+      const data = await safeParseJson(res);
+      if (!res.ok) {
+        const parsed = parseApiError(data, "Kategori listesi alınamadı.");
+        const message = buildCategoryErrorMessage(parsed, "Kategori listesi alınamadı.");
+        toast({
+          title: "Kategori listesi alınamadı",
+          description: message,
+          variant: "destructive",
+        });
+        setItems([]);
+        return;
+      }
       setItems(data.items || []);
       setSelectedIds([]);
     } finally {
@@ -2415,17 +2471,18 @@ const AdminCategories = () => {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const parsed = parseApiError(data, "Kaydetme sırasında hata oluştu.");
+      const detailedMessage = buildCategoryErrorMessage(parsed, "Kaydetme sırasında hata oluştu.");
       if (res.status === 409) {
         if (String(parsed.message || "").toLowerCase().includes("hiyerar")) {
           showDraftToast({
             title: "Kaydetme başarısız",
-            description: "Kategori tamamlanmadan kaydedilemez.",
+            description: detailedMessage,
             variant: "destructive",
           });
         } else {
           showDraftToast({
             title: "Kaydetme başarısız",
-            description: "Başka bir sekmede güncellendi.",
+            description: detailedMessage,
             variant: "destructive",
           });
         }
@@ -2433,19 +2490,13 @@ const AdminCategories = () => {
       } else if (status === "draft") {
         showDraftToast({
           title: "Kaydetme başarısız",
-          description: "Taslak kaydedilemedi.",
+          description: detailedMessage,
           variant: "destructive",
         });
         dismissDraftToast(4000);
       }
-      if (parsed.errorCode === "ORDER_INDEX_ALREADY_USED") {
-        setHierarchyFieldErrors((prev) => ({ ...prev, main_sort_order: parsed.message }));
-      }
-      if (parsed.errorCode === "VEHICLE_SEGMENT_NOT_FOUND" || parsed.errorCode === "VEHICLE_SEGMENT_ALREADY_DEFINED") {
-        setVehicleSegmentError(parsed.message);
-      }
+      applyParsedCategoryError(parsed, { setGeneral: !autosave });
       if (!autosave) {
-        setHierarchyError(parsed.message);
         restoreSnapshot();
       }
       setAutosaveStatus("idle");
@@ -2562,12 +2613,40 @@ const AdminCategories = () => {
   };
 
   const handleDelete = async (item) => {
-    await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${item.id}`, {
+    if (!item?.id) return;
+    const confirmed = window.confirm(`"${item.name || item.slug || 'Kategori'}" ve tüm alt kategorileri tek seferde silmek istiyor musunuz?`);
+    if (!confirmed) return;
+
+    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/categories/${item.id}?cascade=true`, {
       method: "DELETE",
       headers: {
         ...authHeader,
       },
     });
+    const data = await safeParseJson(response);
+    if (!response.ok) {
+      const parsed = parseApiError(data, "Kategori silinemedi.");
+      const message = applyParsedCategoryError(parsed, { setGeneral: true });
+      toast({
+        title: "Silme başarısız",
+        description: message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const deletedCount = Number(data?.deleted_count || 1);
+    const deletedDescendantCount = Number(data?.deleted_descendant_count || Math.max(0, deletedCount - 1));
+    toast({
+      title: "Kategori silindi",
+      description: `${deletedCount} kayıt silindi (alt kategori: ${deletedDescendantCount}).`,
+    });
+
+    const deletedIds = Array.isArray(data?.deleted_ids) ? data.deleted_ids.map((idValue) => String(idValue)) : [];
+    if (editing?.id && deletedIds.includes(String(editing.id))) {
+      setModalOpen(false);
+      setEditing(null);
+    }
     fetchItems();
   };
 
@@ -3046,16 +3125,7 @@ const AdminCategories = () => {
         });
         if (!mutation.ok) {
           const parsed = mutation.parsed;
-          if (parsed.fieldName === "slug") {
-            setHierarchyFieldErrors((prev) => ({ ...prev, main_slug: parsed.message }));
-          }
-          if (parsed.errorCode === "ORDER_INDEX_ALREADY_USED") {
-            setHierarchyFieldErrors((prev) => ({ ...prev, main_sort_order: parsed.message }));
-          }
-          if (parsed.errorCode === "VEHICLE_SEGMENT_NOT_FOUND" || parsed.errorCode === "VEHICLE_SEGMENT_ALREADY_DEFINED") {
-            setVehicleSegmentError(parsed.message);
-          }
-          setHierarchyError(parsed.message);
+          applyParsedCategoryError(parsed, { setGeneral: true });
           return { success: false };
         }
         const data = mutation.data;
@@ -3076,16 +3146,7 @@ const AdminCategories = () => {
         const createdParent = await createCategoryWithSortFallback(parentPayload, "Modül oluşturulamadı.");
         if (!createdParent.ok) {
           const parsed = createdParent.parsed;
-          if (parsed.fieldName === "slug") {
-            setHierarchyFieldErrors((prev) => ({ ...prev, main_slug: parsed.message }));
-          }
-          if (parsed.errorCode === "ORDER_INDEX_ALREADY_USED") {
-            setHierarchyFieldErrors((prev) => ({ ...prev, main_sort_order: parsed.message }));
-          }
-          if (parsed.errorCode === "VEHICLE_SEGMENT_NOT_FOUND" || parsed.errorCode === "VEHICLE_SEGMENT_ALREADY_DEFINED") {
-            setVehicleSegmentError(parsed.message);
-          }
-          setHierarchyError(parsed.message);
+          applyParsedCategoryError(parsed, { setGeneral: true });
           return { success: false };
         }
         if (createdParent.autoAdjusted && createdParent.payload?.sort_order) {
@@ -3117,7 +3178,7 @@ const AdminCategories = () => {
         });
         if (!patchMutation.ok) {
           const parsed = patchMutation.parsed;
-          setHierarchyError(parsed.message);
+          applyParsedCategoryError(parsed, { setGeneral: true });
           return { success: false };
         }
         const patchData = patchMutation.data;

@@ -31294,21 +31294,71 @@ async def admin_export_category_csv(
 async def admin_delete_category(
     category_id: str,
     request: Request,
+    cascade: bool = Query(default=True),
     current_user=Depends(check_permissions(["super_admin", "country_admin", "moderator"])),
     session: AsyncSession = Depends(get_sql_session),
 ):
+    del request
     try:
         category_uuid = uuid.UUID(category_id)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Invalid category id") from exc
+        raise _category_error(
+            "CATEGORY_ID_INVALID",
+            "Kategori kimliği geçersiz.",
+            status_code=400,
+            field_name="category_id",
+            conflict={"category_id": category_id},
+        ) from exc
 
     category = await session.get(Category, category_uuid)
     if not category:
-        raise HTTPException(status_code=404, detail="Category not found")
+        raise _category_error(
+            "CATEGORY_NOT_FOUND",
+            "Kategori bulunamadı.",
+            status_code=404,
+            field_name="category_id",
+            conflict={"category_id": category_id},
+        )
 
-    category.is_enabled = False
-    category.is_deleted = True
-    category.updated_at = datetime.now(timezone.utc)
+    if category.country_code:
+        _assert_country_scope(category.country_code, current_user)
+
+    if category.is_deleted:
+        raise _category_error(
+            "CATEGORY_ALREADY_DELETED",
+            "Kategori zaten silinmiş durumda.",
+            status_code=409,
+            field_name="category_id",
+            conflict={"category_id": str(category.id)},
+        )
+
+    now = datetime.now(timezone.utc)
+    to_delete: list[Category] = [category]
+
+    if cascade:
+        frontier = [category.id]
+        while frontier:
+            children_rows = (
+                await session.execute(
+                    select(Category).where(
+                        Category.parent_id.in_(frontier),
+                        Category.is_deleted.is_(False),
+                    )
+                )
+            ).scalars().all()
+            if not children_rows:
+                break
+            to_delete.extend(children_rows)
+            frontier = [row.id for row in children_rows]
+
+    deleted_ids: list[str] = []
+    for row in to_delete:
+        row.is_enabled = False
+        row.is_deleted = True
+        row.deleted_at = now
+        row.updated_at = now
+        deleted_ids.append(str(row.id))
+
     await session.commit()
 
     result = await session.execute(
@@ -31317,7 +31367,13 @@ async def admin_delete_category(
         .where(Category.id == category_uuid)
     )
     deleted = result.scalar_one()
-    return {"category": _serialize_category_sql(deleted, include_schema=True, include_translations=False)}
+    return {
+        "category": _serialize_category_sql(deleted, include_schema=True, include_translations=False),
+        "cascade": bool(cascade),
+        "deleted_count": len(deleted_ids),
+        "deleted_descendant_count": max(0, len(deleted_ids) - 1),
+        "deleted_ids": deleted_ids,
+    }
 
 
 def _read_import_file(file: UploadFile) -> bytes:
