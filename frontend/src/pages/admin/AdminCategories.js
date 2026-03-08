@@ -4,7 +4,6 @@ import { useCountry } from "../../contexts/CountryContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "@/components/ui/toaster";
 import { CategoryIconSvg } from "@/components/categories/CategoryIconSvg";
-import { APPROVED_CATEGORY_ICON_LIBRARY } from "@/constants/categoryIconLibrary";
 
 const createDefaultSchema = () => ({
   core_fields: {
@@ -502,9 +501,6 @@ const AdminCategories = () => {
   const [categoryImageError, setCategoryImageError] = useState("");
   const [categoryImageCacheBuster, setCategoryImageCacheBuster] = useState(Date.now());
   const [categoryIconSvgError, setCategoryIconSvgError] = useState("");
-  const [iconPickerTab, setIconPickerTab] = useState("library");
-  const [iconLibraryQuery, setIconLibraryQuery] = useState("");
-  const [iconLibraryTag, setIconLibraryTag] = useState("all");
   const [schema, setSchema] = useState(createDefaultSchema());
   const [wizardStep, setWizardStep] = useState("hierarchy");
   const [wizardProgress, setWizardProgress] = useState({ state: "draft", dirty_steps: [] });
@@ -887,30 +883,6 @@ const AdminCategories = () => {
   const isHierarchyLocked = isStepCompleted("hierarchy");
   const isRootCategory = !form.parent_id;
   const categoryIconSvgLength = useMemo(() => String(form.icon_svg || "").trim().length, [form.icon_svg]);
-  const iconLibraryTags = useMemo(
-    () => [
-      "all",
-      ...Array.from(
-        new Set(
-          APPROVED_CATEGORY_ICON_LIBRARY.flatMap((item) => item.tags || [])
-            .map((tag) => String(tag || "").trim().toLowerCase())
-            .filter(Boolean)
-        )
-      ).sort((a, b) => a.localeCompare(b, "tr")),
-    ],
-    []
-  );
-  const filteredApprovedIcons = useMemo(() => {
-    const query = String(iconLibraryQuery || "").trim().toLowerCase();
-    return APPROVED_CATEGORY_ICON_LIBRARY.filter((item) => {
-      const tags = Array.isArray(item.tags) ? item.tags : [];
-      const tagMatch = iconLibraryTag === "all" || tags.includes(iconLibraryTag);
-      if (!tagMatch) return false;
-      if (!query) return true;
-      const text = `${item.label} ${item.key} ${tags.join(" ")}`.toLowerCase();
-      return text.includes(query);
-    });
-  }, [iconLibraryQuery, iconLibraryTag]);
   const categoryImagePreviewUrl = useMemo(
     () => resolveCategoryImagePreviewUrl(form.image_url, categoryImageCacheBuster),
     [form.image_url, categoryImageCacheBuster],
@@ -2385,9 +2357,6 @@ const AdminCategories = () => {
     setCategoryImageUploading(false);
     setCategoryImageError("");
     setCategoryIconSvgError("");
-    setIconPickerTab("library");
-    setIconLibraryQuery("");
-    setIconLibraryTag("all");
     setCategoryImageCacheBuster(Date.now());
     setLastSavedAt("");
     setAutosaveStatus("idle");
@@ -2474,9 +2443,6 @@ const AdminCategories = () => {
     setCategoryImageUploading(false);
     setCategoryImageError("");
     setCategoryIconSvgError("");
-    setIconPickerTab("library");
-    setIconLibraryQuery("");
-    setIconLibraryTag("all");
     setCategoryImageCacheBuster(Date.now());
     setLastSavedAt("");
     setAutosaveStatus("idle");
@@ -4919,116 +4885,23 @@ const AdminCategories = () => {
                         <label className={labelClassName}>Kategori ikonu (SVG)</label>
                         {isRootCategory ? (
                           <div className="rounded-md border border-dashed border-slate-300 p-3 space-y-3" data-testid="categories-icon-svg-editor">
-                            <div className="flex items-center gap-2" data-testid="categories-icon-svg-tabs">
-                              <button
-                                type="button"
-                                className={`h-8 rounded-md border px-3 text-xs font-semibold ${iconPickerTab === 'library' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300'}`}
-                                onClick={() => setIconPickerTab('library')}
-                                disabled={isHierarchyLocked}
-                                data-testid="categories-icon-tab-library"
-                              >
-                                Kütüphane
-                              </button>
-                              <button
-                                type="button"
-                                className={`h-8 rounded-md border px-3 text-xs font-semibold ${iconPickerTab === 'custom' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300'}`}
-                                onClick={() => setIconPickerTab('custom')}
-                                disabled={isHierarchyLocked}
-                                data-testid="categories-icon-tab-custom"
-                              >
-                                Custom SVG
-                              </button>
-                            </div>
-
-                            {iconPickerTab === 'library' ? (
-                              <div className="space-y-3" data-testid="categories-icon-library-panel">
-                                <input
-                                  type="text"
-                                  className="h-9 w-full rounded-md border border-slate-300 px-3 text-xs"
-                                  placeholder="İkon ara (ev, araba, iş, teknoloji...)"
-                                  value={iconLibraryQuery}
-                                  onChange={(event) => setIconLibraryQuery(event.target.value)}
-                                  disabled={isHierarchyLocked}
-                                  data-testid="categories-icon-library-search"
-                                />
-                                <div className="flex flex-wrap gap-2" data-testid="categories-icon-library-tag-list">
-                                  {iconLibraryTags.map((tag) => (
-                                    <button
-                                      key={tag}
-                                      type="button"
-                                      className={`h-7 rounded-full border px-3 text-[11px] font-semibold ${iconLibraryTag === tag ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300'}`}
-                                      onClick={() => setIconLibraryTag(tag)}
-                                      disabled={isHierarchyLocked}
-                                      data-testid={`categories-icon-library-tag-${tag}`}
-                                    >
-                                      {tag === 'all' ? 'Tümü' : tag}
-                                    </button>
-                                  ))}
-                                </div>
-                                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="categories-icon-library-grid">
-                                  {filteredApprovedIcons.length === 0 ? (
-                                    <div className="rounded-md border border-dashed bg-white px-3 py-3 text-xs text-slate-500" data-testid="categories-icon-library-empty">
-                                      Filtreye uygun ikon bulunamadı.
-                                    </div>
-                                  ) : (
-                                    filteredApprovedIcons.map((iconItem) => {
-                                      const selected = String(form.icon_svg || '').trim() === String(iconItem.svg || '').trim();
-                                      return (
-                                        <button
-                                          key={iconItem.key}
-                                          type="button"
-                                          className={`flex items-center gap-2 rounded-md border px-2 py-2 text-left ${selected ? 'border-sky-500 bg-sky-50' : 'border-slate-200 bg-white'}`}
-                                          onClick={() => {
-                                            if (isHierarchyLocked) return;
-                                            setForm((prev) => ({ ...prev, icon_svg: iconItem.svg }));
-                                            setCategoryIconSvgError('');
-                                            setHierarchyFieldErrors((prev) => {
-                                              const next = { ...prev };
-                                              delete next.main_icon_svg;
-                                              return next;
-                                            });
-                                          }}
-                                          disabled={isHierarchyLocked}
-                                          data-testid={`categories-icon-library-item-${iconItem.key}`}
-                                        >
-                                          <CategoryIconSvg
-                                            iconSvg={iconItem.svg}
-                                            wrapperClassName="h-8 w-8 rounded-md border bg-white p-1"
-                                            fallbackClassName="h-8 w-8 rounded-md border bg-slate-100 text-slate-500"
-                                            fallbackText="SVG"
-                                            testId={`categories-icon-library-item-preview-${iconItem.key}`}
-                                          />
-                                          <span className="min-w-0">
-                                            <span className="block truncate text-xs font-semibold text-slate-900" data-testid={`categories-icon-library-item-label-${iconItem.key}`}>{iconItem.label}</span>
-                                            <span className="block truncate text-[11px] text-slate-500" data-testid={`categories-icon-library-item-tags-${iconItem.key}`}>{(iconItem.tags || []).join(', ')}</span>
-                                          </span>
-                                        </button>
-                                      );
-                                    })
-                                  )}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="space-y-3" data-testid="categories-icon-custom-panel">
-                                <textarea
-                                  className="min-h-[120px] w-full rounded-md border p-2 text-xs text-slate-900"
-                                  value={form.icon_svg || ''}
-                                  disabled={isHierarchyLocked}
-                                  placeholder="<svg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>...</svg>"
-                                  onChange={(event) => {
-                                    const nextValue = event.target.value;
-                                    setForm((prev) => ({ ...prev, icon_svg: nextValue }));
-                                    setCategoryIconSvgError('');
-                                    setHierarchyFieldErrors((prev) => {
-                                      const next = { ...prev };
-                                      delete next.main_icon_svg;
-                                      return next;
-                                    });
-                                  }}
-                                  data-testid="categories-icon-svg-input"
-                                />
-                              </div>
-                            )}
+                            <textarea
+                              className="min-h-[120px] w-full rounded-md border p-2 text-xs text-slate-900"
+                              value={form.icon_svg || ''}
+                              disabled={isHierarchyLocked}
+                              placeholder="<svg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>...</svg>"
+                              onChange={(event) => {
+                                const nextValue = event.target.value;
+                                setForm((prev) => ({ ...prev, icon_svg: nextValue }));
+                                setCategoryIconSvgError('');
+                                setHierarchyFieldErrors((prev) => {
+                                  const next = { ...prev };
+                                  delete next.main_icon_svg;
+                                  return next;
+                                });
+                              }}
+                              data-testid="categories-icon-svg-input"
+                            />
 
                             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600" data-testid="categories-icon-svg-meta">
                               <span data-testid="categories-icon-svg-hint">Sanitize aktif: script/event handler/javascript/foreignObject engellenir.</span>
@@ -5052,15 +4925,6 @@ const AdminCategories = () => {
                                 data-testid="categories-icon-svg-clear"
                               >
                                 İkonu Temizle
-                              </button>
-                              <button
-                                type="button"
-                                className="h-8 rounded-md border border-slate-300 px-3 text-xs font-semibold text-slate-700 disabled:opacity-60"
-                                disabled={isHierarchyLocked}
-                                onClick={() => setIconPickerTab('custom')}
-                                data-testid="categories-icon-svg-open-custom"
-                              >
-                                Custom'a Geç
                               </button>
                             </div>
 
