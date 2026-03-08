@@ -3291,3 +3291,44 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Açık Kalanlar
 - **MOCKED:** `academy.modules`
 - Apple Social Login (kullanıcı kredensiyali bekliyor)
+
+## 2026-03-08 — Kategori Icon SVG (Sanitized) Özelliği
+
+### Kullanıcı Kararları
+- 1B: Admin’de SVG giriş alanı + canlı önizleme
+- 2B: Admin listesi + public kategori kartlarında görünürlük
+- 3B: Maksimum 20KB limit
+
+### Uygulananlar
+- **Backend sanitize + limit**
+  - `CATEGORY_ICON_SVG_MAX_LENGTH` → `20000`
+  - `icon_svg` güvenlik kontrolleri (script, on* handler, javascript:, foreignObject) aktif
+  - create/update category akışında sanitize edilmiş `icon_svg` saklama devam ediyor
+- **Admin Categories UI** (`/admin/categories`)
+  - Root kategori için `icon_svg` textarea eklendi
+  - Canlı önizleme eklendi
+  - Karakter sayacı (`x/20000`) eklendi
+  - “İkonu Temizle” butonu eklendi
+  - Form doğrulama: geçersiz SVG / unsafe SVG / limit aşımı client-side hata üretir
+  - Kategori listesi satırında görsel yoksa `icon_svg` önizleme fallback’i eklendi
+- **Public kategori kartları**
+  - Runtime category navigator (main side + category side) bloklarında icon gösterimi eklendi
+  - Runtime sub-category block’ta icon gösterimi eklendi
+  - Listing category selection sütun item’larında icon gösterimi eklendi
+- **Paylaşımlı bileşen**
+  - `frontend/src/components/categories/CategoryIconSvg.jsx` oluşturuldu
+
+### Test Durumu
+- Manual smoke: PASS
+  - Public runtime category icon selector bulundu
+  - Admin modal icon_svg input bulundu
+- Curl/API: PASS
+  - Safe SVG ile create başarılı
+  - Unsafe SVG (script vb.) 400 ile bloklandı
+- Testing agent: PASS
+  - Rapor: `/app/test_reports/iteration_172.json`
+  - Pytest çıktıları: `/app/test_reports/pytest/pytest_results_172_icon_svg.xml`
+
+### Açık Kalanlar
+- **MOCKED:** `academy.modules`
+- Apple Social Login (kullanıcı kredensiyali bekliyor)
