@@ -3388,3 +3388,37 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Açık Kalanlar
 - **MOCKED:** `academy.modules`
 - Apple Social Login (kullanıcı kredensiyali bekliyor)
+
+## 2026-03-08 — academy.modules Canlı Backend Entegrasyonu
+
+### Kullanıcı Onaylı Varsayımlar
+- Kaynak tablo: `academy_modules`
+- Şema: `module_key`, `title`, `description`, `sort_order`, `is_active`
+- Erişim: herkese açık okunur (public)
+
+### Uygulananlar
+- Backend `/api/academy/modules` endpointi public hale getirildi (auth zorunluluğu kaldırıldı)
+- Veri kaynağı canlı SQL tabloya bağlandı: `academy_modules`
+  - raw query ile alanlar okunuyor: `id,module_key,title,description,sort_order,is_active,updated_at`
+  - cache katmanı korundu (`ttl=300s`, `force_refresh` destekli)
+- `source` alanı artık canlı kaynağı raporluyor: `academy_modules_db`
+- Frontend `DealerAcademy` adaptörü yeni şemaya güncellendi
+  - `module_key/title/description/sort_order/is_active` mapping
+  - cache key yeni versiyona taşındı (`dealer_academy_modules_cache_v3`)
+
+### Test Durumu
+- Backend testleri PASS (iteration 175)
+  - Rapor: `/app/test_reports/iteration_175.json`
+  - Pytest: `/app/test_reports/pytest/pytest_results_175_academy_modules.xml`
+- Doğrulananlar:
+  - endpoint auth olmadan `200`
+  - `source=academy_modules_db`
+  - payload şeması doğru
+  - `403/500` regresyonu yok
+
+### Not
+- Test ortamında `academy_modules` tablosu boş olduğundan `items: []` dönmesi beklenen davranıştır.
+- Düşük öncelikli ortam notu: external preview URL erişiminde zaman zaman timeout dalgalanması görülebilir.
+
+### Açık Kalanlar
+- Apple Social Login (kullanıcı kredensiyali bekliyor)
