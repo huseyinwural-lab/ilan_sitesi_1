@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { useCountry } from "../../contexts/CountryContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "@/components/ui/toaster";
+import { CategoryIconSvg } from "@/components/categories/CategoryIconSvg";
 
 const createDefaultSchema = () => ({
   core_fields: {
@@ -116,6 +117,17 @@ const CATEGORY_MODULE_OPTIONS = [
   { value: "vehicle", label: "Vasıta" },
   { value: "other", label: "Diğer" },
 ];
+
+const CATEGORY_ICON_SVG_MAX_LENGTH = 20000;
+
+const isCategoryIconSvgUnsafe = (raw) => {
+  const lowered = String(raw || "").toLowerCase();
+  if (/<\s*\/?\s*script/.test(lowered)) return true;
+  if (/on[a-z]+\s*=/.test(lowered)) return true;
+  if (lowered.includes("javascript:")) return true;
+  if (lowered.includes("<foreignobject")) return true;
+  return false;
+};
 
 const TRANSACTION_TYPE_OPTIONS = [
   { value: "satilik", label: "Satılık" },
@@ -371,6 +383,7 @@ const CATEGORY_FIELD_ERROR_KEY_MAP = {
   country_code: "main_country",
   module: "main_module",
   sort_order: "main_sort_order",
+  icon_svg: "main_icon_svg",
 };
 
 const buildCategoryErrorMessage = (parsed, fallbackMessage = "İşlem başarısız.") => {
@@ -459,6 +472,7 @@ const AdminCategories = () => {
     active_flag: true,
     sort_order: 1,
     image_url: "",
+    icon_svg: "",
   });
   const [vehicleSegment, setVehicleSegment] = useState("");
   const [vehicleSegmentError, setVehicleSegmentError] = useState("");
@@ -486,6 +500,7 @@ const AdminCategories = () => {
   const [categoryImageUploading, setCategoryImageUploading] = useState(false);
   const [categoryImageError, setCategoryImageError] = useState("");
   const [categoryImageCacheBuster, setCategoryImageCacheBuster] = useState(Date.now());
+  const [categoryIconSvgError, setCategoryIconSvgError] = useState("");
   const [schema, setSchema] = useState(createDefaultSchema());
   const [wizardStep, setWizardStep] = useState("hierarchy");
   const [wizardProgress, setWizardProgress] = useState({ state: "draft", dirty_steps: [] });
@@ -568,6 +583,9 @@ const AdminCategories = () => {
     }
     if (normalizedField === "image_url") {
       setCategoryImageError(finalMessage);
+    }
+    if (normalizedField === "icon_svg") {
+      setCategoryIconSvgError(finalMessage);
     }
     if (setGeneral) {
       setHierarchyError(finalMessage);
@@ -700,7 +718,7 @@ const AdminCategories = () => {
 
   const modalIssueBadges = useMemo(() => {
     const hierarchyHasIssue = Boolean(hierarchyError) || Object.keys(hierarchyFieldErrors || {}).some((key) => key.startsWith("main_") || key.startsWith("level-"));
-    const formsHasIssue = Boolean(dynamicError) || Boolean(detailError) || Boolean(categoryImageError) || Boolean(vehicleImportError);
+    const formsHasIssue = Boolean(dynamicError) || Boolean(detailError) || Boolean(categoryImageError) || Boolean(categoryIconSvgError) || Boolean(vehicleImportError);
     const rulesHasIssue = Boolean(vehicleSegmentError) || Boolean(publishError) || Boolean(versionsError);
 
     return [
@@ -708,7 +726,7 @@ const AdminCategories = () => {
       { id: "forms", label: "Forms", hasIssue: formsHasIssue },
       { id: "rules", label: "Rules", hasIssue: rulesHasIssue },
     ];
-  }, [hierarchyError, hierarchyFieldErrors, dynamicError, detailError, categoryImageError, vehicleImportError, vehicleSegmentError, publishError, versionsError]);
+  }, [hierarchyError, hierarchyFieldErrors, dynamicError, detailError, categoryImageError, categoryIconSvgError, vehicleImportError, vehicleSegmentError, publishError, versionsError]);
 
   useEffect(() => {
     if (!lastDeleteUndo?.expiresAt) {
@@ -864,6 +882,7 @@ const AdminCategories = () => {
   };
   const isHierarchyLocked = isStepCompleted("hierarchy");
   const isRootCategory = !form.parent_id;
+  const categoryIconSvgLength = useMemo(() => String(form.icon_svg || "").trim().length, [form.icon_svg]);
   const categoryImagePreviewUrl = useMemo(
     () => resolveCategoryImagePreviewUrl(form.image_url, categoryImageCacheBuster),
     [form.image_url, categoryImageCacheBuster],
@@ -988,6 +1007,7 @@ const AdminCategories = () => {
       active_flag: category.active_flag ?? form.active_flag,
       sort_order: category.sort_order ?? form.sort_order,
       image_url: category.image_url || "",
+      icon_svg: category.icon_svg || "",
     };
     const nextSchema = category.form_schema ? applySchemaDefaults(category.form_schema) : schema;
     const nextWizardProgress = normalizeWizardProgress(category.wizard_progress);
@@ -1011,6 +1031,7 @@ const AdminCategories = () => {
     }));
     setOrderPreview({ checking: false, available: true, message: "", conflict: null, suggested_next_sort_order: null });
     setCategoryImageError("");
+    setCategoryIconSvgError("");
     setCategoryImageCacheBuster(Date.now());
     persistSnapshot({
       form: nextForm,
@@ -2272,6 +2293,7 @@ const AdminCategories = () => {
       active_flag: true,
       sort_order: 1,
       image_url: "",
+      icon_svg: "",
     });
     setSchema(createDefaultSchema());
     setEditing(null);
@@ -2334,6 +2356,7 @@ const AdminCategories = () => {
     setOrderPreview({ checking: false, available: true, message: "", conflict: null, suggested_next_sort_order: null });
     setCategoryImageUploading(false);
     setCategoryImageError("");
+    setCategoryIconSvgError("");
     setCategoryImageCacheBuster(Date.now());
     setLastSavedAt("");
     setAutosaveStatus("idle");
@@ -2353,6 +2376,7 @@ const AdminCategories = () => {
       active_flag: item.active_flag ?? true,
       sort_order: item.sort_order || 1,
       image_url: item.image_url || "",
+      icon_svg: item.icon_svg || "",
     });
     setSchema(applySchemaDefaults(item.form_schema));
     setWizardStep("hierarchy");
@@ -2418,6 +2442,7 @@ const AdminCategories = () => {
     setOrderPreview({ checking: false, available: true, message: "", conflict: null });
     setCategoryImageUploading(false);
     setCategoryImageError("");
+    setCategoryIconSvgError("");
     setCategoryImageCacheBuster(Date.now());
     setLastSavedAt("");
     setAutosaveStatus("idle");
@@ -3254,11 +3279,25 @@ const AdminCategories = () => {
       mainFieldErrors.main_image_url = "Modül görseli zorunludur.";
     }
 
+    const iconSvgRaw = String(form.icon_svg || "").trim();
+    if (iconSvgRaw) {
+      const lowered = iconSvgRaw.toLowerCase();
+      if (iconSvgRaw.length > CATEGORY_ICON_SVG_MAX_LENGTH) {
+        mainFieldErrors.main_icon_svg = `İkon SVG en fazla ${CATEGORY_ICON_SVG_MAX_LENGTH} karakter olabilir.`;
+      } else if (!lowered.includes("<svg") || !lowered.includes("</svg>")) {
+        mainFieldErrors.main_icon_svg = "İkon SVG geçerli bir <svg>...</svg> içermelidir.";
+      } else if (isCategoryIconSvgUnsafe(iconSvgRaw)) {
+        mainFieldErrors.main_icon_svg = "İkon SVG güvenli olmayan içerik içeriyor.";
+      }
+    }
+
     if (Object.keys(mainFieldErrors).length > 0) {
       setHierarchyFieldErrors(mainFieldErrors);
       setHierarchyError("Lütfen işaretli alanları doldurun.");
       return { success: false };
     }
+
+    setCategoryIconSvgError("");
 
     if (isVehicleModule) {
       setVehicleSegmentError("");
@@ -3453,6 +3492,7 @@ const AdminCategories = () => {
             country_code: country,
             module: moduleValue,
             image_url: isRootCategory ? (form.image_url || "") : "",
+            icon_svg: isRootCategory ? (form.icon_svg || "") : "",
             vehicle_segment: isVehicleModule ? vehicleSegment : undefined,
             active_flag: form.active_flag,
             sort_order: rootSortOrder,
@@ -3493,6 +3533,7 @@ const AdminCategories = () => {
           country_code: country,
           module: moduleValue,
           image_url: isRootCategory ? (form.image_url || "") : "",
+          icon_svg: isRootCategory ? (form.icon_svg || "") : "",
           vehicle_segment: isVehicleModule ? vehicleSegment : undefined,
           active_flag: form.active_flag,
           sort_order: rootSortOrder,
@@ -4398,6 +4439,14 @@ const AdminCategories = () => {
                         className="h-full w-full object-cover"
                         data-testid={`categories-row-image-preview-${item.id}`}
                       />
+                    ) : item.icon_svg ? (
+                      <CategoryIconSvg
+                        iconSvg={item.icon_svg}
+                        wrapperClassName="h-full w-full rounded border-0 bg-white p-1"
+                        fallbackClassName="h-full w-full rounded border-0 bg-slate-100 text-slate-500"
+                        fallbackText="SVG"
+                        testId={`categories-row-icon-svg-preview-${item.id}`}
+                      />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-slate-500" data-testid={`categories-row-image-placeholder-${item.id}`}>
                         —
@@ -4832,6 +4881,74 @@ const AdminCategories = () => {
                         )}
                       </div>
 
+                      <div className="space-y-2 md:col-span-2" data-testid="categories-icon-svg-section">
+                        <label className={labelClassName}>Kategori ikonu (SVG)</label>
+                        {isRootCategory ? (
+                          <div className="rounded-md border border-dashed border-slate-300 p-3 space-y-3" data-testid="categories-icon-svg-editor">
+                            <textarea
+                              className="min-h-[120px] w-full rounded-md border p-2 text-xs text-slate-900"
+                              value={form.icon_svg || ""}
+                              disabled={isHierarchyLocked}
+                              placeholder="<svg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>...</svg>"
+                              onChange={(event) => {
+                                const nextValue = event.target.value;
+                                setForm((prev) => ({ ...prev, icon_svg: nextValue }));
+                                setCategoryIconSvgError("");
+                                setHierarchyFieldErrors((prev) => {
+                                  const next = { ...prev };
+                                  delete next.main_icon_svg;
+                                  return next;
+                                });
+                              }}
+                              data-testid="categories-icon-svg-input"
+                            />
+                            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600" data-testid="categories-icon-svg-meta">
+                              <span data-testid="categories-icon-svg-hint">Sanitize aktif: script/event handler/javascript/foreignObject engellenir.</span>
+                              <span data-testid="categories-icon-svg-length">{categoryIconSvgLength}/{CATEGORY_ICON_SVG_MAX_LENGTH}</span>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2" data-testid="categories-icon-svg-actions">
+                              <button
+                                type="button"
+                                className="h-8 rounded-md border border-slate-300 px-3 text-xs font-semibold text-slate-700 disabled:opacity-60"
+                                disabled={isHierarchyLocked || !form.icon_svg}
+                                onClick={() => {
+                                  setForm((prev) => ({ ...prev, icon_svg: "" }));
+                                  setCategoryIconSvgError("");
+                                  setHierarchyFieldErrors((prev) => {
+                                    const next = { ...prev };
+                                    delete next.main_icon_svg;
+                                    return next;
+                                  });
+                                }}
+                                data-testid="categories-icon-svg-clear"
+                              >
+                                İkonu Temizle
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-3" data-testid="categories-icon-svg-preview-wrap">
+                              <CategoryIconSvg
+                                iconSvg={form.icon_svg}
+                                wrapperClassName="h-10 w-10 rounded-md border bg-white p-1"
+                                fallbackClassName="h-10 w-10 rounded-md border bg-slate-100 text-slate-500"
+                                fallbackText="SVG"
+                                testId="categories-icon-svg-preview"
+                              />
+                              <span className="text-xs text-slate-600" data-testid="categories-icon-svg-preview-hint">Önizleme (kayıt sonrası public kategori kartlarında görünür)</span>
+                            </div>
+                            {categoryIconSvgError ? (
+                              <div className="text-xs text-rose-600" data-testid="categories-icon-svg-error">{categoryIconSvgError}</div>
+                            ) : null}
+                            {hierarchyFieldErrors.main_icon_svg ? (
+                              <div className="text-xs text-rose-600" data-testid="categories-icon-svg-required-error">{hierarchyFieldErrors.main_icon_svg}</div>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700" data-testid="categories-icon-svg-root-only-note">
+                            Alt kategorilerde ikon alanı kapalıdır.
+                          </div>
+                        )}
+                      </div>
+
                       <label className="flex items-center gap-2 text-sm text-slate-800" data-testid="categories-active-wrapper">
                         <input
                           type="checkbox"
@@ -5097,6 +5214,9 @@ const AdminCategories = () => {
                     </div>
                     <div className="mt-1 text-xs text-slate-700" data-testid="categories-summary-image-status">
                       Görsel: {form.image_url ? 'Yüklendi' : 'Varsayılan ikon'}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-700" data-testid="categories-summary-icon-svg-status">
+                      SVG İkon: {String(form.icon_svg || '').trim() ? 'Tanımlı' : 'Tanımlı değil'}
                     </div>
                     {form.module === 'vehicle' && (
                       <div className="mt-1 text-xs text-slate-700" data-testid="categories-summary-vehicle-segment">

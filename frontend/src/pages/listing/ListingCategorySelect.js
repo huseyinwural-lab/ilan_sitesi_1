@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CheckCircle2, Search } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { CategoryIconSvg } from '@/components/categories/CategoryIconSvg';
 
 const MODULE_OPTIONS = [
   { id: '1', key: 'vehicle', label: 'Vasıta', sort_order: 1 },
@@ -1104,7 +1105,16 @@ const ListingCategorySelect = () => {
                           }`}
                           data-testid={`ilan-ver-column-item-${columnIndex}-${item.id}`}
                         >
-                          {getCategoryLabel(item)}
+                          <span className="inline-flex items-center gap-2" data-testid={`ilan-ver-column-item-content-${columnIndex}-${item.id}`}>
+                            <CategoryIconSvg
+                              iconSvg={item.icon_svg}
+                              wrapperClassName="h-4 w-4 rounded border border-slate-300 bg-white p-[2px]"
+                              fallbackClassName="h-4 w-4 rounded border border-slate-300 bg-slate-100 text-slate-500"
+                              fallbackText="•"
+                              testId={`ilan-ver-column-item-icon-${columnIndex}-${item.id}`}
+                            />
+                            <span data-testid={`ilan-ver-column-item-title-${columnIndex}-${item.id}`}>{getCategoryLabel(item)}</span>
+                          </span>
                         </button>
                       ))
                     )}

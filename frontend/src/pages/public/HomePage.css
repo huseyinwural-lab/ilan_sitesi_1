@@ -132,6 +132,25 @@
   text-overflow: ellipsis;
 }
 
+.home-v2-category-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  border: 1px solid #cdd8ea;
+  background: #fff;
+  padding: 3px;
+  flex: 0 0 auto;
+}
+
+.home-v2-category-icon-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #667085;
+  font-size: 11px;
+  font-weight: 900;
+}
+
 .home-v2-child-list {
   margin-top: 7px;
   margin-left: 6px;
@@ -232,6 +251,23 @@
   border-radius: 10px;
   border: 1px solid #dbe4f0;
   background: #fff;
+}
+
+.home-v2-first-child-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.home-v2-first-child-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1px solid #dbe4f0;
+  background: #fff;
+  padding: 2px;
+  flex: 0 0 auto;
 }
 
 .home-v2-first-child:hover {

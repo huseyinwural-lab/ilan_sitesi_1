@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import AdSlot from '@/components/public/AdSlot';
+import { CategoryIconSvg } from '@/components/categories/CategoryIconSvg';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const FALLBACK_IMAGES = ['/homepage/slide-1.jpg', '/homepage/slide-2.jpg', '/homepage/slide-3.jpg'];
@@ -53,6 +54,7 @@ const normalizeItems = (items, fallbackPrefix = 'item') => {
         price: item.price,
         currency: item.currency,
         image_url: item.image_url,
+        icon_svg: item.icon_svg,
         score: item.score,
         score_explanation: Array.isArray(item.score_explanation) ? item.score_explanation : [],
       };
@@ -525,11 +527,18 @@ export const CategoryNavigatorMainSideBlock = ({ props, runtimeContext }) => {
             <div key={root.id || root.slug} className="border-b border-slate-200 py-2 last:border-b-0" data-testid={`runtime-category-navigator-main-side-root-${root.id || root.slug}`}>
               <button
                 type="button"
-                className="text-left text-[18px] font-bold leading-6 text-blue-700"
+                className="flex w-full items-center gap-2 text-left text-[18px] font-bold leading-6 text-blue-700"
                 onClick={() => triggerCategoryNavigation(runtimeContext, root)}
                 data-testid={`runtime-category-navigator-main-side-root-link-${root.id || root.slug}`}
               >
-                {root.name}{showCounts ? ` (${rootCount})` : ''}
+                <CategoryIconSvg
+                  iconSvg={root.icon_svg}
+                  wrapperClassName="h-6 w-6 rounded border bg-white p-[2px]"
+                  fallbackClassName="h-6 w-6 rounded border bg-slate-100 text-slate-500"
+                  fallbackText="•"
+                  testId={`runtime-category-navigator-main-side-root-icon-${root.id || root.slug}`}
+                />
+                <span>{root.name}{showCounts ? ` (${rootCount})` : ''}</span>
               </button>
               <div className="mt-1 space-y-0.5 pl-8" data-testid={`runtime-category-navigator-main-side-children-${root.id || root.slug}`}>
                 {rootChildren.map((child) => {
@@ -538,11 +547,18 @@ export const CategoryNavigatorMainSideBlock = ({ props, runtimeContext }) => {
                     <button
                       key={child.id || child.slug}
                       type="button"
-                      className="block w-full text-left text-[17px] font-semibold leading-6 text-blue-700"
+                      className="flex w-full items-center gap-2 text-left text-[17px] font-semibold leading-6 text-blue-700"
                       onClick={() => triggerCategoryNavigation(runtimeContext, child)}
                       data-testid={`runtime-category-navigator-main-side-child-link-${child.id || child.slug}`}
                     >
-                      {child.name}{showCounts ? ` (${childCount})` : ''}
+                      <CategoryIconSvg
+                        iconSvg={child.icon_svg}
+                        wrapperClassName="h-5 w-5 rounded border bg-white p-[2px]"
+                        fallbackClassName="h-5 w-5 rounded border bg-slate-100 text-slate-500"
+                        fallbackText="•"
+                        testId={`runtime-category-navigator-main-side-child-icon-${child.id || child.slug}`}
+                      />
+                      <span>{child.name}{showCounts ? ` (${childCount})` : ''}</span>
                     </button>
                   );
                 })}
@@ -611,12 +627,19 @@ export const CategoryNavigatorCategorySideBlock = ({ props, runtimeContext }) =>
             <button
               key={node.id || node.slug || `path-${index}`}
               type="button"
-              className="block text-left text-[17px] font-semibold leading-6 text-blue-700"
+              className="flex items-center gap-2 text-left text-[17px] font-semibold leading-6 text-blue-700"
               style={{ paddingLeft: `${index * 22}px` }}
               onClick={() => triggerCategoryNavigation(runtimeContext, node)}
               data-testid={`runtime-category-navigator-category-side-path-link-${node.id || node.slug || index}`}
             >
-              {node.name}
+              <CategoryIconSvg
+                iconSvg={node.icon_svg}
+                wrapperClassName="h-5 w-5 rounded border bg-white p-[2px]"
+                fallbackClassName="h-5 w-5 rounded border bg-slate-100 text-slate-500"
+                fallbackText="•"
+                testId={`runtime-category-navigator-category-side-path-icon-${node.id || node.slug || index}`}
+              />
+              <span>{node.name}</span>
             </button>
           ))}
         </div>
@@ -627,11 +650,18 @@ export const CategoryNavigatorCategorySideBlock = ({ props, runtimeContext }) =>
             <button
               key={item.id || item.slug}
               type="button"
-              className="block w-full text-left text-[17px] font-semibold leading-7 text-blue-700"
+              className="flex w-full items-center gap-2 text-left text-[17px] font-semibold leading-7 text-blue-700"
               onClick={() => triggerCategoryNavigation(runtimeContext, item)}
               data-testid={`runtime-category-navigator-category-side-item-${item.id || item.slug}`}
             >
-              {item.name} <span className="text-slate-500">({resolveCategoryNodeCount(item)})</span>
+              <CategoryIconSvg
+                iconSvg={item.icon_svg}
+                wrapperClassName="h-5 w-5 rounded border bg-white p-[2px]"
+                fallbackClassName="h-5 w-5 rounded border bg-slate-100 text-slate-500"
+                fallbackText="•"
+                testId={`runtime-category-navigator-category-side-item-icon-${item.id || item.slug}`}
+              />
+              <span>{item.name} <span className="text-slate-500">({resolveCategoryNodeCount(item)})</span></span>
             </button>
           ))}
         </div>
@@ -1080,6 +1110,7 @@ export const SubCategoryBlock = ({ props, runtimeContext }) => {
           id: item.id,
           label: item.name,
           slug: item.slug,
+          icon_svg: item.icon_svg,
           count: countMap.has(String(item.id)) ? countMap.get(String(item.id)) : Number(item.listing_count || 0),
           url: buildCategoryRoute(item),
         }));
@@ -1108,7 +1139,16 @@ export const SubCategoryBlock = ({ props, runtimeContext }) => {
       <div className="mt-3 grid gap-2" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }} data-testid="runtime-sub-category-items">
         {normalizedItems.map((item, index) => (
           <a key={`${item.id || index}`} href={item?.url || '#'} className="rounded border bg-slate-50 px-2 py-2 text-xs" data-testid={`runtime-sub-category-item-${index}`}>
-            {item.label}
+            <span className="inline-flex items-center gap-2" data-testid={`runtime-sub-category-item-main-${index}`}>
+              <CategoryIconSvg
+                iconSvg={item.icon_svg}
+                wrapperClassName="h-4 w-4 rounded border bg-white p-[2px]"
+                fallbackClassName="h-4 w-4 rounded border bg-slate-100 text-slate-500"
+                fallbackText="•"
+                testId={`runtime-sub-category-item-icon-${index}`}
+              />
+              <span>{item.label}</span>
+            </span>
             {showCount ? <span className="ml-1 text-slate-500">({Number(item.count || 0)})</span> : null}
           </a>
         ))}

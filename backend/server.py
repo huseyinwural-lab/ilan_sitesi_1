@@ -16256,7 +16256,7 @@ def _category_translation_map(translations: list[CategoryTranslation]) -> dict:
     return mapping
 
 
-CATEGORY_ICON_SVG_MAX_LENGTH = 5000
+CATEGORY_ICON_SVG_MAX_LENGTH = 20000
 
 
 def _is_svg_markup_unsafe(raw: str) -> bool:

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Link } from 'react-router-dom';
 import AdSlot from '@/components/public/AdSlot';
+import { CategoryIconSvg } from '@/components/categories/CategoryIconSvg';
 import './HomePage.css';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -399,11 +400,13 @@ export default function HomePage() {
           return {
             id: root.id,
             name: rootName,
+            icon_svg: root.icon_svg || '',
             total_count: rootTotalCount,
             url: `/search?category=${encodeURIComponent(root.slug || root.id)}`,
             children_level1: children.map((child) => ({
               id: child.id,
               name: normalizeLabel(child, language),
+              icon_svg: child.icon_svg || '',
               listing_count: resolveDescendantCount(child),
               url: `/search?category=${encodeURIComponent(child.slug || child.id)}`,
             })),
@@ -478,6 +481,13 @@ export default function HomePage() {
                     return (
                       <div key={root.id} className="home-v2-category-row" data-testid={`home-v2-category-row-${root.id}`}>
                         <Link to={root.url} className="home-v2-root-link" data-testid={`home-v2-root-link-${root.id}`}>
+                          <CategoryIconSvg
+                            iconSvg={root.icon_svg}
+                            wrapperClassName="home-v2-category-icon"
+                            fallbackClassName="home-v2-category-icon home-v2-category-icon-fallback"
+                            fallbackText="•"
+                            testId={`home-v2-root-icon-${root.id}`}
+                          />
                           <span className="home-v2-root-title" data-testid={`home-v2-root-title-${root.id}`}>{root.name}</span>
                         </Link>
 
@@ -490,7 +500,16 @@ export default function HomePage() {
                                 className="home-v2-first-child"
                                 data-testid={`home-v2-first-child-link-${child.id}`}
                               >
-                                <span className="home-v2-first-child-title" data-testid={`home-v2-first-child-title-${child.id}`}>{child.name}</span>
+                                <span className="home-v2-first-child-main" data-testid={`home-v2-first-child-main-${child.id}`}>
+                                  <CategoryIconSvg
+                                    iconSvg={child.icon_svg}
+                                    wrapperClassName="home-v2-first-child-icon"
+                                    fallbackClassName="home-v2-first-child-icon home-v2-category-icon-fallback"
+                                    fallbackText="•"
+                                    testId={`home-v2-first-child-icon-${child.id}`}
+                                  />
+                                  <span className="home-v2-first-child-title" data-testid={`home-v2-first-child-title-${child.id}`}>{child.name}</span>
+                                </span>
                                 <span className="home-v2-first-child-count" data-testid={`home-v2-first-child-count-${child.id}`}>
                                   ({formatNumber(child.listing_count)})
                                 </span>
