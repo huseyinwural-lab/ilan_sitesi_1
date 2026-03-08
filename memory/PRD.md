@@ -3332,3 +3332,34 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Açık Kalanlar
 - **MOCKED:** `academy.modules`
 - Apple Social Login (kullanıcı kredensiyali bekliyor)
+
+## 2026-03-08 — Hibrit İkon Seçici (Onaylı Kütüphane + Custom SVG)
+
+### Kullanıcı Kararları
+- 1A: Sabit dahili onaylı ikon listesi
+- 2A: Tüm kayıtlarda sadece `icon_svg` saklama
+- 3B: İki sekmeli UI (`Kütüphane` / `Custom SVG`)
+- 4B: Arama + kategori etiket filtreleri
+
+### Uygulananlar
+- `frontend/src/constants/categoryIconLibrary.js` eklendi
+  - 40 onaylı ikon tanımı (label/code/color/tags)
+  - SVG badge üretimi merkezi hale getirildi
+- `AdminCategories` icon alanı hibrit picker’a dönüştürüldü
+  - Sekme 1: **Kütüphane** (arama + tag filtre + ikon grid seçimi)
+  - Sekme 2: **Custom SVG** (manuel textarea)
+  - Her iki akışta da sonuç `form.icon_svg` içinde tutuluyor
+- Seçilen ikon canlı önizleme + karakter sayacı + sanitize bilgilendirmesi korunuyor
+- Kayıt formatı değişmedi: backend’e sadece `icon_svg` gönderiliyor
+
+### Test Durumu
+- Manual smoke: PASS
+  - Admin modalde sekmeler görünür
+  - Tab switching çalışıyor
+- Testing agent: PASS
+  - Rapor: `/app/test_reports/iteration_173.json`
+  - Sonuç: UI/Backend regresyon yok, hibrit picker akışı stabil
+
+### Açık Kalanlar
+- **MOCKED:** `academy.modules`
+- Apple Social Login (kullanıcı kredensiyali bekliyor)
