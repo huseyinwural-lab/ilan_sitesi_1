@@ -3363,3 +3363,28 @@ Kullanıcı hedefi, İlan Ver akışını PDF standardında bitirmek ve admin ko
 ### Açık Kalanlar
 - **MOCKED:** `academy.modules`
 - Apple Social Login (kullanıcı kredensiyali bekliyor)
+
+## 2026-03-08 — İkon Kütüphanesi Geri Alımı (Custom SVG Only)
+
+### Kullanıcı Kararı
+- `1A`: Kütüphane tamamen kaldırılacak
+- `2B`: Kütüphane kaynaklı mevcut icon_svg değerleri temizlenecek
+
+### Uygulananlar
+- Admin Categories içinde kütüphane tab/search/tag/grid kaldırıldı
+- İkon akışı tekrar **yalnızca Custom SVG textarea** olarak sadeleştirildi
+- Kütüphane ile ilgili frontend dosyası tamamen kaldırıldı:
+  - `frontend/src/constants/categoryIconLibrary.js` (deleted)
+- Mevcut kütüphane kaynaklı ikonlar temizlendi:
+  - `categories.form_schema.category_meta.home_icon_svg` içinde badge-signature eşleşen değerler DB’de temizlendi
+  - Doğrulama: remaining count `0`
+
+### Test Durumu
+- Manual smoke: PASS (library tab count = 0)
+- Testing agent: PASS
+  - Rapor: `/app/test_reports/iteration_174.json`
+  - Sonuç: Library bileşenleri kaldırıldı, Custom SVG akışı sağlam
+
+### Açık Kalanlar
+- **MOCKED:** `academy.modules`
+- Apple Social Login (kullanıcı kredensiyali bekliyor)
