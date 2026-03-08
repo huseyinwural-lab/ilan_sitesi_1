@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-const ACADEMY_MODULES_CACHE_KEY = 'dealer_academy_modules_cache_v2';
+const ACADEMY_MODULES_CACHE_KEY = 'dealer_academy_modules_cache_v3';
 const ACADEMY_MODULES_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const loadCachedAcademyModules = () => {
@@ -31,16 +31,17 @@ const persistCachedAcademyModules = (items) => {
 };
 
 const adaptAcademyModule = (moduleItem, index) => {
-  const safeSlug = String(moduleItem?.slug || `module-${index}`);
-  const safeStatus = String(moduleItem?.status || 'inactive');
-  const isActive = safeStatus === 'active';
-  const label = String(moduleItem?.title || safeSlug);
+  const safeKey = String(moduleItem?.module_key || `module-${index}`);
+  const isActive = Boolean(moduleItem?.is_active);
+  const label = String(moduleItem?.title || safeKey);
+  const description = String(moduleItem?.description || '').trim();
+  const sortOrder = Number(moduleItem?.sort_order || 0);
 
   return {
-    id: String(moduleItem?.id || safeSlug),
+    id: String(moduleItem?.id || safeKey),
     title: label,
     tag: isActive ? 'Aktif' : 'Pasif',
-    description: `Slug: ${safeSlug} • Locale: ${String(moduleItem?.locale || 'tr').toLowerCase()}`,
+    description: description || `Modül: ${safeKey} • Sıra: ${sortOrder}`,
     progress: isActive ? 100 : 0,
     duration_minutes: isActive ? 10 : 0,
     updated_at: moduleItem?.updated_at || null,
@@ -64,14 +65,10 @@ export default function DealerAcademy() {
     }
 
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${API}/academy/modules`, {
-        headers: { Authorization: `Bearer ${token}` },
-        timeout: 12000,
-      });
+      const response = await axios.get(`${API}/academy/modules`, { timeout: 12000 });
       const backendItems = Array.isArray(response.data?.items) ? response.data.items : [];
       setModules(backendItems.map(adaptAcademyModule));
-      setSource(response.data?.source || 'dealer_modules_db');
+      setSource(response.data?.source || 'academy_modules_db');
       persistCachedAcademyModules(backendItems);
     } catch (requestError) {
       const cachedFallback = loadCachedAcademyModules();

@@ -21794,7 +21794,7 @@ async def dealer_dashboard_summary(
         )
 
 
-def _resolve_academy_modules_locale(request: Request, current_user: Dict[str, Any]) -> str:
+def _resolve_academy_modules_locale(request: Request, current_user: Optional[Dict[str, Any]] = None) -> str:
     url_locale = str(request.headers.get("X-URL-Locale") or "").strip().lower()
     if url_locale in SUPPORTED_COUNTRIES:
         return url_locale
@@ -21803,7 +21803,7 @@ def _resolve_academy_modules_locale(request: Request, current_user: Dict[str, An
         candidate = accept_header.split(",")[0].split("-")[0].strip()
         if candidate in SUPPORTED_COUNTRIES:
             return candidate
-    user_locale = str(current_user.get("language") or "").strip().lower()
+    user_locale = str((current_user or {}).get("language") or "").strip().lower()
     if user_locale in SUPPORTED_COUNTRIES:
         return user_locale
     return "tr"
@@ -21815,41 +21815,29 @@ async def _load_academy_modules_from_db(
     locale: str,
     include_hidden: bool,
 ) -> List[Dict[str, Any]]:
-    await _ensure_dealer_portal_nav_baseline(session)
+    query = """
+        SELECT id, module_key, title, description, sort_order, is_active, updated_at
+        FROM academy_modules
+        {where_clause}
+        ORDER BY sort_order ASC, module_key ASC
+    """
+    where_clause = "" if include_hidden else "WHERE is_active = true"
     rows = (
-        await session.execute(
-            select(DealerModule)
-            .order_by(DealerModule.order_index.asc(), DealerModule.key.asc())
-        )
-    ).scalars().all()
-    if not rows:
-        return []
-
-    feature_map = await _resolve_feature_flags_readonly(
-        session,
-        [row.feature_flag for row in rows if row.feature_flag],
-    )
+        await session.execute(text(query.format(where_clause=where_clause)))
+    ).mappings().all()
 
     modules: List[Dict[str, Any]] = []
     for row in rows:
-        flag_enabled = True
-        if row.feature_flag:
-            flag_enabled = bool(feature_map.get(row.feature_flag, True))
-        effective_visible = bool(row.visible) and flag_enabled
-        if not include_hidden and not effective_visible:
-            continue
-
         modules.append(
             {
-                "id": str(row.id),
-                "title": row.title_i18n_key or row.key,
-                "slug": row.key,
+                "id": str(row.get("id")),
+                "module_key": str(row.get("module_key") or "").strip(),
+                "title": str(row.get("title") or "").strip(),
+                "description": str(row.get("description") or "").strip(),
+                "sort_order": int(row.get("sort_order") or 0),
+                "is_active": bool(row.get("is_active")),
                 "locale": locale,
-                "status": "active" if effective_visible else "inactive",
-                "updated_at": row.updated_at.isoformat() if row.updated_at else None,
-                "order_index": int(row.order_index or 0),
-                "feature_flag": row.feature_flag,
-                "visible": bool(row.visible),
+                "updated_at": row.get("updated_at").isoformat() if row.get("updated_at") else None,
             }
         )
     return modules
@@ -21889,7 +21877,7 @@ async def _get_academy_modules_with_cache(
         )
         return {
             "items": fresh_modules,
-            "source": "dealer_modules_db",
+            "source": "academy_modules_db",
             "cache": {"hit": False, "ttl_seconds": ACADEMY_MODULES_CACHE_TTL_SECONDS},
             "fallback": None,
         }
@@ -21918,21 +21906,13 @@ async def _get_academy_modules_with_cache(
 async def academy_modules(
     request: Request,
     force_refresh: bool = Query(default=False),
-    admin_override: bool = Query(default=False),
-    current_user=Depends(get_current_user),
     session: AsyncSession = Depends(get_sql_session),
 ):
-    role = str(current_user.get("role") or "").strip().lower()
-    if role not in {"dealer", "super_admin", "country_admin"}:
-        raise HTTPException(status_code=403, detail="academy_modules_forbidden")
-    if admin_override and role not in {"super_admin", "country_admin"}:
-        raise HTTPException(status_code=403, detail="admin_override_forbidden")
-
-    locale = _resolve_academy_modules_locale(request, current_user)
+    locale = _resolve_academy_modules_locale(request, None)
     payload = await _get_academy_modules_with_cache(
         session,
         locale=locale,
-        include_hidden=bool(admin_override),
+        include_hidden=False,
         force_refresh=bool(force_refresh),
     )
     return {
